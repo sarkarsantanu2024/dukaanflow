@@ -1,0 +1,89 @@
+// DukaanFlow — Prisma schema
+// Money is stored as INTEGER RUPEES everywhere. No floats, no paise.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ShopType {
+  GROCERY
+  RESTAURANT
+  TEA_STALL
+  ROLL_MOMO
+  HOME_KITCHEN
+  BAKERY
+  OTHER
+}
+
+enum OrderType {
+  DELIVERY
+  PICKUP
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  CANCELLED
+}
+
+model Shop {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  type      ShopType @default(GROCERY)
+  phone     String // 10-digit Indian mobile, digits only
+  address   String   @default("")
+  upiId     String   @default("")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items  Item[]
+  orders Order[]
+
+  @@index([active])
+}
+
+model Item {
+  id        String   @id @default(uuid()) @db.Uuid
+  shopId    String   @db.Uuid
+  name      String
+  price     Int // INTEGER RUPEES
+  unit      String   @default("")
+  category  String   @default("")
+  inStock   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, name, unit])
+  @@index([shopId])
+  @@index([shopId, inStock])
+}
+
+model Order {
+  id              String      @id @default(uuid()) @db.Uuid
+  shopId          String      @db.Uuid
+  customerName    String      @default("")
+  customerPhone   String
+  customerAddress String      @default("")
+  orderType       OrderType   @default(DELIVERY)
+  // Immutable snapshot of what was ordered, at the price charged at that moment.
+  // Reporting reads `totalAmount`; it is never recomputed from this JSON.
+  itemsJson       Json
+  totalAmount     Int
+  status          OrderStatus @default(NEW)
+  createdAt       DateTime    @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
+  @@index([status])
+}
