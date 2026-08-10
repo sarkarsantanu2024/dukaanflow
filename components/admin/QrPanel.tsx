@@ -33,9 +33,20 @@ function QrBlock({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div ref={holderRef} className="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
-        {/* 512px keeps the PNG crisp when printed on an A4 poster. */}
-        <QRCodeCanvas value={value} size={512} level="M" marginSize={2} className="h-44 w-44" />
+      <div ref={holderRef} className="w-full max-w-[12rem] rounded-2xl bg-white p-3 ring-1 ring-slate-200">
+        {/*
+          `size` is the canvas resolution — 512px keeps the downloaded PNG crisp
+          on an A4 poster. Display size must go through `style`, not className:
+          qrcode.react builds `{height: size, width: size, ...style}` as an
+          inline style, and an inline rule beats any Tailwind class.
+        */}
+        <QRCodeCanvas
+          value={value}
+          size={512}
+          level="M"
+          marginSize={2}
+          style={{ width: '100%', height: 'auto', display: 'block' }}
+        />
       </div>
       <p className="break-all text-center text-xs text-slate-500">{caption}</p>
       <Button variant="secondary" size="sm" onClick={download}>

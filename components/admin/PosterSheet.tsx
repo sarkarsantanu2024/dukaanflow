@@ -117,14 +117,16 @@ export function PosterSheet({
         </div>
 
         <div className="mt-6 flex justify-center">
-          <div className="rounded-2xl border-4 border-brand-600 p-4">
+          <div className="w-full max-w-[17rem] rounded-2xl border-4 border-brand-600 p-4">
+            {/* Display size via `style` — qrcode.react's inline width/height
+                would otherwise override any className. */}
             <QRCodeCanvas
               value={link}
               size={640}
               level="M"
               marginSize={2}
               data-qr="shop"
-              className="h-64 w-64"
+              style={{ width: '100%', height: 'auto', display: 'block' }}
             />
           </div>
         </div>
@@ -142,14 +144,14 @@ export function PosterSheet({
               Pay via UPI · UPI-তে পেমেন্ট · UPI से भुगतान
             </p>
             <div className="mt-2 flex justify-center">
-              <div className="rounded-xl border-2 border-slate-300 p-3">
+              <div className="w-full max-w-[9rem] rounded-xl border-2 border-slate-300 p-3">
                 <QRCodeCanvas
                   value={upiPayUrl(upiId, shopName)}
                   size={360}
                   level="M"
                   marginSize={2}
                   data-qr="upi"
-                  className="h-32 w-32"
+                  style={{ width: '100%', height: 'auto', display: 'block' }}
                 />
               </div>
             </div>
