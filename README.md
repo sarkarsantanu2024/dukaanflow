@@ -109,8 +109,16 @@ npm run dev
 > then rejected. Write it as `"\$2a\$12\$…"` in `.env`; paste the **raw** hash
 > (no backslashes) into Vercel, where values are never expanded.
 
+Live: <https://dukaanflow.vercel.app>
+
+Locally the dev server answers on `localhost:3000`:
+
 - Customer: <http://localhost:3000/shop/ramu-grocery>
 - Admin: <http://localhost:3000/admin>
+
+Generated QR codes and shop links always use `NEXT_PUBLIC_BASE_URL`
+(`https://dukaanflow.vercel.app`), never the address you happen to be browsing —
+a printed QR has to work for a customer in the street.
 
 Seeded shops: **Ramu Grocery** (Rice ₹68, Dal ₹82, Mustard Oil ₹165, Biscuit ₹20)
 and **Tasty Roll Corner** (Egg Roll ₹60, Chicken Roll ₹90, Veg Chowmein ₹80,

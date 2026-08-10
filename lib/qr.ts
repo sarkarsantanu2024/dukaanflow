@@ -2,7 +2,10 @@
 
 export function baseUrl(): string {
   const configured = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, '');
-  return configured || 'http://localhost:3000';
+  // Fall back to production rather than localhost: a QR is a physical artefact
+  // that outlives the session that printed it, so a misconfigured environment
+  // should yield a working code, not one pointing at someone's laptop.
+  return configured || 'https://dukaanflow.vercel.app';
 }
 
 export function shopUrl(slug: string): string {

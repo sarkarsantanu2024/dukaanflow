@@ -1,4 +1,5 @@
 import { PrismaClient, ShopType } from '@prisma/client';
+import { shopUrl } from '../lib/qr';
 
 const prisma = new PrismaClient();
 
@@ -79,7 +80,7 @@ async function main() {
 
 main()
   .then(async () => {
-    console.log('\nSeed complete. Open http://localhost:3000/shop/ramu-grocery');
+    console.log(`\nSeed complete. Open ${shopUrl('ramu-grocery')}`);
     await prisma.$disconnect();
   })
   .catch(async (error) => {
