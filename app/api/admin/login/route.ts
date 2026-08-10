@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { createSessionToken, SESSION_COOKIE, SESSION_TTL_MS, sessionCookieOptions } from '@/lib/auth';
-import { verifyAdminPassword } from '@/lib/password';
+import { verifyAdminCredentials } from '@/lib/password';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { loginSchema } from '@/lib/validators';
@@ -18,9 +18,10 @@ export async function POST(request: Request) {
   const parsed = loginSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  if (!(await verifyAdminPassword(parsed.data.password))) {
-    // Deliberately vague — never reveal whether the hash is even configured.
-    return fail('Incorrect password', 401);
+  if (!(await verifyAdminCredentials(parsed.data.username, parsed.data.password))) {
+    // One message for both fields — never confirm that a username exists,
+    // and never reveal whether the hash is even configured.
+    return fail('Incorrect username or password', 401);
   }
 
   const token = await createSessionToken();

@@ -122,6 +122,7 @@ git push -u origin main
    | --- | --- |
    | `DATABASE_URL` | Neon **pooled** string |
    | `DIRECT_URL` | Neon **direct** string |
+   | `ADMIN_USERNAME` | the login name, e.g. `admin` (plain text) |
    | `ADMIN_PASSWORD_HASH` | output of `npm run hash` |
    | `COOKIE_SECRET` | 64 hex characters |
    | `NEXT_PUBLIC_BASE_URL` | `https://dukaanflow.vercel.app` (no trailing slash) |
