@@ -43,9 +43,10 @@ Zod · React Hook Form · qrcode.react · jsPDF · Vercel.
 
 ### Auth
 
-One password, no usernames.
+One fixed username and one password — a single Super Admin, no user table.
 
 ```text
+username → case-insensitive match against ADMIN_USERNAME (plain text)
 password → bcrypt.compare against ADMIN_PASSWORD_HASH   (lib/password.ts, Node only)
         → HMAC-SHA256 signed token                      (lib/auth.ts, Web Crypto)
         → HttpOnly; Secure in prod; SameSite=Lax cookie
@@ -57,6 +58,22 @@ bcrypt lives in `lib/password.ts`, imported solely by the login route. The cooki
 signature covers the expiry, so a client cannot extend its own session. Every
 mutating handler re-checks auth via `requireAdmin()` — a middleware matcher typo
 must not become an open write endpoint.
+
+The username is an identifier rather than a secret, so it is stored in plain
+text; only the password is hashed. A wrong username and a wrong password return
+the identical message, and a username miss is still compared against a decoy
+bcrypt hash so both paths cost the same ~400ms — otherwise an instant rejection
+would confirm which usernames exist.
+
+Changing either credential:
+
+```bash
+npm run hash -- "new-password"   # → ADMIN_PASSWORD_HASH
+# ADMIN_USERNAME is plain text — edit it directly
+```
+
+There is no password recovery. Only the bcrypt hash is stored and bcrypt is
+one-way, so a forgotten password is replaced, never retrieved.
 
 ### CSRF
 

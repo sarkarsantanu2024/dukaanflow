@@ -15,6 +15,7 @@ loadEnvConfig(process.cwd(), true, { info: () => {}, error: console.error });
 const KEYS = [
   'DATABASE_URL',
   'DIRECT_URL',
+  'ADMIN_USERNAME',
   'ADMIN_PASSWORD_HASH',
   'COOKIE_SECRET',
   'NEXT_PUBLIC_BASE_URL',
