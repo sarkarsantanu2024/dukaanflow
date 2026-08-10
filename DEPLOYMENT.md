@@ -27,7 +27,7 @@ Fill in:
 ```env
 DATABASE_URL="postgresql://…-pooler….neon.tech/dukaanflow?sslmode=require"
 DIRECT_URL="postgresql://…….neon.tech/dukaanflow?sslmode=require"
-NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+NEXT_PUBLIC_BASE_URL="https://dukaanflow.vercel.app"
 ```
 
 Generate the two secrets:
@@ -84,8 +84,18 @@ Verify locally:
 npm run dev
 ```
 
+The dev server itself is served from `localhost:3000` — that address is the local
+process, not a setting:
+
 - <http://localhost:3000/shop/ramu-grocery> — add items, send a test order.
 - <http://localhost:3000/admin> — sign in with the password you hashed.
+
+Note that QR codes and shop links generated here point at
+`https://dukaanflow.vercel.app`, because that is what `NEXT_PUBLIC_BASE_URL`
+says. That is intentional — a printed QR must work for a customer in the street,
+not only on the machine that generated it. To make QRs point at your laptop for
+a scanning test, temporarily set `NEXT_PUBLIC_BASE_URL="http://localhost:3000"`
+and restart the dev server.
 
 ## 5. Push to GitHub
 
@@ -114,7 +124,7 @@ git push -u origin main
    | `DIRECT_URL` | Neon **direct** string |
    | `ADMIN_PASSWORD_HASH` | output of `npm run hash` |
    | `COOKIE_SECRET` | 64 hex characters |
-   | `NEXT_PUBLIC_BASE_URL` | `https://your-app.vercel.app` (no trailing slash) |
+   | `NEXT_PUBLIC_BASE_URL` | `https://dukaanflow.vercel.app` (no trailing slash) |
 
 3. Deploy.
 
@@ -150,7 +160,7 @@ the phone.
 
 ## 9. Generate the first QR
 
-1. Sign in at `https://your-domain/admin`.
+1. Sign in at <https://dukaanflow.vercel.app/admin>.
 2. **+ Add shop** — name, WhatsApp number (10 digits), address, UPI ID. The slug
    auto-fills from the name and stays editable.
 3. **Items** — add them one by one, or paste the whole list into **Bulk update**:
