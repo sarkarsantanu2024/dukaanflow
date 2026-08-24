@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
+import { VoiceItemAdder } from './VoiceItemAdder';
 import { formatRupees } from '@/lib/money';
 
 export type AdminItem = {
@@ -151,6 +152,8 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
 
   return (
     <div className="space-y-6">
+      <VoiceItemAdder slug={slug} />
+
       <form onSubmit={addItem} className="rounded-2xl bg-white p-4 shadow-card">
         <h2 className="mb-3 font-semibold text-slate-900">Add or update an item</h2>
         <div className="grid gap-3 sm:grid-cols-2">

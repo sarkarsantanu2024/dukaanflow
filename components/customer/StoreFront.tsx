@@ -6,6 +6,7 @@ import { ShopHeader, type ShopSummary } from './ShopHeader';
 import { ItemCard, type CustomerItem } from './ItemCard';
 import { CartBar } from './CartBar';
 import { CheckoutSheet, type CheckoutSubmit } from './CheckoutSheet';
+import { VoiceOrder } from './VoiceOrder';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
@@ -62,6 +63,11 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     }
     return { totalItems: count, totalAmount: amount };
   }, [cart, items]);
+
+  /** Voice adds are relative — saying "rice" twice means two of them. */
+  function addQuantity(itemId: string, more: number) {
+    setCart((current) => ({ ...current, [itemId]: Math.min((current[itemId] ?? 0) + more, 99) }));
+  }
 
   function setQuantity(itemId: string, next: number) {
     setCart((current) => {
@@ -153,6 +159,11 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
                 </div>
               )}
             </div>
+
+            {/* Matched against the whole menu, not the filtered view — a
+                shopper speaking an item should never be blocked by a search
+                term still sitting in the box. */}
+            <VoiceOrder items={items} locale={locale} onAdd={addQuantity} />
 
             {visibleItems.length === 0 ? (
               <div className="pt-6">

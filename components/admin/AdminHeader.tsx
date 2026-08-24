@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
+import { InstallApp } from './InstallApp';
 
 export function AdminHeader({
   title,
@@ -44,6 +45,7 @@ export function AdminHeader({
         )}
         <h1 className="mr-auto truncate text-lg font-bold text-slate-900">{title}</h1>
         {children}
+        <InstallApp />
         <Button variant="ghost" size="sm" onClick={logout} loading={loggingOut}>
           Sign out
         </Button>
