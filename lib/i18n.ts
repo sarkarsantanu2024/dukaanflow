@@ -46,6 +46,13 @@ type Dictionary = {
   openingWhatsApp: string;
   payViaUpi: string;
   all: string;
+  voiceOrder: string;
+  voiceListening: string;
+  voiceHint: string;
+  voiceAdded: string;
+  voiceNotHeard: string;
+  voiceDenied: string;
+  voiceUnavailable: string;
 };
 
 export const DICTIONARIES: Record<Locale, Dictionary> = {
@@ -82,6 +89,13 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     openingWhatsApp: 'Opening WhatsApp…',
     payViaUpi: 'Pay via UPI',
     all: 'All',
+    voiceOrder: 'Order by voice',
+    voiceListening: 'Listening…',
+    voiceHint: 'Tap the mic and say “two kg rice and one packet salt”',
+    voiceAdded: 'added to cart',
+    voiceNotHeard: 'Could not find that item. Please say it again.',
+    voiceDenied: 'Microphone blocked. Allow mic access for this site.',
+    voiceUnavailable: 'Voice is not available on this browser. Please tap Add instead.',
   },
   bn: {
     scanToOrder: 'স্ক্যান করে অর্ডার করুন',
@@ -116,6 +130,13 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     openingWhatsApp: 'হোয়াটসঅ্যাপ খুলছে…',
     payViaUpi: 'UPI-তে পেমেন্ট',
     all: 'সব',
+    voiceOrder: 'বলে অর্ডার করুন',
+    voiceListening: 'শুনছি…',
+    voiceHint: 'মাইকে চাপ দিয়ে বলুন “দুই কেজি চাল আর এক প্যাকেট নুন”',
+    voiceAdded: 'কার্টে যোগ হয়েছে',
+    voiceNotHeard: 'জিনিসটি খুঁজে পাইনি। আবার বলুন।',
+    voiceDenied: 'মাইক্রোফোন বন্ধ। এই সাইটে মাইক ব্যবহারের অনুমতি দিন।',
+    voiceUnavailable: 'এই ব্রাউজারে ভয়েস কাজ করছে না। “যোগ করুন” চাপুন।',
   },
   hi: {
     scanToOrder: 'स्कैन करके ऑर्डर करें',
@@ -150,6 +171,13 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     openingWhatsApp: 'व्हाट्सएप खुल रहा है…',
     payViaUpi: 'UPI से भुगतान',
     all: 'सभी',
+    voiceOrder: 'बोलकर ऑर्डर करें',
+    voiceListening: 'सुन रहे हैं…',
+    voiceHint: 'माइक दबाकर बोलिए “दो किलो चावल और एक पैकेट नमक”',
+    voiceAdded: 'कार्ट में जोड़ दिया',
+    voiceNotHeard: 'यह सामान नहीं मिला। दोबारा बोलिए।',
+    voiceDenied: 'माइक्रोफ़ोन बंद है। इस साइट को माइक की अनुमति दें।',
+    voiceUnavailable: 'इस ब्राउज़र में आवाज़ काम नहीं कर रही। “जोड़ें” दबाइए।',
   },
 };
 

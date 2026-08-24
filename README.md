@@ -199,6 +199,23 @@ activate/deactivate, delete (typed-name confirmation), search, counts.
 **Items** — add/upsert by `name+unit`, inline price edit (commits on blur/Enter),
 stock toggle, delete, categories, search.
 
+**Voice entry** — tap the mic on the items page and dictate, one item per
+sentence, in English, Hindi or Bengali:
+
+```text
+"rice one kg sixty eight rupees"   → Rice · 1 kg · ₹68
+"tomato 500 gram 30"               → Tomato · 500 g · ₹30
+"basmati rice 5 kg 450 in staples" → Basmati Rice · 5 kg · ₹450 · Staples
+```
+
+Each sentence upserts through the same `POST /api/admin/shop/<slug>/items`
+endpoint as the form, and the phone speaks the result back so the shopkeeper can
+stock shelves without looking at the screen. The parser
+([`lib/speech.ts`](lib/speech.ts)) resolves the price as the last number that is
+*not* followed by a unit word — so "rice 1 kg 68" prices the item at ₹68, never
+₹1 — and refuses rather than guesses when no price was heard. Number words
+("sixty eight") and Devanagari/Bengali digits are converted first.
+
 **Bulk update** — paste a list, one line per item:
 
 ```text
@@ -212,6 +229,21 @@ Price mode creates missing items; stock mode only updates existing ones (a stock
 line for an unknown item is a typo, so it is reported, not silently created).
 `₹`, commas and `/-` are tolerated. Response: `{updated, created, failed, failedRows}` —
 skipped lines are listed back rather than dropped quietly.
+
+**Installable (PWA)** — an "Install app" button in the admin header gives the
+shopkeeper a home-screen icon and a standalone window, which is where voice pays
+off: an installed app keeps its microphone permission instead of re-asking every
+visit. Admin-only by design — the customer shop page links no manifest, because
+its whole promise is that there is nothing to install.
+
+The manifest, icons and service worker are served from the site root
+(`/admin.webmanifest`, `/admin-icon?size=…`, `/admin-sw.js`) rather than under
+`/admin`, because the middleware gate would redirect the browser's
+credential-less manifest fetch to the login page. Icons are drawn on the fly with
+`next/og`, so there are no binary assets to regenerate when the brand colour
+changes. The service worker is network-only — Chrome wants a registered worker
+with a fetch handler before offering a real install, but caching admin pages
+would risk showing a stale price or a deleted shop.
 
 **QR** — shop QR (`/shop/<slug>`) and UPI QR (`upi://pay?pa=…&pn=…&cu=INR`, no
 amount, no gateway), both downloadable as 512px PNG.
@@ -227,6 +259,27 @@ roughly a megabyte for a rarely-used button.
 Mobile-first, no login. Sticky cart bar, bottom-sheet checkout, out-of-stock items
 greyed out with quantity disabled, search + category chips, EN/বাং/हिं toggle
 (remembered in `localStorage`), toasts for errors, empty states throughout.
+
+**Voice ordering** — a mic above the item list. "two kg rice and one packet salt"
+adds both to the cart; the phone reads back what it added, so a shopper who
+cannot read the menu can still order. Clauses split on and/aur/আর, quantity comes
+from the spoken number, and a number that merely restates the pack size ("basmati
+rice 5 kg") counts as one pack rather than five. Out-of-stock items are excluded
+from matching. Recognition follows the EN/বাং/हिं toggle.
+
+The shopper's language need not match the shopkeeper's: a bidirectional synonym
+table in [`lib/speech.ts`](lib/speech.ts) covers everyday kirana vocabulary, so
+"দুই কেজি চাল" and "दो किलो चावल" both find an item typed as **Rice**. Items
+outside the table still match on their own name. Note that Indic vowel signs are
+combining *marks*, not letters — the matching regexes keep `\p{M}`, or "चावल"
+would be shredded into "च व ल" and match nothing.
+
+Both mics use the browser's built-in `SpeechRecognition` and `speechSynthesis` —
+no audio leaves the device and there is no speech API key. Firefox has neither,
+so the mic simply does not render there and the typed flows are untouched.
+Failures are separated rather than lumped into one "blocked" message: a denied
+permission, a page served over plain `http://`, a managed Chrome profile
+refusing the speech service, and a dead network each say what they are.
 
 Name and address are optional; phone is required and normalised — `+91 98765 43210`,
 `098765-43210` and `9876543210` all validate to the same 10 digits.
