@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/guard';
+import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { itemDeleteSchema, itemPatchSchema, itemUpsertSchema } from '@/lib/validators';
 
@@ -18,22 +18,39 @@ async function shopIdFor(slug: string): Promise<string | null> {
  */
 export async function POST(request: Request, { params }: Context) {
   if (!sameOrigin(request)) return fail('Bad request', 403);
-  if (!(await requireAdmin())) return fail('Not authenticated', 401);
-
   const { slug } = await params;
+  if (!(await requireShopWrite(slug))) return fail('Not authenticated', 401);
+
   const shopId = await shopIdFor(slug);
   if (!shopId) return fail('Shop not found', 404);
 
   const parsed = itemUpsertSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { name, price, unit, category, inStock } = parsed.data;
+  const { name, nameBn, nameHi, price, unit, category, inStock } = parsed.data;
 
   const item = await prisma.item.upsert({
     where: { shopId_name_unit: { shopId, name, unit } },
-    create: { shopId, name, price, unit, category, inStock },
-    update: { price, category, inStock },
-    select: { id: true, name: true, price: true, unit: true, category: true, inStock: true },
+    create: { shopId, name, nameBn, nameHi, price, unit, category, inStock },
+    // Blank translations on an update mean "unchanged", never "clear it" — a
+    // quick voice re-price must not wipe names typed by hand earlier.
+    update: {
+      price,
+      category,
+      inStock,
+      ...(nameBn ? { nameBn } : {}),
+      ...(nameHi ? { nameHi } : {}),
+    },
+    select: {
+      id: true,
+      name: true,
+      nameBn: true,
+      nameHi: true,
+      price: true,
+      unit: true,
+      category: true,
+      inStock: true,
+    },
   });
 
   return ok(item, 201);
@@ -42,9 +59,9 @@ export async function POST(request: Request, { params }: Context) {
 /** PATCH — price / stock / category of one existing item. */
 export async function PATCH(request: Request, { params }: Context) {
   if (!sameOrigin(request)) return fail('Bad request', 403);
-  if (!(await requireAdmin())) return fail('Not authenticated', 401);
-
   const { slug } = await params;
+  if (!(await requireShopWrite(slug))) return fail('Not authenticated', 401);
+
   const shopId = await shopIdFor(slug);
   if (!shopId) return fail('Shop not found', 404);
 
@@ -63,9 +80,9 @@ export async function PATCH(request: Request, { params }: Context) {
 /** DELETE — remove one item from this shop. */
 export async function DELETE(request: Request, { params }: Context) {
   if (!sameOrigin(request)) return fail('Bad request', 403);
-  if (!(await requireAdmin())) return fail('Not authenticated', 401);
-
   const { slug } = await params;
+  if (!(await requireShopWrite(slug))) return fail('Not authenticated', 401);
+
   const shopId = await shopIdFor(slug);
   if (!shopId) return fail('Shop not found', 404);
 

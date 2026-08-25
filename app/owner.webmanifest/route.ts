@@ -1,0 +1,48 @@
+import { prisma } from '@/lib/prisma';
+
+/**
+ * Per-shop manifest, so each owner installs an app that opens on their own
+ * price list and carries their shop's name under the icon.
+ *
+ * Served from the root for the same reason as the admin one: Chrome fetches a
+ * manifest without credentials, and anything under /owner is behind the PIN
+ * gate. A shop name is public — it is printed on the QR poster — so answering
+ * this unauthenticated gives nothing away.
+ */
+
+export const runtime = 'nodejs';
+
+export async function GET(request: Request) {
+  const slug = new URL(request.url).searchParams.get('slug') ?? '';
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    return new Response('Not found', { status: 404 });
+  }
+
+  const shop = await prisma.shop.findUnique({ where: { slug }, select: { name: true } });
+  if (!shop) return new Response('Not found', { status: 404 });
+
+  const manifest = {
+    id: `/owner/${slug}`,
+    name: `${shop.name} — DukaanFlow`,
+    short_name: shop.name.slice(0, 12),
+    description: 'Update your prices and stock. Add items by voice.',
+    start_url: `/owner/${slug}`,
+    scope: `/owner/${slug}`,
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#f1f5f9',
+    theme_color: '#0b9057',
+    icons: [
+      { src: '/admin-icon?size=192', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/admin-icon?size=512', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/admin-icon?size=512&maskable=1', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
+  };
+
+  return new Response(JSON.stringify(manifest), {
+    headers: {
+      'Content-Type': 'application/manifest+json',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  });
+}

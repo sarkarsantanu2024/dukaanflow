@@ -10,19 +10,36 @@ import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { VoiceItemAdder } from './VoiceItemAdder';
 import { formatRupees } from '@/lib/money';
+import { suggestNames } from '@/lib/speech';
 
 export type AdminItem = {
   id: string;
   name: string;
+  nameBn: string;
+  nameHi: string;
   price: number;
   unit: string;
   category: string;
   inStock: boolean;
 };
 
-type NewItem = { name: string; price: string; unit: string; category: string };
+type NewItem = {
+  name: string;
+  nameBn: string;
+  nameHi: string;
+  price: string;
+  unit: string;
+  category: string;
+};
 
-const EMPTY_NEW_ITEM: NewItem = { name: '', price: '', unit: '', category: '' };
+const EMPTY_NEW_ITEM: NewItem = {
+  name: '',
+  nameBn: '',
+  nameHi: '',
+  price: '',
+  unit: '',
+  category: '',
+};
 
 export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[] }) {
   const router = useRouter();
@@ -46,9 +63,25 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
     return items.filter((item) => {
       if (category && item.category !== category) return false;
       if (!needle) return true;
-      return `${item.name} ${item.unit} ${item.category}`.toLowerCase().includes(needle);
+      return `${item.name} ${item.nameBn} ${item.nameHi} ${item.unit} ${item.category}`
+        .toLowerCase()
+        .includes(needle);
     });
   }, [items, query, category]);
+
+  /**
+   * Fills the two translations when the typed name is one we know, without
+   * ever overwriting something the shopkeeper entered by hand.
+   */
+  function nameChanged(name: string) {
+    const known = suggestNames(name);
+    setDraft((current) => ({
+      ...current,
+      name,
+      nameBn: current.nameBn || known?.bn || '',
+      nameHi: current.nameHi || known?.hi || '',
+    }));
+  }
 
   async function addItem(event: React.FormEvent) {
     event.preventDefault();
@@ -61,6 +94,8 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: draft.name,
+          nameBn: draft.nameBn,
+          nameHi: draft.nameHi,
           price: Number(draft.price),
           unit: draft.unit,
           category: draft.category,
@@ -152,7 +187,7 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
 
   return (
     <div className="space-y-6">
-      <VoiceItemAdder slug={slug} />
+      <VoiceItemAdder slug={slug} items={items} />
 
       <form onSubmit={addItem} className="rounded-2xl bg-white p-4 shadow-card">
         <h2 className="mb-3 font-semibold text-slate-900">Add or update an item</h2>
@@ -161,7 +196,7 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
             label="Name"
             required
             value={draft.name}
-            onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+            onChange={(event) => nameChanged(event.target.value)}
             error={errors.name}
             placeholder="Rice"
           />
@@ -190,9 +225,25 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
             error={errors.category}
             placeholder="Staples"
           />
+          <Input
+            label="Bengali name"
+            value={draft.nameBn}
+            onChange={(event) => setDraft({ ...draft, nameBn: event.target.value })}
+            error={errors.nameBn}
+            placeholder="চাল"
+          />
+          <Input
+            label="Hindi name"
+            value={draft.nameHi}
+            onChange={(event) => setDraft({ ...draft, nameHi: event.target.value })}
+            error={errors.nameHi}
+            placeholder="चावल"
+          />
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Same name and unit? The existing item is updated instead of duplicated.
+          Same name and unit? The existing item is updated instead of duplicated. Bengali and Hindi
+          names fill in automatically for items we know — leave them blank and the customer sees the
+          main name.
         </p>
         <Button type="submit" className="mt-3" loading={adding}>
           Save item
@@ -248,6 +299,11 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
                     {item.name}
                     {item.unit && <span className="font-normal text-slate-500"> · {item.unit}</span>}
                   </p>
+                  {(item.nameBn || item.nameHi) && (
+                    <p className="truncate text-xs text-slate-500">
+                      {[item.nameBn, item.nameHi].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
                   <div className="mt-1 flex items-center gap-2">
                     {item.category && <Badge>{item.category}</Badge>}
                     <Badge tone={item.inStock ? 'green' : 'red'}>

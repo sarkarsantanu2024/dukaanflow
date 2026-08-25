@@ -35,8 +35,9 @@ const WORD_UNITS: Record<string, number> = {
   एक: 1, दो: 2, तीन: 3, चार: 4, पांच: 5, पाँच: 5, छह: 6, सात: 7, आठ: 8,
   नौ: 9, दस: 10,
   এক: 1, দুই: 2, তিন: 3, চার: 4, পাঁচ: 5, ছয়: 6, সাত: 7, আট: 8, নয়: 9, দশ: 10,
-  ek: 1, do: 2, teen: 3, char: 4, paanch: 5, panch: 5, chhe: 6, saat: 7,
-  aath: 8, nau: 9, das: 10,
+  ek: 1, do: 2, dui: 2, teen: 3, tin: 3, char: 4, paanch: 5, panch: 5,
+  chhe: 6, choy: 6, chhoy: 6, saat: 7, aath: 8, aat: 8, nau: 9, noy: 9,
+  das: 10, dosh: 10,
 };
 
 const WORD_TENS: Record<string, number> = {
@@ -199,45 +200,206 @@ function titleCase(text: string): string {
   return text.replace(/\b[a-z]/g, (char) => char.toUpperCase());
 }
 
+const YES_WORDS = new Set([
+  'yes', 'yeah', 'yep', 'yup', 'ok', 'okay', 'right', 'correct', 'sure',
+  'haan', 'han', 'ha', 'haa', 'theek', 'thik', 'sahi',
+  'हाँ', 'हां', 'ठीक', 'सही',
+  'হ্যাঁ', 'হ্যা', 'হা', 'ঠিক',
+]);
+
+const NO_WORDS = new Set([
+  'no', 'nope', 'nah', 'wrong', 'cancel',
+  'nahi', 'nahin', 'na', 'galat',
+  'नहीं', 'ना', 'गलत',
+  'না', 'ভুল', 'বাতিল',
+]);
+
+/**
+ * Reads a yes/no answer out of a confirmation reply, in any of the three
+ * languages. Returns null when the reply was neither, so the caller can keep
+ * waiting rather than guessing at an answer it did not get.
+ */
+export function spokenYesNo(alternatives: string[]): 'yes' | 'no' | null {
+  for (const alternative of alternatives) {
+    for (const token of tokens(alternative)) {
+      if (YES_WORDS.has(token)) return 'yes';
+      if (NO_WORDS.has(token)) return 'no';
+    }
+    // Two-letter words are dropped by `tokens`; "na"/"ha" still mean something.
+    const bare = alternative.trim().toLowerCase();
+    if (YES_WORDS.has(bare)) return 'yes';
+    if (NO_WORDS.has(bare)) return 'no';
+  }
+  return null;
+}
+
+export type SpokenItemDraft = {
+  name: string;
+  nameHi: string;
+  nameBn: string;
+  unit: string;
+  price: number;
+  category: string;
+  /** An item already on the list that this almost certainly refers to. */
+  matched: MatchableItem | null;
+  /** 1 when nothing similar exists; otherwise how sure the `matched` link is. */
+  confidence: number;
+};
+
+/**
+ * Turns what the shopkeeper said into a ready-to-save item.
+ *
+ * Three things happen here that plain parsing does not do, and together they
+ * are what stop voice entry from quietly creating rubbish:
+ *
+ * 1. Every alternative the recogniser offered is tried, and the reading that
+ *    resolves to an item already on the list wins. "Rise 1 kg 68" becomes a
+ *    price update to Rice rather than a new product spelled wrong.
+ * 2. Known names are filled in for all three languages, so a shop stocked by
+ *    voice in Hindi still reads correctly to a Bengali customer.
+ * 3. A near-but-not-certain match is returned with its confidence rather than
+ *    acted on, so the caller can ask before saving.
+ */
+export function resolveSpokenItem(
+  alternatives: string[],
+  lang: VoiceLang,
+  existing: MatchableItem[],
+): SpokenItemDraft | null {
+  let best: SpokenItemDraft | null = null;
+
+  for (const transcript of alternatives) {
+    const parsed = parseSpokenItem(transcript);
+    if (!parsed) continue;
+
+    const match = bestMatch(parsed.name, existing);
+    const confidence = match?.confidence ?? 0;
+
+    const draft: SpokenItemDraft = {
+      ...namesFor(parsed.name, lang),
+      unit: parsed.unit,
+      price: parsed.price,
+      category: parsed.category,
+      matched: confidence >= UNSURE_MATCH ? match!.item : null,
+      confidence: confidence >= UNSURE_MATCH ? confidence : 1,
+    };
+
+    // An alternative that lands on an existing item beats one that would
+    // create a new one — that is usually the recogniser's mishearing.
+    if (!best || confidence > (best.matched ? best.confidence : 0)) best = draft;
+    if (confidence >= CONFIDENT_MATCH) break;
+  }
+
+  if (!best) return null;
+
+  // A confident link to an existing item means this is that item: adopt its
+  // exact names so the upsert updates the row instead of creating a twin.
+  if (best.matched && best.confidence >= CONFIDENT_MATCH) {
+    best.name = best.matched.name;
+    best.nameHi = best.matched.nameHi ?? '';
+    best.nameBn = best.matched.nameBn ?? '';
+  }
+
+  return best;
+}
+
+/**
+ * Fills in the other two languages when the name is one we know, and otherwise
+ * records what was said under the language it was said in.
+ */
+function namesFor(spoken: string, lang: VoiceLang): { name: string; nameHi: string; nameBn: string } {
+  const known = suggestNames(spoken);
+  if (known) return { name: known.en, nameHi: known.hi, nameBn: known.bn };
+
+  return {
+    // The primary name is what the customer sees when their language is blank,
+    // so it always holds something.
+    name: spoken,
+    nameHi: lang === 'hi-IN' ? spoken : '',
+    nameBn: lang === 'bn-IN' ? spoken : '',
+  };
+}
+
 /* ------------------------------------------------------------------ */
 /* Customer side                                                       */
 /* ------------------------------------------------------------------ */
 
-export type MatchableItem = { id: string; name: string; unit: string };
-export type SpokenOrderLine = { id: string; quantity: number; phrase: string };
+export type MatchableItem = {
+  id: string;
+  name: string;
+  unit: string;
+  /** The same item's name in the other two languages, when it has one. */
+  nameHi?: string;
+  nameBn?: string;
+};
+
+export type SpokenOrderLine = { id: string; quantity: number; phrase: string; confidence: number };
+
+export type SpokenOrderResult = {
+  /** Confident enough to add straight to the cart. */
+  lines: SpokenOrderLine[];
+  /** Heard something close, but not close enough to act on — ask first. */
+  unsure: SpokenOrderLine[];
+};
 
 const ORDER_FILLER =
   /\b(?:i want|i need|give me|please|add|order|chahiye|chaiye|de do|dijiye|mujhe|lagbe|dao|चाहिए|दे दो|दीजिए|मुझे|লাগবে|দাও|দিন)\b/gi;
 
 /**
  * Splits an order sentence on "and"/"aur"/"ar" and resolves each clause
- * against the shop's item list. Unmatched clauses are simply dropped — the
- * caller reads back what it did match so the shopper can see the difference.
+ * against the shop's item list.
+ *
+ * `alternatives` is the recogniser's ranked list of what it thought it heard.
+ * Trying all of them and keeping whichever resolves best is the single biggest
+ * accuracy win available: the top guess is frequently "rise" or "die" where the
+ * second or third is the word the shopper actually said.
  */
 export function parseSpokenOrder(
-  transcript: string,
+  alternatives: string[],
   items: MatchableItem[],
-): SpokenOrderLine[] {
+): SpokenOrderResult {
+  let best: SpokenOrderResult = { lines: [], unsure: [] };
+  let bestQuality = -1;
+
+  for (const transcript of alternatives) {
+    const attempt = resolveOrder(transcript, items);
+    // Prefer the reading that lands the most confident items; a reading that
+    // only produces guesses never beats one that produces a certainty.
+    const quality =
+      attempt.lines.reduce((sum, line) => sum + line.confidence, 0) + attempt.unsure.length * 0.1;
+    if (quality > bestQuality) {
+      bestQuality = quality;
+      best = attempt;
+    }
+  }
+
+  return best;
+}
+
+function resolveOrder(transcript: string, items: MatchableItem[]): SpokenOrderResult {
   const cleaned = wordsToDigits(transcript.toLowerCase()).replace(ORDER_FILLER, ' ');
   const clauses = cleaned.split(/\s+(?:and|aur|ar|और|আর|এবং)\s+|,/);
   const lines: SpokenOrderLine[] = [];
+  const unsure: SpokenOrderLine[] = [];
 
   for (const clause of clauses) {
     const phrase = clause.trim();
     if (!phrase) continue;
 
     const match = bestMatch(phrase, items);
-    if (!match) continue;
+    if (!match || match.confidence < UNSURE_MATCH) continue;
 
-    const quantity = spokenQuantity(phrase, match);
+    const quantity = spokenQuantity(phrase, match.item);
     if (quantity < 1) continue;
 
-    const existing = lines.find((line) => line.id === match.id);
+    const line = { id: match.item.id, quantity, phrase, confidence: match.confidence };
+    const bucket = match.confidence >= CONFIDENT_MATCH ? lines : unsure;
+
+    const existing = bucket.find((entry) => entry.id === line.id);
     if (existing) existing.quantity = Math.min(existing.quantity + quantity, 99);
-    else lines.push({ id: match.id, quantity, phrase });
+    else bucket.push(line);
   }
 
-  return lines;
+  return { lines, unsure };
 }
 
 /**
@@ -275,86 +437,224 @@ function spokenQuantity(phrase: string, item: MatchableItem): number {
  * matches any other — and unlisted items still match on their own name, so a
  * missing word costs nothing beyond that item needing its own language.
  */
-const SYNONYM_GROUPS: string[][] = [
-  ['rice', 'चावल', 'চাল', 'chawal', 'chaval', 'bhat'],
-  ['salt', 'नमक', 'নুন', 'লবণ', 'namak', 'nun', 'lobon'],
-  ['sugar', 'चीनी', 'চিনি', 'cheeni', 'chini'],
-  ['oil', 'तेल', 'তেল', 'tel'],
-  ['mustard', 'सरसों', 'সরিষা', 'সরিষার', 'sarso', 'sorisha'],
-  ['milk', 'दूध', 'দুধ', 'doodh', 'dudh'],
-  ['curd', 'दही', 'দই', 'dahi', 'doi'],
-  ['ghee', 'घी', 'ঘি'],
-  ['paneer', 'पनीर', 'পনির'],
-  ['egg', 'eggs', 'अंडा', 'डिम', 'ডিম', 'anda', 'dim'],
-  ['tomato', 'टमाटर', 'টমেটো', 'tamatar'],
-  ['potato', 'आलू', 'আলু', 'aloo', 'alu'],
-  ['onion', 'प्याज', 'পেঁয়াজ', 'pyaz', 'peyaj'],
-  ['garlic', 'लहसुन', 'রসুন', 'lehsun', 'rosun'],
-  ['ginger', 'अदरक', 'আদা', 'adrak', 'ada'],
-  ['chilli', 'chili', 'मिर्च', 'লঙ্কা', 'মরিচ', 'mirch', 'lanka', 'morich'],
-  ['turmeric', 'हल्दी', 'হলুদ', 'haldi', 'holud'],
-  ['dal', 'daal', 'दाल', 'ডাল', 'lentil', 'pulses'],
-  ['flour', 'आटा', 'আটা', 'atta', 'ata'],
-  ['maida', 'मैदा', 'ময়দা'],
-  ['suji', 'sooji', 'rava', 'सूजी', 'সুজি'],
-  ['wheat', 'गेहूं', 'গম', 'gehu', 'gom'],
-  ['tea', 'चाय', 'চা', 'chai', 'cha'],
-  ['biscuit', 'biscuits', 'बिस्कुट', 'বিস্কুট'],
-  ['bread', 'ब्रेड', 'পাউরুটি', 'pauruti'],
-  ['soap', 'साबुन', 'সাবান', 'sabun', 'saban'],
-  ['water', 'पानी', 'জল', 'pani', 'jol'],
-  ['fish', 'मछली', 'মাছ', 'machli', 'mach'],
-  ['chicken', 'मुर्गा', 'মুরগি', 'murga', 'murgi'],
-  ['mutton', 'मटन', 'মাটন', 'khasi'],
-  ['papad', 'पापड़', 'পাঁপড়'],
-  ['honey', 'शहद', 'মধু', 'shahad', 'modhu'],
+export type Vocab = { en: string; hi: string; bn: string; roman?: string[] };
+
+const VOCAB: Vocab[] = [
+  { en: 'Rice', hi: 'चावल', bn: 'চাল', roman: ['chawal', 'chaval', 'chal', 'bhat'] },
+  { en: 'Salt', hi: 'नमक', bn: 'নুন', roman: ['namak', 'nun', 'lobon', 'লবণ'] },
+  { en: 'Sugar', hi: 'चीनी', bn: 'চিনি', roman: ['cheeni', 'chini'] },
+  { en: 'Oil', hi: 'तेल', bn: 'তেল', roman: ['tel'] },
+  { en: 'Mustard', hi: 'सरसों', bn: 'সরিষা', roman: ['sarso', 'sorisha', 'সরিষার'] },
+  { en: 'Milk', hi: 'दूध', bn: 'দুধ', roman: ['doodh', 'dudh'] },
+  { en: 'Curd', hi: 'दही', bn: 'দই', roman: ['dahi', 'doi', 'yogurt'] },
+  { en: 'Ghee', hi: 'घी', bn: 'ঘি' },
+  { en: 'Paneer', hi: 'पनीर', bn: 'পনির' },
+  { en: 'Egg', hi: 'अंडा', bn: 'ডিম', roman: ['eggs', 'anda', 'dim'] },
+  { en: 'Tomato', hi: 'टमाटर', bn: 'টমেটো', roman: ['tamatar', 'tomatoes'] },
+  { en: 'Potato', hi: 'आलू', bn: 'আলু', roman: ['aloo', 'alu', 'potatoes'] },
+  { en: 'Onion', hi: 'प्याज', bn: 'পেঁয়াজ', roman: ['pyaz', 'peyaj', 'onions'] },
+  { en: 'Garlic', hi: 'लहसुन', bn: 'রসুন', roman: ['lehsun', 'rosun'] },
+  { en: 'Ginger', hi: 'अदरक', bn: 'আদা', roman: ['adrak', 'ada'] },
+  { en: 'Chilli', hi: 'मिर्च', bn: 'লঙ্কা', roman: ['chili', 'mirch', 'lanka', 'morich', 'মরিচ'] },
+  { en: 'Turmeric', hi: 'हल्दी', bn: 'হলুদ', roman: ['haldi', 'holud'] },
+  { en: 'Dal', hi: 'दाल', bn: 'ডাল', roman: ['daal', 'lentil', 'pulses'] },
+  { en: 'Flour', hi: 'आटा', bn: 'আটা', roman: ['atta', 'ata'] },
+  { en: 'Maida', hi: 'मैदा', bn: 'ময়দা' },
+  { en: 'Suji', hi: 'सूजी', bn: 'সুজি', roman: ['sooji', 'rava'] },
+  { en: 'Wheat', hi: 'गेहूं', bn: 'গম', roman: ['gehu', 'gom'] },
+  { en: 'Tea', hi: 'चाय', bn: 'চা', roman: ['chai', 'cha'] },
+  { en: 'Biscuit', hi: 'बिस्कुट', bn: 'বিস্কুট', roman: ['biscuits'] },
+  { en: 'Bread', hi: 'ब्रेड', bn: 'পাউরুটি', roman: ['pauruti'] },
+  { en: 'Soap', hi: 'साबुन', bn: 'সাবান', roman: ['sabun', 'saban'] },
+  { en: 'Water', hi: 'पानी', bn: 'জল', roman: ['pani', 'jol'] },
+  { en: 'Fish', hi: 'मछली', bn: 'মাছ', roman: ['machli', 'mach'] },
+  { en: 'Chicken', hi: 'मुर्गा', bn: 'মুরগি', roman: ['murga', 'murgi'] },
+  { en: 'Mutton', hi: 'मटन', bn: 'মাটন', roman: ['khasi'] },
+  { en: 'Papad', hi: 'पापड़', bn: 'পাঁপড়' },
+  { en: 'Honey', hi: 'शहद', bn: 'মধু', roman: ['shahad', 'modhu'] },
+  { en: 'Butter', hi: 'मक्खन', bn: 'মাখন', roman: ['makhan'] },
+  { en: 'Cumin', hi: 'जीरा', bn: 'জিরা', roman: ['jeera'] },
+  { en: 'Coriander', hi: 'धनिया', bn: 'ধনে', roman: ['dhania', 'dhone'] },
+  { en: 'Mustard oil', hi: 'सरसों का तेल', bn: 'সরিষার তেল' },
+  { en: 'Banana', hi: 'केला', bn: 'কলা', roman: ['kela', 'kola'] },
+  { en: 'Lemon', hi: 'नींबू', bn: 'লেবু', roman: ['nimbu', 'lebu'] },
+  // Street-food menus — the other half of DukaanFlow's shops.
+  { en: 'Roll', hi: 'रोल', bn: 'রোল' },
+  { en: 'Momo', hi: 'मोमो', bn: 'মোমো' },
+  { en: 'Chowmein', hi: 'चाउमिन', bn: 'চাউমিন', roman: ['chow', 'chowmin', 'noodles'] },
+  { en: 'Veg', hi: 'वेज', bn: 'ভেজ', roman: ['vegetable'] },
+  { en: 'Biryani', hi: 'बिरयानी', bn: 'বিরিয়ানি' },
+  { en: 'Samosa', hi: 'समोसा', bn: 'সিঙাড়া', roman: ['singara'] },
+  { en: 'Plate', hi: 'प्लेट', bn: 'প্লেট' },
+  // Packaging words, so compound names like "Biscuit Pack" translate whole.
+  { en: 'Pack', hi: 'पैकेट', bn: 'প্যাকেট', roman: ['packet'] },
+  { en: 'Powder', hi: 'पाउडर', bn: 'গুঁড়ো', roman: ['gura'] },
+  { en: 'Bottle', hi: 'बोतल', bn: 'বোতল' },
 ];
 
+/** Every written form of one entry, lowercased — used for matching. */
+function formsOf(entry: Vocab): string[] {
+  return [entry.en, entry.hi, entry.bn, ...(entry.roman ?? [])].map((form) => form.toLowerCase());
+}
+
 const SYNONYMS = new Map<string, string[]>();
-for (const group of SYNONYM_GROUPS) {
-  for (const word of group) SYNONYMS.set(word, group);
+for (const entry of VOCAB) {
+  const forms = formsOf(entry);
+  for (const form of forms) {
+    // Multi-word entries ("mustard oil") are matched as a phrase, and their
+    // individual words already belong to their own entries.
+    if (!form.includes(' ')) SYNONYMS.set(form, forms);
+  }
+}
+
+const VOCAB_BY_FORM = new Map<string, Vocab>();
+for (const entry of VOCAB) {
+  for (const form of formsOf(entry)) if (!VOCAB_BY_FORM.has(form)) VOCAB_BY_FORM.set(form, entry);
 }
 
 /**
- * Scores every item against the spoken clause by how many of its name words
- * appear, so "2 kg basmati rice" beats plain "Rice" when both exist.
+ * The other two languages for a name the shopkeeper just typed or spoke.
+ *
+ * Only fires on an exact whole-name hit against the vocabulary. A partial or
+ * fuzzy guess here would silently mislabel an item in a language the
+ * shopkeeper cannot read back, which is worse than leaving the field empty.
  */
-function bestMatch(phrase: string, items: MatchableItem[]): MatchableItem | null {
-  // \p{M} matters: Indic vowel signs are combining marks, not letters, so
-  // dropping them would shred "चावल" into "च व ल" and match nothing.
-  const haystack = ` ${phrase.replace(/[^\p{L}\p{N}\p{M}\s]/gu, ' ').replace(/\s+/g, ' ')} `;
+export function suggestNames(name: string): { en: string; hi: string; bn: string } | null {
+  const cleaned = name.trim().toLowerCase().replace(/\s+/g, ' ');
+  if (!cleaned) return null;
+
+  const exact = VOCAB_BY_FORM.get(cleaned);
+  if (exact) return { en: exact.en, hi: exact.hi, bn: exact.bn };
+
+  // A compound name translates only when every word is known: "Biscuit Pack"
+  // becomes "বিস্কুট প্যাকেট", while "Basmati Rice" is left alone rather than
+  // half-translated into something no shopper would recognise.
+  const words = cleaned.split(' ');
+  if (words.length < 2) return null;
+
+  const entries = words.map((word) => VOCAB_BY_FORM.get(word));
+  if (entries.some((entry) => !entry)) return null;
+
+  return {
+    en: entries.map((entry) => entry!.en).join(' '),
+    hi: entries.map((entry) => entry!.hi).join(' '),
+    bn: entries.map((entry) => entry!.bn).join(' '),
+  };
+}
+
+/** Below this, a name word counts as not said at all. */
+const WORD_SIMILARITY_FLOOR = 0.72;
+
+/**
+ * Confidence bands for a match. Speech recognition on a noisy shop floor is
+ * not reliable enough to act on silently, so the callers treat these
+ * differently: act on `confident`, ask before acting on `unsure`, and refuse
+ * anything below.
+ */
+export const CONFIDENT_MATCH = 0.8;
+export const UNSURE_MATCH = 0.45;
+
+export type Match = { item: MatchableItem; confidence: number };
+
+/** Splits into comparable tokens, keeping Indic combining marks intact. */
+function tokens(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}\p{M}]+/u)
+    // Two characters is a whole word in Bengali and Hindi (দই, घी).
+    .filter((word) => word.length >= 2);
+}
+
+/**
+ * Levenshtein distance, normalised to a 0–1 similarity.
+ *
+ * This is what carries an unclear speaker: "tomato" heard as "tomatto" or
+ * "tamato" still resolves, where exact matching would report nothing found.
+ */
+function similarity(a: string, b: string): number {
+  if (a === b) return 1;
+  if (!a || !b) return 0;
+
+  const longer = a.length >= b.length ? a : b;
+  const shorter = a.length >= b.length ? b : a;
+  // One word contained in the other — plurals, "atta"/"atta pack".
+  if (longer.includes(shorter) && shorter.length >= 3) return 0.92;
+
+  let previous = Array.from({ length: shorter.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= longer.length; i += 1) {
+    const current = [i];
+    for (let j = 1; j <= shorter.length; j += 1) {
+      const cost = longer[i - 1] === shorter[j - 1] ? 0 : 1;
+      current[j] = Math.min(current[j - 1]! + 1, previous[j]! + 1, previous[j - 1]! + cost);
+    }
+    previous = current;
+  }
+
+  return 1 - previous[shorter.length]! / longer.length;
+}
+
+/** How strongly one name word was heard, allowing synonyms and misspeaking. */
+function wordScore(word: string, spoken: string[]): number {
+  const variants = SYNONYMS.get(word) ?? [word];
+  let best = 0;
+
+  for (const variant of variants) {
+    if (variant.includes(' ')) {
+      // Multi-word synonym: compare against the phrase as a whole.
+      if (spoken.join(' ').includes(variant)) return 1;
+      continue;
+    }
+    for (const token of spoken) {
+      if (token === variant) return 1;
+      const score = similarity(token, variant);
+      if (score > best) best = score;
+    }
+  }
+
+  return best >= WORD_SIMILARITY_FLOOR ? best : 0;
+}
+
+/**
+ * Scores every item against the spoken clause and returns the best, with how
+ * sure we are.
+ *
+ * An item is scored against all three of its names, best one wins, so a menu
+ * typed in English still answers to Hindi and Bengali. Coverage — the share of
+ * the name's words that were actually heard — is what the confidence reports,
+ * so "rice" against "Basmati Rice" scores lower than against "Rice" and the
+ * exact item wins.
+ */
+function bestMatch(phrase: string, items: MatchableItem[]): Match | null {
+  const spoken = tokens(phrase);
+  if (spoken.length === 0) return null;
+
   let winner: MatchableItem | null = null;
   let winningScore = 0;
 
   for (const item of items) {
-    const words = item.name
-      .toLowerCase()
-      .split(/[^\p{L}\p{N}\p{M}]+/u)
-      // Two characters is a whole word in Bengali and Hindi (দই, घी).
-      .filter((word) => word.length >= 2);
-    if (words.length === 0) continue;
+    let itemBest = 0;
 
-    let hits = 0;
-    for (const word of words) if (heard(haystack, word)) hits += 1;
-    if (hits === 0) continue;
+    for (const name of [item.name, item.nameHi, item.nameBn]) {
+      const words = tokens(name ?? '');
+      if (words.length === 0) continue;
 
-    // Prefer the item whose whole name was heard; break ties on the unit.
-    let score = hits / words.length + hits;
-    if (item.unit && haystack.includes(item.unit.toLowerCase())) score += 0.5;
+      let total = 0;
+      for (const word of words) total += wordScore(word, spoken);
+      if (total === 0) continue;
 
-    if (score > winningScore) {
-      winningScore = score;
+      let coverage = total / words.length;
+      // The unit is a tiebreaker, never a match on its own.
+      if (item.unit && spoken.join(' ').includes(item.unit.toLowerCase())) {
+        coverage = Math.min(1, coverage + 0.05);
+      }
+      if (coverage > itemBest) itemBest = coverage;
+    }
+
+    if (itemBest > winningScore) {
+      winningScore = itemBest;
       winner = item;
     }
   }
 
-  return winner;
-}
-
-/** True when `word` — or any of its other-language equivalents — was spoken. */
-function heard(haystack: string, word: string): boolean {
-  for (const variant of SYNONYMS.get(word) ?? [word]) {
-    if (haystack.includes(` ${variant} `)) return true;
-  }
-  return false;
+  return winner ? { item: winner, confidence: winningScore } : null;
 }

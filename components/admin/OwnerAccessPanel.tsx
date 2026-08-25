@@ -1,0 +1,151 @@
+'use client';
+
+/**
+ * Issues and revokes one shop's owner PIN.
+ *
+ * The PIN is shown exactly once, right after it is generated — only its bcrypt
+ * hash is stored, so there is no way to display it again later. That is the
+ * same trade every API key dashboard makes, and for the same reason.
+ */
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
+import { useToast } from '@/components/ui/Toast';
+
+export function OwnerAccessPanel({
+  slug,
+  baseUrl,
+  hasPin,
+  setAt,
+}: {
+  slug: string;
+  baseUrl: string;
+  hasPin: boolean;
+  setAt: string | null;
+}) {
+  const router = useRouter();
+  const { push } = useToast();
+  const [pin, setPin] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const link = `${baseUrl}/owner/${slug}`;
+
+  async function issue() {
+    if (hasPin && !window.confirm('Issue a new PIN? The old one stops working immediately.')) return;
+
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/admin/shop/${slug}/pin`, { method: 'POST' });
+      const payload = (await response.json().catch(() => ({}))) as { pin?: string; error?: string };
+
+      if (!response.ok || !payload.pin) {
+        push(payload.error ?? 'Could not issue a PIN', 'error');
+        return;
+      }
+
+      setPin(payload.pin);
+      router.refresh();
+    } catch {
+      push('Network error. Please try again.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function revoke() {
+    if (!window.confirm('Revoke owner access? The owner is signed out everywhere.')) return;
+
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/admin/shop/${slug}/pin`, { method: 'DELETE' });
+      if (!response.ok) {
+        push('Could not revoke access', 'error');
+        return;
+      }
+      setPin(null);
+      push('Owner access revoked', 'success');
+      router.refresh();
+    } catch {
+      push('Network error. Please try again.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copy(text: string, what: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      push(`${what} copied`, 'success');
+    } catch {
+      push('Could not copy — select and copy by hand', 'error');
+    }
+  }
+
+  return (
+    <section className="rounded-2xl bg-white p-4 shadow-card">
+      <h2 className="font-semibold text-slate-900">Owner access</h2>
+      <p className="mt-1 text-sm text-slate-600">
+        Lets this shop&apos;s owner update their own prices, stock and voice listings from their
+        phone. They can never see another shop, change the WhatsApp number, or delete anything but
+        their own items.
+      </p>
+
+      <p className="mt-3 text-sm">
+        {hasPin ? (
+          <span className="font-medium text-green-700">
+            PIN active{setAt ? ` · issued ${setAt}` : ''}
+          </span>
+        ) : (
+          <span className="text-slate-500">No PIN issued — the owner cannot sign in.</span>
+        )}
+      </p>
+
+      {pin && (
+        <div className="mt-3 rounded-xl border border-brand-200 bg-brand-50 p-3">
+          <p className="text-sm font-semibold text-brand-900">
+            New PIN — write this down now, it cannot be shown again
+          </p>
+          <p className="mt-1 font-mono text-3xl tracking-[0.3em] text-brand-900">{pin}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button size="sm" variant="secondary" onClick={() => copy(pin, 'PIN')}>
+              Copy PIN
+            </Button>
+            <Button
+              size="sm"
+              variant="whatsapp"
+              onClick={() =>
+                copy(
+                  `Your DukaanFlow shop link: ${link}\nPIN: ${pin}\nOpen the link on your phone and enter the PIN to update your prices.`,
+                  'Message',
+                )
+              }
+            >
+              Copy message for WhatsApp
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Button size="sm" onClick={issue} loading={busy}>
+          {hasPin ? 'Issue new PIN' : 'Create owner PIN'}
+        </Button>
+        {hasPin && (
+          <Button size="sm" variant="ghost" onClick={revoke} disabled={busy} className="text-red-600 hover:bg-red-50">
+            Revoke access
+          </Button>
+        )}
+        <button
+          type="button"
+          onClick={() => copy(link, 'Link')}
+          className="text-sm text-slate-500 underline hover:text-slate-800"
+        >
+          Copy owner link
+        </button>
+      </div>
+
+      <p className="mt-2 break-all text-xs text-slate-400">{link}</p>
+    </section>
+  );
+}
