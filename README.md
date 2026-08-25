@@ -307,6 +307,15 @@ a link:
 The link is a 256-bit random token, stored only as a SHA-256 hash, single use,
 7-day expiry ([`lib/invite.ts`](lib/invite.ts)).
 
+Once inside, an install card offers to put the shop on the owner's home screen —
+given real estate rather than a header button, because "install the app" is what
+the WhatsApp message told them to do. Each shop gets its own manifest, named
+after the shop and scoped to it, so an installed app opens on that shop's till.
+The payoff is the microphone: an installed app keeps the permission between
+visits, and an owner who has to grant it every morning stops using voice by the
+third day. On iPhone the card says which Share-sheet taps to make, because
+Safari offers no install prompt to hook.
+
 Because that link arrives *inside WhatsApp*, whose browser refuses the
 microphone, the owner app detects that webview and says so in the owner's
 language rather than letting voice fail silently

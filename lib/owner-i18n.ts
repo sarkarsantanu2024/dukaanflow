@@ -100,6 +100,13 @@ type OwnerDictionary = {
   welcomeStart: string;
   welcomeSkip: string;
 
+  installTitle: string;
+  installBody: string;
+  installNow: string;
+  installLater: string;
+  installIos: string;
+  installDone: string;
+
   openInChrome: string;
   openInChromeBody: string;
   copyLink: string;
@@ -213,6 +220,14 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
       'Tap the microphone and say the item, its size, then the price — for example “rice one kg sixty eight rupees”. Your phone will repeat it back.',
     welcomeStart: 'Start',
     welcomeSkip: 'Skip',
+
+    installTitle: 'Put your shop on your home screen',
+    installBody:
+      'Install it once and it opens like any other app — and it remembers the microphone, so voice works straight away every time.',
+    installNow: 'Install',
+    installLater: 'Later',
+    installIos: 'Tap Share, then “Add to Home Screen”.',
+    installDone: 'Installed',
 
     openInChrome: 'Open in Chrome to use voice',
     openInChromeBody:
@@ -328,6 +343,14 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     welcomeStart: 'শুরু করুন',
     welcomeSkip: 'পরে',
 
+    installTitle: 'দোকানটি হোম স্ক্রিনে রাখুন',
+    installBody:
+      'একবার ইনস্টল করলে অন্য অ্যাপের মতোই খুলবে — আর মাইকের অনুমতি মনে রাখবে, তাই ভয়েস সঙ্গে সঙ্গে কাজ করবে।',
+    installNow: 'ইনস্টল করুন',
+    installLater: 'পরে',
+    installIos: 'Share চেপে “Add to Home Screen” বেছে নিন।',
+    installDone: 'ইনস্টল হয়েছে',
+
     openInChrome: 'ভয়েসের জন্য Chrome-এ খুলুন',
     openInChromeBody:
       'হোয়াটসঅ্যাপের ব্রাউজারে মাইক কাজ করে না। উপরের ⋮ মেনু থেকে “Open in browser” বেছে নিন, বা লিংক কপি করুন।',
@@ -441,6 +464,14 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
       'माइक दबाकर सामान का नाम, मात्रा, फिर दाम बोलिए — जैसे “चावल एक किलो 68 रुपये”। फोन आपको दोहराकर सुनाएगा।',
     welcomeStart: 'शुरू करें',
     welcomeSkip: 'छोड़ें',
+
+    installTitle: 'दुकान को होम स्क्रीन पर रखें',
+    installBody:
+      'एक बार इंस्टॉल कर लीजिए, फिर यह किसी भी ऐप की तरह खुलेगा — और माइक की अनुमति याद रखेगा, तो आवाज़ तुरंत काम करेगी।',
+    installNow: 'इंस्टॉल करें',
+    installLater: 'बाद में',
+    installIos: 'Share दबाकर “Add to Home Screen” चुनिए।',
+    installDone: 'इंस्टॉल हो गया',
 
     openInChrome: 'आवाज़ के लिए Chrome में खोलें',
     openInChromeBody:
