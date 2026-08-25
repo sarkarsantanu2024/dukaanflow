@@ -71,6 +71,11 @@ model Shop {
   /// database, and the column takes a URL unchanged if that ever changes.
   imageData      String @default("")
   ownerImageData String @default("")
+  /// The shop's own printed UPI QR, photographed or exported from their
+  /// payment app. Preferred over the one DukaanFlow generates from `upiId`,
+  /// because a PhonePe or Paytm QR carries merchant details a plain
+  /// `upi://pay` link cannot reproduce.
+  upiQrData      String @default("")
 
   /// The owner's own language, used by their app. Customers pick their own.
   locale String @default("en")

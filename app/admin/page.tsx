@@ -16,6 +16,7 @@ export default async function AdminDashboard() {
       type: true,
       phone: true,
       active: true,
+      imageData: true,
       _count: { select: { items: true, orders: true } },
     },
   });
@@ -31,7 +32,7 @@ export default async function AdminDashboard() {
         </Link>
       </AdminHeader>
 
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="mx-auto max-w-6xl px-4 py-6">
         <div className="mb-5 grid grid-cols-3 gap-3">
           <Stat label="Total shops" value={shops.length} />
           <Stat label="Active" value={shops.filter((shop) => shop.active).length} />

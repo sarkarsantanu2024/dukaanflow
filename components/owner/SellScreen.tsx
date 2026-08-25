@@ -56,6 +56,7 @@ export function SellScreen({
   slug,
   shopName,
   upiId,
+  upiQrData,
   items,
   locale,
   todayTotal,
@@ -64,6 +65,7 @@ export function SellScreen({
   slug: string;
   shopName: string;
   upiId: string;
+  upiQrData: string;
   items: SellItem[];
   locale: Locale;
   todayTotal: number;
@@ -279,7 +281,10 @@ export function SellScreen({
               </p>
             </div>
 
-            {upiId && (
+            {/* A generated QR carries the amount, so the customer confirms
+                rather than types — that beats the shop's static printed code,
+                which is kept only as the fallback when there is no UPI ID. */}
+            {upiId ? (
               <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-slate-50 p-4">
                 <QRCodeCanvas
                   value={upiUrl(upiId, shopName, total)}
@@ -289,7 +294,13 @@ export function SellScreen({
                 />
                 <p className="text-sm text-slate-600">{t.sellScanToPay}</p>
               </div>
-            )}
+            ) : upiQrData ? (
+              <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-slate-50 p-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={upiQrData} alt="UPI QR" className="h-42 w-42 max-w-[10.5rem]" />
+                <p className="text-sm text-slate-600">{t.sellScanToPay}</p>
+              </div>
+            ) : null}
 
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button

@@ -12,7 +12,14 @@ export default async function PosterPage({ params }: PageProps) {
 
   const shop = await prisma.shop.findUnique({
     where: { slug },
-    select: { name: true, slug: true, phone: true, address: true, upiId: true },
+    select: {
+      name: true,
+      slug: true,
+      phone: true,
+      address: true,
+      upiId: true,
+      upiQrData: true,
+    },
   });
 
   if (!shop) notFound();
@@ -27,6 +34,7 @@ export default async function PosterPage({ params }: PageProps) {
           phone={shop.phone}
           address={shop.address}
           upiId={shop.upiId}
+          upiQrData={shop.upiQrData}
         />
       </main>
     </div>
