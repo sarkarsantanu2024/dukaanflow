@@ -27,6 +27,9 @@ export function OwnerAccessPanel({
   const router = useRouter();
   const { push } = useToast();
   const [pin, setPin] = useState<string | null>(null);
+  const [invite, setInvite] = useState<{ url: string; whatsappUrl: string; pin: string | null } | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
 
   const link = `${baseUrl}/owner/${slug}`;
@@ -45,6 +48,38 @@ export function OwnerAccessPanel({
       }
 
       setPin(payload.pin);
+      router.refresh();
+    } catch {
+      push('Network error. Please try again.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * Mints a fresh one-time link and hands back a WhatsApp message addressed to
+   * the shop's own number — the whole of step 2, in one tap. There is no app
+   * file to send: what the owner needs is a link that signs them in.
+   */
+  async function sendInvite() {
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/admin/shop/${slug}/invite`, { method: 'POST' });
+      const payload = (await response.json().catch(() => ({}))) as {
+        url?: string;
+        whatsappUrl?: string;
+        pin?: string | null;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.url || !payload.whatsappUrl) {
+        push(payload.error ?? 'Could not create the invite', 'error');
+        return;
+      }
+
+      setInvite({ url: payload.url, whatsappUrl: payload.whatsappUrl, pin: payload.pin ?? null });
+      if (payload.pin) setPin(payload.pin);
+      window.open(payload.whatsappUrl, '_blank', 'noopener');
       router.refresh();
     } catch {
       push('Network error. Please try again.', 'error');
@@ -127,8 +162,33 @@ export function OwnerAccessPanel({
         </div>
       )}
 
+      {invite && (
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-sm font-semibold text-slate-800">
+            Invite link created — valid once, for 7 days
+          </p>
+          <p className="mt-1 break-all font-mono text-xs text-slate-500">{invite.url}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <a
+              href={invite.whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-9 items-center rounded-lg bg-[#25D366] px-3 text-sm font-semibold text-white"
+            >
+              Open WhatsApp again
+            </a>
+            <Button size="sm" variant="secondary" onClick={() => copy(invite.url, 'Link')}>
+              Copy link
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Button size="sm" onClick={issue} loading={busy}>
+        <Button size="sm" variant="whatsapp" onClick={sendInvite} loading={busy}>
+          Send app link on WhatsApp
+        </Button>
+        <Button size="sm" variant="secondary" onClick={issue} disabled={busy}>
           {hasPin ? 'Issue new PIN' : 'Create owner PIN'}
         </Button>
         {hasPin && (
@@ -146,6 +206,10 @@ export function OwnerAccessPanel({
       </div>
 
       <p className="mt-2 break-all text-xs text-slate-400">{link}</p>
+      <p className="mt-1 text-xs text-slate-500">
+        The link signs the owner in and opens their shop — no PIN to type on the first run. It works
+        once, then the PIN is how they come back.
+      </p>
     </section>
   );
 }

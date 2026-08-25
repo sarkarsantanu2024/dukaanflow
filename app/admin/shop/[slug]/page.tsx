@@ -6,6 +6,9 @@ import { ShopForm } from '@/components/admin/ShopForm';
 import { QrPanel } from '@/components/admin/QrPanel';
 import { DeleteShopButton } from '@/components/admin/DeleteShopButton';
 import { OwnerAccessPanel } from '@/components/admin/OwnerAccessPanel';
+import { SubscriptionPanel } from '@/components/admin/SubscriptionPanel';
+import { ShopPhotos } from '@/components/admin/ShopPhotos';
+import { shopEntitlement } from '@/lib/billing';
 import { formatRupees } from '@/lib/money';
 import { baseUrl } from '@/lib/qr';
 
@@ -26,8 +29,23 @@ export default async function ShopDetailPage({ params }: PageProps) {
       address: true,
       upiId: true,
       active: true,
+      id: true,
       ownerPinHash: true,
       ownerPinSetAt: true,
+      ownerName: true,
+      locale: true,
+      imageData: true,
+      ownerImageData: true,
+      plan: true,
+      subscriptionStatus: true,
+      trialEndsAt: true,
+      currentPeriodEnd: true,
+      activatedAt: true,
+      payments: {
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: { id: true, amount: true, plan: true, periodEnd: true, method: true },
+      },
       orders: {
         orderBy: { createdAt: 'desc' },
         take: 10,
@@ -45,6 +63,8 @@ export default async function ShopDetailPage({ params }: PageProps) {
   });
 
   if (!shop) notFound();
+
+  const billing = await shopEntitlement(shop.id);
 
   return (
     <div className="min-h-dvh bg-slate-100">
@@ -74,6 +94,8 @@ export default async function ShopDetailPage({ params }: PageProps) {
             editingSlug={shop.slug}
             initial={{
               name: shop.name,
+              ownerName: shop.ownerName,
+              locale: shop.locale as 'en' | 'bn' | 'hi',
               slug: shop.slug,
               type: shop.type,
               phone: shop.phone,
@@ -83,6 +105,31 @@ export default async function ShopDetailPage({ params }: PageProps) {
             }}
           />
         </section>
+
+        <SubscriptionPanel
+          slug={shop.slug}
+          state={{
+            plan: shop.plan,
+            status: shop.subscriptionStatus,
+            itemCount: billing?.itemCount ?? shop._count.items,
+            itemLimit: billing?.itemLimit ?? 25,
+            trialEndsAt: shop.trialEndsAt?.toISOString() ?? null,
+            currentPeriodEnd: shop.currentPeriodEnd?.toISOString() ?? null,
+            payments: shop.payments.map((payment) => ({
+              id: payment.id,
+              amount: payment.amount,
+              plan: payment.plan,
+              periodEnd: payment.periodEnd.toISOString(),
+              method: payment.method,
+            })),
+          }}
+        />
+
+        <ShopPhotos
+          slug={shop.slug}
+          imageData={shop.imageData}
+          ownerImageData={shop.ownerImageData}
+        />
 
         <OwnerAccessPanel
           slug={shop.slug}

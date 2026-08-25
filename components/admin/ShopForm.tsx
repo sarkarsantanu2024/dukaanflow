@@ -10,6 +10,8 @@ import { SHOP_TYPES, SHOP_TYPE_LABELS } from '@/lib/validators';
 
 export type ShopFormValues = {
   name: string;
+  ownerName: string;
+  locale: 'en' | 'bn' | 'hi';
   slug: string;
   type: (typeof SHOP_TYPES)[number];
   phone: string;
@@ -20,6 +22,8 @@ export type ShopFormValues = {
 
 const EMPTY: ShopFormValues = {
   name: '',
+  ownerName: '',
+  locale: 'en',
   slug: '',
   type: 'GROCERY',
   phone: '',
@@ -128,6 +132,27 @@ export function ShopForm({
             {SHOP_TYPE_LABELS[type]}
           </option>
         ))}
+      </Select>
+
+      <Input
+        label="Owner name"
+        hint="who runs the shop"
+        value={values.ownerName}
+        onChange={(event) => set('ownerName', event.target.value)}
+        error={errors.ownerName}
+        placeholder="Ramu Das"
+      />
+
+      <Select
+        label="Owner's language"
+        hint="their app opens in this"
+        value={values.locale}
+        onChange={(event) => set('locale', event.target.value as ShopFormValues['locale'])}
+        error={errors.locale}
+      >
+        <option value="en">English</option>
+        <option value="bn">বাংলা</option>
+        <option value="hi">हिंदी</option>
       </Select>
 
       <Input

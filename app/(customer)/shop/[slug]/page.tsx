@@ -20,6 +20,9 @@ async function loadShop(slug: string) {
       address: true,
       upiId: true,
       active: true,
+      ownerName: true,
+      imageData: true,
+      ownerImageData: true,
       items: {
         orderBy: [{ category: 'asc' }, { inStock: 'desc' }, { name: 'asc' }],
         select: {

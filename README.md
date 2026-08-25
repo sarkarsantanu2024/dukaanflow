@@ -15,16 +15,46 @@ owner's WhatsApp as a plain message. One Super Admin runs everything.
 
 | Included | Excluded on purpose |
 | --- | --- |
-| QR shop page, live total, WhatsApp handoff | POS / billing |
-| Super Admin CRUD for shops and items | Delivery tracking |
-| Bulk price & stock paste | Loyalty, CRM, coupons |
-| Shop QR + UPI payment QR + A4 printable poster | WhatsApp Business API |
-| Order snapshots for history | Payment gateway, delivery fleet |
-| PIN access for shop owners to their own price list | Owner accounts, email, self-signup |
+| QR shop page, live total, WhatsApp handoff | Delivery tracking |
+| Super Admin CRUD for shops and items | Loyalty, CRM, coupons |
+| Owner app: sell, items, orders — in 3 languages | WhatsApp Business API |
+| Voice listing and a counter till with UPI QR | Owner self-signup, email accounts |
+| Shop QR + UPI payment QR + A4 printable poster | Payment gateway (UPI + manual record instead) |
+| Subscription plans metered by catalogue size | Commission on orders — ever |
 
 Keeping this list short is the product.
 
 ---
+
+## How it is sold
+
+One price per shop, set by **catalogue size** — the one number a shopkeeper and
+DukaanFlow both already understand, and the one that tracks the value of the
+software. Orders, customers and QR scans are unlimited on every plan: charging a
+shop more for selling more is not a partnership, and a commission model is
+exactly what small shops fear about going online.
+
+| Plan | Items | Price |
+| --- | --- | --- |
+| Free | 25 | ₹0 |
+| Starter | 150 | ₹199/month |
+| Pro | 2,000 | ₹499/month |
+
+Every shop starts on 14 days of Pro. Payment is UPI, recorded by the Super Admin
+in the shop's Subscription panel — [`app/api/admin/shop/[slug]/subscription`](app/api/admin/shop/%5Bslug%5D/subscription/route.ts)
+writes the same rows a Razorpay webhook would, so a gateway can take over later
+without the rest moving.
+
+Enforcement lives in [`lib/billing.ts`](lib/billing.ts) and runs on every path
+that can create an item — the form, voice, the starter catalogue and the bulk
+paste. Two rules keep it humane:
+
+- **Editing is not adding.** A shop at its limit can still correct a price;
+  only *new* items are refused.
+- **A lapsed shop keeps trading.** Its QR, its page and its customers carry on
+  working; only item editing stops, and only after a 7-day grace period. Taking
+  a live shop offline over a late payment costs the owner real sales, and nobody
+  renews software that did that to them.
 
 ## Stack
 
@@ -119,12 +149,14 @@ this blocks classic form-post CSRF without token plumbing.
 app/
   (customer)/shop/[slug]/page.tsx        Server Component → Prisma → <StoreFront/>
   admin/login|shops/new|shop/[slug]/...  Dashboard, items, QR, A4 poster
-  owner/[slug][/login]                   One shop owner's own price list (PIN)
+  owner/[slug]/sell|inventory|orders     The owner's three screens (PIN or invite)
+  join/[token]                           One-time invite link → signs the owner in
+  pricing                                Public plans page
   admin.webmanifest|owner.webmanifest    Installable apps (root-served, see below)
   admin-icon|admin-sw.js                 Generated icons, network-only worker
   api/admin/login|logout                 Session
   api/owner/[slug]/login, api/owner/logout   Owner PIN session
-  api/admin/shop[/[slug][/items|/bulk|/pin]] Shop, item & owner-PIN mutations
+  api/admin/shop/[slug]/{items,bulk,pin,invite,sale,order,starter,subscription,images}
   api/order                              Server-priced order + WhatsApp URL
 components/customer|admin|ui
 lib/  prisma auth password guard http validators whatsapp qr slug money bulk rate-limit i18n
@@ -134,10 +166,19 @@ middleware.ts
 
 ## Data model
 
-`Shop` (unique `slug`, indexed `active`, optional `ownerPinHash`/`ownerPinSetAt`)
-→ `Item` (unique `shopId+name+unit`, plus optional `nameBn`/`nameHi`,
+`Shop` (unique `slug`, indexed `active` and `subscriptionStatus`; owner PIN,
+invite token, photos, locale and billing columns) → `Item` (unique
+`shopId+name+unit`, plus optional `nameBn`/`nameHi`,
 indexed `shopId`, `shopId+inStock`) → `Order` (immutable `itemsJson` snapshot +
 `totalAmount`).
+
+`Sale` records counter sales and `Order` records what arrived from the QR —
+separate models because they answer different questions: orders are a queue to
+work through, sales are what the day took. `Payment` is the subscription ledger.
+
+Photos are held as resized data URLs on `Shop`, not in a blob store. One ~90 KB
+image per shop keeps DukaanFlow deployable with nothing but a database, and the
+column takes a URL unchanged if that ever needs to change.
 
 `totalAmount` is the reporting column. Totals are **never** recomputed from
 `itemsJson` later — the snapshot records what was quoted, even after prices move.
@@ -187,6 +228,7 @@ Momo ₹70). The seed is idempotent — re-running refreshes prices, never dupli
 | `npm run db:migrate` / `db:deploy` | Migrate (dev / prod) |
 | `npm run db:seed` | Seed sample shops |
 | `npx tsx scripts/backfill-item-names.ts` | Fill Bengali/Hindi item names (`--write`) |
+| `npm run vercel:env` | Print deployment-ready env values |
 | `npm run db:studio` | Prisma Studio |
 
 ---
@@ -226,6 +268,62 @@ neutralised before they reach the message — a stray asterisk cannot reflow an 
 > `buildOrderMessage()` if you want a byte-exact match to the original format.
 
 ---
+
+## The owner's app
+
+Three screens, bottom tabs, one thumb — used standing at a counter while a
+customer waits.
+
+**Sell** — the till. Tap items, watch the total, take cash or show a UPI QR
+carrying the exact amount so nobody types figures. Each sale is recorded, and
+the day's takings sit at the top of the screen. Kept apart from Items on
+purpose: selling and cataloguing are different jobs at different moments, and
+mixing them means hunting past a form while somebody waits with a ten-rupee
+note.
+
+**Items** — the catalogue. Voice listing, the starter catalogue, the full list
+with search and inline prices. The typed form starts folded away behind “type
+instead”, because on a phone the mic is the primary control.
+
+**Orders** — what arrived from the QR. Orders still land on WhatsApp; this turns
+that thread into a worklist the owner can mark off.
+
+Everything an owner reads is in their own language, stored on the shop so it
+follows them to any phone: [`lib/owner-i18n.ts`](lib/owner-i18n.ts). The Super
+Admin console stays English — that is one operator, not thousands of
+shopkeepers.
+
+### Getting the app to the owner
+
+There is no APK to forward. DukaanFlow is a PWA, so what the owner receives is
+a link:
+
+1. Super Admin taps **Send app link on WhatsApp** on the shop page.
+2. WhatsApp opens, addressed to the shop's own number, message already written.
+3. The owner taps the link — it signs them in, spends itself, and drops them on
+   their items screen with a walkthrough. No PIN on the first run; the PIN is
+   how they come back afterwards.
+
+The link is a 256-bit random token, stored only as a SHA-256 hash, single use,
+7-day expiry ([`lib/invite.ts`](lib/invite.ts)).
+
+Because that link arrives *inside WhatsApp*, whose browser refuses the
+microphone, the owner app detects that webview and says so in the owner's
+language rather than letting voice fail silently
+([`OpenInChromeNotice`](components/owner/OpenInChromeNotice.tsx)). Without it,
+the very first thing we ask a shopkeeper to do does nothing at all.
+
+### Starter catalogue
+
+Dictating two hundred items is an evening's work, and an owner facing a blank
+list very often just stops. [`lib/starter-catalogue.ts`](lib/starter-catalogue.ts)
+holds what each type of shop almost always carries — already named in all three
+languages with the right units. The owner ticks what they sell and is left with
+the one job only they can do: setting prices.
+
+Starter items arrive **out of stock at ₹1** on purpose. A suggested price is a
+wrong price, and nothing reaches a customer until the owner has said what it
+costs.
 
 ## Admin features
 
