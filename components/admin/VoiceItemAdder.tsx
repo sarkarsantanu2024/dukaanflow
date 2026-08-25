@@ -35,6 +35,8 @@ import {
   type VoiceLang,
 } from '@/lib/speech';
 import type { AdminItem } from './ItemsManager';
+import { ownerDict } from '@/lib/owner-i18n';
+import type { Locale } from '@/lib/i18n';
 
 const LANG_STORAGE_KEY = 'dukaanflow:voice-lang';
 
@@ -116,29 +118,39 @@ const PHRASES: Record<
   },
 };
 
-const EXAMPLES: Record<VoiceLang, string[]> = {
-  'en-IN': ['“rice one kg sixty eight rupees”', '“rice out of stock”', '“remove rice”'],
-  'hi-IN': ['“चावल एक किलो 68 रुपये”', '“चावल खत्म”', '“चावल हटाओ”'],
-  'bn-IN': ['“চাল এক কেজি ৬৮ টাকা”', '“চাল শেষ”', '“চাল মুছে দাও”'],
-};
-
 function draftLabel(draft: SpokenItemDraft): string {
   return draft.unit ? `${draft.name} · ${draft.unit}` : draft.name;
 }
 
 /** What a pending command will do, in words, for the confirmation prompt. */
-function describe(command: VoiceCommand): string {
-  if (command.kind === 'delete') return `Remove ${command.label}`;
+function describe(command: VoiceCommand, t: ReturnType<typeof ownerDict>): string {
+  if (command.kind === 'delete') return `${t.labelRemove}: ${command.label}`;
   if (command.kind === 'stock') {
-    return `Mark ${command.label} ${command.inStock ? 'in stock' : 'out of stock'}`;
+    return `${command.label} — ${command.inStock ? t.inStock : t.outOfStock}`;
   }
-  return `Save ${command.label} at ${formatRupees(command.draft.price)}`;
+  return `${command.label} — ${formatRupees(command.draft.price)}`;
 }
 
-export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem[] }) {
+/** The owner's reading language maps to the language they will dictate in. */
+const LANG_FOR_LOCALE: Record<Locale, VoiceLang> = {
+  en: 'en-IN',
+  bn: 'bn-IN',
+  hi: 'hi-IN',
+};
+
+export function VoiceItemAdder({
+  slug,
+  items,
+  locale = 'en',
+}: {
+  slug: string;
+  items: AdminItem[];
+  locale?: Locale;
+}) {
   const router = useRouter();
   const { push } = useToast();
-  const [lang, setLang] = useState<VoiceLang>('en-IN');
+  const t = ownerDict(locale);
+  const [lang, setLang] = useState<VoiceLang>(LANG_FOR_LOCALE[locale]);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<{ command: VoiceCommand; heard: string } | null>(null);
@@ -320,7 +332,7 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
 
         if (command.needsConfirm) {
           setPending({ command, heard });
-          announce(phrases.confirm(describe(command)));
+          announce(phrases.confirm(describe(command, t)));
           return;
         }
 
@@ -358,12 +370,12 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
               });
 
     if (!result.ok) {
-      push('Could not undo that', 'error');
+      push(t.networkError, 'error');
       return;
     }
 
     setLog((current) => current.filter((row) => row.key !== entry.key));
-    push('Undone', 'success');
+    push(t.undone, 'success');
     router.refresh();
   }
 
@@ -381,15 +393,15 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
         <MicButton
           listening={listening}
           onClick={toggle}
-          label={listening ? 'Stop voice' : 'Manage items by voice'}
+          label={t.voiceTitle}
         />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-semibold text-slate-900">Manage items by voice</h2>
+            <h2 className="font-semibold text-slate-900">{t.voiceTitle}</h2>
             <select
               value={lang}
               onChange={(event) => changeLang(event.target.value as VoiceLang)}
-              aria-label="Speaking language"
+              aria-label={t.language}
               className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm"
             >
               {VOICE_LANGS.map((option) => (
@@ -398,20 +410,22 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
                 </option>
               ))}
             </select>
-            {busy && <span className="text-xs text-slate-400">working…</span>}
+            {busy && <span className="text-xs text-slate-400">{t.working}</span>}
           </div>
 
           <p className="mt-1 text-sm text-slate-600">
-            {listening
-              ? interim || 'Listening… add a price, mark out of stock, or remove.'
-              : 'Tap the mic, then say one instruction per sentence.'}
+            {listening ? interim || t.voiceListening : t.voiceIdle}
           </p>
           <ul className="mt-1 space-y-0.5 text-xs text-slate-400">
-            {EXAMPLES[lang].map((example, index) => (
-              <li key={example}>
-                {['Add / re-price', 'Out of stock', 'Remove'][index]}: {example}
-              </li>
-            ))}
+            <li>
+              {t.labelAdd}: {t.voiceExampleAdd}
+            </li>
+            <li>
+              {t.labelOut}: {t.voiceExampleOut}
+            </li>
+            <li>
+              {t.labelRemove}: {t.voiceExampleRemove}
+            </li>
           </ul>
 
           {errorCode && <p className="mt-2 text-sm text-red-600">{VOICE_ERRORS[errorCode]}</p>}
@@ -421,9 +435,9 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
       {pending && (
         <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
           <p className="text-sm text-amber-900">
-            Heard “{pending.heard}”. <strong>{describe(pending.command)}</strong>?
+            {t.confirmHeard} “{pending.heard}”. <strong>{describe(pending.command, t)}</strong>?
           </p>
-          <p className="mt-1 text-xs text-amber-700">Say “yes” or “no”, or tap below.</p>
+          <p className="mt-1 text-xs text-amber-700">{t.confirmSayYesNo}</p>
           <div className="mt-2 flex gap-2">
             <Button
               size="sm"
@@ -433,10 +447,10 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
                 void run(confirmed.command, confirmed.heard);
               }}
             >
-              Yes
+              {t.yes}
             </Button>
             <Button variant="secondary" size="sm" onClick={() => setPending(null)}>
-              No
+              {t.no}
             </Button>
           </div>
         </div>
@@ -454,7 +468,11 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
                   entry.status === 'failed' && 'bg-red-50 text-red-700',
                 )}
               >
-                {entry.status === 'done' ? 'Done' : entry.status === 'rejected' ? 'Unclear' : 'Failed'}
+                {entry.status === 'done'
+                  ? t.statusDone
+                  : entry.status === 'rejected'
+                    ? t.statusUnclear
+                    : t.statusFailed}
               </span>
               <span className="min-w-0 flex-1 text-slate-700">
                 {entry.detail}
@@ -466,7 +484,7 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
                   onClick={() => undo(entry)}
                   className="shrink-0 text-xs font-medium text-slate-500 underline hover:text-slate-800"
                 >
-                  Undo
+                  {t.undo}
                 </button>
               )}
             </li>
@@ -480,7 +498,7 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
           onClick={() => setLog([])}
           className="mt-2 text-xs text-slate-400 underline"
         >
-          Clear log
+          {t.clearLog}
         </button>
       )}
     </div>

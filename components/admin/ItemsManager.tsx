@@ -11,6 +11,8 @@ import { useToast } from '@/components/ui/Toast';
 import { VoiceItemAdder } from './VoiceItemAdder';
 import { formatRupees } from '@/lib/money';
 import { suggestNames } from '@/lib/speech';
+import { ownerDict } from '@/lib/owner-i18n';
+import type { Locale } from '@/lib/i18n';
 
 export type AdminItem = {
   id: string;
@@ -41,9 +43,22 @@ const EMPTY_NEW_ITEM: NewItem = {
   category: '',
 };
 
-export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[] }) {
+export function ItemsManager({
+  slug,
+  items,
+  locale = 'en',
+}: {
+  slug: string;
+  items: AdminItem[];
+  /** The owner's language. The Super Admin console stays English. */
+  locale?: Locale;
+}) {
   const router = useRouter();
   const { push } = useToast();
+  const t = ownerDict(locale);
+  // The typed form is secondary to the mic on a phone, so it starts folded
+  // away and opens on request.
+  const [typing, setTyping] = useState(false);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
   const [draft, setDraft] = useState<NewItem>(EMPTY_NEW_ITEM);
@@ -106,15 +121,15 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
 
       if (!response.ok) {
         setErrors(payload.errors ?? {});
-        push(payload.error ?? 'Could not save the item', 'error');
+        push(payload.error ?? t.networkError, 'error');
         return;
       }
 
-      push(`${draft.name} saved`, 'success');
+      push(`${draft.name} ✓`, 'success');
       setDraft(EMPTY_NEW_ITEM);
       router.refresh();
     } catch {
-      push('Network error. Please try again.', 'error');
+      push(t.networkError, 'error');
     } finally {
       setAdding(false);
     }
@@ -130,13 +145,13 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
       });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) {
-        push(payload.error ?? 'Update failed', 'error');
+        push(payload.error ?? t.networkError, 'error');
         return false;
       }
       router.refresh();
       return true;
     } catch {
-      push('Network error. Please try again.', 'error');
+      push(t.networkError, 'error');
       return false;
     } finally {
       setBusyId(null);
@@ -144,7 +159,7 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
   }
 
   async function deleteItem(item: AdminItem) {
-    if (!window.confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+    if (!window.confirm(`${item.name} — ${t.deleteConfirm}`)) return;
     setBusyId(item.id);
     try {
       const response = await fetch(`/api/admin/shop/${slug}/items`, {
@@ -153,13 +168,13 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
         body: JSON.stringify({ id: item.id }),
       });
       if (!response.ok) {
-        push('Could not delete the item', 'error');
+        push(t.networkError, 'error');
         return;
       }
-      push(`${item.name} deleted`, 'success');
+      push(`${item.name} ✓`, 'success');
       router.refresh();
     } catch {
-      push('Network error. Please try again.', 'error');
+      push(t.networkError, 'error');
     } finally {
       setBusyId(null);
     }
@@ -177,7 +192,7 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
     });
 
     if (!Number.isInteger(price) || price < 1) {
-      push('Price must be a whole number of rupees', 'error');
+      push(`${t.price} — 1, 2, 3…`, 'error');
       return;
     }
     if (price === item.price) return;
@@ -187,13 +202,27 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
 
   return (
     <div className="space-y-6">
-      <VoiceItemAdder slug={slug} items={items} />
+      <VoiceItemAdder slug={slug} items={items} locale={locale} />
 
-      <form onSubmit={addItem} className="rounded-2xl bg-white p-4 shadow-card">
-        <h2 className="mb-3 font-semibold text-slate-900">Add or update an item</h2>
+      <div className="rounded-2xl bg-white p-4 shadow-card">
+        <button
+          type="button"
+          onClick={() => setTyping((open) => !open)}
+          aria-expanded={typing}
+          className="text-sm font-semibold text-brand-700 underline"
+        >
+          {typing ? t.hideForm : t.typeInstead}
+        </button>
+      </div>
+
+      <form
+        onSubmit={addItem}
+        hidden={!typing}
+        className="rounded-2xl bg-white p-4 shadow-card"
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
-            label="Name"
+            label={t.name}
             required
             value={draft.name}
             onChange={(event) => nameChanged(event.target.value)}
@@ -201,7 +230,7 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
             placeholder="Rice"
           />
           <Input
-            label="Price (₹)"
+            label={t.price}
             required
             type="number"
             inputMode="numeric"
@@ -212,41 +241,37 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
             placeholder="68"
           />
           <Input
-            label="Unit"
+            label={t.unit}
             value={draft.unit}
             onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
             error={errors.unit}
             placeholder="1 kg"
           />
           <Input
-            label="Category"
+            label={t.category}
             value={draft.category}
             onChange={(event) => setDraft({ ...draft, category: event.target.value })}
             error={errors.category}
             placeholder="Staples"
           />
           <Input
-            label="Bengali name"
+            label={t.nameBn}
             value={draft.nameBn}
             onChange={(event) => setDraft({ ...draft, nameBn: event.target.value })}
             error={errors.nameBn}
             placeholder="চাল"
           />
           <Input
-            label="Hindi name"
+            label={t.nameHi}
             value={draft.nameHi}
             onChange={(event) => setDraft({ ...draft, nameHi: event.target.value })}
             error={errors.nameHi}
             placeholder="चावल"
           />
         </div>
-        <p className="mt-2 text-xs text-slate-500">
-          Same name and unit? The existing item is updated instead of duplicated. Bengali and Hindi
-          names fill in automatically for items we know — leave them blank and the customer sees the
-          main name.
-        </p>
+        <p className="mt-2 text-xs text-slate-500">{t.upsertHint}</p>
         <Button type="submit" className="mt-3" loading={adding}>
-          Save item
+          {t.saveItem}
         </Button>
       </form>
 
@@ -256,18 +281,18 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search items"
-            aria-label="Search items"
+            placeholder={t.searchItems}
+            aria-label={t.searchItems}
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5"
           />
           {categories.length > 0 && (
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              aria-label="Filter by category"
+              aria-label={t.allCategories}
               className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 sm:w-52"
             >
-              <option value="">All categories</option>
+              <option value="">{t.allCategories}</option>
               {categories.map((name) => (
                 <option key={name} value={name}>
                   {name}
@@ -278,12 +303,9 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
         </div>
 
         {items.length === 0 ? (
-          <EmptyState
-            title="No items yet"
-            hint="Add items one by one above, or paste the whole price list using bulk update."
-          />
+          <EmptyState title={t.noItems} hint={t.noItemsHint} />
         ) : visible.length === 0 ? (
-          <EmptyState title="No items match that search" />
+          <EmptyState title={t.noMatch} />
         ) : (
           <ul className="space-y-2">
             {visible.map((item) => (
@@ -307,7 +329,7 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
                   <div className="mt-1 flex items-center gap-2">
                     {item.category && <Badge>{item.category}</Badge>}
                     <Badge tone={item.inStock ? 'green' : 'red'}>
-                      {item.inStock ? 'In stock' : 'Out of stock'}
+                      {item.inStock ? t.inStock : t.outOfStock}
                     </Badge>
                   </div>
                 </div>
@@ -336,7 +358,7 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
                   disabled={busyId === item.id}
                   onClick={() => patchItem(item.id, { inStock: !item.inStock })}
                 >
-                  {item.inStock ? 'Mark out' : 'Mark in'}
+                  {item.inStock ? t.markOut : t.markIn}
                 </Button>
 
                 <Button
@@ -346,7 +368,7 @@ export function ItemsManager({ slug, items }: { slug: string; items: AdminItem[]
                   onClick={() => deleteItem(item)}
                   className="text-red-600 hover:bg-red-50"
                 >
-                  Delete
+                  {t.delete}
                 </Button>
               </li>
             ))}

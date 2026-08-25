@@ -19,6 +19,7 @@ const KEYS = [
   'ADMIN_PASSWORD_HASH',
   'COOKIE_SECRET',
   'NEXT_PUBLIC_BASE_URL',
+  'NEXT_PUBLIC_SUPPORT_PHONE',
 ] as const;
 
 console.log('\nPaste each value into Vercel → Settings → Environment Variables.');
@@ -46,4 +47,4 @@ if (hash && hash.length !== 60) {
 
 if (missing > 0) process.exit(1);
 
-console.log('After saving all five, redeploy — NEXT_PUBLIC_BASE_URL is baked in at build time.\n');
+console.log('After saving them all, redeploy — NEXT_PUBLIC_BASE_URL is baked in at build time.\n');

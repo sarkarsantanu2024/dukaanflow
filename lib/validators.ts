@@ -67,6 +67,8 @@ export const upiSchema = z
 
 export const shopCreateSchema = z.object({
   name: z.string().trim().min(2, 'Shop name is required').max(80),
+  ownerName: z.string().trim().max(60).default(''),
+  locale: z.enum(['en', 'bn', 'hi']).default('en'),
   slug: slugSchema.optional().or(z.literal('')),
   type: z.enum(SHOP_TYPES),
   phone: phoneSchema,
@@ -134,6 +136,54 @@ export const ownerLoginSchema = z.object({
     // Phone keyboards and copy-paste both like to add spaces and hyphens.
     .transform((value) => value.replace(/[\s-]/g, ''))
     .pipe(z.string().regex(/^\d{6}$/, 'Enter the 6-digit PIN')),
+});
+
+/** A counter sale rung up by the owner. Prices are re-read server-side. */
+export const saleSchema = z.object({
+  items: z
+    .array(z.object({ itemId: z.string().uuid(), quantity: quantitySchema }))
+    .min(1, 'Add at least one item')
+    .max(60, 'Too many items in one sale'),
+  paymentMode: z.enum(['CASH', 'UPI']).default('CASH'),
+});
+
+export const orderStatusSchema = z.object({
+  id: z.string().uuid('Unknown order'),
+  status: z.enum(['NEW', 'CONFIRMED', 'CANCELLED']),
+});
+
+/** Names picked from the shop-type starter catalogue. */
+export const starterSchema = z.object({
+  names: z.array(z.string().trim().min(1).max(80)).min(1, 'Pick at least one').max(200),
+});
+
+export const subscriptionSchema = z.object({
+  plan: z.enum(['FREE', 'STARTER', 'PRO']),
+  months: z.number().int().min(1).max(24).default(1),
+  /// Set to change plan/state without recording money — corrections and cancellations.
+  status: z.enum(['TRIALING', 'ACTIVE', 'PAST_DUE', 'CANCELLED']).optional(),
+  method: z.string().trim().max(20).default('UPI'),
+  reference: z.string().trim().max(60).default(''),
+  note: z.string().trim().max(200).default(''),
+});
+
+/**
+ * A resized photo as a data URL. Held in the database rather than a blob store
+ * so DukaanFlow needs no second service; the client resizes before upload and
+ * this is the backstop.
+ */
+const imageDataSchema = z
+  .string()
+  .trim()
+  .max(400_000, 'Image is too large — please choose a smaller photo')
+  .refine(
+    (value) => value === '' || /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value),
+    'That does not look like an image',
+  );
+
+export const shopImagesSchema = z.object({
+  imageData: imageDataSchema.optional(),
+  ownerImageData: imageDataSchema.optional(),
 });
 
 /** Flattens a ZodError into `{ field: message }` for the client. */

@@ -32,6 +32,21 @@ enum OrderStatus {
   CANCELLED
 }
 
+/// Billing tier. The limit that goes with each lives in lib/plans.ts, so
+/// pricing can change without a migration.
+enum Plan {
+  FREE
+  STARTER
+  PRO
+}
+
+enum SubStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
 model Shop {
   id        String   @id @default(uuid()) @db.Uuid
   name      String
@@ -46,13 +61,78 @@ model Shop {
   // the default — access is granted deliberately, never by existing.
   ownerPinHash  String?
   ownerPinSetAt DateTime?
+  /// One-time invite link, so an owner's first open needs no PIN typing.
+  inviteTokenHash      String?
+  inviteTokenExpiresAt DateTime?
+
+  ownerName String @default("")
+  /// Storefront and owner photos, held as resized data URLs. Not a blob store:
+  /// one ~100 KB image per shop keeps DukaanFlow deployable with nothing but a
+  /// database, and the column takes a URL unchanged if that ever changes.
+  imageData      String @default("")
+  ownerImageData String @default("")
+
+  /// The owner's own language, used by their app. Customers pick their own.
+  locale String @default("en")
+
+  plan               Plan      @default(FREE)
+  subscriptionStatus SubStatus @default(TRIALING)
+  trialEndsAt        DateTime?
+  currentPeriodEnd   DateTime?
+  /// When this shop first listed an item — the activation metric.
+  activatedAt        DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items  Item[]
-  orders Order[]
+  items    Item[]
+  orders   Order[]
+  sales    Sale[]
+  payments Payment[]
 
   @@index([active])
+  @@index([subscriptionStatus])
+}
+
+/// A recorded payment. DukaanFlow collects over UPI and the Super Admin records
+/// it here; the shape is deliberately gateway-shaped so a Razorpay or Stripe
+/// webhook can write the same rows without a migration.
+model Payment {
+  id          String   @id @default(uuid()) @db.Uuid
+  shopId      String   @db.Uuid
+  amount      Int // INTEGER RUPEES
+  plan        Plan
+  periodStart DateTime
+  periodEnd   DateTime
+  /// "UPI", "CASH", "RAZORPAY", …
+  method      String   @default("UPI")
+  /// UTR number, gateway payment id, or whatever identifies it externally.
+  reference   String   @default("")
+  note        String   @default("")
+  createdAt   DateTime @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
+}
+
+/// A counter sale — the owner ringing something up in the shop, as opposed to
+/// an `Order` that arrived from a customer's phone. Kept separate because they
+/// answer different questions: orders are a queue to work through, sales are
+/// what the day took.
+model Sale {
+  id          String   @id @default(uuid()) @db.Uuid
+  shopId      String   @db.Uuid
+  /// Immutable snapshot: name, unit, quantity and the price charged.
+  itemsJson   Json
+  totalAmount Int // INTEGER RUPEES
+  /// "CASH" or "UPI".
+  paymentMode String   @default("CASH")
+  createdAt   DateTime @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
 }
 
 model Item {

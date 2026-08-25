@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { itemDeleteSchema, itemPatchSchema, itemUpsertSchema } from '@/lib/validators';
+import { checkEditAllowance, checkItemAllowance, markActivated } from '@/lib/billing';
 
 export const runtime = 'nodejs';
 
@@ -29,6 +30,19 @@ export async function POST(request: Request, { params }: Context) {
 
   const { name, nameBn, nameHi, price, unit, category, inStock } = parsed.data;
 
+  // Re-pricing something the shop already has is an edit, not a new item, so
+  // it stays allowed right up to the catalogue limit rather than being refused
+  // at it — a shop at its limit must still be able to correct a price.
+  const existing = await prisma.item.findUnique({
+    where: { shopId_name_unit: { shopId, name, unit } },
+    select: { id: true },
+  });
+
+  const refusal = existing
+    ? await checkEditAllowance(shopId)
+    : await checkItemAllowance(shopId, 1);
+  if (refusal) return fail(refusal.message, refusal.status);
+
   const item = await prisma.item.upsert({
     where: { shopId_name_unit: { shopId, name, unit } },
     create: { shopId, name, nameBn, nameHi, price, unit, category, inStock },
@@ -53,6 +67,8 @@ export async function POST(request: Request, { params }: Context) {
     },
   });
 
+  if (!existing) await markActivated(shopId);
+
   return ok(item, 201);
 }
 
@@ -64,6 +80,9 @@ export async function PATCH(request: Request, { params }: Context) {
 
   const shopId = await shopIdFor(slug);
   if (!shopId) return fail('Shop not found', 404);
+
+  const refusal = await checkEditAllowance(shopId);
+  if (refusal) return fail(refusal.message, refusal.status);
 
   const parsed = itemPatchSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
