@@ -5,7 +5,9 @@ import { AdminHeader } from '@/components/admin/AdminHeader';
 import { ShopForm } from '@/components/admin/ShopForm';
 import { QrPanel } from '@/components/admin/QrPanel';
 import { DeleteShopButton } from '@/components/admin/DeleteShopButton';
+import { OwnerAccessPanel } from '@/components/admin/OwnerAccessPanel';
 import { formatRupees } from '@/lib/money';
+import { baseUrl } from '@/lib/qr';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +26,8 @@ export default async function ShopDetailPage({ params }: PageProps) {
       address: true,
       upiId: true,
       active: true,
+      ownerPinHash: true,
+      ownerPinSetAt: true,
       orders: {
         orderBy: { createdAt: 'desc' },
         take: 10,
@@ -79,6 +83,13 @@ export default async function ShopDetailPage({ params }: PageProps) {
             }}
           />
         </section>
+
+        <OwnerAccessPanel
+          slug={shop.slug}
+          baseUrl={baseUrl()}
+          hasPin={Boolean(shop.ownerPinHash)}
+          setAt={shop.ownerPinSetAt ? shop.ownerPinSetAt.toLocaleDateString('en-IN') : null}
+        />
 
         <section>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">

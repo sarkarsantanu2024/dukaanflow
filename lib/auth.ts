@@ -1,19 +1,30 @@
 /**
- * Session handling for the single Super Admin.
+ * Session handling for the two kinds of sign-in: the single Super Admin, who
+ * can touch every shop, and a shop owner, who can touch exactly one.
  *
  * Deliberately Web Crypto only — no `node:crypto`, no bcrypt — so that
- * `middleware.ts` can import it and run on the Edge runtime. Password
+ * `middleware.ts` can import it and run on the Edge runtime. Password and PIN
  * verification (bcrypt, Node-only) lives in `lib/password.ts` and is imported
- * exclusively by the login route handler.
+ * exclusively by the login route handlers.
  *
- * Cookie value: `<expiresAtMs>.<base64url hmac>`
- * The HMAC covers the expiry, so a client cannot extend its own session.
+ * Admin cookie: `<expiresAtMs>.<base64url hmac>`
+ * Owner cookie: `<expiresAtMs>.<slug>.<base64url hmac>`
+ * The HMAC covers the expiry — and, for an owner, the slug — so a client can
+ * neither extend its own session nor repoint it at another shop.
  */
 
 export const SESSION_COOKIE = 'df_admin';
 export const SESSION_TTL_MS = 1000 * 60 * 60 * 12; // 12 hours
 
+export const OWNER_COOKIE = 'df_owner';
+// Far longer than the admin's 12 hours: a shopkeeper updates prices from the
+// counter between customers, and a login screen every morning is the kind of
+// friction that gets a tool abandoned. The blast radius is one shop's item
+// list, and the Super Admin can revoke the PIN at any time.
+export const OWNER_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+
 const SUBJECT = 'admin';
+const OWNER_SUBJECT = 'owner';
 
 function secret(): string {
   const value = process.env.COOKIE_SECRET;
@@ -68,6 +79,57 @@ export async function verifySessionToken(token: string | undefined | null): Prom
     return timingSafeEqual(signature, await sign(`${SUBJECT}.${expiresAt}`));
   } catch {
     return false;
+  }
+}
+
+export type OwnerSession = {
+  slug: string;
+  /** `ownerPinSetAt` when the session began, as epoch ms. */
+  pinVersion: number;
+};
+
+/**
+ * `pinVersion` is what makes revocation real. The token is self-contained and
+ * lives 30 days, so without it, clearing a shop's PIN would leave every phone
+ * already holding a session signed in for a month. Node-side callers compare
+ * it against the shop's current `ownerPinSetAt`; reissuing or revoking the PIN
+ * moves that value and every older token stops authorising anything.
+ */
+export async function createOwnerToken(
+  slug: string,
+  pinVersion: number,
+  now = Date.now(),
+): Promise<string> {
+  const expiresAt = now + OWNER_TTL_MS;
+  const signature = await sign(`${OWNER_SUBJECT}.${slug}.${pinVersion}.${expiresAt}`);
+  return `${expiresAt}.${slug}.${pinVersion}.${signature}`;
+}
+
+/**
+ * Verifies the signature and expiry only. The caller must still check the slug
+ * against the shop being acted on — a valid token for shop A is never
+ * authorisation for shop B — and, wherever a database is available, check
+ * `pinVersion` against the shop's current one.
+ */
+export async function readOwnerToken(
+  token: string | undefined | null,
+): Promise<OwnerSession | null> {
+  if (!token) return null;
+
+  const parts = token.split('.');
+  if (parts.length !== 4) return null;
+
+  const [expiresAtRaw, slug, pinVersionRaw, signature] = parts as [string, string, string, string];
+  const expiresAt = Number(expiresAtRaw);
+  const pinVersion = Number(pinVersionRaw);
+  if (!slug || !Number.isFinite(expiresAt) || !Number.isFinite(pinVersion)) return null;
+  if (expiresAt < Date.now()) return null;
+
+  try {
+    const expected = await sign(`${OWNER_SUBJECT}.${slug}.${pinVersion}.${expiresAt}`);
+    return timingSafeEqual(signature, expected) ? { slug, pinVersion } : null;
+  } catch {
+    return null;
   }
 }
 

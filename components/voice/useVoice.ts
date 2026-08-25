@@ -52,8 +52,12 @@ export type VoiceErrorCode =
 
 export type UseVoiceOptions = {
   lang: VoiceLang;
-  /** Called once per completed sentence. */
-  onPhrase: (transcript: string) => void;
+  /**
+   * Called once per completed sentence, with the recogniser's ranked guesses —
+   * best first. Callers should try them all: on an unclear speaker the top
+   * guess is often wrong where the second or third is exactly right.
+   */
+  onPhrase: (alternatives: string[]) => void;
 };
 
 export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
@@ -117,21 +121,28 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
     recognition.lang = lang;
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
+    // Ask for several readings, not just the top one — see `onPhrase`.
+    recognition.maxAlternatives = 5;
 
     recognition.onresult = (event: any) => {
       let pending = '';
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
         const result = event.results[i] as unknown as ArrayLike<RecognitionResult> & {
           isFinal: boolean;
+          length: number;
         };
-        const transcript = String(result[0]?.transcript ?? '');
-        if (result.isFinal) {
-          const phrase = transcript.trim();
-          if (phrase) onPhraseRef.current(phrase);
-        } else {
-          pending += transcript;
+
+        if (!result.isFinal) {
+          pending += String(result[0]?.transcript ?? '');
+          continue;
         }
+
+        const alternatives: string[] = [];
+        for (let n = 0; n < result.length; n += 1) {
+          const phrase = String(result[n]?.transcript ?? '').trim();
+          if (phrase && !alternatives.includes(phrase)) alternatives.push(phrase);
+        }
+        if (alternatives.length > 0) onPhraseRef.current(alternatives);
       }
       setInterim(pending.trim());
     };

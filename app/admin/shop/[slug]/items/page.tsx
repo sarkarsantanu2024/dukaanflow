@@ -19,7 +19,16 @@ export default async function ItemsPage({ params }: PageProps) {
       slug: true,
       items: {
         orderBy: [{ category: 'asc' }, { name: 'asc' }],
-        select: { id: true, name: true, price: true, unit: true, category: true, inStock: true },
+        select: {
+          id: true,
+          name: true,
+          nameBn: true,
+          nameHi: true,
+          price: true,
+          unit: true,
+          category: true,
+          inStock: true,
+        },
       },
     },
   });

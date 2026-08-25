@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/guard';
+import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { bulkSchema } from '@/lib/validators';
 import { matchKey, parseBulk, splitNameAndUnit } from '@/lib/bulk';
@@ -17,9 +17,9 @@ type Context = { params: Promise<{ slug: string }> };
  */
 export async function POST(request: Request, { params }: Context) {
   if (!sameOrigin(request)) return fail('Bad request', 403);
-  if (!(await requireAdmin())) return fail('Not authenticated', 401);
-
   const { slug } = await params;
+  if (!(await requireShopWrite(slug))) return fail('Not authenticated', 401);
+
   const shop = await prisma.shop.findUnique({ where: { slug }, select: { id: true } });
   if (!shop) return fail('Shop not found', 404);
 

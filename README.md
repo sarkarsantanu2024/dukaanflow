@@ -19,7 +19,8 @@ owner's WhatsApp as a plain message. One Super Admin runs everything.
 | Super Admin CRUD for shops and items | Delivery tracking |
 | Bulk price & stock paste | Loyalty, CRM, coupons |
 | Shop QR + UPI payment QR + A4 printable poster | WhatsApp Business API |
-| Order snapshots for history | Shop-owner logins, payment gateway |
+| Order snapshots for history | Payment gateway, delivery fleet |
+| PIN access for shop owners to their own price list | Owner accounts, email, self-signup |
 
 Keeping this list short is the product.
 
@@ -75,6 +76,35 @@ npm run hash -- "new-password"   # → ADMIN_PASSWORD_HASH
 There is no password recovery. Only the bcrypt hash is stored and bcrypt is
 one-way, so a forgotten password is replaced, never retrieved.
 
+### Shop owner access
+
+A second, much smaller sign-in. The Super Admin issues a shop a 6-digit PIN;
+its owner opens `/owner/<slug>` on their phone and manages that shop's price
+list — nothing else.
+
+```text
+PIN  → bcrypt.compare against Shop.ownerPinHash   (lib/password.ts)
+     → HMAC-signed token `<expiry>.<slug>.<pinVersion>`   (lib/auth.ts)
+     → verified on the Edge in middleware.ts      (signature + slug)
+     → re-verified on Node in lib/guard.ts        (pinVersion vs ownerPinSetAt)
+```
+
+The token carries the shop's slug, so a session for one shop is never
+authorisation for another, and `pinVersion` is what makes revocation real:
+the token is self-contained and lives 30 days, so without it, clearing a PIN
+would leave every phone already holding one signed in for a month. Reissuing
+or revoking moves `ownerPinSetAt`, and every older token stops authorising
+anything — verified by test, not by hope.
+
+Six digits is only a million codes, so the login route carries two rate-limit
+buckets: 5 per 15 minutes per client, and 30 per hour against a given shop no
+matter where the attempts come from.
+
+Owners write through the same item endpoints the admin uses, which authorise
+per shop via `requireShopWrite(slug)`. Shop settings, QR codes, the WhatsApp
+number, deleting a shop and issuing PINs all stay on `requireAdmin`. The PIN is
+displayed once, at generation; only its hash is stored.
+
 ### CSRF
 
 Cookie-authenticated mutations require `Origin` to match `Host`
@@ -89,8 +119,12 @@ this blocks classic form-post CSRF without token plumbing.
 app/
   (customer)/shop/[slug]/page.tsx        Server Component → Prisma → <StoreFront/>
   admin/login|shops/new|shop/[slug]/...  Dashboard, items, QR, A4 poster
+  owner/[slug][/login]                   One shop owner's own price list (PIN)
+  admin.webmanifest|owner.webmanifest    Installable apps (root-served, see below)
+  admin-icon|admin-sw.js                 Generated icons, network-only worker
   api/admin/login|logout                 Session
-  api/admin/shop[/[slug][/items|/bulk]]  Shop & item mutations
+  api/owner/[slug]/login, api/owner/logout   Owner PIN session
+  api/admin/shop[/[slug][/items|/bulk|/pin]] Shop, item & owner-PIN mutations
   api/order                              Server-priced order + WhatsApp URL
 components/customer|admin|ui
 lib/  prisma auth password guard http validators whatsapp qr slug money bulk rate-limit i18n
@@ -100,7 +134,8 @@ middleware.ts
 
 ## Data model
 
-`Shop` (unique `slug`, indexed `active`) → `Item` (unique `shopId+name+unit`,
+`Shop` (unique `slug`, indexed `active`, optional `ownerPinHash`/`ownerPinSetAt`)
+→ `Item` (unique `shopId+name+unit`, plus optional `nameBn`/`nameHi`,
 indexed `shopId`, `shopId+inStock`) → `Order` (immutable `itemsJson` snapshot +
 `totalAmount`).
 
@@ -151,6 +186,7 @@ Momo ₹70). The seed is idempotent — re-running refreshes prices, never dupli
 | `npm run hash -- "pw"` | Print `ADMIN_PASSWORD_HASH` |
 | `npm run db:migrate` / `db:deploy` | Migrate (dev / prod) |
 | `npm run db:seed` | Seed sample shops |
+| `npx tsx scripts/backfill-item-names.ts` | Fill Bengali/Hindi item names (`--write`) |
 | `npm run db:studio` | Prisma Studio |
 
 ---
@@ -199,6 +235,15 @@ activate/deactivate, delete (typed-name confirmation), search, counts.
 **Items** — add/upsert by `name+unit`, inline price edit (commits on blur/Enter),
 stock toggle, delete, categories, search.
 
+**Three-language item names** — every item carries an English, Bengali and
+Hindi name, and the customer page shows the one matching their toggle, falling
+back to the primary name when a translation is blank. For everyday kirana and
+street-food vocabulary the other two languages fill in by themselves, whether
+the name was typed or spoken; compound names translate only when every word is
+known, so "Biscuit Pack" becomes "বিস্কুট প্যাকেট" while "Basmati Rice" is
+left alone rather than half-translated. `npx tsx scripts/backfill-item-names.ts`
+fills in existing rows (`--write` to apply) and lists what it could not.
+
 **Voice entry** — tap the mic on the items page and dictate, one item per
 sentence, in English, Hindi or Bengali:
 
@@ -210,7 +255,14 @@ sentence, in English, Hindi or Bengali:
 
 Each sentence upserts through the same `POST /api/admin/shop/<slug>/items`
 endpoint as the form, and the phone speaks the result back so the shopkeeper can
-stock shelves without looking at the screen. The parser
+stock shelves without looking at the screen.
+
+Speech on a shop floor is not reliable enough to act on blindly, so accuracy is
+defended in four places: every alternative the recogniser offers is tried and
+the reading that lands on an existing item wins ("Rise 1 kg 68" re-prices Rice
+rather than creating a misspelt twin); matching is fuzzy, so "tomatto" still
+resolves; a near-but-not-certain match is read back for a spoken yes/no before
+anything is saved; and every save keeps an Undo for the session. The parser
 ([`lib/speech.ts`](lib/speech.ts)) resolves the price as the last number that is
 *not* followed by a unit word — so "rice 1 kg 68" prices the item at ₹68, never
 ₹1 — and refuses rather than guesses when no price was heard. Number words

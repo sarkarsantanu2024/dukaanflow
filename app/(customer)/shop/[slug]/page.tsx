@@ -25,6 +25,8 @@ async function loadShop(slug: string) {
         select: {
           id: true,
           name: true,
+          nameBn: true,
+          nameHi: true,
           price: true,
           unit: true,
           category: true,

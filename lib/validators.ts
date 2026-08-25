@@ -80,8 +80,13 @@ export const shopUpdateSchema = shopCreateSchema.partial().extend({
   slug: slugSchema.optional(),
 });
 
+/** Optional per-language name. Empty means "fall back to `name`". */
+const altNameSchema = z.string().trim().max(80).default('');
+
 export const itemUpsertSchema = z.object({
   name: itemNameSchema,
+  nameBn: altNameSchema,
+  nameHi: altNameSchema,
   price: priceSchema,
   unit: z.string().trim().max(24).default(''),
   category: z.string().trim().max(40).default(''),
@@ -93,6 +98,8 @@ export const itemPatchSchema = z.object({
   price: priceSchema.optional(),
   inStock: z.boolean().optional(),
   category: z.string().trim().max(40).optional(),
+  nameBn: altNameSchema.optional(),
+  nameHi: altNameSchema.optional(),
 });
 
 export const itemDeleteSchema = z.object({ id: z.string().uuid('Unknown item') });
@@ -117,6 +124,16 @@ export const orderSchema = z.object({
 export const loginSchema = z.object({
   username: z.string().trim().min(1, 'Username is required').max(60),
   password: z.string().min(1, 'Password is required').max(200),
+});
+
+/** The owner's sign-in: one 6-digit PIN, nothing else to remember. */
+export const ownerLoginSchema = z.object({
+  pin: z
+    .string()
+    .trim()
+    // Phone keyboards and copy-paste both like to add spaces and hyphens.
+    .transform((value) => value.replace(/[\s-]/g, ''))
+    .pipe(z.string().regex(/^\d{6}$/, 'Enter the 6-digit PIN')),
 });
 
 /** Flattens a ZodError into `{ field: message }` for the client. */

@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { randomInt } from 'node:crypto';
 
 /**
  * Node-runtime only. Kept out of `lib/auth.ts` so that Edge middleware can
@@ -44,6 +45,44 @@ export async function verifyAdminCredentials(
     // Always run bcrypt, even on a username miss, to keep timing flat.
     const passwordMatches = await bcrypt.compare(password, usernameMatches ? hash : DECOY_HASH);
     return usernameMatches && passwordMatches;
+  } catch {
+    return false;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Shop owner PINs                                                     */
+/* ------------------------------------------------------------------ */
+
+/** Cheaper than the admin's 12 — a PIN is checked on a phone, on a counter. */
+const PIN_ROUNDS = 10;
+
+export const OWNER_PIN_LENGTH = 6;
+
+/**
+ * A 6-digit PIN from a CSPRNG — never Math.random, which is predictable enough
+ * that a determined guesser could narrow a million codes to a handful.
+ * Leading zeros are kept: "004821" is a perfectly good PIN.
+ */
+export function generateOwnerPin(): string {
+  let pin = '';
+  for (let i = 0; i < OWNER_PIN_LENGTH; i += 1) pin += String(randomInt(0, 10));
+  return pin;
+}
+
+export function hashOwnerPin(pin: string): Promise<string> {
+  return bcrypt.hash(pin, PIN_ROUNDS);
+}
+
+/**
+ * Six digits is a small space, so this is only ever safe behind the rate limit
+ * on the owner login route. Never call it in a loop.
+ */
+export async function verifyOwnerPin(pin: string, hash: string | null): Promise<boolean> {
+  try {
+    // Compare against a decoy when no PIN is set, so "this shop has no owner
+    // access" and "wrong PIN" take the same time to answer.
+    return await bcrypt.compare(pin, hash ?? DECOY_HASH);
   } catch {
     return false;
   }

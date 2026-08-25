@@ -25,14 +25,20 @@ function isStandalone(): boolean {
   );
 }
 
-export function InstallApp() {
+/**
+ * `manifestSlug` switches this from the Super Admin app to one shop owner's:
+ * the worker is then scoped to that shop, so an owner's installed app opens on
+ * their own price list.
+ */
+export function InstallApp({ manifestSlug }: { manifestSlug?: string } = {}) {
   const [prompt, setPrompt] = useState<InstallPromptEvent | null>(null);
   const [iosHint, setIosHint] = useState(false);
 
   useEffect(() => {
     if (isStandalone()) return;
 
-    navigator.serviceWorker?.register('/admin-sw.js', { scope: '/admin/' }).catch(() => {
+    const scope = manifestSlug ? `/owner/${manifestSlug}/` : '/admin/';
+    navigator.serviceWorker?.register('/admin-sw.js', { scope }).catch(() => {
       // An unregistered worker only costs the install prompt, not the app.
     });
 
@@ -51,7 +57,7 @@ export function InstallApp() {
     }
 
     return () => window.removeEventListener('beforeinstallprompt', onPrompt);
-  }, []);
+  }, [manifestSlug]);
 
   if (prompt) {
     return (

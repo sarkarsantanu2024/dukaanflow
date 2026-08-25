@@ -23,8 +23,9 @@ export function GET() {
     headers: {
       'Content-Type': 'text/javascript; charset=utf-8',
       'Cache-Control': 'no-cache',
-      // Lets a worker served from / take the narrower /admin/ scope.
-      'Service-Worker-Allowed': '/admin/',
+      // Served from the root, so it may take any narrower scope: /admin/ for
+      // the Super Admin app, /owner/<slug>/ for a shop owner's.
+      'Service-Worker-Allowed': '/',
     },
   });
 }

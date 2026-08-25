@@ -41,6 +41,11 @@ model Shop {
   address   String   @default("")
   upiId     String   @default("")
   active    Boolean  @default(true)
+  // Owner access: a bcrypt hash of the 6-digit PIN the Super Admin issues to
+  // this shop's owner. Null means the owner cannot sign in at all, which is
+  // the default — access is granted deliberately, never by existing.
+  ownerPinHash  String?
+  ownerPinSetAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -53,7 +58,11 @@ model Shop {
 model Item {
   id        String   @id @default(uuid()) @db.Uuid
   shopId    String   @db.Uuid
+  // `name` is the primary name and always set — it is what a customer sees
+  // when their own language is blank. The other two are optional overrides.
   name      String
+  nameBn    String   @default("")
+  nameHi    String   @default("")
   price     Int // INTEGER RUPEES
   unit      String   @default("")
   category  String   @default("")

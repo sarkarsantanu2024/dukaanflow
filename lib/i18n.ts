@@ -53,6 +53,9 @@ type Dictionary = {
   voiceNotHeard: string;
   voiceDenied: string;
   voiceUnavailable: string;
+  voiceDidYouMean: string;
+  voiceYes: string;
+  voiceNo: string;
 };
 
 export const DICTIONARIES: Record<Locale, Dictionary> = {
@@ -96,6 +99,9 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceNotHeard: 'Could not find that item. Please say it again.',
     voiceDenied: 'Microphone blocked. Allow mic access for this site.',
     voiceUnavailable: 'Voice is not available on this browser. Please tap Add instead.',
+    voiceDidYouMean: 'Did you mean',
+    voiceYes: 'Yes, add',
+    voiceNo: 'No',
   },
   bn: {
     scanToOrder: 'স্ক্যান করে অর্ডার করুন',
@@ -137,6 +143,9 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceNotHeard: 'জিনিসটি খুঁজে পাইনি। আবার বলুন।',
     voiceDenied: 'মাইক্রোফোন বন্ধ। এই সাইটে মাইক ব্যবহারের অনুমতি দিন।',
     voiceUnavailable: 'এই ব্রাউজারে ভয়েস কাজ করছে না। “যোগ করুন” চাপুন।',
+    voiceDidYouMean: 'আপনি কি বলতে চেয়েছেন',
+    voiceYes: 'হ্যাঁ, যোগ করুন',
+    voiceNo: 'না',
   },
   hi: {
     scanToOrder: 'स्कैन करके ऑर्डर करें',
@@ -178,6 +187,9 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceNotHeard: 'यह सामान नहीं मिला। दोबारा बोलिए।',
     voiceDenied: 'माइक्रोफ़ोन बंद है। इस साइट को माइक की अनुमति दें।',
     voiceUnavailable: 'इस ब्राउज़र में आवाज़ काम नहीं कर रही। “जोड़ें” दबाइए।',
+    voiceDidYouMean: 'क्या आपका मतलब है',
+    voiceYes: 'हाँ, जोड़ें',
+    voiceNo: 'नहीं',
   },
 };
 

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { ShopHeader, type ShopSummary } from './ShopHeader';
-import { ItemCard, type CustomerItem } from './ItemCard';
+import { ItemCard, itemName, type CustomerItem } from './ItemCard';
 import { CartBar } from './CartBar';
 import { CheckoutSheet, type CheckoutSubmit } from './CheckoutSheet';
 import { VoiceOrder } from './VoiceOrder';
@@ -47,7 +47,10 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     return items.filter((item) => {
       if (category && item.category !== category) return false;
       if (!needle) return true;
-      return `${item.name} ${item.unit} ${item.category}`.toLowerCase().includes(needle);
+      // Search all three names, so typing "চাল" finds an item listed as Rice.
+      return `${item.name} ${item.nameBn} ${item.nameHi} ${item.unit} ${item.category}`
+        .toLowerCase()
+        .includes(needle);
     });
   }, [items, query, category]);
 
