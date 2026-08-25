@@ -244,14 +244,23 @@ known, so "Biscuit Pack" becomes "বিস্কুট প্যাকেট" w
 left alone rather than half-translated. `npx tsx scripts/backfill-item-names.ts`
 fills in existing rows (`--write` to apply) and lists what it could not.
 
-**Voice entry** — tap the mic on the items page and dictate, one item per
-sentence, in English, Hindi or Bengali:
+Category chips translate the same way, from a separate short list — an invented
+category shows as typed, because a filter chip reading in English beats one
+reading as nonsense.
+
+**Voice management** — tap the mic on the items page and speak one instruction
+per sentence, in English, Hindi or Bengali. Three things can be said:
 
 ```text
-"rice one kg sixty eight rupees"   → Rice · 1 kg · ₹68
-"tomato 500 gram 30"               → Tomato · 500 g · ₹30
-"basmati rice 5 kg 450 in staples" → Basmati Rice · 5 kg · ₹450 · Staples
+add / re-price   "rice one kg sixty eight rupees"   → Rice · 1 kg · ₹68
+                 "basmati rice 5 kg 450 in staples" → Basmati Rice · 5 kg · Staples
+out of stock     "rice out of stock" · "चावल खत्म" · "চাল শেষ"
+back in stock    "rice in stock" · "आ गया" · "এসে গেছে"
+remove           "remove rice" · "चावल हटाओ" · "চাল মুছে দাও"
 ```
+
+Removal always asks for a spoken yes/no first — it is the one action here that
+saying the sentence again cannot put back. Everything else keeps an Undo.
 
 Each sentence upserts through the same `POST /api/admin/shop/<slug>/items`
 endpoint as the form, and the phone speaks the result back so the shopkeeper can

@@ -302,6 +302,111 @@ export function resolveSpokenItem(
   return best;
 }
 
+/* ------------------------------------------------------------------ */
+/* Spoken commands: add / re-price, remove, stock                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Verbs the shopkeeper uses, in all three languages. Each is matched as a
+ * whole word against the sentence, and stripped before the rest is resolved
+ * against the item list.
+ */
+const DELETE_WORDS = [
+  'remove', 'delete', 'drop',
+  'hatao', 'hata do', 'hatado', 'nikalo', 'nikal do', 'mitao', 'mita do',
+  'हटाओ', 'हटा दो', 'निकालो', 'निकाल दो', 'मिटाओ', 'हटाइए',
+  'muche dao', 'mure dao', 'bad dao', 'sorao',
+  'মুছে দাও', 'মুছুন', 'বাদ দাও', 'সরাও', 'সরিয়ে দাও',
+];
+
+const OUT_OF_STOCK_WORDS = [
+  'out of stock', 'stock out', 'out', 'finished', 'over', 'sold out',
+  'khatam', 'khatm', 'khtm', 'nahi hai', 'shesh', 'nei',
+  'खत्म', 'ख़त्म', 'नहीं है', 'स्टॉक खत्म',
+  'শেষ', 'নেই', 'ফুরিয়ে গেছে',
+];
+
+const IN_STOCK_WORDS = [
+  'in stock', 'stock in', 'back in stock', 'available', 'restock',
+  'aa gaya', 'aagaya', 'hai', 'stock aa gaya',
+  'आ गया', 'स्टॉक आ गया', 'उपलब्ध',
+  'এসে গেছে', 'আছে', 'স্টক আছে',
+];
+
+export type VoiceCommand =
+  | { kind: 'upsert'; draft: SpokenItemDraft; needsConfirm: boolean; label: string }
+  | { kind: 'delete'; item: MatchableItem; needsConfirm: true; label: string }
+  | { kind: 'stock'; item: MatchableItem; inStock: boolean; needsConfirm: boolean; label: string };
+
+/** Longest phrase first, so "out of stock" wins over the bare "out". */
+function matchVerb(text: string, words: string[]): { rest: string } | null {
+  for (const word of [...words].sort((a, b) => b.length - a.length)) {
+    const pattern = new RegExp(`(^|\\s)${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`, 'i');
+    if (pattern.test(text)) return { rest: text.replace(pattern, ' ').replace(/\s+/g, ' ').trim() };
+  }
+  return null;
+}
+
+function labelFor(item: { name: string; unit: string }): string {
+  return item.unit ? `${item.name} · ${item.unit}` : item.name;
+}
+
+/**
+ * Works out what the shopkeeper wants done, not just what item they named.
+ *
+ * "rice one kg 68" prices an item, "remove rice" takes one off the list,
+ * "rice khatam" marks it out of stock. Removal always asks first — it is the
+ * one action here that cannot be undone by saying the sentence again.
+ */
+export function resolveSpokenCommand(
+  alternatives: string[],
+  lang: VoiceLang,
+  existing: MatchableItem[],
+): VoiceCommand | null {
+  for (const transcript of alternatives) {
+    const text = wordsToDigits(transcript.trim().replace(/\s+/g, ' ')).toLowerCase();
+
+    const removal = matchVerb(text, DELETE_WORDS);
+    if (removal) {
+      const match = bestMatch(removal.rest, existing);
+      if (match && match.confidence >= UNSURE_MATCH) {
+        return { kind: 'delete', item: match.item, needsConfirm: true, label: labelFor(match.item) };
+      }
+      continue;
+    }
+
+    // Stock changes only make sense for something already listed, so a miss
+    // falls through to the add path rather than inventing an item.
+    for (const [words, inStock] of [
+      [OUT_OF_STOCK_WORDS, false],
+      [IN_STOCK_WORDS, true],
+    ] as const) {
+      const stock = matchVerb(text, words);
+      if (!stock) continue;
+      const match = bestMatch(stock.rest, existing);
+      if (match && match.confidence >= UNSURE_MATCH) {
+        return {
+          kind: 'stock',
+          item: match.item,
+          inStock,
+          needsConfirm: match.confidence < CONFIDENT_MATCH,
+          label: labelFor(match.item),
+        };
+      }
+    }
+  }
+
+  const draft = resolveSpokenItem(alternatives, lang, existing);
+  if (!draft) return null;
+
+  return {
+    kind: 'upsert',
+    draft,
+    needsConfirm: Boolean(draft.matched) && draft.confidence < CONFIDENT_MATCH,
+    label: labelFor(draft.matched ?? draft),
+  };
+}
+
 /**
  * Fills in the other two languages when the name is one we know, and otherwise
  * records what was said under the language it was said in.
@@ -491,6 +596,49 @@ const VOCAB: Vocab[] = [
   { en: 'Powder', hi: 'पाउडर', bn: 'গুঁড়ো', roman: ['gura'] },
   { en: 'Bottle', hi: 'बोतल', bn: 'বোতল' },
 ];
+
+/**
+ * Category names, which are free text on the item but in practice come from a
+ * short, repeating list. Anything the shopkeeper invents falls through
+ * untranslated rather than being mangled.
+ */
+const CATEGORY_VOCAB: Vocab[] = [
+  { en: 'Staples', hi: 'रोज़ का सामान', bn: 'নিত্য প্রয়োজনীয়' },
+  { en: 'Snacks', hi: 'नाश्ता', bn: 'জলখাবার' },
+  { en: 'Oil & Ghee', hi: 'तेल और घी', bn: 'তেল ও ঘি' },
+  { en: 'Dairy', hi: 'दूध-दही', bn: 'দুধ-দই' },
+  { en: 'Vegetables', hi: 'सब्ज़ी', bn: 'সবজি' },
+  { en: 'Fruits', hi: 'फल', bn: 'ফল' },
+  { en: 'Spices', hi: 'मसाले', bn: 'মশলা' },
+  { en: 'Beverages', hi: 'पेय', bn: 'পানীয়' },
+  { en: 'Sweets', hi: 'मिठाई', bn: 'মিষ্টি' },
+  { en: 'Bakery', hi: 'बेकरी', bn: 'বেকারি' },
+  { en: 'Household', hi: 'घर का सामान', bn: 'ঘরের জিনিস' },
+  { en: 'Rolls', hi: 'रोल', bn: 'রোল' },
+  { en: 'Chinese', hi: 'चाइनीज़', bn: 'চাইনিজ' },
+  { en: 'Rice & Atta', hi: 'चावल-आटा', bn: 'চাল-আটা' },
+  { en: 'Tea & Coffee', hi: 'चाय-कॉफ़ी', bn: 'চা-কফি' },
+  { en: 'Non-veg', hi: 'नॉन-वेज', bn: 'আমিষ' },
+];
+
+const CATEGORY_BY_FORM = new Map<string, Vocab>();
+for (const entry of CATEGORY_VOCAB) {
+  for (const form of [entry.en, entry.hi, entry.bn]) {
+    const key = form.toLowerCase();
+    if (!CATEGORY_BY_FORM.has(key)) CATEGORY_BY_FORM.set(key, entry);
+  }
+}
+
+/**
+ * A category name in the shopper's language. Unknown categories are returned
+ * as typed — a filter chip that reads in English is far better than one that
+ * reads as nonsense.
+ */
+export function translateCategory(category: string, locale: 'en' | 'bn' | 'hi'): string {
+  const entry = CATEGORY_BY_FORM.get(category.trim().toLowerCase());
+  if (!entry) return category;
+  return locale === 'bn' ? entry.bn : locale === 'hi' ? entry.hi : entry.en;
+}
 
 /** Every written form of one entry, lowercased — used for matching. */
 function formsOf(entry: Vocab): string[] {
