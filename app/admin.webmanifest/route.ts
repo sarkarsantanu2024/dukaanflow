@@ -36,7 +36,7 @@ const MANIFEST = {
 export function GET() {
   return new Response(JSON.stringify(MANIFEST), {
     headers: {
-      'Content-Type': 'application/manifest+json',
+      'Content-Type': 'application/manifest+json; charset=utf-8',
       'Cache-Control': 'public, max-age=3600',
     },
   });

@@ -26,8 +26,10 @@ export async function GET(request: Request) {
     name: `${shop.name} — DukaanFlow`,
     short_name: shop.name.slice(0, 12),
     description: 'Update your prices and stock. Add items by voice.',
-    start_url: `/owner/${slug}`,
-    scope: `/owner/${slug}`,
+    start_url: `/owner/${slug}/sell`,
+    // The trailing slash matters: without it, "ramu-grocery" would also scope
+    // "ramu-grocery-2", and two shops on one phone would collide.
+    scope: `/owner/${slug}/`,
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#f1f5f9',
@@ -41,7 +43,9 @@ export async function GET(request: Request) {
 
   return new Response(JSON.stringify(manifest), {
     headers: {
-      'Content-Type': 'application/manifest+json',
+      // Explicit charset, or a Bengali shop name can reach the launcher as
+      // mojibake on some Android builds.
+      'Content-Type': 'application/manifest+json; charset=utf-8',
       'Cache-Control': 'public, max-age=3600',
     },
   });

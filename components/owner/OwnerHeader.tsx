@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/Toast';
-import { InstallApp } from '@/components/admin/InstallApp';
 import { ownerDict } from '@/lib/owner-i18n';
 import { LOCALE_LABELS, LOCALES, type Locale } from '@/lib/i18n';
 
@@ -79,8 +78,6 @@ export function OwnerHeader({
             </button>
           ))}
         </div>
-
-        <InstallApp manifestSlug={slug} />
 
         <button
           type="button"
