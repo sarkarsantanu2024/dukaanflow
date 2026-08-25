@@ -1,16 +1,21 @@
 'use client';
 
 /**
- * Hands-free item entry for the shopkeeper.
+ * Hands-free item management for the shopkeeper.
  *
- * Tap the mic once and keep talking — "rice one kg sixty eight rupees" — and
- * each sentence becomes an item. The phone speaks the result back so the
- * shopkeeper never has to look at the screen while stocking shelves.
+ * Tap the mic once and keep talking. Three things can be said:
+ *
+ *   "rice one kg sixty eight rupees"  → adds it, or re-prices it if it exists
+ *   "rice khatam" / "চাল শেষ"          → marks it out of stock
+ *   "remove rice" / "चावल हटाओ"        → takes it off the list
+ *
+ * The phone speaks each result back, so the shopkeeper never has to look at
+ * the screen while stocking shelves.
  *
  * Speech on a shop floor is not reliable enough to act on blindly, so there
- * are two safety nets. A sentence that lands near an item already on the list,
- * but not squarely on it, is read back for a spoken yes/no before anything is
- * saved. And everything saved keeps an Undo for the rest of the session.
+ * are two safety nets. Anything uncertain — and every removal, certain or not
+ * — is read back for a spoken yes/no first. And everything done here keeps an
+ * Undo for the rest of the session.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -22,24 +27,30 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { formatRupees } from '@/lib/money';
 import {
-  CONFIDENT_MATCH,
-  resolveSpokenItem,
+  resolveSpokenCommand,
   spokenYesNo,
   VOICE_LANGS,
   type SpokenItemDraft,
+  type VoiceCommand,
   type VoiceLang,
 } from '@/lib/speech';
 import type { AdminItem } from './ItemsManager';
 
 const LANG_STORAGE_KEY = 'dukaanflow:voice-lang';
 
+/** How to put back whatever a spoken command just did. */
+type Undo =
+  | { type: 'delete'; itemId: string }
+  | { type: 'price'; itemId: string; price: number }
+  | { type: 'recreate'; item: AdminItem }
+  | { type: 'stock'; itemId: string; inStock: boolean };
+
 type LogEntry = {
   key: number;
   heard: string;
-  status: 'saved' | 'rejected' | 'failed';
+  status: 'done' | 'rejected' | 'failed';
   detail: string;
-  /** Present on a saved row, so it can be taken back. */
-  undo?: { itemId: string; previousPrice: number | null };
+  undo?: Undo;
 };
 
 /**
@@ -64,7 +75,10 @@ const PHRASES: Record<
   VoiceLang,
   {
     saved: (name: string, price: number) => string;
-    confirm: (name: string) => string;
+    removed: (name: string) => string;
+    markedOut: (name: string) => string;
+    markedIn: (name: string) => string;
+    confirm: (what: string) => string;
     cancelled: string;
     noPrice: string;
     failed: string;
@@ -72,35 +86,53 @@ const PHRASES: Record<
 > = {
   'en-IN': {
     saved: (name, price) => `${name} added at ${price} rupees`,
-    confirm: (name) => `Did you mean ${name}? Say yes or no.`,
+    removed: (name) => `${name} removed`,
+    markedOut: (name) => `${name} marked out of stock`,
+    markedIn: (name) => `${name} marked in stock`,
+    confirm: (what) => `${what}? Say yes or no.`,
     cancelled: 'Cancelled. Please say it again.',
     noPrice: 'I did not catch the price. Please say the item and the price again.',
-    failed: 'Could not save that. Please try again.',
+    failed: 'Could not do that. Please try again.',
   },
   'hi-IN': {
     saved: (name, price) => `${name} ${price} रुपये में जोड़ दिया`,
-    confirm: (name) => `क्या आपका मतलब ${name} है? हाँ या नहीं बोलिए।`,
+    removed: (name) => `${name} हटा दिया`,
+    markedOut: (name) => `${name} खत्म कर दिया`,
+    markedIn: (name) => `${name} उपलब्ध कर दिया`,
+    confirm: (what) => `${what}? हाँ या नहीं बोलिए।`,
     cancelled: 'रद्द कर दिया। फिर से बोलिए।',
     noPrice: 'दाम समझ नहीं आया। सामान और दाम फिर से बोलिए।',
-    failed: 'सेव नहीं हो सका। दोबारा कोशिश कीजिए।',
+    failed: 'यह नहीं हो सका। दोबारा कोशिश कीजिए।',
   },
   'bn-IN': {
     saved: (name, price) => `${name} ${price} টাকায় যোগ হয়েছে`,
-    confirm: (name) => `আপনি কি ${name} বলতে চেয়েছেন? হ্যাঁ বা না বলুন।`,
+    removed: (name) => `${name} মুছে দেওয়া হয়েছে`,
+    markedOut: (name) => `${name} শেষ বলে দেওয়া হয়েছে`,
+    markedIn: (name) => `${name} আবার আছে বলে দেওয়া হয়েছে`,
+    confirm: (what) => `${what}? হ্যাঁ বা না বলুন।`,
     cancelled: 'বাতিল করা হয়েছে। আবার বলুন।',
     noPrice: 'দাম বুঝতে পারিনি। জিনিস আর দাম আবার বলুন।',
-    failed: 'সেভ করা যায়নি। আবার চেষ্টা করুন।',
+    failed: 'করা যায়নি। আবার চেষ্টা করুন।',
   },
 };
 
-const EXAMPLES: Record<VoiceLang, string> = {
-  'en-IN': '“rice one kg sixty eight rupees” · “tomato 500 gram 30”',
-  'hi-IN': '“चावल एक किलो 68 रुपये” · “टमाटर 500 ग्राम 30”',
-  'bn-IN': '“চাল এক কেজি ৬৮ টাকা” · “টমেটো ৫০০ গ্রাম ৩০”',
+const EXAMPLES: Record<VoiceLang, string[]> = {
+  'en-IN': ['“rice one kg sixty eight rupees”', '“rice out of stock”', '“remove rice”'],
+  'hi-IN': ['“चावल एक किलो 68 रुपये”', '“चावल खत्म”', '“चावल हटाओ”'],
+  'bn-IN': ['“চাল এক কেজি ৬৮ টাকা”', '“চাল শেষ”', '“চাল মুছে দাও”'],
 };
 
-function labelOf(draft: { name: string; unit: string }): string {
+function draftLabel(draft: SpokenItemDraft): string {
   return draft.unit ? `${draft.name} · ${draft.unit}` : draft.name;
+}
+
+/** What a pending command will do, in words, for the confirmation prompt. */
+function describe(command: VoiceCommand): string {
+  if (command.kind === 'delete') return `Remove ${command.label}`;
+  if (command.kind === 'stock') {
+    return `Mark ${command.label} ${command.inStock ? 'in stock' : 'out of stock'}`;
+  }
+  return `Save ${command.label} at ${formatRupees(command.draft.price)}`;
 }
 
 export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem[] }) {
@@ -108,8 +140,8 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
   const { push } = useToast();
   const [lang, setLang] = useState<VoiceLang>('en-IN');
   const [log, setLog] = useState<LogEntry[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [pending, setPending] = useState<{ draft: SpokenItemDraft; heard: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<{ command: VoiceCommand; heard: string } | null>(null);
 
   // A Bengali shopkeeper should not re-pick Bengali on every visit.
   useEffect(() => {
@@ -129,7 +161,7 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
   const pendingRef = useRef(pending);
   pendingRef.current = pending;
   // Sentences can arrive faster than the API answers; a promise chain keeps
-  // saves in the order they were spoken and stops two upserts from racing.
+  // work in the order it was spoken and stops two writes from racing.
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const keyRef = useRef(0);
 
@@ -153,34 +185,82 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
     setLog((current) => [{ ...entry, key: keyRef.current }, ...current].slice(0, 8));
   }, []);
 
-  const save = useCallback(
-    async (draft: SpokenItemDraft, heard: string) => {
-      const phrases = PHRASES[langRef.current];
-      // Remembered before the write, so Undo knows whether this created a row
-      // or merely re-priced one.
-      const previous = itemsRef.current.find(
-        (item) => item.name === draft.name && item.unit === draft.unit,
-      );
+  const call = useCallback(
+    async (method: 'POST' | 'PATCH' | 'DELETE', body: unknown) => {
+      const response = await fetch(`/api/admin/shop/${slug}/items`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const payload = (await response.json().catch(() => ({}))) as { id?: string; error?: string };
+      return { ok: response.ok, payload };
+    },
+    [slug],
+  );
 
-      setSaving(true);
+  const run = useCallback(
+    async (command: VoiceCommand, heard: string) => {
+      const phrases = PHRASES[langRef.current];
+      setBusy(true);
+
       try {
-        const response = await fetch(`/api/admin/shop/${slug}/items`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: draft.name,
-            nameBn: draft.nameBn,
-            nameHi: draft.nameHi,
-            price: draft.price,
-            unit: draft.unit,
-            category: draft.category,
-            inStock: true,
-          }),
+        if (command.kind === 'delete') {
+          const before = itemsRef.current.find((item) => item.id === command.item.id);
+          const { ok } = await call('DELETE', { id: command.item.id });
+          if (!ok || !before) {
+            addEntry({ heard, status: 'failed', detail: 'Could not remove' });
+            announce(phrases.failed);
+            return;
+          }
+          addEntry({
+            heard,
+            status: 'done',
+            detail: `Removed ${command.label}`,
+            undo: { type: 'recreate', item: before },
+          });
+          announce(phrases.removed(command.label.replace(' · ', ' ')));
+          router.refresh();
+          return;
+        }
+
+        if (command.kind === 'stock') {
+          const before = itemsRef.current.find((item) => item.id === command.item.id);
+          const { ok } = await call('PATCH', { id: command.item.id, inStock: command.inStock });
+          if (!ok) {
+            addEntry({ heard, status: 'failed', detail: 'Could not update stock' });
+            announce(phrases.failed);
+            return;
+          }
+          addEntry({
+            heard,
+            status: 'done',
+            detail: `${command.label} — ${command.inStock ? 'in stock' : 'out of stock'}`,
+            undo: { type: 'stock', itemId: command.item.id, inStock: before?.inStock ?? true },
+          });
+          const spoken = command.label.replace(' · ', ' ');
+          announce(command.inStock ? phrases.markedIn(spoken) : phrases.markedOut(spoken));
+          router.refresh();
+          return;
+        }
+
+        const { draft } = command;
+        // Remembered before the write, so Undo knows whether this created a row
+        // or merely re-priced one.
+        const previous = itemsRef.current.find(
+          (item) => item.name === draft.name && item.unit === draft.unit,
+        );
+
+        const { ok, payload } = await call('POST', {
+          name: draft.name,
+          nameBn: draft.nameBn,
+          nameHi: draft.nameHi,
+          price: draft.price,
+          unit: draft.unit,
+          category: draft.category,
+          inStock: true,
         });
 
-        const payload = (await response.json().catch(() => ({}))) as { id?: string; error?: string };
-
-        if (!response.ok || !payload.id) {
+        if (!ok || !payload.id) {
           addEntry({ heard, status: 'failed', detail: payload.error ?? 'Save failed' });
           announce(phrases.failed);
           return;
@@ -188,20 +268,22 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
 
         addEntry({
           heard,
-          status: 'saved',
-          detail: `${labelOf(draft)} — ${formatRupees(draft.price)}`,
-          undo: { itemId: payload.id, previousPrice: previous?.price ?? null },
+          status: 'done',
+          detail: `${draftLabel(draft)} — ${formatRupees(draft.price)}`,
+          undo: previous
+            ? { type: 'price', itemId: payload.id, price: previous.price }
+            : { type: 'delete', itemId: payload.id },
         });
-        announce(phrases.saved(labelOf(draft).replace(' · ', ' '), draft.price));
+        announce(phrases.saved(draftLabel(draft).replace(' · ', ' '), draft.price));
         router.refresh();
       } catch {
         addEntry({ heard, status: 'failed', detail: 'Network error' });
         announce(phrases.failed);
       } finally {
-        setSaving(false);
+        setBusy(false);
       }
     },
-    [slug, router, announce, addEntry],
+    [call, router, announce, addEntry],
   );
 
   const handlePhrase = useCallback(
@@ -216,7 +298,7 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
           const answer = spokenYesNo(alternatives);
           if (answer === 'yes') {
             setPending(null);
-            await save(outstanding.draft, outstanding.heard);
+            await run(outstanding.command, outstanding.heard);
             return;
           }
           if (answer === 'no') {
@@ -226,27 +308,26 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
             return;
           }
           // Neither yes nor no — fall through and treat it as a fresh sentence.
+          setPending(null);
         }
 
-        const draft = resolveSpokenItem(alternatives, langRef.current, itemsRef.current);
-        if (!draft) {
+        const command = resolveSpokenCommand(alternatives, langRef.current, itemsRef.current);
+        if (!command) {
           addEntry({ heard, status: 'rejected', detail: 'No price heard' });
           announce(phrases.noPrice);
           return;
         }
 
-        // Close to something already listed, but not close enough to be sure
-        // which — ask rather than risk re-pricing the wrong product.
-        if (draft.matched && draft.confidence < CONFIDENT_MATCH) {
-          setPending({ draft, heard });
-          announce(phrases.confirm(labelOf(draft.matched)));
+        if (command.needsConfirm) {
+          setPending({ command, heard });
+          announce(phrases.confirm(describe(command)));
           return;
         }
 
-        await save(draft, heard);
+        await run(command, heard);
       });
     },
-    [save, announce, addEntry],
+    [run, announce, addEntry],
   );
 
   const { supported, listening, errorCode, interim, toggle, start, stop } = useVoice({
@@ -257,35 +338,39 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
 
   async function undo(entry: LogEntry) {
     if (!entry.undo) return;
-    const { itemId, previousPrice } = entry.undo;
+    const action = entry.undo;
 
-    const response =
-      previousPrice === null
-        ? await fetch(`/api/admin/shop/${slug}/items`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: itemId }),
-          })
-        : await fetch(`/api/admin/shop/${slug}/items`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: itemId, price: previousPrice }),
-          });
+    const result =
+      action.type === 'delete'
+        ? await call('DELETE', { id: action.itemId })
+        : action.type === 'price'
+          ? await call('PATCH', { id: action.itemId, price: action.price })
+          : action.type === 'stock'
+            ? await call('PATCH', { id: action.itemId, inStock: action.inStock })
+            : await call('POST', {
+                name: action.item.name,
+                nameBn: action.item.nameBn,
+                nameHi: action.item.nameHi,
+                price: action.item.price,
+                unit: action.item.unit,
+                category: action.item.category,
+                inStock: action.item.inStock,
+              });
 
-    if (!response.ok) {
+    if (!result.ok) {
       push('Could not undo that', 'error');
       return;
     }
 
     setLog((current) => current.filter((row) => row.key !== entry.key));
-    push(previousPrice === null ? 'Item removed' : 'Price restored', 'success');
+    push('Undone', 'success');
     router.refresh();
   }
 
   if (!supported) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
-        Voice entry needs Chrome, Edge, or Safari. Use the form below on this browser.
+        Voice needs Chrome, Edge, or Safari. Use the form below on this browser.
       </div>
     );
   }
@@ -296,11 +381,11 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
         <MicButton
           listening={listening}
           onClick={toggle}
-          label={listening ? 'Stop voice entry' : 'Add items by voice'}
+          label={listening ? 'Stop voice' : 'Manage items by voice'}
         />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-semibold text-slate-900">Add items by voice</h2>
+            <h2 className="font-semibold text-slate-900">Manage items by voice</h2>
             <select
               value={lang}
               onChange={(event) => changeLang(event.target.value as VoiceLang)}
@@ -313,15 +398,21 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
                 </option>
               ))}
             </select>
-            {saving && <span className="text-xs text-slate-400">saving…</span>}
+            {busy && <span className="text-xs text-slate-400">working…</span>}
           </div>
 
           <p className="mt-1 text-sm text-slate-600">
             {listening
-              ? interim || 'Listening… say the item, size, then the price.'
-              : 'Tap the mic, then say one item per sentence.'}
+              ? interim || 'Listening… add a price, mark out of stock, or remove.'
+              : 'Tap the mic, then say one instruction per sentence.'}
           </p>
-          <p className="mt-1 text-xs text-slate-400">{EXAMPLES[lang]}</p>
+          <ul className="mt-1 space-y-0.5 text-xs text-slate-400">
+            {EXAMPLES[lang].map((example, index) => (
+              <li key={example}>
+                {['Add / re-price', 'Out of stock', 'Remove'][index]}: {example}
+              </li>
+            ))}
+          </ul>
 
           {errorCode && <p className="mt-2 text-sm text-red-600">{VOICE_ERRORS[errorCode]}</p>}
         </div>
@@ -330,9 +421,7 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
       {pending && (
         <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
           <p className="text-sm text-amber-900">
-            Heard “{pending.heard}”. Did you mean{' '}
-            <strong>{labelOf(pending.draft.matched ?? pending.draft)}</strong> at{' '}
-            <strong>{formatRupees(pending.draft.price)}</strong>?
+            Heard “{pending.heard}”. <strong>{describe(pending.command)}</strong>?
           </p>
           <p className="mt-1 text-xs text-amber-700">Say “yes” or “no”, or tap below.</p>
           <div className="mt-2 flex gap-2">
@@ -341,10 +430,10 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
               onClick={() => {
                 const confirmed = pending;
                 setPending(null);
-                void save(confirmed.draft, confirmed.heard);
+                void run(confirmed.command, confirmed.heard);
               }}
             >
-              Yes, save
+              Yes
             </Button>
             <Button variant="secondary" size="sm" onClick={() => setPending(null)}>
               No
@@ -360,12 +449,12 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
               <span
                 className={clsx(
                   'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
-                  entry.status === 'saved' && 'bg-green-50 text-green-700',
+                  entry.status === 'done' && 'bg-green-50 text-green-700',
                   entry.status === 'rejected' && 'bg-amber-50 text-amber-700',
                   entry.status === 'failed' && 'bg-red-50 text-red-700',
                 )}
               >
-                {entry.status === 'saved' ? 'Added' : entry.status === 'rejected' ? 'Unclear' : 'Failed'}
+                {entry.status === 'done' ? 'Done' : entry.status === 'rejected' ? 'Unclear' : 'Failed'}
               </span>
               <span className="min-w-0 flex-1 text-slate-700">
                 {entry.detail}
@@ -385,7 +474,7 @@ export function VoiceItemAdder({ slug, items }: { slug: string; items: AdminItem
         </ul>
       )}
 
-      {log.some((entry) => entry.status !== 'saved') && (
+      {log.some((entry) => entry.status !== 'done') && (
         <button
           type="button"
           onClick={() => setLog([])}

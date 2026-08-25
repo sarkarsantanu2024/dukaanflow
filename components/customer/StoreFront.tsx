@@ -10,6 +10,7 @@ import { VoiceOrder } from './VoiceOrder';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
+import { translateCategory } from '@/lib/speech';
 
 const LOCALE_STORAGE_KEY = 'dukaanflow:locale';
 
@@ -141,7 +142,12 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
 
               {categories.length > 0 && (
                 <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                  {[{ value: '', label: t.all }, ...categories.map((c) => ({ value: c, label: c }))].map(
+                  {[
+                    { value: '', label: t.all },
+                    // The value stays the stored category so filtering still
+                    // works; only what the shopper reads is translated.
+                    ...categories.map((c) => ({ value: c, label: translateCategory(c, locale) })),
+                  ].map(
                     (option) => (
                       <button
                         key={option.value || 'all'}

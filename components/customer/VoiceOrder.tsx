@@ -125,8 +125,12 @@ export function VoiceOrder({
         return;
       }
 
-      setFeedback(`${words.voiceNotHeard} — “${alternatives[0] ?? ''}”`);
-      announce(words.voiceNotHeard);
+      // "not in this shop" and "did not understand you" are different failures
+      // and lead the shopper to different next moves, so they are not merged.
+      const heard = (alternatives[0] ?? '').trim();
+      const message = heard ? words.voiceNotInShop : words.voiceNotHeard;
+      setFeedback(heard ? `“${heard}” — ${message}` : message);
+      announce(message);
     },
     [announce, accept],
   );

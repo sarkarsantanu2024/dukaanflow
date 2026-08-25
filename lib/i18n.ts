@@ -51,6 +51,7 @@ type Dictionary = {
   voiceHint: string;
   voiceAdded: string;
   voiceNotHeard: string;
+  voiceNotInShop: string;
   voiceDenied: string;
   voiceUnavailable: string;
   voiceDidYouMean: string;
@@ -97,6 +98,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceHint: 'Tap the mic and say “two kg rice and one packet salt”',
     voiceAdded: 'added to cart',
     voiceNotHeard: 'Could not find that item. Please say it again.',
+    voiceNotInShop: 'This shop does not have that item.',
     voiceDenied: 'Microphone blocked. Allow mic access for this site.',
     voiceUnavailable: 'Voice is not available on this browser. Please tap Add instead.',
     voiceDidYouMean: 'Did you mean',
@@ -141,6 +143,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceHint: 'মাইকে চাপ দিয়ে বলুন “দুই কেজি চাল আর এক প্যাকেট নুন”',
     voiceAdded: 'কার্টে যোগ হয়েছে',
     voiceNotHeard: 'জিনিসটি খুঁজে পাইনি। আবার বলুন।',
+    voiceNotInShop: 'এই দোকানে সেই জিনিসটি নেই।',
     voiceDenied: 'মাইক্রোফোন বন্ধ। এই সাইটে মাইক ব্যবহারের অনুমতি দিন।',
     voiceUnavailable: 'এই ব্রাউজারে ভয়েস কাজ করছে না। “যোগ করুন” চাপুন।',
     voiceDidYouMean: 'আপনি কি বলতে চেয়েছেন',
@@ -185,6 +188,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceHint: 'माइक दबाकर बोलिए “दो किलो चावल और एक पैकेट नमक”',
     voiceAdded: 'कार्ट में जोड़ दिया',
     voiceNotHeard: 'यह सामान नहीं मिला। दोबारा बोलिए।',
+    voiceNotInShop: 'इस दुकान में यह सामान नहीं है।',
     voiceDenied: 'माइक्रोफ़ोन बंद है। इस साइट को माइक की अनुमति दें।',
     voiceUnavailable: 'इस ब्राउज़र में आवाज़ काम नहीं कर रही। “जोड़ें” दबाइए।',
     voiceDidYouMean: 'क्या आपका मतलब है',
