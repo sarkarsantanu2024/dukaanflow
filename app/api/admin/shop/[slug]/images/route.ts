@@ -25,8 +25,8 @@ export async function PATCH(request: Request, { params }: Context) {
   const parsed = shopImagesSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { imageData, ownerImageData } = parsed.data;
-  if (imageData === undefined && ownerImageData === undefined) {
+  const { imageData, ownerImageData, upiQrData } = parsed.data;
+  if (imageData === undefined && ownerImageData === undefined && upiQrData === undefined) {
     return fail('Nothing to update', 400);
   }
 
@@ -35,6 +35,7 @@ export async function PATCH(request: Request, { params }: Context) {
     data: {
       ...(imageData === undefined ? {} : { imageData }),
       ...(ownerImageData === undefined ? {} : { ownerImageData }),
+      ...(upiQrData === undefined ? {} : { upiQrData }),
     },
   });
 

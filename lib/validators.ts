@@ -184,6 +184,7 @@ const imageDataSchema = z
 export const shopImagesSchema = z.object({
   imageData: imageDataSchema.optional(),
   ownerImageData: imageDataSchema.optional(),
+  upiQrData: imageDataSchema.optional(),
 });
 
 /** Flattens a ZodError into `{ field: message }` for the client. */

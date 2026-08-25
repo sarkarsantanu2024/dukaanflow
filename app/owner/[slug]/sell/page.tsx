@@ -53,6 +53,7 @@ export default async function SellPage({ params }: PageProps) {
         slug={shop.slug}
         shopName={shop.name}
         upiId={shop.upiId}
+        upiQrData={shop.upiQrData}
         items={items}
         locale={locale}
         todayTotal={today._sum.totalAmount ?? 0}

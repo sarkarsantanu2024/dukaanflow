@@ -7,7 +7,7 @@ export default function NewShopPage() {
   return (
     <div className="min-h-dvh bg-slate-100">
       <AdminHeader title="Add shop" backHref="/admin" />
-      <main className="mx-auto max-w-lg px-4 py-6">
+      <main className="mx-auto max-w-3xl px-4 py-6">
         <ShopForm />
       </main>
     </div>

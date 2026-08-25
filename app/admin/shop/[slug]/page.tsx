@@ -7,7 +7,6 @@ import { QrPanel } from '@/components/admin/QrPanel';
 import { DeleteShopButton } from '@/components/admin/DeleteShopButton';
 import { OwnerAccessPanel } from '@/components/admin/OwnerAccessPanel';
 import { SubscriptionPanel } from '@/components/admin/SubscriptionPanel';
-import { ShopPhotos } from '@/components/admin/ShopPhotos';
 import { shopEntitlement } from '@/lib/billing';
 import { formatRupees } from '@/lib/money';
 import { baseUrl } from '@/lib/qr';
@@ -36,6 +35,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
       locale: true,
       imageData: true,
       ownerImageData: true,
+      upiQrData: true,
       plan: true,
       subscriptionStatus: true,
       trialEndsAt: true,
@@ -83,7 +83,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
         </Link>
       </AdminHeader>
 
-      <main className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-6">
         <QrPanel slug={shop.slug} shopName={shop.name} upiId={shop.upiId} />
 
         <section>
@@ -91,6 +91,11 @@ export default async function ShopDetailPage({ params }: PageProps) {
             Shop details
           </h2>
           <ShopForm
+            initialImages={{
+              imageData: shop.imageData,
+              ownerImageData: shop.ownerImageData,
+              upiQrData: shop.upiQrData,
+            }}
             editingSlug={shop.slug}
             initial={{
               name: shop.name,
@@ -123,12 +128,6 @@ export default async function ShopDetailPage({ params }: PageProps) {
               method: payment.method,
             })),
           }}
-        />
-
-        <ShopPhotos
-          slug={shop.slug}
-          imageData={shop.imageData}
-          ownerImageData={shop.ownerImageData}
         />
 
         <OwnerAccessPanel
