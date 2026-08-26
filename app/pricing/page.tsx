@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PLAN_ORDER, PLAN_SPECS, TRIAL_DAYS, formatPlanPrice } from '@/lib/plans';
+import { ShopArt } from '@/components/ui/ShopArt';
 
 export const metadata: Metadata = {
   title: 'DukaanFlow — Pricing',
@@ -25,16 +26,21 @@ export default function PricingPage() {
   return (
     <main className="min-h-dvh bg-slate-50">
       <header className="bg-gradient-to-br from-brand-700 to-brand-600 px-4 py-12 text-white">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">DukaanFlow</p>
-          <h1 className="mt-2 text-3xl font-bold leading-tight sm:text-4xl">
-            One price per shop. Never a cut of your orders.
-          </h1>
-          <p className="mt-3 max-w-xl text-white/85">
-            You pay for how many items you list — nothing else. Orders, customers and QR scans are
-            unlimited on every plan, because charging a shop more for selling more is not a
-            partnership.
-          </p>
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-8 md:flex-row">
+          <div className="flex-1">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">DukaanFlow</p>
+            <h1 className="mt-2 text-3xl font-bold leading-tight sm:text-4xl">
+              One price per shop. Never a cut of your orders.
+            </h1>
+            <p className="mt-3 max-w-xl text-white/85">
+              You pay for how many items you list — nothing else. Orders, customers and QR scans are
+              unlimited on every plan, because charging a shop more for selling more is not a
+              partnership.
+            </p>
+          </div>
+          <div className="w-full max-w-xs shrink-0 rounded-2xl bg-white/10 p-4 backdrop-blur md:w-80">
+            <ShopArt className="h-44 w-full" />
+          </div>
         </div>
       </header>
 

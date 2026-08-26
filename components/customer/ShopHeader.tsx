@@ -3,6 +3,7 @@
 import { SHOP_TYPE_LABELS } from '@/lib/validators';
 import { upiPayUrl } from '@/lib/qr';
 import { LangToggle } from './LangToggle';
+import { PinIcon, RupeeIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import type { Locale } from '@/lib/i18n';
 
 export type ShopSummary = {
@@ -64,23 +65,30 @@ export function ShopHeader({
           />
         )}
 
-        {shop.address && <p className="text-sm text-white/85">📍 {shop.address}</p>}
+        {shop.address && (
+          <p className="flex items-start gap-1.5 text-sm text-white/85">
+            <PinIcon className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{shop.address}</span>
+          </p>
+        )}
 
         <div className="flex flex-wrap gap-2">
           <a
             href={`https://wa.me/91${shop.phone}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25"
           >
-            💬 +91 {shop.phone}
+            <WhatsAppIcon className="h-4 w-4" />
+            +91 {shop.phone}
           </a>
           {shop.upiId && (
             <a
               href={upiPayUrl(shop.upiId, shop.name)}
-              className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25"
             >
-              ₹ {payLabel}
+              <RupeeIcon className="h-4 w-4" />
+              {payLabel}
             </a>
           )}
         </div>

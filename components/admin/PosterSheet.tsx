@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Button } from '@/components/ui/Button';
+import { PrinterIcon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { shopUrl, upiPayUrl } from '@/lib/qr';
 
@@ -108,7 +109,10 @@ export function PosterSheet({
   return (
     <div className="space-y-4">
       <div className="no-print flex flex-wrap gap-2">
-        <Button onClick={() => window.print()}>🖨 Print A4 poster</Button>
+        <Button onClick={() => window.print()}>
+          <PrinterIcon className="h-4 w-4" />
+          Print A4 poster
+        </Button>
         <Button variant="secondary" onClick={downloadPdf} loading={exporting}>
           Download PDF
         </Button>
