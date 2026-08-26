@@ -36,7 +36,7 @@ export default async function ItemsPage({ params }: PageProps) {
   if (!shop) notFound();
 
   return (
-    <div className="min-h-dvh bg-slate-100">
+    <>
       <AdminHeader title={`${shop.name} — Items`} backHref="/admin">
         <Link
           href={`/admin/shop/${shop.slug}`}
@@ -46,10 +46,10 @@ export default async function ItemsPage({ params }: PageProps) {
         </Link>
       </AdminHeader>
 
-      <main className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-6 lg:px-6">
         <ItemsManager slug={shop.slug} items={shop.items} />
         <BulkPanel slug={shop.slug} />
       </main>
-    </div>
+    </>
   );
 }

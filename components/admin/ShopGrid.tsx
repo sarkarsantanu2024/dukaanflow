@@ -46,6 +46,13 @@ const PLAN_TONE: Record<ShopRow['planState'], string> = {
 
 type Filter = 'all' | 'attention' | 'paused';
 
+/**
+ * auto-fill rather than a fixed column count: the row keeps filling with 300px
+ * cards for as wide as the window happens to be, instead of three cards
+ * stretching across a desk monitor.
+ */
+const CARD_GRID = 'grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]';
+
 export function ShopGrid({ shops }: { shops: ShopRow[] }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -133,7 +140,7 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
       {filtered.length === 0 ? (
         <EmptyState title="Nothing here" hint="Try a different search or filter." />
       ) : (
-        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul className={CARD_GRID}>
           {filtered.map((shop) => (
             <li
               key={shop.id}

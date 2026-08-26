@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { AdminChrome } from '@/components/admin/AdminChrome';
 
 /**
  * Links the manifest on admin pages only. The customer shop page is left
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <AdminChrome>{children}</AdminChrome>;
 }
