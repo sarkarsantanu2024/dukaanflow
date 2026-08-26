@@ -47,6 +47,13 @@ enum SubStatus {
   CANCELLED
 }
 
+/// DEBIT — the customer took goods and owes more.
+/// CREDIT — the customer paid some of it back.
+enum LedgerKind {
+  DEBIT
+  CREDIT
+}
+
 model Shop {
   id        String   @id @default(uuid()) @db.Uuid
   name      String
@@ -90,10 +97,12 @@ model Shop {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items    Item[]
-  orders   Order[]
-  sales    Sale[]
-  payments Payment[]
+  items     Item[]
+  orders    Order[]
+  sales     Sale[]
+  payments  Payment[]
+  customers Customer[]
+  ledger    LedgerEntry[]
 
   @@index([active])
   @@index([subscriptionStatus])
@@ -138,6 +147,48 @@ model Sale {
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@index([shopId, createdAt])
+}
+
+/// A named regular of one shop, keyed by phone.
+///
+/// Exists for udhaar — the credit book every kirana already keeps on paper —
+/// and, later, for telling those regulars what is cooking today. Scoped to a
+/// single shop on purpose: one shopkeeper's customer list is not another's, and
+/// DukaanFlow is not in the business of pooling them.
+model Customer {
+  id        String   @id @default(uuid()) @db.Uuid
+  shopId    String   @db.Uuid
+  name      String   @default("")
+  phone     String // 10-digit Indian mobile, digits only
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop   Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  ledger LedgerEntry[]
+
+  @@unique([shopId, phone])
+  @@index([shopId, name])
+}
+
+/// One line of the credit book. The balance is always derived by summing these,
+/// never stored: a running total that can drift from its own history is how a
+/// paper khata starts an argument, and the whole point is to end those.
+model LedgerEntry {
+  id         String     @id @default(uuid()) @db.Uuid
+  shopId     String     @db.Uuid
+  customerId String     @db.Uuid
+  kind       LedgerKind
+  amount     Int // INTEGER RUPEES, always positive
+  note       String     @default("")
+  /// Set when the entry came from a counter sale rung up on credit.
+  saleId     String?    @db.Uuid
+  createdAt  DateTime   @default(now())
+
+  shop     Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
+  @@index([customerId, createdAt])
 }
 
 model Item {

@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { saleSchema } from '@/lib/validators';
+import { upsertCustomer } from '@/lib/khata';
 
 export const runtime = 'nodejs';
 
@@ -25,7 +26,14 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = saleSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { items, paymentMode } = parsed.data;
+  const { items, paymentMode, customerPhone, customerName } = parsed.data;
+
+  // Goods leaving on credit need somebody to owe for them.
+  if (paymentMode === 'KHATA' && !customerPhone) {
+    return fail('Choose who the udhaar is for', 422, {
+      customerPhone: 'Whose khata is this?',
+    });
+  }
 
   const rows = await prisma.item.findMany({
     where: { shopId: shop.id, id: { in: items.map((line) => line.itemId) } },
@@ -57,6 +65,21 @@ export async function POST(request: Request, { params }: Context) {
     data: { shopId: shop.id, itemsJson: lines, totalAmount, paymentMode },
     select: { id: true, totalAmount: true, createdAt: true },
   });
+
+  // One action at the counter, two records: the sale, and what is now owed.
+  if (paymentMode === 'KHATA' && customerPhone) {
+    const customer = await upsertCustomer(shop.id, customerPhone, customerName);
+    await prisma.ledgerEntry.create({
+      data: {
+        shopId: shop.id,
+        customerId: customer.id,
+        kind: 'DEBIT',
+        amount: totalAmount,
+        note: lines.map((line) => `${line.name} x${line.quantity}`).join(', ').slice(0, 120),
+        saleId: sale.id,
+      },
+    });
+  }
 
   return ok(sale, 201);
 }

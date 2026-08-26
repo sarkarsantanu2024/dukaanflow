@@ -61,6 +61,7 @@ export function SellScreen({
   locale,
   todayTotal,
   todayCount,
+  customers,
 }: {
   slug: string;
   shopName: string;
@@ -70,6 +71,8 @@ export function SellScreen({
   locale: Locale;
   todayTotal: number;
   todayCount: number;
+  /** Regulars already in the khata, so udhaar is a tap not a typing job. */
+  customers: { id: string; name: string; phone: string }[];
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -79,6 +82,7 @@ export function SellScreen({
   const [query, setQuery] = useState('');
   const [paying, setPaying] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [khata, setKhata] = useState<{ name: string; phone: string } | null>(null);
 
   const sellable = useMemo(() => items.filter((item) => item.inStock), [items]);
 
@@ -118,7 +122,8 @@ export function SellScreen({
     });
   }
 
-  async function record(paymentMode: 'CASH' | 'UPI') {
+  async function record(paymentMode: 'CASH' | 'UPI' | 'KHATA') {
+    if (paymentMode === 'KHATA' && !khata?.phone) return;
     setSaving(true);
     try {
       const response = await fetch(`/api/admin/shop/${slug}/sale`, {
@@ -127,6 +132,9 @@ export function SellScreen({
         body: JSON.stringify({
           items: lines.map((line) => ({ itemId: line.item.id, quantity: line.quantity })),
           paymentMode,
+          ...(paymentMode === 'KHATA' && khata
+            ? { customerPhone: khata.phone, customerName: khata.name }
+            : {}),
         }),
       });
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
@@ -138,6 +146,7 @@ export function SellScreen({
 
       setCart({});
       setPaying(false);
+      setKhata(null);
       push(t.sellRecorded, 'success');
       router.refresh();
     } catch {
@@ -302,7 +311,7 @@ export function SellScreen({
               </div>
             ) : null}
 
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-3 gap-2">
               <button
                 type="button"
                 disabled={saving}
@@ -319,7 +328,76 @@ export function SellScreen({
               >
                 {t.sellUpi}
               </button>
+              {/* Goods leaving on credit is a payment mode here, because at the
+                  counter that is exactly what it is — the third thing that can
+                  happen when the customer is ready to go. */}
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setKhata(khata ?? { name: '', phone: '' })}
+                className={clsx(
+                  'h-12 rounded-xl border font-semibold disabled:opacity-50',
+                  khata
+                    ? 'border-amber-500 bg-amber-50 text-amber-800'
+                    : 'border-slate-300 text-slate-800',
+                )}
+              >
+                {t.sellKhata}
+              </button>
             </div>
+
+            {khata && (
+              <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
+                <p className="text-sm font-semibold text-amber-900">{t.sellWhoseKhata}</p>
+
+                {customers.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {customers.slice(0, 8).map((customer) => (
+                      <button
+                        key={customer.id}
+                        type="button"
+                        onClick={() => setKhata({ name: customer.name, phone: customer.phone })}
+                        className={clsx(
+                          'rounded-full border px-3 py-1 text-sm font-medium',
+                          khata.phone === customer.phone
+                            ? 'border-amber-600 bg-amber-600 text-white'
+                            : 'border-amber-300 bg-white text-amber-900',
+                        )}
+                      >
+                        {customer.name || customer.phone}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <input
+                    value={khata.name}
+                    onChange={(event) => setKhata({ ...khata, name: event.target.value })}
+                    placeholder={t.khataCustomer}
+                    aria-label={t.khataCustomer}
+                    className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-base"
+                  />
+                  <input
+                    value={khata.phone}
+                    onChange={(event) => setKhata({ ...khata, phone: event.target.value })}
+                    inputMode="numeric"
+                    placeholder={t.khataPhone}
+                    aria-label={t.khataPhone}
+                    className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-base"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  disabled={saving || khata.phone.replace(/\D/g, '').length < 10}
+                  onClick={() => record('KHATA')}
+                  className="mt-2 h-11 w-full rounded-xl bg-amber-600 font-semibold text-white disabled:opacity-50"
+                >
+                  {t.sellKhata} · {formatRupees(total)}
+                </button>
+              </div>
+            )}
 
             <button
               type="button"

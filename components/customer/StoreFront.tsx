@@ -7,6 +7,7 @@ import { ItemCard, itemName, type CustomerItem } from './ItemCard';
 import { CartBar } from './CartBar';
 import { CheckoutSheet, type CheckoutSubmit } from './CheckoutSheet';
 import { VoiceOrder } from './VoiceOrder';
+import { RepeatOrder, rememberOrder } from './RepeatOrder';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
@@ -110,6 +111,9 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         return;
       }
 
+      // Remembered before the cart is cleared, so the next visit can offer it.
+      rememberOrder(shop.slug, cart);
+
       push(t.openingWhatsApp, 'success');
       setCheckoutOpen(false);
       setCart({});
@@ -173,6 +177,19 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
                 shopper speaking an item should never be blocked by a search
                 term still sitting in the box. */}
             <VoiceOrder items={items} locale={locale} onAdd={addQuantity} />
+
+            {/* Offered only while the cart is empty — once a shopper has begun
+                choosing, suggesting they start over is noise. */}
+            {totalItems === 0 && (
+              <RepeatOrder
+                slug={shop.slug}
+                items={items}
+                locale={locale}
+                onRepeat={(lines) => {
+                  for (const line of lines) addQuantity(line.id, line.quantity);
+                }}
+              />
+            )}
 
             {visibleItems.length === 0 ? (
               <div className="pt-6">

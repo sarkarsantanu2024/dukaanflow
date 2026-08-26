@@ -285,8 +285,27 @@ note.
 with search and inline prices. The typed form starts folded away behind “type
 instead”, because on a phone the mic is the primary control.
 
+**Khata** — the udhaar book. The most-asked-for thing in this market, and built
+to look like the paper book it replaces: a name, what they took, what they paid,
+what is left. Two verbs — *gave goods* and *got payment* — because that is the
+whole vocabulary a shopkeeper uses for it. Selling on credit is a payment mode
+at the till, so goods leaving on udhaar records the sale and the debt in one
+action. Each name carries a WhatsApp reminder with the amount already written.
+
+Balances are always summed from entries and never stored: a running total that
+can drift from its own history is how a paper khata starts an argument, and
+ending those is the point. The book is also **not gated on the subscription** —
+locking a shopkeeper out of their own debts over a late payment would be
+indefensible.
+
 **Orders** — what arrived from the QR. Orders still land on WhatsApp; this turns
 that thread into a worklist the owner can mark off.
+
+**Today's menu** sits on the till: tick what is ready, and it writes the message
+with prices and the shop link. It is a composer, not a sender — WhatsApp will
+not let a web page message many people at once, only the paid Business API does
+that. So it copies out for a Broadcast List the shopkeeper already knows how to
+use, or sends to one saved regular at a time.
 
 Everything an owner reads is in their own language, stored on the shop so it
 follows them to any phone: [`lib/owner-i18n.ts`](lib/owner-i18n.ts). The Super
@@ -448,6 +467,12 @@ so the mic simply does not render there and the typed flows are untouched.
 Failures are separated rather than lumped into one "blocked" message: a denied
 permission, a page served over plain `http://`, a managed Chrome profile
 refusing the speech service, and a dead network each say what they are.
+
+**Same as last time** — a returning shopper is offered their previous basket in
+one tap, since that is how a kirana actually works. The last order is kept in
+that browser's own storage, not looked up on the server: the page has no login,
+and asking for a phone number before showing anything would cost more orders
+than it saves.
 
 Name and address are optional; phone is required and normalised — `+91 98765 43210`,
 `098765-43210` and `9876543210` all validate to the same 10 digits.

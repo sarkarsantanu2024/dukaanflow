@@ -129,6 +129,36 @@ type OwnerDictionary = {
   sellToday: string;
   sellTodayCount: string;
   sellMissingItem: string;
+  sellKhata: string;
+  sellWhoseKhata: string;
+
+  tabKhata: string;
+  khataTitle: string;
+  khataTotal: string;
+  khataNobody: string;
+  khataNobodyHint: string;
+  khataOwes: string;
+  khataAdvance: string;
+  khataSettled: string;
+  khataGave: string;
+  khataGot: string;
+  khataCustomer: string;
+  khataPhone: string;
+  khataAmount: string;
+  khataNote: string;
+  khataSave: string;
+  khataRemind: string;
+  khataHistory: string;
+  khataDelete: string;
+  khataDeleteConfirm: string;
+
+  menuTitle: string;
+  menuHint: string;
+  menuCopy: string;
+  menuCopied: string;
+  menuSendTo: string;
+  menuNoCustomers: string;
+  menuToday: string;
 };
 
 export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
@@ -252,6 +282,36 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellToday: 'Today',
     sellTodayCount: 'sales',
     sellMissingItem: 'Item not in the list? Add it in Items, then come back.',
+    sellKhata: 'Udhaar',
+    sellWhoseKhata: 'Whose khata?',
+
+    tabKhata: 'Khata',
+    khataTitle: 'Udhaar book',
+    khataTotal: 'Total outstanding',
+    khataNobody: 'Nobody owes you anything',
+    khataNobodyHint: 'Add an entry below, or sell on udhaar from the Sell screen.',
+    khataOwes: 'owes',
+    khataAdvance: 'in advance',
+    khataSettled: 'settled',
+    khataGave: 'Gave goods',
+    khataGot: 'Got payment',
+    khataCustomer: 'Name',
+    khataPhone: 'Phone',
+    khataAmount: 'Amount (₹)',
+    khataNote: 'Note',
+    khataSave: 'Save entry',
+    khataRemind: 'Remind on WhatsApp',
+    khataHistory: 'History',
+    khataDelete: 'Remove',
+    khataDeleteConfirm: 'Remove this entry from the book?',
+
+    menuTitle: 'Send today’s menu',
+    menuHint: 'Tell your regulars what is ready today.',
+    menuCopy: 'Copy message',
+    menuCopied: 'Copied — paste it into your WhatsApp broadcast list',
+    menuSendTo: 'Send to',
+    menuNoCustomers: 'No saved customers yet. They are added when you use the khata.',
+    menuToday: 'Available today',
   },
 
   bn: {
@@ -374,6 +434,36 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellToday: 'আজ',
     sellTodayCount: 'বিক্রি',
     sellMissingItem: 'তালিকায় নেই? “জিনিস”-এ গিয়ে যোগ করুন, তারপর ফিরে আসুন।',
+    sellKhata: 'ধার',
+    sellWhoseKhata: 'কার খাতায়?',
+
+    tabKhata: 'খাতা',
+    khataTitle: 'ধারের খাতা',
+    khataTotal: 'মোট বাকি',
+    khataNobody: 'কারও কাছে বাকি নেই',
+    khataNobodyHint: 'নিচে লিখুন, বা “বিক্রি” থেকে ধারে দিন।',
+    khataOwes: 'বাকি',
+    khataAdvance: 'অগ্রিম',
+    khataSettled: 'শোধ',
+    khataGave: 'জিনিস দিলাম',
+    khataGot: 'টাকা পেলাম',
+    khataCustomer: 'নাম',
+    khataPhone: 'ফোন',
+    khataAmount: 'টাকা (₹)',
+    khataNote: 'নোট',
+    khataSave: 'লিখুন',
+    khataRemind: 'হোয়াটসঅ্যাপে মনে করান',
+    khataHistory: 'হিসাব',
+    khataDelete: 'মুছুন',
+    khataDeleteConfirm: 'এই লেখাটি খাতা থেকে মুছে দেবেন?',
+
+    menuTitle: 'আজকের তালিকা পাঠান',
+    menuHint: 'নিয়মিত খদ্দেরদের জানান আজ কী আছে।',
+    menuCopy: 'লেখা কপি করুন',
+    menuCopied: 'কপি হয়েছে — হোয়াটসঅ্যাপ ব্রডকাস্টে পেস্ট করুন',
+    menuSendTo: 'পাঠান',
+    menuNoCustomers: 'এখনও কোনো খদ্দের নেই। খাতা ব্যবহার করলে যোগ হবে।',
+    menuToday: 'আজ আছে',
   },
 
   hi: {
@@ -496,6 +586,36 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellToday: 'आज',
     sellTodayCount: 'बिक्री',
     sellMissingItem: 'सूची में नहीं है? “सामान” में जाकर जोड़िए, फिर लौटिए।',
+    sellKhata: 'उधार',
+    sellWhoseKhata: 'किसके खाते में?',
+
+    tabKhata: 'खाता',
+    khataTitle: 'उधार खाता',
+    khataTotal: 'कुल बाकी',
+    khataNobody: 'किसी पर कुछ बाकी नहीं',
+    khataNobodyHint: 'नीचे लिखिए, या “बिक्री” से उधार पर दीजिए।',
+    khataOwes: 'बाकी',
+    khataAdvance: 'अग्रिम',
+    khataSettled: 'चुकता',
+    khataGave: 'सामान दिया',
+    khataGot: 'पैसा मिला',
+    khataCustomer: 'नाम',
+    khataPhone: 'फ़ोन',
+    khataAmount: 'रकम (₹)',
+    khataNote: 'नोट',
+    khataSave: 'लिखें',
+    khataRemind: 'व्हाट्सएप पर याद दिलाएँ',
+    khataHistory: 'हिसाब',
+    khataDelete: 'हटाएँ',
+    khataDeleteConfirm: 'यह लिखा खाते से हटा दें?',
+
+    menuTitle: 'आज की सूची भेजें',
+    menuHint: 'अपने नियमित ग्राहकों को बताइए आज क्या है।',
+    menuCopy: 'संदेश कॉपी करें',
+    menuCopied: 'कॉपी हो गया — व्हाट्सएप ब्रॉडकास्ट में पेस्ट कीजिए',
+    menuSendTo: 'भेजें',
+    menuNoCustomers: 'अभी कोई ग्राहक नहीं। खाता इस्तेमाल करने पर जुड़ेंगे।',
+    menuToday: 'आज उपलब्ध',
   },
 };
 
