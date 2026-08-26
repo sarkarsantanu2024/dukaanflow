@@ -25,7 +25,7 @@ export default async function PosterPage({ params }: PageProps) {
   if (!shop) notFound();
 
   return (
-    <div className="min-h-dvh bg-slate-100">
+    <>
       <AdminHeader title={`${shop.name} — QR poster`} backHref={`/admin/shop/${shop.slug}`} />
       <main className="mx-auto max-w-3xl px-4 py-6">
         <PosterSheet
@@ -37,6 +37,6 @@ export default async function PosterPage({ params }: PageProps) {
           upiQrData={shop.upiQrData}
         />
       </main>
-    </div>
+    </>
   );
 }

@@ -68,7 +68,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
   const billing = await shopEntitlement(shop.id);
 
   return (
-    <div className="min-h-dvh bg-slate-100">
+    <>
       <AdminHeader title={shop.name} backHref="/admin">
         <Link
           href={`/admin/shop/${shop.slug}/items`}
@@ -85,13 +85,12 @@ export default async function ShopDetailPage({ params }: PageProps) {
         </Link>
       </AdminHeader>
 
-      <main className="mx-auto max-w-4xl space-y-6 px-4 py-6">
-        <QrPanel slug={shop.slug} shopName={shop.name} upiId={shop.upiId} />
-
-        <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Shop details
-          </h2>
+      {/* Editing on the left, reference on the right. The QR, the plan and the
+          owner's access are things you look at while changing something else,
+          so stacking them above the form pushed the form off the screen and
+          left the width empty either side. */}
+      <main className="grid items-start gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:px-6">
+        <div className="min-w-0 space-y-6">
           <ShopForm
             initialImages={{
               imageData: shop.imageData,
@@ -111,9 +110,12 @@ export default async function ShopDetailPage({ params }: PageProps) {
               active: shop.active,
             }}
           />
-        </section>
+        </div>
 
-        <SubscriptionPanel
+        <div className="space-y-6 lg:sticky lg:top-[4.25rem]">
+          <QrPanel slug={shop.slug} shopName={shop.name} upiId={shop.upiId} />
+
+          <SubscriptionPanel
           slug={shop.slug}
           state={{
             plan: shop.plan,
@@ -132,14 +134,15 @@ export default async function ShopDetailPage({ params }: PageProps) {
           }}
         />
 
-        <OwnerAccessPanel
-          slug={shop.slug}
-          baseUrl={baseUrl()}
-          hasPin={Boolean(shop.ownerPinHash)}
-          setAt={shop.ownerPinSetAt ? shop.ownerPinSetAt.toLocaleDateString('en-IN') : null}
-        />
+          <OwnerAccessPanel
+            slug={shop.slug}
+            baseUrl={baseUrl()}
+            hasPin={Boolean(shop.ownerPinHash)}
+            setAt={shop.ownerPinSetAt ? shop.ownerPinSetAt.toLocaleDateString('en-IN') : null}
+          />
+        </div>
 
-        <section>
+        <section className="min-w-0 lg:col-span-2">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
             Recent orders ({shop._count.orders})
           </h2>
@@ -179,6 +182,6 @@ export default async function ShopDetailPage({ params }: PageProps) {
           <DeleteShopButton slug={shop.slug} shopName={shop.name} />
         </section>
       </main>
-    </div>
+    </>
   );
 }

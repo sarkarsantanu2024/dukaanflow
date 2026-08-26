@@ -102,7 +102,7 @@ export default async function AdminDashboard() {
   const orders = rows.reduce((sum, row) => sum + row.orderCount, 0);
 
   return (
-    <div className="min-h-dvh bg-slate-100">
+    <>
       <AdminHeader title="Shops">
         <Link
           href="/admin/shops/new"
@@ -113,7 +113,7 @@ export default async function AdminDashboard() {
         </Link>
       </AdminHeader>
 
-      <main className="mx-auto max-w-6xl px-4 py-5">
+      <main className="px-4 py-5 lg:px-6">
         {/* One strip rather than four tall cards. These numbers are context, not
             the point of the page, and they were taking up a third of it. */}
         <dl className="mb-5 flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl bg-white px-5 py-4 shadow-card">
@@ -126,7 +126,7 @@ export default async function AdminDashboard() {
 
         <ShopGrid shops={rows} />
       </main>
-    </div>
+    </>
   );
 }
 

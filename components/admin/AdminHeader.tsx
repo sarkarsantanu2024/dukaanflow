@@ -33,8 +33,8 @@ export function AdminHeader({
   }
 
   return (
-    <header className="no-print border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
+    <header className="no-print sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="flex flex-wrap items-center gap-3 px-4 py-3 lg:px-6">
         {backHref && (
           <Link
             href={backHref}
