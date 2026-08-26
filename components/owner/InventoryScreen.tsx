@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { ItemsManager, type AdminItem } from '@/components/admin/ItemsManager';
 import { StarterPicker } from './StarterPicker';
 import { ownerDict } from '@/lib/owner-i18n';
+import { VoiceArt } from '@/components/ui/ShopArt';
 import { formatRupees } from '@/lib/money';
 import type { StarterItem } from '@/lib/starter-catalogue';
 import type { Locale } from '@/lib/i18n';
@@ -43,6 +44,7 @@ export function InventoryScreen({
   if (welcome) {
     return (
       <section className="rounded-2xl bg-white p-6 shadow-card">
+        <VoiceArt className="mx-auto mb-4 h-28 w-auto max-w-[16rem]" />
         <h2 className="text-xl font-bold text-slate-900">{t.welcomeTitle}</h2>
         <p className="mt-2 text-slate-600">{t.welcomeBody}</p>
         <div className="mt-5 flex flex-wrap gap-2">

@@ -84,15 +84,15 @@ export function ShopRowActions({
         type="button"
         onClick={toggleActive}
         disabled={busy}
-        className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        className="rounded-md px-2 py-1 font-semibold text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline disabled:opacity-50"
       >
-        {active ? 'Deactivate' : 'Activate'}
+        {active ? 'Pause' : 'Activate'}
       </button>
       <button
         type="button"
         onClick={remove}
         disabled={busy}
-        className="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+        className="rounded-md px-2 py-1 font-semibold text-slate-400 underline-offset-2 hover:text-red-600 hover:underline disabled:opacity-50"
       >
         Delete
       </button>

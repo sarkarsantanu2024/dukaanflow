@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { AdminHeader } from '@/components/admin/AdminHeader';
+import { PrinterIcon } from '@/components/ui/Icon';
 import { ShopForm } from '@/components/admin/ShopForm';
 import { QrPanel } from '@/components/admin/QrPanel';
 import { DeleteShopButton } from '@/components/admin/DeleteShopButton';
@@ -79,7 +80,8 @@ export default async function ShopDetailPage({ params }: PageProps) {
           href={`/admin/shop/${shop.slug}/poster`}
           className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
-          🖨 QR poster
+          <PrinterIcon className="h-4 w-4" />
+          QR poster
         </Link>
       </AdminHeader>
 

@@ -24,6 +24,11 @@ async function loadShop(slug: string) {
       imageData: true,
       ownerImageData: true,
       items: {
+        // Starter-catalogue rows land at Re 1 and out of stock so the owner can
+        // set a real price before anyone sees them. Until they do, they are not
+        // a product — showing a customer "Atta — Rs 1 — out of stock" makes a
+        // working shop look broken.
+        where: { NOT: { price: { lte: 1 }, inStock: false } },
         orderBy: [{ category: 'asc' }, { inStock: 'desc' }, { name: 'asc' }],
         select: {
           id: true,
