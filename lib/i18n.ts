@@ -57,6 +57,10 @@ type Dictionary = {
   voiceDidYouMean: string;
   voiceYes: string;
   voiceNo: string;
+  repeatTitle: string;
+  repeatHint: string;
+  repeatAdd: string;
+  repeatDismiss: string;
 };
 
 export const DICTIONARIES: Record<Locale, Dictionary> = {
@@ -101,6 +105,10 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceNotInShop: 'This shop does not have that item.',
     voiceDenied: 'Microphone blocked. Allow mic access for this site.',
     voiceUnavailable: 'Voice is not available on this browser. Please tap Add instead.',
+    repeatTitle: 'Same as last time?',
+    repeatHint: 'Your last order from this shop',
+    repeatAdd: 'Add all',
+    repeatDismiss: 'No, start fresh',
     voiceDidYouMean: 'Did you mean',
     voiceYes: 'Yes, add',
     voiceNo: 'No',
@@ -146,6 +154,10 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceNotInShop: 'এই দোকানে সেই জিনিসটি নেই।',
     voiceDenied: 'মাইক্রোফোন বন্ধ। এই সাইটে মাইক ব্যবহারের অনুমতি দিন।',
     voiceUnavailable: 'এই ব্রাউজারে ভয়েস কাজ করছে না। “যোগ করুন” চাপুন।',
+    repeatTitle: 'আগের বারের মতোই?',
+    repeatHint: 'এই দোকানে আপনার শেষ অর্ডার',
+    repeatAdd: 'সব যোগ করুন',
+    repeatDismiss: 'না, নতুন করে',
     voiceDidYouMean: 'আপনি কি বলতে চেয়েছেন',
     voiceYes: 'হ্যাঁ, যোগ করুন',
     voiceNo: 'না',
@@ -191,6 +203,10 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceNotInShop: 'इस दुकान में यह सामान नहीं है।',
     voiceDenied: 'माइक्रोफ़ोन बंद है। इस साइट को माइक की अनुमति दें।',
     voiceUnavailable: 'इस ब्राउज़र में आवाज़ काम नहीं कर रही। “जोड़ें” दबाइए।',
+    repeatTitle: 'पिछली बार जैसा ही?',
+    repeatHint: 'इस दुकान से आपका पिछला ऑर्डर',
+    repeatAdd: 'सब जोड़ें',
+    repeatDismiss: 'नहीं, नया',
     voiceDidYouMean: 'क्या आपका मतलब है',
     voiceYes: 'हाँ, जोड़ें',
     voiceNo: 'नहीं',

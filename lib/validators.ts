@@ -144,8 +144,27 @@ export const saleSchema = z.object({
     .array(z.object({ itemId: z.string().uuid(), quantity: quantitySchema }))
     .min(1, 'Add at least one item')
     .max(60, 'Too many items in one sale'),
-  paymentMode: z.enum(['CASH', 'UPI']).default('CASH'),
+  // KHATA means the goods left on credit: the sale is recorded and the amount
+  // is added to that customer's udhaar in the same breath.
+  paymentMode: z.enum(['CASH', 'UPI', 'KHATA']).default('CASH'),
+  customerPhone: phoneSchema.optional(),
+  customerName: z.string().trim().max(60).default(''),
 });
+
+/** One line of the credit book. */
+export const ledgerSchema = z.object({
+  customerPhone: phoneSchema,
+  customerName: z.string().trim().max(60).default(''),
+  kind: z.enum(['DEBIT', 'CREDIT']),
+  amount: z
+    .number({ invalid_type_error: 'Enter an amount' })
+    .int('Whole rupees only')
+    .min(1, 'Enter at least ₹1')
+    .max(1000000, 'That looks too large'),
+  note: z.string().trim().max(120).default(''),
+});
+
+export const ledgerDeleteSchema = z.object({ id: z.string().uuid('Unknown entry') });
 
 export const orderStatusSchema = z.object({
   id: z.string().uuid('Unknown order'),

@@ -19,7 +19,7 @@ import { PlanBanner, type PlanState } from './PlanBanner';
 import { OpenInChromeNotice } from './OpenInChromeNotice';
 import { InstallCard } from './InstallCard';
 
-export type OwnerTab = 'sell' | 'inventory' | 'orders';
+export type OwnerTab = 'sell' | 'inventory' | 'khata' | 'orders';
 
 function TabIcon({ tab }: { tab: OwnerTab }) {
   const common = {
@@ -36,6 +36,15 @@ function TabIcon({ tab }: { tab: OwnerTab }) {
         <path d="M3 6h18l-1.6 9.2a2 2 0 0 1-2 1.8H7.6a2 2 0 0 1-2-1.8L4 6" />
         <path d="M9 21h.01M17 21h.01" />
         <path d="M9 10h6" />
+      </svg>
+    );
+  }
+  if (tab === 'khata') {
+    return (
+      <svg viewBox="0 0 24 24" className="h-6 w-6" {...common} aria-hidden>
+        <path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v18H6.5A1.5 1.5 0 0 1 5 19.5z" />
+        <path d="M9 3v18" />
+        <path d="M12 9h4M12 13h4" />
       </svg>
     );
   }
@@ -75,6 +84,7 @@ export function OwnerShell({
   const tabs: { id: OwnerTab; href: string; label: string }[] = [
     { id: 'sell', href: `/owner/${slug}/sell`, label: t.tabSell },
     { id: 'inventory', href: `/owner/${slug}/inventory`, label: t.tabInventory },
+    { id: 'khata', href: `/owner/${slug}/khata`, label: t.tabKhata },
     { id: 'orders', href: `/owner/${slug}/orders`, label: t.tabOrders },
   ];
 
