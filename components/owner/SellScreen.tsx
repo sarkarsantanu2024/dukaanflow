@@ -61,6 +61,7 @@ export function SellScreen({
   locale,
   todayTotal,
   todayCount,
+  sales,
   customers,
 }: {
   slug: string;
@@ -71,6 +72,14 @@ export function SellScreen({
   locale: Locale;
   todayTotal: number;
   todayCount: number;
+  /** Today's sales, newest first, each with the moment it was rung up. */
+  sales: {
+    id: string;
+    totalAmount: number;
+    paymentMode: string;
+    createdAt: string;
+    count: number;
+  }[];
   /** Regulars already in the khata, so udhaar is a tap not a typing job. */
   customers: { id: string; name: string; phone: string }[];
 }) {
@@ -174,6 +183,41 @@ export function SellScreen({
           </p>
         </div>
       </div>
+
+      {/* What has actually been taken today, with the time of each. The total
+          on its own can only be agreed with or doubted; this is the list a
+          shopkeeper counts the drawer against. */}
+      {sales.length > 0 && lines.length === 0 && (
+        <section>
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {t.sellToday}
+          </h2>
+          <ul className="divide-y divide-slate-100 rounded-2xl bg-white shadow-card">
+            {sales.map((sale) => (
+              <li key={sale.id} className="flex items-center gap-3 px-4 py-2.5">
+                <span className="w-20 shrink-0 text-sm tabular-nums text-slate-500">
+                  {new Date(sale.createdAt).toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-sm text-slate-600">
+                  {sale.count} {t.itemsCount}
+                  {' · '}
+                  {sale.paymentMode === 'CASH'
+                    ? t.sellCash
+                    : sale.paymentMode === 'UPI'
+                      ? t.sellUpi
+                      : t.sellKhata}
+                </span>
+                <span className="shrink-0 font-bold tabular-nums text-slate-900">
+                  {formatRupees(sale.totalAmount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {lines.length > 0 && (
         <ul className="divide-y divide-slate-100 rounded-2xl bg-white shadow-card">

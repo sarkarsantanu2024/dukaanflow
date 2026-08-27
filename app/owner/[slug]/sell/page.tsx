@@ -31,7 +31,7 @@ export default async function SellPage({ params }: PageProps) {
   const since = new Date();
   since.setHours(0, 0, 0, 0);
 
-  const [items, today, customers] = await Promise.all([
+  const [items, today, recent, customers] = await Promise.all([
     prisma.item.findMany({
       where: { shopId: shop.id },
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
@@ -51,6 +51,15 @@ export default async function SellPage({ params }: PageProps) {
       _sum: { totalAmount: true },
       _count: true,
     }),
+    // Today's sales themselves, not just their total. A shopkeeper reconciling
+    // the drawer at closing needs to see the individual takings and when each
+    // one happened — a single number can only be agreed with or doubted.
+    prisma.sale.findMany({
+      where: { shopId: shop.id, createdAt: { gte: since } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { id: true, totalAmount: true, paymentMode: true, createdAt: true, itemsJson: true },
+    }),
     prisma.customer.findMany({
       where: { shopId: shop.id },
       orderBy: { updatedAt: 'desc' },
@@ -58,6 +67,23 @@ export default async function SellPage({ params }: PageProps) {
       select: { id: true, name: true, phone: true },
     }),
   ]);
+
+  /** How many things were in a sale, read defensively out of its JSON snapshot. */
+  function countOf(itemsJson: unknown): number {
+    if (!Array.isArray(itemsJson)) return 0;
+    return itemsJson.reduce((sum: number, row) => {
+      const line = row as { quantity?: unknown };
+      return sum + (Number(line?.quantity) || 0);
+    }, 0);
+  }
+
+  const sales = recent.map((sale) => ({
+    id: sale.id,
+    totalAmount: sale.totalAmount,
+    paymentMode: sale.paymentMode,
+    createdAt: sale.createdAt.toISOString(),
+    count: countOf(sale.itemsJson),
+  }));
 
   return (
     <OwnerShell
@@ -76,6 +102,7 @@ export default async function SellPage({ params }: PageProps) {
         locale={locale}
         todayTotal={today._sum.totalAmount ?? 0}
         todayCount={today._count}
+        sales={sales}
         customers={customers}
       />
 
