@@ -86,6 +86,7 @@ export function InventoryScreen({
           slug={slug}
           catalogue={catalogue}
           locale={locale}
+          remaining={Math.max(0, itemLimit - items.length)}
           onDismiss={() => setStarter(false)}
         />
       )}
