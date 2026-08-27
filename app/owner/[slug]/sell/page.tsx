@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { startOfBusinessDay } from '@/lib/time';
 import { prisma } from '@/lib/prisma';
 import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
@@ -27,9 +28,10 @@ export default async function SellPage({ params }: PageProps) {
   const { slug } = await params;
   const { shop, plan, locale } = await loadOwnerShop(slug);
 
-  // Midnight local — "today" for a shopkeeper is the day, not 24 rolling hours.
-  const since = new Date();
-  since.setHours(0, 0, 0, 0);
+  // Midnight in the shop's own day. Server-local midnight is UTC on Vercel,
+  // which put the shop's "today" at 5.30am and quietly filed early sales under
+  // yesterday.
+  const since = startOfBusinessDay();
 
   const [items, today, recent, customers] = await Promise.all([
     prisma.item.findMany({

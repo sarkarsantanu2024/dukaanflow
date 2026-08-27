@@ -20,6 +20,7 @@
  * not find the app optimistic.
  */
 
+import { formatClock, formatDay, startOfBusinessDay } from '@/lib/time';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -47,19 +48,16 @@ type Tab = 'ALL' | OrderStatus;
 
 const TAB_ORDER: Tab[] = ['NEW', 'CONFIRMED', 'COMPLETED', 'ALL', 'CANCELLED'];
 
-/** Today in the shop's own day, not UTC — a 9pm order is still today's. */
+/**
+ * Today in the shop's own day.
+ *
+ * The local-date comparison this replaces asked the *machine* what day it was,
+ * which is UTC on the server and IST in the browser — so the two could count
+ * different numbers of orders for the same list and React would throw the tree
+ * away. Anchored to the shop's midnight, both agree.
+ */
 function isToday(iso: string): boolean {
-  const date = new Date(iso);
-  const now = new Date();
-  return (
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear()
-  );
-}
-
-function clockTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+  return new Date(iso) >= startOfBusinessDay();
 }
 
 export function OrdersScreen({
@@ -248,9 +246,9 @@ export function OrdersScreen({
                   </p>
                   <p className="text-xs text-slate-500">
                     {order.orderType === 'DELIVERY' ? t.delivery : t.pickup} ·{' '}
-                    {clockTime(order.createdAt)}
+                    {formatClock(order.createdAt)}
                     {!isToday(order.createdAt) &&
-                      ` · ${new Date(order.createdAt).toLocaleDateString('en-IN')}`}
+                      ` · ${formatDay(order.createdAt)}`}
                   </p>
                 </div>
                 <span

@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { formatDay, formatDayTime } from '@/lib/time';
 import { prisma } from '@/lib/prisma';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { HeaderAction } from '@/components/admin/HeaderAction';
@@ -137,7 +138,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
             slug={shop.slug}
             baseUrl={baseUrl()}
             hasPin={Boolean(shop.ownerPinHash)}
-            setAt={shop.ownerPinSetAt ? shop.ownerPinSetAt.toLocaleDateString('en-IN') : null}
+            setAt={shop.ownerPinSetAt ? formatDay(shop.ownerPinSetAt) : null}
           />
         </div>
 
@@ -160,7 +161,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
                       </p>
                       <p className="text-xs text-slate-500">
                         {order.orderType === 'DELIVERY' ? 'Delivery' : 'Pickup'} ·{' '}
-                        {order.createdAt.toLocaleString('en-IN')}
+                        {formatDayTime(order.createdAt)}
                       </p>
                     </div>
                     <p className="shrink-0 font-bold text-slate-900">
