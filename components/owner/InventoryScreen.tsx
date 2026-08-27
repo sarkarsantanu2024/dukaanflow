@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ItemsManager, type AdminItem } from '@/components/admin/ItemsManager';
+import type { ShopType } from '@prisma/client';
 import { StarterPicker } from './StarterPicker';
 import { ownerDict } from '@/lib/owner-i18n';
 import { VoiceArt } from '@/components/ui/ShopArt';
@@ -25,6 +26,7 @@ export function InventoryScreen({
   locale,
   showWelcome,
   itemLimit,
+  shopType,
 }: {
   slug: string;
   items: AdminItem[];
@@ -32,6 +34,8 @@ export function InventoryScreen({
   locale: Locale;
   showWelcome: boolean;
   itemLimit: number;
+  /** Drives which units this shop is offered. */
+  shopType: ShopType;
 }) {
   const t = ownerDict(locale);
   const [welcome, setWelcome] = useState(showWelcome);
@@ -91,7 +95,7 @@ export function InventoryScreen({
         />
       )}
 
-      <ItemsManager slug={slug} items={items} locale={locale} />
+      <ItemsManager slug={slug} items={items} locale={locale} shopType={shopType} />
     </div>
   );
 }

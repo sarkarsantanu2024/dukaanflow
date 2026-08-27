@@ -4,9 +4,13 @@ import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { SellScreen } from '@/components/owner/SellScreen';
 import { MenuBroadcast } from '@/components/owner/MenuBroadcast';
+import type { ShopType } from '@prisma/client';
 import { baseUrl } from '@/lib/qr';
 
 export const dynamic = 'force-dynamic';
+
+/** Shop kinds whose offer changes day to day, and only those. */
+const DAILY_OFFER_SHOPS: ShopType[] = ['HOME_KITCHEN', 'RESTAURANT', 'BAKERY', 'TEA_STALL'];
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -69,6 +73,11 @@ export default async function SellPage({ params }: PageProps) {
         customers={customers}
       />
 
+      {/* A kirana's list is the same today as yesterday — "today's menu" is
+          noise on a shop where 99% of the items are fixed. It earns its place
+          only where the offer genuinely changes: a home kitchen cooking one
+          thing today, a bakery's fresh batch, a restaurant's special. */}
+      {DAILY_OFFER_SHOPS.includes(shop.type) && (
       <MenuBroadcast
         shopName={shop.name}
         shopUrl={`${baseUrl()}/shop/${shop.slug}`}
@@ -76,6 +85,7 @@ export default async function SellPage({ params }: PageProps) {
         customers={customers}
         locale={locale}
       />
+      )}
     </OwnerShell>
   );
 }

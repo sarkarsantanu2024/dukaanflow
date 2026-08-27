@@ -11,6 +11,9 @@ import { useToast } from '@/components/ui/Toast';
 import { VoiceItemAdder } from './VoiceItemAdder';
 import { formatRupees } from '@/lib/money';
 import { suggestNames, translateCategory } from '@/lib/speech';
+import { unitsFor, UNIT_LIST_ID } from '@/lib/units';
+import { Drawer } from '@/components/ui/Drawer';
+import type { ShopType } from '@prisma/client';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
 
@@ -70,7 +73,8 @@ export function ItemsManager({
   items,
   locale = 'en',
   wide = false,
-  sidebar,
+  shopType = 'OTHER',
+  tools,
 }: {
   slug: string;
   items: AdminItem[];
@@ -82,8 +86,15 @@ export function ItemsManager({
    * them on top of it, so the list starts at the top of the screen.
    */
   wide?: boolean;
-  /** Extra panels for the wide column — the console's bulk editor. */
-  sidebar?: React.ReactNode;
+  /** Drives which units this shop is offered. A tea stall is not weighed in kg. */
+  shopType?: ShopType;
+  /**
+   * Heavy tools for the wide column — the common-items list, the bulk editor.
+   * Each opens in a drawer rather than sitting in the column: stacked, they ran
+   * to thousands of pixels and scrolled the whole page to show them, which
+   * stranded the item list at the top beside an empty gutter.
+   */
+  tools?: { id: string; label: string; hint?: string; content: React.ReactNode }[];
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -97,8 +108,12 @@ export function ItemsManager({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  /** Which drawer is open, by tool id. `form` is this component's own. */
+  const [drawer, setDrawer] = useState<string | null>(null);
   // Price edits are local until blur/Enter, so typing "6" of "68" doesn't save.
   const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({});
+  const [unitDrafts, setUnitDrafts] = useState<Record<string, string>>({});
+  const units = unitsFor(shopType);
 
   const categories = useMemo(
     () => Array.from(new Set(items.map((item) => item.category).filter(Boolean))).sort(),
@@ -212,6 +227,26 @@ export function ItemsManager({
     }
   }
 
+  /**
+   * Pack size is the shop's own decision — a starter item arrives at "1 kg"
+   * and the shop selling rice by the 5 kg bag has to be able to say so. Until
+   * this existed the only way to change a unit was to delete the item.
+   */
+  async function commitUnit(item: AdminItem) {
+    const next = unitDrafts[item.id];
+    if (next === undefined) return;
+
+    setUnitDrafts((current) => {
+      const copy = { ...current };
+      delete copy[item.id];
+      return copy;
+    });
+
+    const unit = next.trim();
+    if (unit === item.unit) return;
+    if (await patchItem(item.id, { unit })) push(`${displayName(item, locale)} · ${unit || '—'}`, 'success');
+  }
+
   async function commitPrice(item: AdminItem) {
     const raw = priceDrafts[item.id];
     if (raw === undefined) return;
@@ -229,29 +264,21 @@ export function ItemsManager({
     }
     if (price === item.price) return;
 
-    if (await patchItem(item.id, { price })) push(`${item.name} → ${formatRupees(price)}`, 'success');
+    // A starter item is parked at ₹1 and out of stock for one reason only:
+    // nobody has said what it costs. Saying so is therefore also the answer to
+    // why it was hidden, so pricing it puts it on sale. Leaving that as a
+    // second, separate tap meant an owner priced their whole list and still
+    // saw a shop full of "Out of stock".
+    const wasUnpriced = item.price <= 1 && !item.inStock;
+    const changes = wasUnpriced && price > 1 ? { price, inStock: true } : { price };
+
+    if (await patchItem(item.id, changes)) {
+      push(`${displayName(item, locale)} → ${formatRupees(price)}`, 'success');
+    }
   }
 
-  const adder = (
-    <>
-      <VoiceItemAdder slug={slug} items={items} locale={locale} />
-
-      <div className="rounded-2xl bg-white p-4 shadow-card">
-        <button
-          type="button"
-          onClick={() => setTyping((open) => !open)}
-          aria-expanded={typing}
-          className="text-sm font-semibold text-brand-700 underline"
-        >
-          {typing ? t.hideForm : t.typeInstead}
-        </button>
-      </div>
-
-      <form
-        onSubmit={addItem}
-        hidden={!typing}
-        className="rounded-2xl bg-white p-4 shadow-card"
-      >
+  const typedForm = (
+    <form onSubmit={addItem} className="rounded-2xl bg-white p-4 shadow-card">
         <div className={clsx('grid gap-3', wide ? 'grid-cols-2' : 'sm:grid-cols-2')}>
           <Input
             label={t.name}
@@ -274,10 +301,11 @@ export function ItemsManager({
           />
           <Input
             label={t.unit}
+            list={UNIT_LIST_ID}
             value={draft.unit}
             onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
             error={errors.unit}
-            placeholder="1 kg"
+            placeholder={units[0]}
           />
           <Input
             label={t.category}
@@ -318,10 +346,28 @@ export function ItemsManager({
           </div>
         </details>
         <p className="mt-2 text-xs text-slate-500">{t.upsertHint}</p>
-        <Button type="submit" className="mt-3" loading={adding}>
-          {t.saveItem}
-        </Button>
-      </form>
+      <Button type="submit" className="mt-3" loading={adding}>
+        {t.saveItem}
+      </Button>
+    </form>
+  );
+
+  const adder = (
+    <>
+      <VoiceItemAdder slug={slug} items={items} locale={locale} />
+
+      <div className="rounded-2xl bg-white p-4 shadow-card">
+        <button
+          type="button"
+          onClick={() => setTyping((open) => !open)}
+          aria-expanded={typing}
+          className="text-sm font-semibold text-brand-700 underline"
+        >
+          {typing ? t.hideForm : t.typeInstead}
+        </button>
+      </div>
+
+      <div hidden={!typing}>{typedForm}</div>
     </>
   );
 
@@ -408,6 +454,24 @@ export function ItemsManager({
                   />
                 </label>
 
+                {/* Pack size, editable in place and suggested from what this
+                    kind of shop actually sells in. */}
+                <input
+                  type="text"
+                  list={UNIT_LIST_ID}
+                  aria-label={`${t.unit} — ${displayName(item, locale)}`}
+                  placeholder={t.unit}
+                  value={unitDrafts[item.id] ?? item.unit}
+                  onChange={(event) =>
+                    setUnitDrafts((current) => ({ ...current, [item.id]: event.target.value }))
+                  }
+                  onBlur={() => commitUnit(item)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') event.currentTarget.blur();
+                  }}
+                  className="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                />
+
                 <Button
                   variant="secondary"
                   size="sm"
@@ -433,22 +497,70 @@ export function ItemsManager({
     </section>
   );
 
+  // One datalist serves every unit field on the page.
+  const unitOptions = (
+    <datalist id={UNIT_LIST_ID}>
+      {units.map((option) => (
+        <option key={option} value={option} />
+      ))}
+    </datalist>
+  );
+
   if (!wide) {
     return (
       <div className="space-y-6">
+        {unitOptions}
         {adder}
         {list}
       </div>
     );
   }
 
+  const openTool = tools?.find((tool) => tool.id === drawer);
+
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      {unitOptions}
       {list}
-      <div className="space-y-6 max-lg:order-first lg:sticky lg:top-[4.25rem]">
-        {adder}
-        {sidebar}
+
+      {/* The column holds the mic and a row of triggers, and nothing tall. It
+          is sticky and stays roughly one screen high, so the page scrolls with
+          the list rather than with the tools. */}
+      <div className="space-y-3 max-lg:order-first lg:sticky lg:top-[4.25rem]">
+        <VoiceItemAdder slug={slug} items={items} locale={locale} />
+
+        <button
+          type="button"
+          onClick={() => setDrawer('form')}
+          className="w-full rounded-2xl bg-white px-4 py-3 text-left shadow-card transition hover:bg-slate-50"
+        >
+          <span className="block font-semibold text-slate-900">{t.typeInstead}</span>
+        </button>
+
+        {tools?.map((tool) => (
+          <button
+            key={tool.id}
+            type="button"
+            onClick={() => setDrawer(tool.id)}
+            className="w-full rounded-2xl bg-white px-4 py-3 text-left shadow-card transition hover:bg-slate-50"
+          >
+            <span className="block font-semibold text-slate-900">{tool.label}</span>
+            {tool.hint && <span className="mt-0.5 block text-sm text-slate-500">{tool.hint}</span>}
+          </button>
+        ))}
       </div>
+
+      <Drawer open={drawer === 'form'} title={t.typeInstead} onClose={() => setDrawer(null)}>
+        {typedForm}
+      </Drawer>
+
+      <Drawer
+        open={Boolean(openTool)}
+        title={openTool?.label ?? ''}
+        onClose={() => setDrawer(null)}
+      >
+        {openTool?.content}
+      </Drawer>
     </div>
   );
 }

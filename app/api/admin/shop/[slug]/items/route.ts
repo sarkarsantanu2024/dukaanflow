@@ -89,9 +89,19 @@ export async function PATCH(request: Request, { params }: Context) {
 
   const { id, ...changes } = parsed.data;
 
-  // Scoped by shopId so one shop's id can never mutate another shop's item.
-  const result = await prisma.item.updateMany({ where: { id, shopId }, data: changes });
-  if (result.count === 0) return fail('Item not found', 404);
+  try {
+    // Scoped by shopId so one shop's id can never mutate another shop's item.
+    const result = await prisma.item.updateMany({ where: { id, shopId }, data: changes });
+    if (result.count === 0) return fail('Item not found', 404);
+  } catch (error) {
+    // (shopId, name, unit) is unique, so re-pricing a unit onto one the shop
+    // already lists collides. Said plainly rather than as a database error:
+    // the owner meant to have one of these, not to be told about a constraint.
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
+      return fail('You already have this item in that unit. Edit that one instead.', 409);
+    }
+    throw error;
+  }
 
   return ok({ success: true });
 }

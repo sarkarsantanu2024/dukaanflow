@@ -98,6 +98,10 @@ export const itemUpsertSchema = z.object({
 export const itemPatchSchema = z.object({
   id: z.string().uuid('Unknown item'),
   price: priceSchema.optional(),
+  // Editable because the pack size is the shop's own decision: a starter item
+  // arrives at "1 kg" and the shop that sells rice by the 5 kg bag must be able
+  // to say so. Without this the only fix was deleting the item and re-adding it.
+  unit: z.string().trim().max(24).optional(),
   inStock: z.boolean().optional(),
   category: z.string().trim().max(40).optional(),
   nameBn: altNameSchema.optional(),

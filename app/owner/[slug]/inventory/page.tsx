@@ -47,6 +47,7 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
         slug={shop.slug}
         items={items}
         catalogue={starterCatalogue(shop.type)}
+        shopType={shop.type}
         locale={locale}
         showWelcome={welcome === '1' && items.length === 0}
         itemLimit={plan.itemLimit}

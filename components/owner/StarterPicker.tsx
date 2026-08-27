@@ -24,7 +24,7 @@ import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { ownerDict } from '@/lib/owner-i18n';
-import { starterName, type StarterItem } from '@/lib/starter-catalogue';
+import { starterName, starterOtherNames, type StarterItem } from '@/lib/starter-catalogue';
 import { translateCategory } from '@/lib/speech';
 import type { Locale } from '@/lib/i18n';
 
@@ -44,7 +44,8 @@ export function StarterPicker({
    * to one error — the worst possible first five minutes.
    */
   remaining?: number;
-  onDismiss: () => void;
+  /** Omitted inside a drawer, where the drawer's own close is the way out. */
+  onDismiss?: () => void;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -132,7 +133,7 @@ export function StarterPicker({
       }
 
       push(`${payload.created ?? 0} ${t.starterAdded}`, 'success');
-      onDismiss();
+      onDismiss?.();
       router.refresh();
     } catch {
       push(t.networkError, 'error');
@@ -151,17 +152,28 @@ export function StarterPicker({
         aria-pressed={on}
         disabled={!on && full}
         className={clsx(
-          'rounded-full border px-3 py-1.5 text-sm font-medium transition',
+          'rounded-2xl border px-3 py-1.5 text-left text-sm font-medium transition',
           on
             ? 'border-brand-600 bg-brand-600 text-white'
             : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
           !on && full && 'cursor-not-allowed opacity-40',
         )}
       >
-        {starterName(item, locale)}
-        {item.unit && (
-          <span className={on ? 'text-white/70' : 'text-slate-400'}> · {item.unit}</span>
-        )}
+        {/* Both languages, because the operator reading this list and the
+            shopkeeper they are doing it for do not read the same one, and a
+            chip that says only "Rice" is unverifiable to one of them.
+            The unit is deliberately absent: pack size is the shop's own
+            decision and is set on the item afterwards, so showing it here was
+            offering a fact the picker has no business asserting. */}
+        <span className="block leading-tight">{starterName(item, locale)}</span>
+        <span
+          className={clsx(
+            'block text-xs leading-tight',
+            on ? 'text-white/70' : 'text-slate-500',
+          )}
+        >
+          {starterOtherNames(item, locale).join(' · ')}
+        </span>
       </button>
     );
   }
@@ -253,9 +265,11 @@ export function StarterPicker({
           {t.starterAdd}
           {picked.size > 0 ? ` (${picked.size})` : ''}
         </Button>
-        <Button variant="ghost" size="sm" onClick={onDismiss}>
-          {t.starterSkip}
-        </Button>
+        {onDismiss && (
+          <Button variant="ghost" size="sm" onClick={onDismiss}>
+            {t.starterSkip}
+          </Button>
+        )}
       </div>
     </section>
   );
