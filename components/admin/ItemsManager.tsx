@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { VoiceItemAdder } from './VoiceItemAdder';
 import { PhotoItemAdder, type Identified } from './PhotoItemAdder';
+import type { StarterItem } from '@/lib/starter-catalogue';
 import { formatRupees } from '@/lib/money';
 import { suggestNames, translateCategory } from '@/lib/speech';
 import { unitsFor, UNIT_LIST_ID } from '@/lib/units';
@@ -75,6 +76,7 @@ export function ItemsManager({
   locale = 'en',
   wide = false,
   shopType = 'OTHER',
+  catalogue = [],
   tools,
 }: {
   slug: string;
@@ -89,6 +91,8 @@ export function ItemsManager({
   wide?: boolean;
   /** Drives which units this shop is offered. A tea stall is not weighed in kg. */
   shopType?: ShopType;
+  /** The shop-type catalogue, matched against when reading a photographed packet. */
+  catalogue?: StarterItem[];
   /**
    * Heavy tools for the wide column — the common-items list, the bulk editor.
    * Each opens in a drawer rather than sitting in the column: stacked, they ran
@@ -372,11 +376,14 @@ export function ItemsManager({
     </form>
   );
 
-  const photoAdder = (
+  // Only offered when there is a catalogue to match against — without one the
+  // scan can do no better than the largest text on the wrapper.
+  const photoAdder = catalogue.length > 0 && (
     <PhotoItemAdder
-      slug={slug}
+      catalogue={catalogue}
       label={t.photoAdd}
       hint={t.photoAddHint}
+      reading={t.photoReading}
       onIdentified={identified}
       onError={(message) => push(message, 'error')}
     />

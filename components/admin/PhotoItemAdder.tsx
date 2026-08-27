@@ -1,26 +1,31 @@
 'use client';
 
 /**
- * List an item by photographing it.
+ * List an item by photographing the packet.
  *
  * The third way in, beside the mic and the keyboard, and the one that covers
  * what the other two are worst at: a branded packet whose name the owner does
- * not say the way it is spelled, and anything they would otherwise have to
- * spell out letter by letter.
+ * not say the way it is spelled, and anything they would otherwise spell out
+ * letter by letter.
  *
- * The photo never leaves this component except as one request. It is resized,
- * sent, read, and the variable goes out of scope — nothing is written to the
- * database, nothing is kept in storage, and what comes back is text the owner
- * still has to agree to. The picture has done its job the moment the name
- * appears in the form.
+ * The reading happens **in the browser**. No key, no per-photo cost, and the
+ * photograph never leaves the phone — which also means it cannot be stored,
+ * because there is nowhere for it to go. What the owner gets back is a filled
+ * form they still have to agree to.
+ *
+ * OCR is loaded only when someone actually takes a picture. It is a few
+ * megabytes of engine and language data, and a shopkeeper who never uses this
+ * should not pay for it on every page load.
  */
 
 import { useRef, useState } from 'react';
 import { Spinner } from '@/components/ui/Spinner';
+import { matchCatalogue, extractUnit, pickLikelyName, type ScannedLine } from '@/lib/ocr-match';
+import type { StarterItem } from '@/lib/starter-catalogue';
 
-/** Big enough to read a label, small enough to send over a counter's 4G. */
-const MAX_EDGE = 768;
-const QUALITY = 0.75;
+/** Text needs resolution; this is the smallest that reads a label reliably. */
+const MAX_EDGE = 1400;
+const QUALITY = 0.9;
 
 export type Identified = {
   name: string;
@@ -30,7 +35,12 @@ export type Identified = {
   category: string;
 };
 
-async function toDataUrl(file: File): Promise<string> {
+/**
+ * Resized and turned greyscale with more contrast. OCR reads flat, high-
+ * contrast text far better than a colour photo of a shiny wrapper, and doing it
+ * here costs nothing.
+ */
+async function prepare(file: File): Promise<string> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
   const width = Math.round(bitmap.width * scale);
@@ -45,52 +55,110 @@ async function toDataUrl(file: File): Promise<string> {
   context.drawImage(bitmap, 0, 0, width, height);
   bitmap.close();
 
+  const frame = context.getImageData(0, 0, width, height);
+  const pixels = frame.data;
+  for (let index = 0; index < pixels.length; index += 4) {
+    const grey = 0.299 * pixels[index] + 0.587 * pixels[index + 1] + 0.114 * pixels[index + 2];
+    // Pushed away from the midpoint: ink darker, packet lighter.
+    const contrasted = Math.max(0, Math.min(255, (grey - 128) * 1.4 + 128));
+    pixels[index] = contrasted;
+    pixels[index + 1] = contrasted;
+    pixels[index + 2] = contrasted;
+  }
+  context.putImageData(frame, 0, 0);
+
   return canvas.toDataURL('image/jpeg', QUALITY);
 }
 
 export function PhotoItemAdder({
-  slug,
+  catalogue,
   label,
   hint,
+  reading,
   onIdentified,
   onError,
 }: {
-  slug: string;
+  /** The shop-type catalogue, matched against so a hit is a real item. */
+  catalogue: StarterItem[];
   label: string;
   hint: string;
+  reading: string;
   onIdentified: (item: Identified) => void;
   onError: (message: string) => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   async function handle(file: File) {
     setBusy(true);
+    setProgress(0);
+
+    let worker: Awaited<ReturnType<typeof import('tesseract.js').createWorker>> | null = null;
+
     try {
-      // Scoped to this call. Once the request returns there is no reference to
-      // the photo anywhere — no state, no storage, no column.
-      const imageData = await toDataUrl(file);
+      const imageData = await prepare(file);
 
-      const response = await fetch(`/api/admin/shop/${slug}/identify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageData }),
+      // Imported here rather than at module scope: several megabytes that only
+      // a shopkeeper who takes a photo should ever download.
+      const { createWorker } = await import('tesseract.js');
+      worker = await createWorker('eng', undefined, {
+        logger: (message: { status: string; progress: number }) => {
+          if (message.status === 'recognizing text') setProgress(message.progress);
+        },
       });
-      const payload = (await response.json().catch(() => ({}))) as {
-        item?: Identified;
-        error?: string;
-      };
 
-      if (!response.ok || !payload.item) {
-        onError(payload.error ?? 'Could not read that photo.');
+      const { data } = await worker.recognize(imageData, {}, { blocks: true, text: true });
+
+      const lines: ScannedLine[] = (data.blocks ?? []).flatMap((block) =>
+        block.paragraphs.flatMap((paragraph) =>
+          paragraph.lines.map((line) => ({
+            text: line.text,
+            confidence: line.confidence,
+            height: line.bbox.y1 - line.bbox.y0,
+          })),
+        ),
+      );
+
+      const text = data.text ?? '';
+      const unit = extractUnit(text);
+      const match = matchCatalogue(text, catalogue);
+
+      if (match) {
+        onIdentified({
+          name: match.name,
+          nameBn: match.nameBn,
+          nameHi: match.nameHi,
+          // What the packet says beats what the catalogue assumes: the
+          // catalogue's unit is a sensible default, the printed one is a fact.
+          unit: unit || match.unit,
+          category: match.category,
+        });
         return;
       }
 
-      onIdentified(payload.item);
+      // Nothing in the catalogue, so fall back to the largest text on the
+      // packet — usually the product name — and leave the translations empty
+      // rather than inventing them.
+      const guess = pickLikelyName(lines);
+      if (guess) {
+        onIdentified({ name: guess, nameBn: '', nameHi: '', unit, category: '' });
+        return;
+      }
+
+      onError(
+        unit
+          ? 'Could not read the name. Try a closer photo of the label.'
+          : 'Could not read that packet. Try a closer, straighter photo — or type the name.',
+      );
     } catch {
-      onError('Could not read that photo.');
+      onError('Could not read that photo. Try again, or type the name.');
     } finally {
+      // The engine holds a worker and its language data; leaving it running
+      // keeps tens of megabytes alive on a phone that has moved on.
+      await worker?.terminate().catch(() => {});
       setBusy(false);
+      setProgress(0);
     }
   }
 
@@ -139,8 +207,10 @@ export function PhotoItemAdder({
         </span>
 
         <span className="min-w-0">
-          <span className="block font-semibold text-slate-900">{label}</span>
-          <span className="block text-sm text-slate-500">{hint}</span>
+          <span className="block font-semibold text-slate-900">{busy ? reading : label}</span>
+          <span className="block text-sm text-slate-500">
+            {busy ? `${Math.round(progress * 100)}%` : hint}
+          </span>
         </span>
       </button>
     </div>

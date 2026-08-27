@@ -59,6 +59,7 @@ export default async function ItemsPage({ params }: PageProps) {
           items={shop.items}
           wide
           shopType={shop.type}
+          catalogue={catalogue}
           tools={[
             {
               id: 'starter',
