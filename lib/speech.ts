@@ -233,12 +233,71 @@ export function spokenYesNo(alternatives: string[]): 'yes' | 'no' | null {
   return null;
 }
 
+/**
+ * The item name out of a spoken sentence, and nothing else.
+ *
+ * Listing by voice asks for the name alone — the shopkeeper says "চাল" and
+ * fills in the pack size and the price afterwards, looking at the list. Saying
+ * a price out loud and having it saved unseen is how a shop ends up quoting a
+ * number nobody checked; typing it into the row is a moment's work and the
+ * owner can see what they are agreeing to.
+ *
+ * Quantities and prices are stripped rather than rejected, so an owner who
+ * still says the whole sentence out of habit gets "চাল" listed instead of an
+ * item literally named "চাল এক কেজি ৬৮ টাকা".
+ */
+export function parseSpokenName(transcript: string): { name: string; category: string } | null {
+  let text = normaliseDigits(transcript.trim())
+    .replace(/[।॥.,!?;:]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  text = text.replace(LEAD_FILLER, '').trim();
+  if (!text) return null;
+
+  // "rice in staples" — an explicit category tail, kept because it costs the
+  // speaker nothing and saves a field.
+  let category = '';
+  const categoryMatch = text.match(
+    /\s+(?:in|under|category|categories|श्रेणी|विभाग|ক্যাটাগরি)\s+(.+)$/i,
+  );
+  if (categoryMatch) {
+    category = categoryMatch[1]!.trim();
+    text = text.slice(0, categoryMatch.index).trim();
+  }
+
+  // Everything from the first quantity or price onwards is noise now. Number
+  // *words* are converted first, or "চিনি এক কেজি ৬৮ টাকা" would keep "এক কেজি"
+  // — এক is one, but spelled out, so a digit search walks straight past it.
+  const noise = /(?:\d|₹|\brs\b|rupees?|rupaye|taka|টাকা|रुपये|रुपए)/i;
+  const digitised = wordsToDigits(text);
+  const tail = digitised.search(noise);
+
+  if (tail > 0) {
+    const trimmed = digitised.slice(0, tail).trim();
+    if (trimmed) {
+      text = trimmed;
+    } else {
+      // A name that *is* a number word — "Seven Up" — would be cut to nothing.
+      // Fall back to trimming only what was literally said.
+      const plain = text.search(noise);
+      text = plain > 0 ? text.slice(0, plain).trim() : text;
+    }
+  }
+
+  const name = text
+    .replace(/\s+(?:at|for|ka|ki|ke|का|की|के|দাম|price)\s*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!name) return null;
+  return { name: titleCase(name), category: category ? titleCase(category) : '' };
+}
+
 export type SpokenItemDraft = {
   name: string;
   nameHi: string;
   nameBn: string;
-  unit: string;
-  price: number;
   category: string;
   /** An item already on the list that this almost certainly refers to. */
   matched: MatchableItem | null;
@@ -268,7 +327,7 @@ export function resolveSpokenItem(
   let best: SpokenItemDraft | null = null;
 
   for (const transcript of alternatives) {
-    const parsed = parseSpokenItem(transcript);
+    const parsed = parseSpokenName(transcript);
     if (!parsed) continue;
 
     const match = bestMatch(parsed.name, existing);
@@ -276,8 +335,6 @@ export function resolveSpokenItem(
 
     const draft: SpokenItemDraft = {
       ...namesFor(parsed.name, lang),
-      unit: parsed.unit,
-      price: parsed.price,
       category: parsed.category,
       matched: confidence >= UNSURE_MATCH ? match!.item : null,
       confidence: confidence >= UNSURE_MATCH ? confidence : 1,
@@ -341,6 +398,12 @@ const IN_STOCK_WORDS = [
 
 export type VoiceCommand =
   | { kind: 'upsert'; draft: SpokenItemDraft; needsConfirm: boolean; label: string }
+  /**
+   * Named something already on the list. Reported rather than saved: listing
+   * by voice no longer carries a price, so re-saving would quietly reset one
+   * the owner had already set.
+   */
+  | { kind: 'exists'; item: MatchableItem; needsConfirm: false; label: string }
   | { kind: 'delete'; item: MatchableItem; needsConfirm: true; label: string }
   | { kind: 'stock'; item: MatchableItem; inStock: boolean; needsConfirm: boolean; label: string };
 
@@ -353,7 +416,7 @@ function matchVerb(text: string, words: string[]): { rest: string } | null {
   return null;
 }
 
-function labelFor(item: { name: string; unit: string }): string {
+function labelFor(item: { name: string; unit?: string }): string {
   return item.unit ? `${item.name} · ${item.unit}` : item.name;
 }
 
@@ -420,6 +483,12 @@ export function resolveSpokenCommand(
 
   const draft = resolveSpokenItem(alternatives, lang, existing);
   if (!draft) return null;
+
+  // Already stocked: say so and change nothing. The price and pack size on that
+  // row are the owner's, and a bare name is not a reason to touch either.
+  if (draft.matched && draft.confidence >= CONFIDENT_MATCH) {
+    return { kind: 'exists', item: draft.matched, needsConfirm: false, label: labelFor(draft.matched) };
+  }
 
   return {
     kind: 'upsert',
