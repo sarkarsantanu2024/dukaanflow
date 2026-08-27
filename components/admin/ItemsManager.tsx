@@ -61,6 +61,29 @@ function otherNames(item: AdminItem, locale: Locale): string[] {
   );
 }
 
+/**
+ * The category an item belongs in, worked out rather than asked for.
+ *
+ * A shopkeeper knows they sell rice. Whether rice files under "Rice & Atta" or
+ * "Staples" is a taxonomy question they never asked to be given, and a field
+ * they leave blank — or fill with a different word every time — makes the
+ * customer's category filter worse than having none at all. The shop-type
+ * catalogue already answers it for the things a shop of this kind carries.
+ */
+function categoryFor(name: string, catalogue: StarterItem[]): string {
+  const needle = name.trim().toLowerCase();
+  if (!needle) return '';
+
+  const hit = catalogue.find(
+    (item) =>
+      item.name.toLowerCase() === needle ||
+      item.nameBn.toLowerCase() === needle ||
+      item.nameHi.toLowerCase() === needle,
+  );
+
+  return hit?.category ?? '';
+}
+
 const EMPTY_NEW_ITEM: NewItem = {
   name: '',
   nameBn: '',
@@ -142,11 +165,18 @@ export function ItemsManager({
    */
   function nameChanged(name: string) {
     const known = suggestNames(name);
+    // Category is derived, never asked for. A shopkeeper knows they sell rice;
+    // whether rice belongs under "Rice & Atta" or "Staples" is a taxonomy
+    // question they did not ask to be given, and a field they leave blank -- or
+    // fill with something new every time -- is worse than one that fills itself
+    // from the catalogue this shop type already has.
+    const knownCategory = categoryFor(name, catalogue);
     setDraft((current) => ({
       ...current,
       name,
-      nameBn: current.nameBn || known?.bn || '',
-      nameHi: current.nameHi || known?.hi || '',
+      nameBn: known?.bn ?? '',
+      nameHi: known?.hi ?? '',
+      category: knownCategory,
     }));
   }
 
@@ -331,44 +361,8 @@ export function ItemsManager({
             error={errors.unit}
             placeholder={units[0]}
           />
-          <Input
-            label={t.category}
-            value={draft.category}
-            onChange={(event) => setDraft({ ...draft, category: event.target.value })}
-            error={errors.category}
-            placeholder="Staples"
-          />
         </div>
 
-        {/* The other two languages are filled in automatically for any name the
-            product already knows, and left blank otherwise — the storefront
-            falls back to the primary name. Nobody, operator or shopkeeper,
-            reads all three, so asking for all three as required fields was
-            asking for work that could not be done. Kept reachable, because a
-            Bengali owner naming something the dictionary has never heard of is
-            the one person who can supply it. */}
-        <details className="mt-3 rounded-xl bg-slate-50 p-3">
-          <summary className="cursor-pointer text-sm font-semibold text-slate-700">
-            {t.otherLanguages}
-          </summary>
-          <p className="mb-2 mt-1 text-xs text-slate-500">{t.otherLanguagesHint}</p>
-          <div className={clsx('grid gap-3', wide ? 'grid-cols-2' : 'sm:grid-cols-2')}>
-            <Input
-              label={t.nameBn}
-              value={draft.nameBn}
-              onChange={(event) => setDraft({ ...draft, nameBn: event.target.value })}
-              error={errors.nameBn}
-              placeholder="চাল"
-            />
-            <Input
-              label={t.nameHi}
-              value={draft.nameHi}
-              onChange={(event) => setDraft({ ...draft, nameHi: event.target.value })}
-              error={errors.nameHi}
-              placeholder="चावल"
-            />
-          </div>
-        </details>
         <p className="mt-2 text-xs text-slate-500">{t.upsertHint}</p>
       <Button type="submit" className="mt-3" loading={adding}>
         {t.saveItem}
@@ -449,11 +443,16 @@ export function ItemsManager({
               <li
                 key={item.id}
                 className={clsx(
-                  'flex flex-wrap items-center gap-3 rounded-2xl bg-white p-3 shadow-card',
+                  'rounded-2xl bg-white p-3 shadow-card',
                   busyId === item.id && 'opacity-60',
                 )}
               >
-                <div className="min-w-0 flex-1">
+                {/* Stacked on a phone, one line from `sm` up. Wrapping a single
+                    flex row put four controls beside the name and squeezed it
+                    to a single letter — the name is the thing being edited and
+                    must never be the part that gives way. */}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <div className="min-w-0 sm:flex-1">
                   {/* The owner reads their own language first. This showed the
                       primary (usually English) name to everyone, so a Bengali
                       shopkeeper got a Bengali app listing "Mustard Oil". */}
@@ -474,6 +473,7 @@ export function ItemsManager({
                   </div>
                 </div>
 
+                <div className="flex flex-wrap items-center gap-2">
                 <label className="flex items-center gap-1">
                   <span className="text-slate-500">₹</span>
                   <input
@@ -528,6 +528,8 @@ export function ItemsManager({
                 >
                   {t.delete}
                 </Button>
+                </div>
+                </div>
               </li>
             ))}
           </ul>

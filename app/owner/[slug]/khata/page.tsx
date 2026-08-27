@@ -55,7 +55,13 @@ export default async function KhataPage({ params }: PageProps) {
   }));
 
   return (
-    <OwnerShell slug={shop.slug} shopName={shop.name} locale={locale} plan={plan}>
+    <OwnerShell
+      slug={shop.slug}
+      shopName={shop.name}
+      ownerImage={shop.ownerImageData}
+      locale={locale}
+      plan={plan}
+    >
       <KhataScreen
         slug={shop.slug}
         shopName={shop.name}

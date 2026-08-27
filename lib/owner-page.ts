@@ -28,6 +28,7 @@ export async function loadOwnerShop(slug: string) {
       phone: true,
       upiId: true,
       upiQrData: true,
+      ownerImageData: true,
       locale: true,
     },
   });
