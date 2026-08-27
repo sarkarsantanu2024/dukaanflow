@@ -84,14 +84,15 @@ export async function identifyItem(
   dataUrl: string,
   categories: string[],
 ): Promise<IdentifyResult> {
-  if (!process.env.ANTHROPIC_API_KEY) return { ok: false, reason: 'unconfigured' };
-
   const image = splitDataUrl(dataUrl);
   if (!image) return { ok: false, reason: 'unreadable' };
 
-  const client = new Anthropic();
-
   try {
+    // Constructed inside the try, and no key is checked by hand: the SDK
+    // resolves credentials from several places, so testing one environment
+    // variable would refuse setups that are perfectly well configured. A
+    // genuinely missing credential surfaces below as an auth failure.
+    const client = new Anthropic();
     const response = await client.messages.create({
       model: 'claude-opus-5',
       max_tokens: 2000,
@@ -132,7 +133,16 @@ export async function identifyItem(
         category: (parsed.category ?? '').trim().slice(0, 40),
       },
     };
-  } catch {
+  } catch (error) {
+    // No credential, or a rejected one, is a setup problem rather than a bad
+    // photo — and the two want different words in front of the shopkeeper.
+    if (
+      error instanceof Anthropic.AuthenticationError ||
+      (error instanceof Error && /api[_ ]?key/i.test(error.message))
+    ) {
+      return { ok: false, reason: 'unconfigured' };
+    }
+
     // The owner gets "try again, or type it" — never a stack trace, and never a
     // half-filled form built from a failed read.
     return { ok: false, reason: 'failed' };
