@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import clsx from 'clsx';
 import { ShopHeader, type ShopSummary } from './ShopHeader';
 import { ItemCard, itemName, type CustomerItem } from './ItemCard';
@@ -126,15 +127,21 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   }
 
   return (
-    <div className="min-h-dvh bg-slate-50 pb-28">
+    <div className="min-h-dvh bg-slate-100 pb-28">
       <ShopHeader shop={shop} locale={locale} onLocaleChange={changeLocale} payLabel={t.payViaUpi} />
 
-      <main className="mx-auto max-w-2xl px-4 py-4">
+      {/* One column of controls above one grid of items, at every width — the
+          same shape the rest of the product uses. Only the number of items in a
+          row changes with the screen. */}
+      <main className="mx-auto max-w-6xl px-4 py-4 lg:py-6">
         {items.length === 0 ? (
           <EmptyState title={t.emptyShop} hint={t.emptyShopHint} />
         ) : (
           <>
-            <div className="sticky top-0 z-10 -mx-4 bg-slate-50/95 px-4 pb-2 pt-3 backdrop-blur">
+            {/* Search stays the full width of the menu it filters, and pins
+                directly beneath the brand bar so it is still there ten items
+                down. `top` clears that bar rather than hiding behind it. */}
+            <div className="sticky top-[3.25rem] z-10 -mx-4 bg-slate-100/95 px-4 pb-2 pt-3 backdrop-blur">
               <input
                 type="search"
                 value={query}
@@ -145,7 +152,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
               />
 
               {categories.length > 0 && (
-                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                <div className="mt-2 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
                   {[
                     { value: '', label: t.all },
                     // The value stays the stored category so filtering still
@@ -196,7 +203,10 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
                 <EmptyState title={t.noResults} />
               </div>
             ) : (
-              <ul className="mt-2 space-y-2">
+              /* Two across from a tablet, three from a laptop. Cards any
+                 narrower than this and the price, the unit and the stock badge
+                 start stacking on top of each other. */
+              <ul className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
                 {visibleItems.map((item) => (
                   <ItemCard
                     key={item.id}
@@ -212,7 +222,11 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         )}
 
         <p className="mt-8 text-center text-xs text-slate-400">
-          Powered by DukaanFlow · Scan → Select → WhatsApp
+          Powered by{' '}
+          <Link href="/" className="font-medium text-slate-500 underline hover:text-brand-700">
+            DukaanFlow
+          </Link>{' '}
+          · Scan → Select → WhatsApp
         </p>
       </main>
 
