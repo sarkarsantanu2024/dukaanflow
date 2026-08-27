@@ -1,0 +1,11 @@
+-- Item photos are not stored.
+--
+-- A photo is an *input* to listing an item, the same way speech is: the owner
+-- points the camera at a packet, the name comes back, and the picture has done
+-- its job. Keeping it afterwards would put the one column that multiplies with
+-- both shops and items into a database sized for neither.
+--
+-- Dropping rather than leaving unused: a column that exists will eventually be
+-- written to. Nothing is lost — the feature it was added for shipped and was
+-- replaced within the day, so no row ever carried a real value.
+ALTER TABLE "Item" DROP COLUMN IF EXISTS "imageData";
