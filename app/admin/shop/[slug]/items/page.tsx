@@ -58,16 +58,27 @@ export default async function ItemsPage({ params }: PageProps) {
           slug={shop.slug}
           items={shop.items}
           wide
-          sidebar={
-            <>
-              <StarterPanel
-                slug={shop.slug}
-                catalogue={catalogue}
-                remaining={billing?.remaining ?? 0}
-              />
-              <BulkPanel slug={shop.slug} />
-            </>
-          }
+          shopType={shop.type}
+          tools={[
+            {
+              id: 'starter',
+              label: 'Add common items',
+              hint: `${catalogue.length} usual items for this shop type`,
+              content: (
+                <StarterPanel
+                  slug={shop.slug}
+                  catalogue={catalogue}
+                  remaining={billing?.remaining ?? 0}
+                />
+              ),
+            },
+            {
+              id: 'bulk',
+              label: 'Bulk update',
+              hint: 'Paste a price or stock list',
+              content: <BulkPanel slug={shop.slug} />,
+            },
+          ]}
         />
       </main>
     </>

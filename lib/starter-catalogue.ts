@@ -344,3 +344,18 @@ export function starterName(item: StarterItem, locale: 'en' | 'bn' | 'hi'): stri
   if (locale === 'hi') return item.nameHi || item.name;
   return item.name;
 }
+
+/**
+ * The item's other names, for the line under the heading.
+ *
+ * Both languages are shown because the operator picking items and the
+ * shopkeeper they are picking for do not read the same one — a list that says
+ * only "Rice" cannot be checked by the person who calls it চাল. Deduplicated,
+ * so a name spelled identically in two languages is not repeated.
+ */
+export function starterOtherNames(item: StarterItem, locale: 'en' | 'bn' | 'hi'): string[] {
+  const shown = starterName(item, locale);
+  return [...new Set([item.name, item.nameBn, item.nameHi])].filter(
+    (name) => name && name !== shown,
+  );
+}
