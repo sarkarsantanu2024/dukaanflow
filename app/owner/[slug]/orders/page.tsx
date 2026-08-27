@@ -40,8 +40,11 @@ export default async function OrdersPage({ params }: PageProps) {
 
   const rows = await prisma.order.findMany({
     where: { shopId: shop.id },
-    orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
-    take: 50,
+    // The screen groups by status itself and counts today's takings across the
+    // whole set, so it wants a window of history rather than a top-50 slice
+    // that could cut today's own orders in half on a busy day.
+    orderBy: { createdAt: 'desc' },
+    take: 200,
     select: {
       id: true,
       customerName: true,
