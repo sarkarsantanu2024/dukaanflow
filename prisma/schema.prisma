@@ -26,9 +26,16 @@ enum OrderType {
   PICKUP
 }
 
+/// The life of one order, in the order an owner works it. `asc` on this enum is
+/// the queue: what still needs doing first, what is finished last.
+///
+/// CONFIRMED and COMPLETED are deliberately separate. "I have taken this order"
+/// and "the customer has it" are different moments, and the gap between them is
+/// the only thing an owner is actually tracking during a rush.
 enum OrderStatus {
   NEW
   CONFIRMED
+  COMPLETED
   CANCELLED
 }
 

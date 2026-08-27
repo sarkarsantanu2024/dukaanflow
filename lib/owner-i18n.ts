@@ -75,12 +75,20 @@ type OwnerDictionary = {
   noOrdersHint: string;
   orderNew: string;
   orderConfirmed: string;
+  orderCompleted: string;
   orderCancelled: string;
   markConfirmed: string;
+  markCompleted: string;
   markCancelled: string;
+  ordersAll: string;
+  ordersToday: string;
+  ordersTakings: string;
+  ordersWaiting: string;
+  noOrdersHere: string;
   delivery: string;
   pickup: string;
   callCustomer: string;
+  messageCustomer: string;
 
   planLabel: string;
   trialDaysLeft: string;
@@ -94,6 +102,11 @@ type OwnerDictionary = {
   starterAdd: string;
   starterSkip: string;
   starterAdded: string;
+  starterSearch: string;
+  starterSelectAll: string;
+  starterClear: string;
+  starterRoomLeft: string;
+  starterFull: string;
 
   welcomeTitle: string;
   welcomeBody: string;
@@ -225,12 +238,20 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noOrdersHint: 'Orders appear here the moment a customer sends one from your QR.',
     orderNew: 'New',
     orderConfirmed: 'Confirmed',
+    orderCompleted: 'Done',
     orderCancelled: 'Cancelled',
-    markConfirmed: 'Confirm',
+    markConfirmed: 'Accept',
+    markCompleted: 'Mark done',
     markCancelled: 'Cancel',
+    ordersAll: 'All',
+    ordersToday: 'Today',
+    ordersTakings: 'Takings',
+    ordersWaiting: 'Waiting',
+    noOrdersHere: 'Nothing here right now',
     delivery: 'Delivery',
     pickup: 'Pickup',
     callCustomer: 'Call',
+    messageCustomer: 'WhatsApp',
 
     planLabel: 'Plan',
     trialDaysLeft: 'days left in your free trial',
@@ -244,6 +265,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterAdd: 'Add selected',
     starterSkip: 'Not now',
     starterAdded: 'added — now set their prices',
+    starterSearch: 'Search the list',
+    starterSelectAll: 'All',
+    starterClear: 'Clear',
+    starterRoomLeft: 'left on your plan',
+    starterFull: 'Your plan is full. Upgrade to add more.',
 
     welcomeTitle: 'Let’s add your first item',
     welcomeBody:
@@ -377,12 +403,20 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noOrdersHint: 'আপনার QR থেকে কেউ অর্ডার পাঠালেই এখানে দেখাবে।',
     orderNew: 'নতুন',
     orderConfirmed: 'নেওয়া হয়েছে',
+    orderCompleted: 'হয়ে গেছে',
     orderCancelled: 'বাতিল',
     markConfirmed: 'নিলাম',
+    markCompleted: 'হয়ে গেছে',
     markCancelled: 'বাতিল',
+    ordersAll: 'সব',
+    ordersToday: 'আজ',
+    ordersTakings: 'আজকের টাকা',
+    ordersWaiting: 'বাকি আছে',
+    noOrdersHere: 'এখানে এখন কিছু নেই',
     delivery: 'ডেলিভারি',
     pickup: 'দোকান থেকে',
     callCustomer: 'ফোন',
+    messageCustomer: 'WhatsApp',
 
     planLabel: 'প্ল্যান',
     trialDaysLeft: 'দিন ফ্রি ট্রায়াল বাকি',
@@ -396,6 +430,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterAdd: 'বাছাই করা যোগ করুন',
     starterSkip: 'এখন নয়',
     starterAdded: 'যোগ হয়েছে — এবার দাম দিন',
+    starterSearch: 'তালিকায় খুঁজুন',
+    starterSelectAll: 'সব',
+    starterClear: 'বাদ দিন',
+    starterRoomLeft: 'আপনার প্ল্যানে বাকি',
+    starterFull: 'আপনার প্ল্যান ভরে গেছে। আরও যোগ করতে প্ল্যান বাড়ান।',
 
     welcomeTitle: 'চলুন প্রথম জিনিসটি যোগ করি',
     welcomeBody:
@@ -529,12 +568,20 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noOrdersHint: 'आपके QR से कोई ऑर्डर भेजते ही यहाँ दिखेगा।',
     orderNew: 'नया',
     orderConfirmed: 'लिया',
+    orderCompleted: 'हो गया',
     orderCancelled: 'रद्द',
     markConfirmed: 'लिया',
+    markCompleted: 'हो गया',
     markCancelled: 'रद्द',
+    ordersAll: 'सब',
+    ordersToday: 'आज',
+    ordersTakings: 'आज की कमाई',
+    ordersWaiting: 'बाकी है',
+    noOrdersHere: 'यहाँ अभी कुछ नहीं',
     delivery: 'डिलीवरी',
     pickup: 'दुकान से',
     callCustomer: 'फ़ोन',
+    messageCustomer: 'WhatsApp',
 
     planLabel: 'प्लान',
     trialDaysLeft: 'दिन का फ्री ट्रायल बाकी',
@@ -548,6 +595,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterAdd: 'चुने हुए जोड़ें',
     starterSkip: 'अभी नहीं',
     starterAdded: 'जुड़ गए — अब दाम डालिए',
+    starterSearch: 'सूची में खोजें',
+    starterSelectAll: 'सभी',
+    starterClear: 'हटाएं',
+    starterRoomLeft: 'आपके प्लान में बाकी',
+    starterFull: 'आपका प्लान भर गया है। और जोड़ने के लिए प्लान बढ़ाएं।',
 
     welcomeTitle: 'पहला सामान जोड़ते हैं',
     welcomeBody:

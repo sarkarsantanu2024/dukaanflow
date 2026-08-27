@@ -168,7 +168,7 @@ export const ledgerDeleteSchema = z.object({ id: z.string().uuid('Unknown entry'
 
 export const orderStatusSchema = z.object({
   id: z.string().uuid('Unknown order'),
-  status: z.enum(['NEW', 'CONFIRMED', 'CANCELLED']),
+  status: z.enum(['NEW', 'CONFIRMED', 'COMPLETED', 'CANCELLED']),
 });
 
 /** Names picked from the shop-type starter catalogue. */
