@@ -126,6 +126,8 @@ git push -u origin main
    | `ADMIN_PASSWORD_HASH` | output of `npm run hash` |
    | `COOKIE_SECRET` | 64 hex characters |
    | `NEXT_PUBLIC_BASE_URL` | `https://dukaanflow.vercel.app` (no trailing slash) |
+   | `NEXT_PUBLIC_SUPPORT_PHONE` | your WhatsApp number, digits only with country code |
+   | `ANTHROPIC_API_KEY` | optional — only for "Add by photo" |
 
 3. Deploy.
 
