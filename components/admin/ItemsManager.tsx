@@ -9,6 +9,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { VoiceItemAdder } from './VoiceItemAdder';
+import { ImagePicker } from './ImagePicker';
+import { ItemPhoto } from './ItemPhoto';
 import { formatRupees } from '@/lib/money';
 import { suggestNames, translateCategory } from '@/lib/speech';
 import { unitsFor, UNIT_LIST_ID } from '@/lib/units';
@@ -26,6 +28,7 @@ export type AdminItem = {
   unit: string;
   category: string;
   inStock: boolean;
+  imageData?: string;
 };
 
 type NewItem = {
@@ -35,6 +38,7 @@ type NewItem = {
   price: string;
   unit: string;
   category: string;
+  imageData: string;
 };
 
 /**
@@ -66,6 +70,7 @@ const EMPTY_NEW_ITEM: NewItem = {
   price: '',
   unit: '',
   category: '',
+  imageData: '',
 };
 
 export function ItemsManager({
@@ -161,6 +166,7 @@ export function ItemsManager({
           price: Number(draft.price),
           unit: draft.unit,
           category: draft.category,
+          imageData: draft.imageData,
           inStock: true,
         }),
       });
@@ -316,6 +322,17 @@ export function ItemsManager({
           />
         </div>
 
+        <div className="mt-3">
+          <ImagePicker
+            label={t.photo}
+            hint={t.photoHint}
+            shape="thumb"
+            value={draft.imageData}
+            onChange={(imageData) => setDraft((current) => ({ ...current, imageData }))}
+            onError={(message) => push(message, 'error')}
+          />
+        </div>
+
         {/* The other two languages are filled in automatically for any name the
             product already knows, and left blank otherwise — the storefront
             falls back to the primary name. Nobody, operator or shopkeeper,
@@ -415,6 +432,14 @@ export function ItemsManager({
                   busyId === item.id && 'opacity-60',
                 )}
               >
+                <ItemPhoto
+                  value={item.imageData ?? ''}
+                  label={displayName(item, locale)}
+                  disabled={busyId === item.id}
+                  onChange={(imageData) => patchItem(item.id, { imageData })}
+                  onError={(message) => push(message, 'error')}
+                />
+
                 <div className="min-w-0 flex-1">
                   {/* The owner reads their own language first. This showed the
                       primary (usually English) name to everyone, so a Bengali

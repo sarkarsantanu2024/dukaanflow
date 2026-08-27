@@ -15,6 +15,7 @@ export type CustomerItem = {
   unit: string;
   category: string;
   inStock: boolean;
+  imageData?: string;
 };
 
 /**
@@ -50,6 +51,18 @@ export function ItemCard({
         disabled ? 'border-slate-200 opacity-60' : 'border-slate-200',
       )}
     >
+      {/* A picture does the work three names cannot: a shopper who reads none
+          of the languages still knows what they are buying. Absent on most
+          items, so it takes space only when there is something to show. */}
+      {item.imageData && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={item.imageData}
+          alt=""
+          className="h-14 w-14 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+        />
+      )}
+
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold text-slate-900">{label}</p>
         <div className="mt-1 flex flex-wrap items-center gap-2">

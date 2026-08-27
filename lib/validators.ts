@@ -85,6 +85,19 @@ export const shopUpdateSchema = shopCreateSchema.partial().extend({
 /** Optional per-language name. Empty means "fall back to `name`". */
 const altNameSchema = z.string().trim().max(80).default('');
 
+/**
+ * A resized item thumbnail, as a data URL. Bounded because this column is the
+ * one that multiplies — a client that skipped the browser-side resize must not
+ * be able to put a 4 MB phone photo into a row. ~180 KB of characters is
+ * comfortably above a 320px JPEG and far below anything alarming.
+ */
+const itemImageSchema = z
+  .string()
+  .trim()
+  .max(180_000, 'That photo is too large')
+  .refine((value) => value === '' || value.startsWith('data:image/'), 'That is not an image')
+  .default('');
+
 export const itemUpsertSchema = z.object({
   name: itemNameSchema,
   nameBn: altNameSchema,
@@ -93,6 +106,7 @@ export const itemUpsertSchema = z.object({
   unit: z.string().trim().max(24).default(''),
   category: z.string().trim().max(40).default(''),
   inStock: z.boolean().default(true),
+  imageData: itemImageSchema,
 });
 
 export const itemPatchSchema = z.object({
@@ -103,6 +117,7 @@ export const itemPatchSchema = z.object({
   // to say so. Without this the only fix was deleting the item and re-adding it.
   unit: z.string().trim().max(24).optional(),
   inStock: z.boolean().optional(),
+  imageData: itemImageSchema.optional(),
   category: z.string().trim().max(40).optional(),
   nameBn: altNameSchema.optional(),
   nameHi: altNameSchema.optional(),

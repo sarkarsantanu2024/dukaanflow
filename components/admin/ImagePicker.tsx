@@ -16,13 +16,21 @@ const MAX_EDGE = 900;
 const QUALITY = 0.72;
 /** QR codes must stay crisp and lossless, or a scanner will struggle. */
 const QR_MAX_EDGE = 700;
+/**
+ * Item photos are thumbnails, and deliberately far smaller than the shop's own
+ * images. A shop banner is one row; an item photo is one per item per shop, so
+ * this is the number that decides whether a 0.5 GB database holds two hundred
+ * photographed shops or thirty.
+ */
+const THUMB_MAX_EDGE = 320;
+const THUMB_QUALITY = 0.7;
 
-export type ImageShape = 'wide' | 'square' | 'circle';
+export type ImageShape = 'wide' | 'square' | 'circle' | 'thumb';
 
 async function resize(file: File, shape: ImageShape): Promise<string> {
   const bitmap = await createImageBitmap(file);
   const isQr = shape === 'square';
-  const maxEdge = isQr ? QR_MAX_EDGE : MAX_EDGE;
+  const maxEdge = isQr ? QR_MAX_EDGE : shape === 'thumb' ? THUMB_MAX_EDGE : MAX_EDGE;
 
   const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
   const width = Math.round(bitmap.width * scale);
@@ -42,13 +50,15 @@ async function resize(file: File, shape: ImageShape): Promise<string> {
   bitmap.close();
 
   // JPEG artefacts round off the corners of QR modules, so those stay PNG.
-  return isQr ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', QUALITY);
+  if (isQr) return canvas.toDataURL('image/png');
+  return canvas.toDataURL('image/jpeg', shape === 'thumb' ? THUMB_QUALITY : QUALITY);
 }
 
 const FRAME: Record<ImageShape, string> = {
   wide: 'h-24 w-40',
   square: 'h-28 w-28',
   circle: 'h-24 w-24 rounded-full',
+  thumb: 'h-16 w-16',
 };
 
 export function ImagePicker({

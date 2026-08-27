@@ -210,6 +210,16 @@ model Item {
   unit      String   @default("")
   category  String   @default("")
   inStock   Boolean  @default(true)
+  /// The item's photo, as a resized data URL — the same approach the shop's own
+  /// images use, so DukaanFlow still needs no image service or second bill.
+  ///
+  /// Held to a thumbnail (320px, ~20 KB) rather than the 900px the shop banner
+  /// gets, because this one multiplies: a shop banner is one row, an item photo
+  /// is one per item per shop. At 20 KB a 130-item catalogue costs ~2.6 MB, so
+  /// a 0.5 GB database holds a couple of hundred fully-photographed shops. At
+  /// the shop banner's size it would hold thirty. If that ceiling is ever in
+  /// sight, this column takes a real URL unchanged.
+  imageData String   @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

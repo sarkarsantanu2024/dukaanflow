@@ -38,6 +38,7 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
       unit: true,
       category: true,
       inStock: true,
+      imageData: true,
     },
   });
 
