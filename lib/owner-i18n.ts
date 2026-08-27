@@ -54,6 +54,8 @@ type OwnerDictionary = {
   photoAdd: string;
   photoAddHint: string;
   photoReading: string;
+  voiceAlready: string;
+  voiceSetPrice: string;
   otherLanguages: string;
   otherLanguagesHint: string;
   saveItem: string;
@@ -197,7 +199,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     voiceTitle: 'Manage items by voice',
     voiceIdle: 'Tap the mic, then say one instruction per sentence.',
     voiceListening: 'Listening… add a price, mark out of stock, or remove.',
-    voiceExampleAdd: '“rice one kg sixty eight rupees”',
+    voiceExampleAdd: '“rice”',
     voiceExampleOut: '“rice out of stock”',
     voiceExampleRemove: '“remove rice”',
     labelAdd: 'Add / re-price',
@@ -227,6 +229,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     photoAdd: 'Add by photo',
     photoAddHint: 'Point the camera at the packet. The photo is not saved.',
     photoReading: 'Reading the packet…',
+    voiceAlready: 'already on your list',
+    voiceSetPrice: 'added — now set the price',
     otherLanguages: 'Other languages (optional)',
     otherLanguagesHint:
       'Filled in automatically for names the app knows. Left blank, customers see the name above.',
@@ -373,7 +377,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     voiceTitle: 'কথা বলে জিনিস সামলান',
     voiceIdle: 'মাইকে চাপ দিন, তারপর এক বাক্যে একটি নির্দেশ বলুন।',
     voiceListening: 'শুনছি… দাম যোগ করুন, শেষ বলুন, বা মুছে দিন।',
-    voiceExampleAdd: '“চাল এক কেজি ৬৮ টাকা”',
+    voiceExampleAdd: '“চাল”',
     voiceExampleOut: '“চাল শেষ”',
     voiceExampleRemove: '“চাল মুছে দাও”',
     labelAdd: 'যোগ / দাম বদল',
@@ -403,6 +407,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     photoAdd: 'ছবি তুলে যোগ করুন',
     photoAddHint: 'প্যাকেটের দিকে ক্যামেরা ধরুন। ছবি রাখা হয় না।',
     photoReading: 'পড়া হচ্ছে…',
+    voiceAlready: 'ইতিমধ্যে তালিকায় আছে',
+    voiceSetPrice: 'যোগ হয়েছে — এবার দাম দিন',
     otherLanguages: 'অন্য ভাষা (ইচ্ছামতো)',
     otherLanguagesHint:
       'চেনা নাম হলে নিজে থেকেই ভরে যায়। খালি রাখলে ক্রেতা উপরের নামটাই দেখবে।',
@@ -549,7 +555,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     voiceTitle: 'बोलकर सामान संभालें',
     voiceIdle: 'माइक दबाइए, फिर एक बार में एक बात बोलिए।',
     voiceListening: 'सुन रहे हैं… दाम जोड़िए, खत्म बताइए, या हटाइए।',
-    voiceExampleAdd: '“चावल एक किलो 68 रुपये”',
+    voiceExampleAdd: '“चावल”',
     voiceExampleOut: '“चावल खत्म”',
     voiceExampleRemove: '“चावल हटाओ”',
     labelAdd: 'जोड़ें / दाम बदलें',
@@ -579,6 +585,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     photoAdd: 'फोटो से जोड़ें',
     photoAddHint: 'पैकेट की ओर कैमरा कीजिए। फोटो सेव नहीं होती।',
     photoReading: 'पढ़ रहे हैं…',
+    voiceAlready: 'पहले से सूची में है',
+    voiceSetPrice: 'जुड़ गया — अब दाम डालिए',
     otherLanguages: 'अन्य भाषा (वैकल्पिक)',
     otherLanguagesHint:
       'जाने-पहचाने नाम खुद भर जाते हैं। खाली छोड़ने पर ग्राहक ऊपर वाला नाम देखेंगे।',

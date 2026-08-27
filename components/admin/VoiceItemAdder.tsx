@@ -119,7 +119,7 @@ const PHRASES: Record<
 };
 
 function draftLabel(draft: SpokenItemDraft): string {
-  return draft.unit ? `${draft.name} · ${draft.unit}` : draft.name;
+  return draft.name;
 }
 
 /** What a pending command will do, in words, for the confirmation prompt. */
@@ -128,7 +128,8 @@ function describe(command: VoiceCommand, t: ReturnType<typeof ownerDict>): strin
   if (command.kind === 'stock') {
     return `${command.label} — ${command.inStock ? t.inStock : t.outOfStock}`;
   }
-  return `${command.label} — ${formatRupees(command.draft.price)}`;
+  if (command.kind === 'exists') return `${command.label} — ${t.voiceAlready}`;
+  return command.label;
 }
 
 /** The owner's reading language maps to the language they will dictate in. */
@@ -255,21 +256,27 @@ export function VoiceItemAdder({
           return;
         }
 
-        const { draft } = command;
-        // Remembered before the write, so Undo knows whether this created a row
-        // or merely re-priced one.
-        const previous = itemsRef.current.find(
-          (item) => item.name === draft.name && item.unit === draft.unit,
-        );
+        // Already stocked. Saying its name is not an instruction to change
+        // anything, and the price on that row is the owner's.
+        if (command.kind === 'exists') {
+          addEntry({ heard, status: 'done', detail: `${command.label} — ${t.voiceAlready}` });
+          announce(`${command.label} ${t.voiceAlready}`);
+          return;
+        }
 
+        const { draft } = command;
+
+        // Listed unpriced and out of stock, exactly as a starter item is: the
+        // owner said what they sell, not what it costs, and nothing reaches a
+        // customer until they say so. Pricing the row puts it on sale.
         const { ok, payload } = await call('POST', {
           name: draft.name,
           nameBn: draft.nameBn,
           nameHi: draft.nameHi,
-          price: draft.price,
-          unit: draft.unit,
+          price: 1,
+          unit: '',
           category: draft.category,
-          inStock: true,
+          inStock: false,
         });
 
         if (!ok || !payload.id) {
@@ -281,12 +288,10 @@ export function VoiceItemAdder({
         addEntry({
           heard,
           status: 'done',
-          detail: `${draftLabel(draft)} — ${formatRupees(draft.price)}`,
-          undo: previous
-            ? { type: 'price', itemId: payload.id, price: previous.price }
-            : { type: 'delete', itemId: payload.id },
+          detail: `${draftLabel(draft)} — ${t.voiceSetPrice}`,
+          undo: { type: 'delete', itemId: payload.id },
         });
-        announce(phrases.saved(draftLabel(draft).replace(' · ', ' '), draft.price));
+        announce(`${draftLabel(draft)} — ${t.voiceSetPrice}`);
         router.refresh();
       } catch {
         addEntry({ heard, status: 'failed', detail: 'Network error' });
