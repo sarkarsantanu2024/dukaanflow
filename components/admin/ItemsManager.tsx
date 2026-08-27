@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { Badge } from '@/components/ui/Badge';
+import { TrashIcon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
@@ -15,6 +16,7 @@ import { formatRupees } from '@/lib/money';
 import { suggestNames, translateCategory } from '@/lib/speech';
 import { unitsFor, UNIT_LIST_ID } from '@/lib/units';
 import { Drawer } from '@/components/ui/Drawer';
+import { FloatingTools } from './FloatingTools';
 import type { ShopType } from '@prisma/client';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
@@ -138,6 +140,9 @@ export function ItemsManager({
   const [adding, setAdding] = useState(false);
   /** Which drawer is open, by tool id. `form` is this component's own. */
   const [drawer, setDrawer] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  /** Filled by the hidden file input, called by the floating camera button. */
+  const openPhoto = useRef<(() => void) | null>(null);
   // Price edits are local until blur/Enter, so typing "6" of "68" doesn't save.
   const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({});
   const [unitDrafts, setUnitDrafts] = useState<Record<string, string>>({});
@@ -370,36 +375,65 @@ export function ItemsManager({
     </form>
   );
 
+  /**
+   * Several packets at once become several rows, unpriced and out of stock —
+   * the same landing place voice and the starter list use. Pricing one puts it
+   * on sale, so the owner works down the list once rather than stopping at a
+   * form between every photograph.
+   */
+  async function addIdentified(found: Identified[], unreadable: number) {
+    let created = 0;
+
+    for (const item of found) {
+      const response = await fetch(`/api/admin/shop/${slug}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: item.name,
+          nameBn: item.nameBn,
+          nameHi: item.nameHi,
+          price: 1,
+          unit: item.unit,
+          category: item.category,
+          inStock: false,
+        }),
+      });
+      if (response.ok) created += 1;
+    }
+
+    push(
+      unreadable > 0
+        ? `${created} ${t.voiceSetPrice} · ${unreadable} ✗`
+        : `${created} ${t.voiceSetPrice}`,
+      created > 0 ? 'success' : 'error',
+    );
+    if (created > 0) router.refresh();
+  }
+
   // Only offered when there is a catalogue to match against — without one the
   // scan can do no better than the largest text on the wrapper.
   const photoAdder = catalogue.length > 0 && (
     <PhotoItemAdder
       catalogue={catalogue}
-      label={t.photoAdd}
-      hint={t.photoAddHint}
-      reading={t.photoReading}
       onIdentified={identified}
+      onBatch={addIdentified}
+      onBusyChange={setScanning}
+      openRef={openPhoto}
       onError={(message) => push(message, 'error')}
     />
   );
 
-  const adder = (
+  const floatingTools = (
     <>
-      <VoiceItemAdder slug={slug} items={items} locale={locale} />
       {photoAdder}
-
-      <div className="rounded-2xl bg-white p-4 shadow-card">
-        <button
-          type="button"
-          onClick={() => setTyping((open) => !open)}
-          aria-expanded={typing}
-          className="text-sm font-semibold text-brand-700 underline"
-        >
-          {typing ? t.hideForm : t.typeInstead}
-        </button>
-      </div>
-
-      <div hidden={!typing}>{typedForm}</div>
+      <FloatingTools
+        onVoice={() => setDrawer('voice')}
+        onPhoto={() => openPhoto.current?.()}
+        voiceLabel={t.voiceTitle}
+        photoLabel={t.photoAdd}
+        photoBusy={scanning}
+        aboveTabBar={!wide}
+      />
     </>
   );
 
@@ -447,88 +481,92 @@ export function ItemsManager({
                   busyId === item.id && 'opacity-60',
                 )}
               >
-                {/* Stacked on a phone, one line from `sm` up. Wrapping a single
-                    flex row put four controls beside the name and squeezed it
-                    to a single letter — the name is the thing being edited and
-                    must never be the part that gives way. */}
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                <div className="min-w-0 sm:flex-1">
-                  {/* The owner reads their own language first. This showed the
-                      primary (usually English) name to everyone, so a Bengali
-                      shopkeeper got a Bengali app listing "Mustard Oil". */}
-                  <p className="truncate font-semibold text-slate-900">
-                    {displayName(item, locale)}
-                    {item.unit && <span className="font-normal text-slate-500"> · {item.unit}</span>}
-                  </p>
-                  {otherNames(item, locale).length > 0 && (
-                    <p className="truncate text-xs text-slate-500">
-                      {otherNames(item, locale).join(' · ')}
+                {/* Two rows, both edge to edge. The controls were a wrapping
+                    strip of four fixed-width things, which left a ragged gap
+                    down the right of every card and put the delete button on a
+                    line of its own. Now the two fields share the free width and
+                    the two actions sit at a fixed size against the right edge,
+                    so every card lines up with the one above it. All controls
+                    are the same 40px height. */}
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    {/* The owner reads their own language first. */}
+                    <p className="truncate font-semibold leading-tight text-slate-900">
+                      {displayName(item, locale)}
                     </p>
-                  )}
-                  <div className="mt-1 flex items-center gap-2">
-                    {item.category && <Badge>{translateCategory(item.category, locale)}</Badge>}
-                    <Badge tone={item.inStock ? 'green' : 'red'}>
-                      {item.inStock ? t.inStock : t.outOfStock}
-                    </Badge>
+                    <p className="truncate text-xs leading-tight text-slate-500">
+                      {[...otherNames(item, locale), item.category && translateCategory(item.category, locale)]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
                   </div>
+
+                  <Badge tone={item.inStock ? 'green' : 'red'}>
+                    {item.inStock ? t.inStock : t.outOfStock}
+                  </Badge>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                <label className="flex items-center gap-1">
-                  <span className="text-slate-500">₹</span>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <label className="relative min-w-0 flex-1">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                      ₹
+                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      aria-label={`${t.price} — ${displayName(item, locale)}`}
+                      value={priceDrafts[item.id] ?? String(item.price)}
+                      onChange={(event) =>
+                        setPriceDrafts((current) => ({ ...current, [item.id]: event.target.value }))
+                      }
+                      onBlur={() => commitPrice(item)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') event.currentTarget.blur();
+                      }}
+                      className="h-10 w-full rounded-lg border border-slate-300 pl-6 pr-2 text-right text-sm tabular-nums"
+                    />
+                  </label>
+
+                  {/* Pack size, editable in place and suggested from what this
+                      kind of shop actually sells in. */}
                   <input
-                    type="number"
-                    min={1}
-                    aria-label={`Price of ${item.name}`}
-                    value={priceDrafts[item.id] ?? String(item.price)}
+                    type="text"
+                    list={UNIT_LIST_ID}
+                    aria-label={`${t.unit} — ${displayName(item, locale)}`}
+                    placeholder={t.unit}
+                    value={unitDrafts[item.id] ?? item.unit}
                     onChange={(event) =>
-                      setPriceDrafts((current) => ({ ...current, [item.id]: event.target.value }))
+                      setUnitDrafts((current) => ({ ...current, [item.id]: event.target.value }))
                     }
-                    onBlur={() => commitPrice(item)}
+                    onBlur={() => commitUnit(item)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter') event.currentTarget.blur();
                     }}
-                    className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-right"
+                    className="h-10 w-full min-w-0 flex-1 rounded-lg border border-slate-300 px-2.5 text-sm"
                   />
-                </label>
 
-                {/* Pack size, editable in place and suggested from what this
-                    kind of shop actually sells in. */}
-                <input
-                  type="text"
-                  list={UNIT_LIST_ID}
-                  aria-label={`${t.unit} — ${displayName(item, locale)}`}
-                  placeholder={t.unit}
-                  value={unitDrafts[item.id] ?? item.unit}
-                  onChange={(event) =>
-                    setUnitDrafts((current) => ({ ...current, [item.id]: event.target.value }))
-                  }
-                  onBlur={() => commitUnit(item)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') event.currentTarget.blur();
-                  }}
-                  className="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
-                />
+                  <button
+                    type="button"
+                    disabled={busyId === item.id}
+                    onClick={() => patchItem(item.id, { inStock: !item.inStock })}
+                    className="h-10 shrink-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    {item.inStock ? t.markOut : t.markIn}
+                  </button>
 
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={busyId === item.id}
-                  onClick={() => patchItem(item.id, { inStock: !item.inStock })}
-                >
-                  {item.inStock ? t.markOut : t.markIn}
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={busyId === item.id}
-                  onClick={() => deleteItem(item)}
-                  className="text-red-600 hover:bg-red-50"
-                >
-                  {t.delete}
-                </Button>
-                </div>
+                  {/* An icon, not the word. "Delete" spelled out in three
+                      languages was the widest thing on the row and the least
+                      often wanted. */}
+                  <button
+                    type="button"
+                    disabled={busyId === item.id}
+                    onClick={() => deleteItem(item)}
+                    aria-label={`${t.delete} — ${displayName(item, locale)}`}
+                    title={t.delete}
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  >
+                    <TrashIcon className="h-[18px] w-[18px]" />
+                  </button>
                 </div>
               </li>
             ))}
@@ -546,12 +584,33 @@ export function ItemsManager({
     </datalist>
   );
 
+  const voiceDrawer = (
+    <Drawer open={drawer === 'voice'} title={t.voiceTitle} onClose={() => setDrawer(null)}>
+      <div className="space-y-4">
+        <VoiceItemAdder slug={slug} items={items} locale={locale} />
+        <button
+          type="button"
+          onClick={() => setDrawer('form')}
+          className="text-sm font-semibold text-brand-700 underline"
+        >
+          {t.typeInstead}
+        </button>
+      </div>
+    </Drawer>
+  );
+
   if (!wide) {
     return (
-      <div className="space-y-6">
+      // Room at the bottom for the floating buttons, so the last item is never
+      // trapped underneath them.
+      <div className="space-y-4 pb-24">
         {unitOptions}
-        {adder}
         {list}
+        {floatingTools}
+        {voiceDrawer}
+        <Drawer open={drawer === 'form'} title={t.typeInstead} onClose={() => setDrawer(null)}>
+          {typedForm}
+        </Drawer>
       </div>
     );
   }
@@ -568,7 +627,6 @@ export function ItemsManager({
           the list rather than with the tools. */}
       <div className="space-y-3 max-lg:order-first lg:sticky lg:top-[4.25rem]">
         <VoiceItemAdder slug={slug} items={items} locale={locale} />
-        {photoAdder}
 
         <button
           type="button"
@@ -590,6 +648,8 @@ export function ItemsManager({
           </button>
         ))}
       </div>
+
+      {floatingTools}
 
       <Drawer open={drawer === 'form'} title={t.typeInstead} onClose={() => setDrawer(null)}>
         {typedForm}
