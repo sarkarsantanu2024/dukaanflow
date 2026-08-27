@@ -72,147 +72,128 @@ async function prepare(file: File): Promise<string> {
 
 export function PhotoItemAdder({
   catalogue,
-  label,
-  hint,
-  reading,
   onIdentified,
+  onBatch,
   onError,
+  onBusyChange,
+  openRef,
 }: {
   /** The shop-type catalogue, matched against so a hit is a real item. */
   catalogue: StarterItem[];
-  label: string;
-  hint: string;
-  reading: string;
+  /** One photo: fill the form so the owner can price it there and then. */
   onIdentified: (item: Identified) => void;
+  /**
+   * Several photos: filling a form per packet would defeat the point, so the
+   * batch is listed straight away — unpriced, the way voice lists things.
+   */
+  onBatch: (items: Identified[], unreadable: number) => void;
   onError: (message: string) => void;
+  onBusyChange?: (busy: boolean) => void;
+  /** Lets the floating button open the picker without rendering one. */
+  openRef?: { current: (() => void) | null };
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState(0);
 
-  async function handle(file: File) {
-    setBusy(true);
-    setProgress(0);
-
-    let worker: Awaited<ReturnType<typeof import('tesseract.js').createWorker>> | null = null;
+  /** One shared worker for the whole batch — starting it is the slow part. */
+  async function readAll(files: File[]): Promise<{ found: Identified[]; unreadable: number }> {
+    const { createWorker } = await import('tesseract.js');
+    const worker = await createWorker('eng');
 
     try {
-      const imageData = await prepare(file);
+      const found: Identified[] = [];
+      let unreadable = 0;
 
-      // Imported here rather than at module scope: several megabytes that only
-      // a shopkeeper who takes a photo should ever download.
-      const { createWorker } = await import('tesseract.js');
-      worker = await createWorker('eng', undefined, {
-        logger: (message: { status: string; progress: number }) => {
-          if (message.status === 'recognizing text') setProgress(message.progress);
-        },
-      });
+      for (const file of files) {
+        const imageData = await prepare(file);
+        const { data } = await worker.recognize(imageData, {}, { blocks: true, text: true });
 
-      const { data } = await worker.recognize(imageData, {}, { blocks: true, text: true });
+        const lines: ScannedLine[] = (data.blocks ?? []).flatMap((block) =>
+          block.paragraphs.flatMap((paragraph) =>
+            paragraph.lines.map((line) => ({
+              text: line.text,
+              confidence: line.confidence,
+              height: line.bbox.y1 - line.bbox.y0,
+            })),
+          ),
+        );
 
-      const lines: ScannedLine[] = (data.blocks ?? []).flatMap((block) =>
-        block.paragraphs.flatMap((paragraph) =>
-          paragraph.lines.map((line) => ({
-            text: line.text,
-            confidence: line.confidence,
-            height: line.bbox.y1 - line.bbox.y0,
-          })),
-        ),
-      );
+        const text = data.text ?? '';
+        const unit = extractUnit(text);
+        const match = matchCatalogue(text, catalogue);
 
-      const text = data.text ?? '';
-      const unit = extractUnit(text);
-      const match = matchCatalogue(text, catalogue);
+        if (match) {
+          found.push({
+            name: match.name,
+            nameBn: match.nameBn,
+            nameHi: match.nameHi,
+            // What the packet says beats what the catalogue assumes: the
+            // catalogue's unit is a sensible default, the printed one is a fact.
+            unit: unit || match.unit,
+            category: match.category,
+          });
+          continue;
+        }
 
-      if (match) {
-        onIdentified({
-          name: match.name,
-          nameBn: match.nameBn,
-          nameHi: match.nameHi,
-          // What the packet says beats what the catalogue assumes: the
-          // catalogue's unit is a sensible default, the printed one is a fact.
-          unit: unit || match.unit,
-          category: match.category,
-        });
-        return;
+        // Nothing in the catalogue, so fall back to the largest text on the
+        // packet — usually the product name — and leave the translations empty
+        // rather than inventing them.
+        const guess = pickLikelyName(lines);
+        if (guess) found.push({ name: guess, nameBn: '', nameHi: '', unit, category: '' });
+        else unreadable += 1;
       }
 
-      // Nothing in the catalogue, so fall back to the largest text on the
-      // packet — usually the product name — and leave the translations empty
-      // rather than inventing them.
-      const guess = pickLikelyName(lines);
-      if (guess) {
-        onIdentified({ name: guess, nameBn: '', nameHi: '', unit, category: '' });
-        return;
-      }
-
-      onError(
-        unit
-          ? 'Could not read the name. Try a closer photo of the label.'
-          : 'Could not read that packet. Try a closer, straighter photo — or type the name.',
-      );
-    } catch {
-      onError('Could not read that photo. Try again, or type the name.');
+      return { found, unreadable };
     } finally {
       // The engine holds a worker and its language data; leaving it running
       // keeps tens of megabytes alive on a phone that has moved on.
-      await worker?.terminate().catch(() => {});
-      setBusy(false);
-      setProgress(0);
+      await worker.terminate().catch(() => {});
     }
   }
 
+  async function handle(files: File[]) {
+    setBusy(true);
+    onBusyChange?.(true);
+
+    try {
+      const { found, unreadable } = await readAll(files);
+
+      if (found.length === 0) {
+        onError('Could not read that packet. Try a closer, straighter photo — or type the name.');
+        return;
+      }
+
+      // One packet fills the form, where the owner prices it there and then.
+      // Several go straight onto the list: stopping at a form per photo would
+      // undo the reason for picking several.
+      if (files.length === 1 && found.length === 1) onIdentified(found[0]!);
+      else onBatch(found, unreadable);
+    } catch {
+      onError('Could not read that photo. Try again, or type the name.');
+    } finally {
+      setBusy(false);
+      onBusyChange?.(false);
+    }
+  }
+
+  // The floating button owns the trigger; this component only owns the input.
+  if (openRef) openRef.current = () => input.current?.click();
+
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-card">
-      <input
-        ref={input}
-        type="file"
-        accept="image/*"
-        // Opens the camera on a phone: the owner is holding the packet.
-        capture="environment"
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) void handle(file);
-          event.target.value = '';
-        }}
-      />
-
-      <button
-        type="button"
-        onClick={() => input.current?.click()}
-        disabled={busy}
-        className="flex w-full items-center gap-3 text-left disabled:opacity-60"
-      >
-        <span
-          aria-hidden
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white"
-        >
-          {busy ? (
-            <Spinner className="h-5 w-5" />
-          ) : (
-            <svg
-              viewBox="0 0 24 24"
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.8}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
-              <circle cx="12" cy="13" r="3.5" />
-            </svg>
-          )}
-        </span>
-
-        <span className="min-w-0">
-          <span className="block font-semibold text-slate-900">{busy ? reading : label}</span>
-          <span className="block text-sm text-slate-500">
-            {busy ? `${Math.round(progress * 100)}%` : hint}
-          </span>
-        </span>
-      </button>
-    </div>
+    <input
+      ref={input}
+      type="file"
+      accept="image/*"
+      // Several at once, so an owner can work through a shelf rather than
+      // returning to the same button for every packet.
+      multiple
+      className="hidden"
+      disabled={busy}
+      onChange={(event) => {
+        const files = [...(event.target.files ?? [])];
+        if (files.length) void handle(files);
+        event.target.value = '';
+      }}
+    />
   );
 }

@@ -174,6 +174,36 @@ export function QrIcon(props: IconProps) {
   );
 }
 
+export function TrashIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 7h16" />
+      <path d="M9 7V5h6v2" />
+      <path d="M6 7l1 13h10l1-13" />
+      <path d="M10 11v6M14 11v6" />
+    </Svg>
+  );
+}
+
+export function MicIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z" />
+      <path d="M5 11a7 7 0 0 0 14 0" />
+      <path d="M12 18v3" />
+    </Svg>
+  );
+}
+
+export function CameraIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </Svg>
+  );
+}
+
 export function AlertIcon(props: IconProps) {
   return (
     <Svg {...props}>
