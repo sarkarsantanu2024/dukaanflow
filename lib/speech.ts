@@ -315,8 +315,14 @@ const DELETE_WORDS = [
   'remove', 'delete', 'drop',
   'hatao', 'hata do', 'hatado', 'nikalo', 'nikal do', 'mitao', 'mita do',
   'हटाओ', 'हटा दो', 'निकालो', 'निकाल दो', 'मिटाओ', 'हटाइए',
-  'muche dao', 'mure dao', 'bad dao', 'sorao',
-  'মুছে দাও', 'মুছুন', 'বাদ দাও', 'সরাও', 'সরিয়ে দাও',
+  'muche dao', 'mure dao', 'bad dao', 'sorao', 'delete karo',
+  // Recognisers run words together at least as often as they separate them,
+  // so the joined spellings are listed beside the spaced ones — and the bare
+  // stem too, which is distinctive on its own and is what a shopkeeper in a
+  // hurry actually says.
+  'মুছে দাও', 'মুছেদাও', 'মুছে', 'মুছুন', 'মুছবেন',
+  'বাদ দাও', 'বাদদাও', 'সরাও', 'সরিয়ে দাও', 'সরিয়েদাও', 'ডিলিট',
+  'हटादो', 'डिलीट', 'मिटा दो', 'मिटादो',
 ];
 
 const OUT_OF_STOCK_WORDS = [
@@ -364,7 +370,23 @@ export function resolveSpokenCommand(
   existing: MatchableItem[],
 ): VoiceCommand | null {
   for (const transcript of alternatives) {
-    const text = wordsToDigits(transcript.trim().replace(/\s+/g, ' ')).toLowerCase();
+    // Two things have to happen before a verb can be recognised, and the order
+    // matters more than it looks.
+    //
+    // Punctuation first: a Bengali danda or a full stop sitting against the
+    // verb defeated a match that required whitespace on both sides.
+    //
+    // And *no* number conversion. "हटा दो" is Hindi for "remove it", but दो is
+    // also the word for two — running digits first turned the sentence into
+    // "हटा 2" and the verb stopped existing. Every Hindi removal phrase ends in
+    // दो, so this silently broke removal in Hindi entirely. Nothing in a verb
+    // or stock phrase is a number, and the item match that follows does not
+    // need digits either.
+    const text = transcript
+      .trim()
+      .replace(/[।॥.,!?;:]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
 
     const removal = matchVerb(text, DELETE_WORDS);
     if (removal) {

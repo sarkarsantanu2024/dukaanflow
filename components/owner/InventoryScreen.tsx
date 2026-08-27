@@ -95,7 +95,13 @@ export function InventoryScreen({
         />
       )}
 
-      <ItemsManager slug={slug} items={items} locale={locale} shopType={shopType} />
+      <ItemsManager
+        slug={slug}
+        items={items}
+        locale={locale}
+        shopType={shopType}
+        catalogue={catalogue}
+      />
     </div>
   );
 }

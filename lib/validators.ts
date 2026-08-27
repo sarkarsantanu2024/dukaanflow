@@ -108,18 +108,6 @@ export const itemPatchSchema = z.object({
   nameHi: altNameSchema.optional(),
 });
 
-/**
- * A photograph sent to be read, never stored. Bounded so a client that skipped
- * the browser-side resize cannot post a 4 MB phone original — the model does
- * not need it, and the request would time out before it helped anyone.
- */
-export const identifySchema = z.object({
-  imageData: z
-    .string()
-    .max(900_000, 'That photo is too large')
-    .refine((value) => /^data:image\/(jpeg|png|webp);base64,/.test(value), 'That is not a photo'),
-});
-
 export const itemDeleteSchema = z.object({ id: z.string().uuid('Unknown item') });
 
 export const bulkSchema = z.object({
