@@ -19,7 +19,7 @@ export function CartBar({
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 shadow-sheet backdrop-blur">
-      <div className="mx-auto flex max-w-2xl items-center gap-3">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-1">
         <div className="min-w-0 flex-1">
           <p className="text-xs text-slate-500">
             {totalItems} {t.items}
