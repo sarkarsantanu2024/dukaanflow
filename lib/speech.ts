@@ -619,6 +619,15 @@ const CATEGORY_VOCAB: Vocab[] = [
   { en: 'Rice & Atta', hi: 'चावल-आटा', bn: 'চাল-আটা' },
   { en: 'Tea & Coffee', hi: 'चाय-कॉफ़ी', bn: 'চা-কফি' },
   { en: 'Non-veg', hi: 'नॉन-वेज', bn: 'আমিষ' },
+  { en: 'Dal & Pulses', hi: 'दाल', bn: 'ডাল' },
+  { en: 'Dry Fruits', hi: 'ड्राई फ्रूट्स', bn: 'শুকনো ফল' },
+  { en: 'Personal Care', hi: 'निजी सामान', bn: 'ব্যক্তিগত জিনিস' },
+  // Prepared-food categories. These were already in use by the restaurant and
+  // home-kitchen starter lists and fell through untranslated.
+  { en: 'Momo', hi: 'मोमो', bn: 'মোমো' },
+  { en: 'Biryani', hi: 'बिरयानी', bn: 'বিরিয়ানি' },
+  { en: 'Meals', hi: 'भोजन', bn: 'খাবার' },
+  { en: 'Extras', hi: 'अन्य', bn: 'অন্যান্য' },
 ];
 
 const CATEGORY_BY_FORM = new Map<string, Vocab>();
