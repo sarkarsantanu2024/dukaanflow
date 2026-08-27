@@ -111,7 +111,7 @@ export function OwnerHeader({
           ))}
         </select>
 
-        <OwnerInstallButton label={t.installNow} />
+        <OwnerInstallButton slug={slug} label={t.installNow} />
 
         <button
           type="button"

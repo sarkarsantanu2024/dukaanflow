@@ -25,11 +25,20 @@ function isStandalone(): boolean {
   );
 }
 
-export function OwnerInstallButton({ label }: { label: string }) {
+export function OwnerInstallButton({ slug, label }: { slug: string; label: string }) {
   const [prompt, setPrompt] = useState<InstallPromptEvent | null>(null);
 
   useEffect(() => {
     if (isStandalone()) return;
+
+    // Registering the worker lives here because the browser will not offer an
+    // install without one — and this button is now the only thing asking. It
+    // used to sit in the install card; deleting that card without moving this
+    // would have quietly removed the install option altogether.
+    // Scoped to this shop, so an owner's installed app opens on their own till.
+    navigator.serviceWorker?.register('/admin-sw.js', { scope: `/owner/${slug}/` }).catch(() => {
+      // Without it they can still use the site; they just lose the prompt.
+    });
 
     const onPrompt = (event: Event) => {
       event.preventDefault();
@@ -39,7 +48,7 @@ export function OwnerInstallButton({ label }: { label: string }) {
     window.addEventListener('appinstalled', () => setPrompt(null));
 
     return () => window.removeEventListener('beforeinstallprompt', onPrompt);
-  }, []);
+  }, [slug]);
 
   if (!prompt) return null;
 

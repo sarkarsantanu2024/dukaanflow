@@ -17,7 +17,6 @@ import type { Locale } from '@/lib/i18n';
 import { OwnerHeader } from './OwnerHeader';
 import { PlanBanner, type PlanState } from './PlanBanner';
 import { OpenInChromeNotice } from './OpenInChromeNotice';
-import { InstallCard } from './InstallCard';
 
 export type OwnerTab = 'sell' | 'inventory' | 'khata' | 'orders';
 
@@ -99,7 +98,6 @@ export function OwnerShell({
 
       <main className="mx-auto max-w-3xl space-y-4 px-4 py-4">
         <OpenInChromeNotice locale={locale} />
-        <InstallCard slug={slug} locale={locale} />
         <PlanBanner slug={slug} locale={locale} plan={plan} />
         {children}
       </main>
