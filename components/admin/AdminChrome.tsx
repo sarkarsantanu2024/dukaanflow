@@ -9,14 +9,16 @@
  * should put the width to work. The left gutter is now navigation that is
  * always there, and the content runs to the edge of the window.
  *
- * The sidebar is desktop-only: below `lg` the same links live in the header,
- * because a shopkeeper's operator checking one shop from a phone needs the
- * screen for the shop, not for a nav rail.
+ * The sidebar is desktop-only. Below `lg` the same destinations become a bottom
+ * tab bar, the way the owner's app does it: an operator checking a shop from a
+ * phone gets the screen for the shop and their navigation under one thumb,
+ * rather than a rail eating the width or links stuffed into the header.
  */
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
+import { BrandMark } from '@/components/ui/BrandMark';
 import { BoxIcon, PlusIcon } from '@/components/ui/Icon';
 
 const NAV = [
@@ -33,15 +35,7 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh bg-slate-100">
       <aside className="no-print sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
-        <Link href="/admin" className="flex items-center gap-2.5 px-5 py-4">
-          <span
-            aria-hidden
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white"
-          >
-            DF
-          </span>
-          <span className="font-bold leading-tight text-slate-900">DukaanFlow</span>
-        </Link>
+        <BrandMark href="/admin" className="px-5 py-4" />
 
         <nav className="flex flex-col gap-0.5 px-3 py-2">
           {NAV.map((item) => {
@@ -71,7 +65,35 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
         </p>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      <div className="flex min-w-0 flex-1 flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0">
+        {children}
+      </div>
+
+      <nav
+        aria-label="Console"
+        className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      >
+        <div className="flex">
+          {NAV.map((item) => {
+            const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={clsx(
+                  'flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-semibold transition',
+                  active ? 'text-brand-700' : 'text-slate-500 hover:text-slate-800',
+                )}
+              >
+                <Icon className="h-6 w-6" />
+                <span className="max-w-full truncate px-1">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

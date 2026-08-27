@@ -26,7 +26,7 @@ export default async function PosterPage({ params }: PageProps) {
 
   return (
     <>
-      <AdminHeader title={`${shop.name} — QR poster`} backHref={`/admin/shop/${shop.slug}`} />
+      <AdminHeader title="QR poster" eyebrow={shop.name} backHref={`/admin/shop/${shop.slug}`} />
       <main className="mx-auto max-w-3xl px-4 py-6">
         <PosterSheet
           shopName={shop.name}

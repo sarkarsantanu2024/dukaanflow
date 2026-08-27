@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { AdminHeader } from '@/components/admin/AdminHeader';
+import { HeaderAction } from '@/components/admin/HeaderAction';
 import { ShopGrid, type ShopRow } from '@/components/admin/ShopGrid';
 import { PlusIcon } from '@/components/ui/Icon';
 import { entitlement, type Plan, type SubStatus } from '@/lib/plans';
@@ -104,13 +104,7 @@ export default async function AdminDashboard() {
   return (
     <>
       <AdminHeader title="Shops">
-        <Link
-          href="/admin/shops/new"
-          className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-brand-600 px-3 text-sm font-semibold text-white hover:bg-brand-700"
-        >
-          <PlusIcon className="h-4 w-4" />
-          Add shop
-        </Link>
+        <HeaderAction href="/admin/shops/new" label="Add shop" icon={PlusIcon} variant="primary" />
       </AdminHeader>
 
       <main className="px-4 py-5 lg:px-6">

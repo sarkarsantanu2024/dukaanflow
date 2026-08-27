@@ -1,8 +1,8 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { AdminHeader } from '@/components/admin/AdminHeader';
-import { PrinterIcon } from '@/components/ui/Icon';
+import { HeaderAction } from '@/components/admin/HeaderAction';
+import { BoxIcon, PrinterIcon } from '@/components/ui/Icon';
 import { ShopForm } from '@/components/admin/ShopForm';
 import { QrPanel } from '@/components/admin/QrPanel';
 import { DeleteShopButton } from '@/components/admin/DeleteShopButton';
@@ -70,19 +70,18 @@ export default async function ShopDetailPage({ params }: PageProps) {
   return (
     <>
       <AdminHeader title={shop.name} backHref="/admin">
-        <Link
+        <HeaderAction
           href={`/admin/shop/${shop.slug}/items`}
-          className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700"
-        >
-          Items ({shop._count.items})
-        </Link>
-        <Link
+          label={`Items (${shop._count.items})`}
+          icon={BoxIcon}
+          variant="primary"
+        />
+        <HeaderAction
           href={`/admin/shop/${shop.slug}/poster`}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        >
-          <PrinterIcon className="h-4 w-4" />
-          QR poster
-        </Link>
+          label="QR poster"
+          icon={PrinterIcon}
+          hideOnMobile
+        />
       </AdminHeader>
 
       {/* Editing on the left, reference on the right. The QR, the plan and the

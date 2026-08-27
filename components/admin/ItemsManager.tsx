@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { VoiceItemAdder } from './VoiceItemAdder';
 import { formatRupees } from '@/lib/money';
-import { suggestNames } from '@/lib/speech';
+import { suggestNames, translateCategory } from '@/lib/speech';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
 
@@ -34,6 +34,28 @@ type NewItem = {
   category: string;
 };
 
+/**
+ * The item's name in the reader's own language, falling back to the primary
+ * name. The Super Admin console passes 'en' and so still reads in English.
+ */
+function displayName(item: AdminItem, locale: Locale): string {
+  if (locale === 'bn') return item.nameBn || item.name;
+  if (locale === 'hi') return item.nameHi || item.name;
+  return item.name;
+}
+
+/**
+ * The names *not* being shown as the heading, for the subtitle line. Kept as a
+ * set so an item named the same in two languages is not listed twice, and so
+ * the heading is never repeated underneath itself.
+ */
+function otherNames(item: AdminItem, locale: Locale): string[] {
+  const shown = displayName(item, locale);
+  return [...new Set([item.name, item.nameBn, item.nameHi])].filter(
+    (name) => name && name !== shown,
+  );
+}
+
 const EMPTY_NEW_ITEM: NewItem = {
   name: '',
   nameBn: '',
@@ -47,11 +69,21 @@ export function ItemsManager({
   slug,
   items,
   locale = 'en',
+  wide = false,
+  sidebar,
 }: {
   slug: string;
   items: AdminItem[];
   /** The owner's language. The Super Admin console stays English. */
   locale?: Locale;
+  /**
+   * The console has a desk's worth of width; the owner has a phone. Wide mode
+   * moves the adding tools into a column beside the list instead of stacking
+   * them on top of it, so the list starts at the top of the screen.
+   */
+  wide?: boolean;
+  /** Extra panels for the wide column — the console's bulk editor. */
+  sidebar?: React.ReactNode;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -200,8 +232,8 @@ export function ItemsManager({
     if (await patchItem(item.id, { price })) push(`${item.name} → ${formatRupees(price)}`, 'success');
   }
 
-  return (
-    <div className="space-y-6">
+  const adder = (
+    <>
       <VoiceItemAdder slug={slug} items={items} locale={locale} />
 
       <div className="rounded-2xl bg-white p-4 shadow-card">
@@ -220,7 +252,7 @@ export function ItemsManager({
         hidden={!typing}
         className="rounded-2xl bg-white p-4 shadow-card"
       >
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className={clsx('grid gap-3', wide ? 'grid-cols-2' : 'sm:grid-cols-2')}>
           <Input
             label={t.name}
             required
@@ -274,9 +306,12 @@ export function ItemsManager({
           {t.saveItem}
         </Button>
       </form>
+    </>
+  );
 
-      <section>
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+  const list = (
+    <section className="min-w-0">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             type="search"
             value={query}
@@ -293,9 +328,11 @@ export function ItemsManager({
               className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 sm:w-52"
             >
               <option value="">{t.allCategories}</option>
+              {/* The value stays the stored category so filtering still works;
+                  only what the owner reads is translated. */}
               {categories.map((name) => (
                 <option key={name} value={name}>
-                  {name}
+                  {translateCategory(name, locale)}
                 </option>
               ))}
             </select>
@@ -307,7 +344,7 @@ export function ItemsManager({
         ) : visible.length === 0 ? (
           <EmptyState title={t.noMatch} />
         ) : (
-          <ul className="space-y-2">
+          <ul className={clsx('space-y-2', wide && 'xl:grid xl:grid-cols-2 xl:gap-2 xl:space-y-0')}>
             {visible.map((item) => (
               <li
                 key={item.id}
@@ -317,17 +354,20 @@ export function ItemsManager({
                 )}
               >
                 <div className="min-w-0 flex-1">
+                  {/* The owner reads their own language first. This showed the
+                      primary (usually English) name to everyone, so a Bengali
+                      shopkeeper got a Bengali app listing "Mustard Oil". */}
                   <p className="truncate font-semibold text-slate-900">
-                    {item.name}
+                    {displayName(item, locale)}
                     {item.unit && <span className="font-normal text-slate-500"> · {item.unit}</span>}
                   </p>
-                  {(item.nameBn || item.nameHi) && (
+                  {otherNames(item, locale).length > 0 && (
                     <p className="truncate text-xs text-slate-500">
-                      {[item.nameBn, item.nameHi].filter(Boolean).join(' · ')}
+                      {otherNames(item, locale).join(' · ')}
                     </p>
                   )}
                   <div className="mt-1 flex items-center gap-2">
-                    {item.category && <Badge>{item.category}</Badge>}
+                    {item.category && <Badge>{translateCategory(item.category, locale)}</Badge>}
                     <Badge tone={item.inStock ? 'green' : 'red'}>
                       {item.inStock ? t.inStock : t.outOfStock}
                     </Badge>
@@ -374,7 +414,25 @@ export function ItemsManager({
             ))}
           </ul>
         )}
-      </section>
+    </section>
+  );
+
+  if (!wide) {
+    return (
+      <div className="space-y-6">
+        {adder}
+        {list}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      {list}
+      <div className="space-y-6 max-lg:order-first lg:sticky lg:top-[4.25rem]">
+        {adder}
+        {sidebar}
+      </div>
     </div>
   );
 }

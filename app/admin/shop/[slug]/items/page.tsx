@@ -1,7 +1,8 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { AdminHeader } from '@/components/admin/AdminHeader';
+import { HeaderAction } from '@/components/admin/HeaderAction';
+import { PencilIcon } from '@/components/ui/Icon';
 import { ItemsManager } from '@/components/admin/ItemsManager';
 import { BulkPanel } from '@/components/admin/BulkPanel';
 
@@ -37,18 +38,20 @@ export default async function ItemsPage({ params }: PageProps) {
 
   return (
     <>
-      <AdminHeader title={`${shop.name} — Items`} backHref="/admin">
-        <Link
-          href={`/admin/shop/${shop.slug}`}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        >
-          Edit &amp; QR
-        </Link>
+      <AdminHeader title="Items" eyebrow={shop.name} backHref="/admin">
+        <HeaderAction href={`/admin/shop/${shop.slug}`} label="Edit & QR" icon={PencilIcon} />
       </AdminHeader>
 
-      <main className="mx-auto max-w-4xl space-y-6 px-4 py-6 lg:px-6">
-        <ItemsManager slug={shop.slug} items={shop.items} />
-        <BulkPanel slug={shop.slug} />
+      {/* The list is the page; adding and bulk editing are things you reach for
+          while looking at it. Side by side rather than stacked, so the list
+          starts at the top of the screen instead of below a screenful of tools. */}
+      <main className="px-4 py-6 lg:px-6">
+        <ItemsManager
+          slug={shop.slug}
+          items={shop.items}
+          wide
+          sidebar={<BulkPanel slug={shop.slug} />}
+        />
       </main>
     </>
   );
