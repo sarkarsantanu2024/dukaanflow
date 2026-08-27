@@ -68,12 +68,15 @@ function TabIcon({ tab }: { tab: OwnerTab }) {
 export function OwnerShell({
   slug,
   shopName,
+  ownerImage,
   locale,
   plan,
   children,
 }: {
   slug: string;
   shopName: string;
+  /** The owner's photo, shown beside the shop name. */
+  ownerImage?: string;
   locale: Locale;
   plan: PlanState;
   children: React.ReactNode;
@@ -81,16 +84,18 @@ export function OwnerShell({
   const t = ownerDict(locale);
   const pathname = usePathname();
 
+  // Items first: a shop is listed before it is sold from, and an owner opening
+  // the app on day one should land beside the thing they still have to do.
   const tabs: { id: OwnerTab; href: string; label: string }[] = [
-    { id: 'sell', href: `/owner/${slug}/sell`, label: t.tabSell },
     { id: 'inventory', href: `/owner/${slug}/inventory`, label: t.tabInventory },
+    { id: 'sell', href: `/owner/${slug}/sell`, label: t.tabSell },
     { id: 'khata', href: `/owner/${slug}/khata`, label: t.tabKhata },
     { id: 'orders', href: `/owner/${slug}/orders`, label: t.tabOrders },
   ];
 
   return (
     <div className="min-h-dvh bg-slate-100 pb-24">
-      <OwnerHeader slug={slug} shopName={shopName} locale={locale} />
+      <OwnerHeader slug={slug} shopName={shopName} ownerImage={ownerImage} locale={locale} />
 
       <main className="mx-auto max-w-3xl space-y-4 px-4 py-4">
         <OpenInChromeNotice locale={locale} />

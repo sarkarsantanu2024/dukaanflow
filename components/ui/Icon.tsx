@@ -146,6 +146,16 @@ export function SignOutIcon(props: IconProps) {
   );
 }
 
+export function InstallIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3v11" />
+      <path d="m8 10 4 4 4-4" />
+      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+    </Svg>
+  );
+}
+
 export function PencilIcon(props: IconProps) {
   return (
     <Svg {...props}>

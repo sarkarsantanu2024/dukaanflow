@@ -60,7 +60,13 @@ export default async function SellPage({ params }: PageProps) {
   ]);
 
   return (
-    <OwnerShell slug={shop.slug} shopName={shop.name} locale={locale} plan={plan}>
+    <OwnerShell
+      slug={shop.slug}
+      shopName={shop.name}
+      ownerImage={shop.ownerImageData}
+      locale={locale}
+      plan={plan}
+    >
       <SellScreen
         slug={shop.slug}
         shopName={shop.name}

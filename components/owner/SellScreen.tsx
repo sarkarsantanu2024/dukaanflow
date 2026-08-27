@@ -84,7 +84,12 @@ export function SellScreen({
   const [saving, setSaving] = useState(false);
   const [khata, setKhata] = useState<{ name: string; phone: string } | null>(null);
 
-  const sellable = useMemo(() => items.filter((item) => item.inStock), [items]);
+  // Everything listed is shown, in stock or not. Hiding the out-of-stock ones
+  // left an owner staring at a short list wondering where the rest went, when
+  // what they usually want is to sell the last of something and mark it out —
+  // or to be reminded, at the counter, that it is out. They are shown greyed
+  // and cannot be added.
+  const sellable = items;
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -230,21 +235,30 @@ export function SellScreen({
               key={item.id}
               type="button"
               onClick={() => add(item.id)}
+              disabled={!item.inStock}
               className={clsx(
                 'flex min-h-[76px] flex-col justify-between rounded-xl border bg-white p-3 text-left transition',
-                cart[item.id]
-                  ? 'border-brand-500 ring-2 ring-brand-200'
-                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50',
+                !item.inStock
+                  ? 'cursor-not-allowed border-slate-200 opacity-50'
+                  : cart[item.id]
+                    ? 'border-brand-500 ring-2 ring-brand-200'
+                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50',
               )}
             >
               <span className="line-clamp-2 text-sm font-semibold text-slate-900">
                 {label(item, locale)}
               </span>
               <span className="mt-1 flex items-baseline gap-1">
-                <span className="font-bold tabular-nums text-brand-700">
-                  {formatRupees(item.price)}
-                </span>
-                {item.unit && <span className="text-xs text-slate-500">/ {item.unit}</span>}
+                {item.inStock ? (
+                  <>
+                    <span className="font-bold tabular-nums text-brand-700">
+                      {formatRupees(item.price)}
+                    </span>
+                    {item.unit && <span className="text-xs text-slate-500">/ {item.unit}</span>}
+                  </>
+                ) : (
+                  <span className="text-xs font-semibold text-red-600">{t.outOfStock}</span>
+                )}
               </span>
             </button>
           ))}
