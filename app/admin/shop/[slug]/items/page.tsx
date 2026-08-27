@@ -5,6 +5,9 @@ import { HeaderAction } from '@/components/admin/HeaderAction';
 import { PencilIcon } from '@/components/ui/Icon';
 import { ItemsManager } from '@/components/admin/ItemsManager';
 import { BulkPanel } from '@/components/admin/BulkPanel';
+import { StarterPanel } from '@/components/admin/StarterPanel';
+import { starterCatalogue } from '@/lib/starter-catalogue';
+import { shopEntitlement } from '@/lib/billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +19,10 @@ export default async function ItemsPage({ params }: PageProps) {
   const shop = await prisma.shop.findUnique({
     where: { slug },
     select: {
+      id: true,
       name: true,
       slug: true,
+      type: true,
       items: {
         orderBy: [{ category: 'asc' }, { name: 'asc' }],
         select: {
@@ -36,6 +41,9 @@ export default async function ItemsPage({ params }: PageProps) {
 
   if (!shop) notFound();
 
+  const billing = await shopEntitlement(shop.id);
+  const catalogue = starterCatalogue(shop.type);
+
   return (
     <>
       <AdminHeader title="Items" eyebrow={shop.name} backHref="/admin">
@@ -50,7 +58,16 @@ export default async function ItemsPage({ params }: PageProps) {
           slug={shop.slug}
           items={shop.items}
           wide
-          sidebar={<BulkPanel slug={shop.slug} />}
+          sidebar={
+            <>
+              <StarterPanel
+                slug={shop.slug}
+                catalogue={catalogue}
+                remaining={billing?.remaining ?? 0}
+              />
+              <BulkPanel slug={shop.slug} />
+            </>
+          }
         />
       </main>
     </>
