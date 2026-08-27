@@ -51,6 +51,8 @@ type OwnerDictionary = {
   category: string;
   nameBn: string;
   nameHi: string;
+  otherLanguages: string;
+  otherLanguagesHint: string;
   saveItem: string;
   upsertHint: string;
 
@@ -102,6 +104,11 @@ type OwnerDictionary = {
   starterAdd: string;
   starterSkip: string;
   starterAdded: string;
+  pinLabel: string;
+  pinHint: string;
+  pinSignIn: string;
+  pinWrong: string;
+  pinNotSetUp: string;
   starterSearch: string;
   starterSelectAll: string;
   starterClear: string;
@@ -214,6 +221,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     category: 'Category',
     nameBn: 'Bengali name',
     nameHi: 'Hindi name',
+    otherLanguages: 'Other languages (optional)',
+    otherLanguagesHint:
+      'Filled in automatically for names the app knows. Left blank, customers see the name above.',
     saveItem: 'Save item',
     upsertHint: 'Same name and unit? The existing item is updated, not duplicated.',
 
@@ -265,6 +275,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterAdd: 'Add selected',
     starterSkip: 'Not now',
     starterAdded: 'added — now set their prices',
+    pinLabel: 'PIN',
+    pinHint: 'Enter the 6-digit PIN from your DukaanFlow contact to manage your prices.',
+    pinSignIn: 'Sign in',
+    pinWrong: 'Incorrect PIN',
+    pinNotSetUp: 'Owner access has not been set up for this shop yet. Ask your DukaanFlow contact to issue a PIN.',
     starterSearch: 'Search the list',
     starterSelectAll: 'All',
     starterClear: 'Clear',
@@ -379,6 +394,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     category: 'ভাগ',
     nameBn: 'বাংলা নাম',
     nameHi: 'হিন্দি নাম',
+    otherLanguages: 'অন্য ভাষা (ইচ্ছামতো)',
+    otherLanguagesHint:
+      'চেনা নাম হলে নিজে থেকেই ভরে যায়। খালি রাখলে ক্রেতা উপরের নামটাই দেখবে।',
     saveItem: 'সেভ করুন',
     upsertHint: 'একই নাম আর পরিমাণ? পুরনোটাই বদলে যাবে, নতুন হবে না।',
 
@@ -430,6 +448,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterAdd: 'বাছাই করা যোগ করুন',
     starterSkip: 'এখন নয়',
     starterAdded: 'যোগ হয়েছে — এবার দাম দিন',
+    pinLabel: 'পিন',
+    pinHint: 'দাম সামলাতে DukaanFlow-এর দেওয়া ৬ অঙ্কের পিন দিন।',
+    pinSignIn: 'সাইন ইন',
+    pinWrong: 'পিন ভুল',
+    pinNotSetUp: 'এই দোকানের জন্য এখনও মালিকের অ্যাক্সেস চালু হয়নি। DukaanFlow-এর সঙ্গে যোগাযোগ করে পিন নিন।',
     starterSearch: 'তালিকায় খুঁজুন',
     starterSelectAll: 'সব',
     starterClear: 'বাদ দিন',
@@ -544,6 +567,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     category: 'श्रेणी',
     nameBn: 'बंगाली नाम',
     nameHi: 'हिंदी नाम',
+    otherLanguages: 'अन्य भाषा (वैकल्पिक)',
+    otherLanguagesHint:
+      'जाने-पहचाने नाम खुद भर जाते हैं। खाली छोड़ने पर ग्राहक ऊपर वाला नाम देखेंगे।',
     saveItem: 'सेव करें',
     upsertHint: 'वही नाम और मात्रा? पुराना ही बदलेगा, नया नहीं बनेगा।',
 
@@ -595,6 +621,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterAdd: 'चुने हुए जोड़ें',
     starterSkip: 'अभी नहीं',
     starterAdded: 'जुड़ गए — अब दाम डालिए',
+    pinLabel: 'पिन',
+    pinHint: 'दाम संभालने के लिए DukaanFlow से मिला 6 अंकों का पिन डालिए।',
+    pinSignIn: 'साइन इन',
+    pinWrong: 'पिन गलत है',
+    pinNotSetUp: 'इस दुकान के लिए मालिक का एक्सेस अभी चालू नहीं हुआ है। पिन के लिए DukaanFlow से संपर्क कीजिए।',
     starterSearch: 'सूची में खोजें',
     starterSelectAll: 'सभी',
     starterClear: 'हटाएं',

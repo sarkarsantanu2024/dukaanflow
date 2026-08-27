@@ -286,21 +286,37 @@ export function ItemsManager({
             error={errors.category}
             placeholder="Staples"
           />
-          <Input
-            label={t.nameBn}
-            value={draft.nameBn}
-            onChange={(event) => setDraft({ ...draft, nameBn: event.target.value })}
-            error={errors.nameBn}
-            placeholder="চাল"
-          />
-          <Input
-            label={t.nameHi}
-            value={draft.nameHi}
-            onChange={(event) => setDraft({ ...draft, nameHi: event.target.value })}
-            error={errors.nameHi}
-            placeholder="चावल"
-          />
         </div>
+
+        {/* The other two languages are filled in automatically for any name the
+            product already knows, and left blank otherwise — the storefront
+            falls back to the primary name. Nobody, operator or shopkeeper,
+            reads all three, so asking for all three as required fields was
+            asking for work that could not be done. Kept reachable, because a
+            Bengali owner naming something the dictionary has never heard of is
+            the one person who can supply it. */}
+        <details className="mt-3 rounded-xl bg-slate-50 p-3">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-700">
+            {t.otherLanguages}
+          </summary>
+          <p className="mb-2 mt-1 text-xs text-slate-500">{t.otherLanguagesHint}</p>
+          <div className={clsx('grid gap-3', wide ? 'grid-cols-2' : 'sm:grid-cols-2')}>
+            <Input
+              label={t.nameBn}
+              value={draft.nameBn}
+              onChange={(event) => setDraft({ ...draft, nameBn: event.target.value })}
+              error={errors.nameBn}
+              placeholder="চাল"
+            />
+            <Input
+              label={t.nameHi}
+              value={draft.nameHi}
+              onChange={(event) => setDraft({ ...draft, nameHi: event.target.value })}
+              error={errors.nameHi}
+              placeholder="चावल"
+            />
+          </div>
+        </details>
         <p className="mt-2 text-xs text-slate-500">{t.upsertHint}</p>
         <Button type="submit" className="mt-3" loading={adding}>
           {t.saveItem}

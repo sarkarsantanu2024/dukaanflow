@@ -8,9 +8,20 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
+import { ownerDict } from '@/lib/owner-i18n';
+import type { Locale } from '@/lib/i18n';
 
-export function OwnerLoginForm({ slug, shopName }: { slug: string; shopName: string }) {
+export function OwnerLoginForm({
+  slug,
+  shopName,
+  locale,
+}: {
+  slug: string;
+  shopName: string;
+  locale: Locale;
+}) {
   const router = useRouter();
+  const t = ownerDict(locale);
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -29,7 +40,7 @@ export function OwnerLoginForm({ slug, shopName }: { slug: string; shopName: str
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
 
       if (!response.ok) {
-        setError(payload.error ?? 'Incorrect PIN');
+        setError(payload.error ?? t.pinWrong);
         setPin('');
         return;
       }
@@ -37,7 +48,7 @@ export function OwnerLoginForm({ slug, shopName }: { slug: string; shopName: str
       router.replace(`/owner/${slug}`);
       router.refresh();
     } catch {
-      setError('Network error. Please try again.');
+      setError(t.networkError);
     } finally {
       setBusy(false);
     }
@@ -47,12 +58,10 @@ export function OwnerLoginForm({ slug, shopName }: { slug: string; shopName: str
     <form onSubmit={submit} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-card">
       <p className="text-xs font-bold uppercase tracking-wide text-brand-700">DukaanFlow</p>
       <h1 className="mt-1 text-2xl font-bold text-slate-900">{shopName}</h1>
-      <p className="mt-1 text-sm text-slate-500">
-        Enter the 6-digit PIN from your DukaanFlow contact to manage your prices.
-      </p>
+      <p className="mt-1 text-sm text-slate-500">{t.pinHint}</p>
 
       <label className="mt-4 block text-sm font-semibold text-slate-700" htmlFor="owner-pin">
-        PIN
+        {t.pinLabel}
       </label>
       <input
         id="owner-pin"
@@ -71,7 +80,7 @@ export function OwnerLoginForm({ slug, shopName }: { slug: string; shopName: str
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
       <Button type="submit" fullWidth size="lg" className="mt-4" loading={busy}>
-        Sign in
+        {t.pinSignIn}
       </Button>
     </form>
   );
