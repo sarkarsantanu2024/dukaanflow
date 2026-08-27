@@ -12,6 +12,7 @@
  * exact amount, so the customer scans and pays without anyone typing figures.
  */
 
+import { formatClock } from '@/lib/time';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -196,10 +197,7 @@ export function SellScreen({
             {sales.map((sale) => (
               <li key={sale.id} className="flex items-center gap-3 px-4 py-2.5">
                 <span className="w-20 shrink-0 text-sm tabular-nums text-slate-500">
-                  {new Date(sale.createdAt).toLocaleTimeString(undefined, {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })}
+                  {formatClock(sale.createdAt)}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-sm text-slate-600">
                   {sale.count} {t.itemsCount}

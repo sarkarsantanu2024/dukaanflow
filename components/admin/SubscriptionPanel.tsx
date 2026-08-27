@@ -9,6 +9,7 @@
  * anything above it changing.
  */
 
+import { formatDay } from '@/lib/time';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -100,9 +101,9 @@ export function SubscriptionPanel({
           </span>
           <span className="text-slate-500">
             {state.currentPeriodEnd
-              ? `Paid to ${new Date(state.currentPeriodEnd).toLocaleDateString('en-IN')}`
+              ? `Paid to ${formatDay(state.currentPeriodEnd)}`
               : state.trialEndsAt
-                ? `Trial to ${new Date(state.trialEndsAt).toLocaleDateString('en-IN')}`
+                ? `Trial to ${formatDay(state.trialEndsAt)}`
                 : 'No paid period'}
           </span>
         </div>
@@ -201,7 +202,7 @@ export function SubscriptionPanel({
                 {PLAN_SPECS[payment.plan].name} · {payment.method}
               </span>
               <span className="tabular-nums">
-                {formatRupees(payment.amount)} → {new Date(payment.periodEnd).toLocaleDateString('en-IN')}
+                {formatRupees(payment.amount)} → {formatDay(payment.periodEnd)}
               </span>
             </li>
           ))}

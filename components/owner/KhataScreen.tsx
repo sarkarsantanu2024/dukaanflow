@@ -12,6 +12,7 @@
  * reminder with the amount already written.
  */
 
+import { formatDay } from '@/lib/time';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -210,7 +211,7 @@ export function KhataScreen({
                               )}
                             </span>
                             <span className="block text-xs text-slate-400">
-                              {new Date(entry.createdAt).toLocaleDateString('en-IN')}
+                              {formatDay(entry.createdAt)}
                             </span>
                           </span>
                           <span
