@@ -432,6 +432,12 @@ export function resolveSpokenCommand(
   lang: VoiceLang,
   existing: MatchableItem[],
 ): VoiceCommand | null {
+  // Set when a sentence clearly gave an instruction about an item we could not
+  // find. Such a sentence must never reach the add path: "মুছে দাও" with no
+  // match once created an item *named* "মুছে দাও", priced at whatever number
+  // was nearby. A command that misses is a command that failed, not a product.
+  let commandMissed = false;
+
   for (const transcript of alternatives) {
     // Two things have to happen before a verb can be recognised, and the order
     // matters more than it looks.
@@ -457,6 +463,7 @@ export function resolveSpokenCommand(
       if (match && match.confidence >= UNSURE_MATCH) {
         return { kind: 'delete', item: match.item, needsConfirm: true, label: labelFor(match.item) };
       }
+      commandMissed = true;
       continue;
     }
 
@@ -469,6 +476,7 @@ export function resolveSpokenCommand(
       const stock = matchVerb(text, words);
       if (!stock) continue;
       const match = bestMatch(stock.rest, existing);
+      if (!match || match.confidence < UNSURE_MATCH) commandMissed = true;
       if (match && match.confidence >= UNSURE_MATCH) {
         return {
           kind: 'stock',
@@ -480,6 +488,10 @@ export function resolveSpokenCommand(
       }
     }
   }
+
+  // Said "remove X" or "X is finished" about something not on the list. Adding
+  // X would be the opposite of what was asked for.
+  if (commandMissed) return null;
 
   const draft = resolveSpokenItem(alternatives, lang, existing);
   if (!draft) return null;
