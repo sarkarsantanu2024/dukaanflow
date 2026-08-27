@@ -39,7 +39,6 @@ async function loadShop(slug: string) {
           unit: true,
           category: true,
           inStock: true,
-          imageData: true,
         },
       },
     },

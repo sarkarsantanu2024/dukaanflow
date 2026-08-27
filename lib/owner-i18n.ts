@@ -51,8 +51,8 @@ type OwnerDictionary = {
   category: string;
   nameBn: string;
   nameHi: string;
-  photo: string;
-  photoHint: string;
+  photoAdd: string;
+  photoAddHint: string;
   otherLanguages: string;
   otherLanguagesHint: string;
   saveItem: string;
@@ -223,8 +223,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     category: 'Category',
     nameBn: 'Bengali name',
     nameHi: 'Hindi name',
-    photo: 'Photo',
-    photoHint: 'optional',
+    photoAdd: 'Add by photo',
+    photoAddHint: 'Point the camera at the packet. The photo is not saved.',
     otherLanguages: 'Other languages (optional)',
     otherLanguagesHint:
       'Filled in automatically for names the app knows. Left blank, customers see the name above.',
@@ -398,8 +398,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     category: 'ভাগ',
     nameBn: 'বাংলা নাম',
     nameHi: 'হিন্দি নাম',
-    photo: 'ছবি',
-    photoHint: 'ইচ্ছামতো',
+    photoAdd: 'ছবি তুলে যোগ করুন',
+    photoAddHint: 'প্যাকেটের দিকে ক্যামেরা ধরুন। ছবি রাখা হয় না।',
     otherLanguages: 'অন্য ভাষা (ইচ্ছামতো)',
     otherLanguagesHint:
       'চেনা নাম হলে নিজে থেকেই ভরে যায়। খালি রাখলে ক্রেতা উপরের নামটাই দেখবে।',
@@ -573,8 +573,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     category: 'श्रेणी',
     nameBn: 'बंगाली नाम',
     nameHi: 'हिंदी नाम',
-    photo: 'फोटो',
-    photoHint: 'वैकल्पिक',
+    photoAdd: 'फोटो से जोड़ें',
+    photoAddHint: 'पैकेट की ओर कैमरा कीजिए। फोटो सेव नहीं होती।',
     otherLanguages: 'अन्य भाषा (वैकल्पिक)',
     otherLanguagesHint:
       'जाने-पहचाने नाम खुद भर जाते हैं। खाली छोड़ने पर ग्राहक ऊपर वाला नाम देखेंगे।',

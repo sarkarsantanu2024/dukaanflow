@@ -9,8 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { VoiceItemAdder } from './VoiceItemAdder';
-import { ImagePicker } from './ImagePicker';
-import { ItemPhoto } from './ItemPhoto';
+import { PhotoItemAdder, type Identified } from './PhotoItemAdder';
 import { formatRupees } from '@/lib/money';
 import { suggestNames, translateCategory } from '@/lib/speech';
 import { unitsFor, UNIT_LIST_ID } from '@/lib/units';
@@ -28,7 +27,6 @@ export type AdminItem = {
   unit: string;
   category: string;
   inStock: boolean;
-  imageData?: string;
 };
 
 type NewItem = {
@@ -38,7 +36,6 @@ type NewItem = {
   price: string;
   unit: string;
   category: string;
-  imageData: string;
 };
 
 /**
@@ -70,7 +67,6 @@ const EMPTY_NEW_ITEM: NewItem = {
   price: '',
   unit: '',
   category: '',
-  imageData: '',
 };
 
 export function ItemsManager({
@@ -150,6 +146,25 @@ export function ItemsManager({
     }));
   }
 
+  /**
+   * A recognised photo fills the form and opens it, rather than saving on the
+   * owner's behalf. The one thing a photo cannot tell us is the price, and the
+   * name is a suggestion until someone who knows the shop agrees with it.
+   */
+  function identified(item: Identified) {
+    setDraft({
+      name: item.name,
+      nameBn: item.nameBn,
+      nameHi: item.nameHi,
+      unit: item.unit,
+      category: item.category,
+      price: '',
+    });
+    if (wide) setDrawer('form');
+    else setTyping(true);
+    push(item.name, 'success');
+  }
+
   async function addItem(event: React.FormEvent) {
     event.preventDefault();
     setAdding(true);
@@ -166,7 +181,6 @@ export function ItemsManager({
           price: Number(draft.price),
           unit: draft.unit,
           category: draft.category,
-          imageData: draft.imageData,
           inStock: true,
         }),
       });
@@ -322,17 +336,6 @@ export function ItemsManager({
           />
         </div>
 
-        <div className="mt-3">
-          <ImagePicker
-            label={t.photo}
-            hint={t.photoHint}
-            shape="thumb"
-            value={draft.imageData}
-            onChange={(imageData) => setDraft((current) => ({ ...current, imageData }))}
-            onError={(message) => push(message, 'error')}
-          />
-        </div>
-
         {/* The other two languages are filled in automatically for any name the
             product already knows, and left blank otherwise — the storefront
             falls back to the primary name. Nobody, operator or shopkeeper,
@@ -369,9 +372,20 @@ export function ItemsManager({
     </form>
   );
 
+  const photoAdder = (
+    <PhotoItemAdder
+      slug={slug}
+      label={t.photoAdd}
+      hint={t.photoAddHint}
+      onIdentified={identified}
+      onError={(message) => push(message, 'error')}
+    />
+  );
+
   const adder = (
     <>
       <VoiceItemAdder slug={slug} items={items} locale={locale} />
+      {photoAdder}
 
       <div className="rounded-2xl bg-white p-4 shadow-card">
         <button
@@ -432,14 +446,6 @@ export function ItemsManager({
                   busyId === item.id && 'opacity-60',
                 )}
               >
-                <ItemPhoto
-                  value={item.imageData ?? ''}
-                  label={displayName(item, locale)}
-                  disabled={busyId === item.id}
-                  onChange={(imageData) => patchItem(item.id, { imageData })}
-                  onError={(message) => push(message, 'error')}
-                />
-
                 <div className="min-w-0 flex-1">
                   {/* The owner reads their own language first. This showed the
                       primary (usually English) name to everyone, so a Bengali
@@ -553,6 +559,7 @@ export function ItemsManager({
           the list rather than with the tools. */}
       <div className="space-y-3 max-lg:order-first lg:sticky lg:top-[4.25rem]">
         <VoiceItemAdder slug={slug} items={items} locale={locale} />
+        {photoAdder}
 
         <button
           type="button"
