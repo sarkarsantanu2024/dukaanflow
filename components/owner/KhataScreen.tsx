@@ -13,13 +13,14 @@
  */
 
 import { formatDay } from '@/lib/time';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
+import { handledExpiredSession } from './sessionGuard';
 import { WhatsAppIcon } from '@/components/ui/Icon';
 import { formatRupees } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -93,6 +94,51 @@ export function KhataScreen({
       }
 
       setForm({ name: '', phone: '', area: '', amount: '', note: '' });
+      router.refresh();
+    } catch {
+      push(t.networkError, 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * One entry against a customer already in the book, posted from their own
+   * row rather than from the form at the bottom of the page.
+   *
+   * The row used to carry a link that silently prefilled that distant form,
+   * with no scroll and no feedback — so it read as a button that did nothing.
+   * Acting where the balance is shown is the whole point.
+   */
+  async function addFor(
+    customer: KhataCustomer,
+    kind: 'DEBIT' | 'CREDIT',
+    amount: number,
+    note = '',
+  ) {
+    if (!Number.isFinite(amount) || amount < 1) {
+      push(t.khataAmount, 'error');
+      return;
+    }
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/admin/shop/${slug}/khata`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerPhone: customer.phone,
+          customerName: customer.name,
+          customerArea: customer.area,
+          kind,
+          amount,
+          note,
+        }),
+      });
+      if (handledExpiredSession({ response, slug, t, push })) return;
+      if (!response.ok) {
+        push(t.networkError, 'error');
+        return;
+      }
       router.refresh();
     } catch {
       push(t.networkError, 'error');
@@ -202,7 +248,13 @@ export function KhataScreen({
                     {owes && (
                       <a
                         href={`https://wa.me/91${customer.phone}?text=${encodeURIComponent(
-                          reminderMessage(shopName, customer.name, customer.balance, locale),
+                          reminderMessage(
+                            shopName,
+                            customer.name,
+                            customer.balance,
+                            locale,
+                            customer.entries,
+                          ),
                         )}`}
                         target="_blank"
                         rel="noreferrer"
@@ -251,13 +303,12 @@ export function KhataScreen({
                       ))}
                     </ul>
 
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, name: customer.name, phone: customer.phone })}
-                      className="mt-2 text-sm font-semibold text-brand-700 underline"
-                    >
-                      + {t.khataGave} / {t.khataGot}
-                    </button>
+                    <SettleRow
+                      customer={customer}
+                      t={t}
+                      busy={busy}
+                      onSettle={(kind, amount) => addFor(customer, kind, amount)}
+                    />
                   </div>
                 )}
               </li>
@@ -267,7 +318,12 @@ export function KhataScreen({
       )}
 
       <section className="rounded-2xl bg-white p-4 shadow-card">
-        <h2 className="mb-3 font-semibold text-slate-900">{t.khataTitle}</h2>
+        {/* This form is for somebody not in the book yet. Anyone already
+            listed above is settled on their own row, where their balance is —
+            which is what the old "+ Gave goods / Got payment" link was
+            fumbling towards by silently prefilling this. */}
+        <h2 className="font-semibold text-slate-900">{t.khataNewCustomer}</h2>
+        <p className="mb-3 mt-0.5 text-sm text-slate-500">{t.khataNewHint}</p>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
             label={t.khataCustomer}
@@ -334,6 +390,78 @@ export function KhataScreen({
       </section>
 
       {confirmDialog}
+    </div>
+  );
+}
+
+/**
+ * The one row that settles an account, sitting on the customer it belongs to.
+ *
+ * The amount starts at whatever they owe, so the common case — "they have paid
+ * it all" — is a single tap, and a part payment is the same tap after editing
+ * one number. That ordering matters: a shopkeeper handed an empty box has to
+ * work out the balance themselves, which is exactly the arithmetic a khata is
+ * meant to take off them.
+ */
+function SettleRow({
+  customer,
+  t,
+  busy,
+  onSettle,
+}: {
+  customer: KhataCustomer;
+  t: ReturnType<typeof ownerDict>;
+  busy: boolean;
+  onSettle: (kind: 'DEBIT' | 'CREDIT', amount: number) => void;
+}) {
+  const owed = Math.max(0, customer.balance);
+  const [amount, setAmount] = useState(owed > 0 ? String(owed) : '');
+
+  // The balance moves when an entry is added, so the box has to follow it —
+  // otherwise the next tap pays off a figure that is no longer true.
+  useEffect(() => {
+    setAmount(owed > 0 ? String(owed) : '');
+  }, [owed]);
+
+  const value = Number(amount);
+  const valid = Number.isFinite(value) && value >= 1;
+  const settlesInFull = valid && value === owed && owed > 0;
+
+  return (
+    <div className="mt-3 border-t border-slate-100 pt-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="relative">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">₹</span>
+          <input
+            type="number"
+            min={1}
+            inputMode="numeric"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            aria-label={t.khataAmount}
+            className="h-10 w-28 rounded-lg border border-slate-300 pl-6 pr-2 text-base tabular-nums"
+          />
+        </label>
+
+        <Button
+          size="sm"
+          disabled={busy || !valid}
+          onClick={() => onSettle('CREDIT', value)}
+        >
+          {settlesInFull ? t.khataSettle : t.khataGot}
+        </Button>
+
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={busy || !valid}
+          onClick={() => onSettle('DEBIT', value)}
+        >
+          {t.khataGave}
+        </Button>
+      </div>
+
+      {owed > 0 && <p className="mt-1.5 text-xs text-slate-500">{t.khataPartHint}</p>}
     </div>
   );
 }

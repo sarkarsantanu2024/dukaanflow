@@ -522,7 +522,8 @@ export function ItemsManager({
             aria-label={t.searchItems}
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5"
           />
-          {categories.length > 0 && (
+          {/* One category means the filter cannot change what is on screen. */}
+          {categories.length > 1 && (
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
