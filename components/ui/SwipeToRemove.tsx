@@ -96,14 +96,15 @@ export function SwipeToRemove({
         {children}
       </div>
 
-      {/* A gesture is not an interface on its own: a keyboard and a screen
-          reader need the same door, and a mouse has no swipe at all. */}
+      {/* Always visible, not a pointer-only fallback. A gesture nobody can see
+          is a gesture most people never find, and a keyboard and a screen
+          reader cannot swipe at all. */}
       <button
         type="button"
         onClick={onRemove}
         aria-label={label}
         title={label}
-        className="absolute right-1 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-300 transition hover:bg-red-50 hover:text-red-600 focus-visible:flex sm:flex"
+        className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-300 transition hover:bg-red-50 hover:text-red-600"
       >
         <TrashIcon className="h-4 w-4" />
       </button>

@@ -186,6 +186,15 @@ export function SellScreen({
     <Drawer
       open={cartOpen && lines.length > 0}
       title={t.sellTotal}
+      action={
+        <button
+          type="button"
+          onClick={() => setCart({})}
+          className="shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+        >
+          {t.sellClear}
+        </button>
+      }
       onClose={() => setCartOpen(false)}
     >
         <ul className="divide-y divide-slate-100 rounded-2xl bg-white shadow-card">
@@ -195,7 +204,7 @@ export function SellScreen({
               onRemove={() => setQuantity(item.id, 0)}
               label={`${t.delete} — ${label(item, locale)}`}
             >
-              <div className="flex items-center gap-3 p-3">
+              <div className="flex items-center gap-3 py-3 pl-3 pr-12">
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold text-slate-900">
                 {label(item, locale)}

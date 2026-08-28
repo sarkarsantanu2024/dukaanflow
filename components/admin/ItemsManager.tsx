@@ -304,11 +304,9 @@ export function ItemsManager({
     }
     if (price === item.price) return;
 
-    // A starter item is parked at ₹1 and out of stock for one reason only:
-    // nobody has said what it costs. Saying so is therefore also the answer to
-    // why it was hidden, so pricing it puts it on sale. Leaving that as a
-    // second, separate tap meant an owner priced their whole list and still
-    // saw a shop full of "Out of stock".
+    // New rows arrive in stock now, so pricing one no longer has to switch it
+    // on — but a row the owner had marked out *while* unpriced still should,
+    // since the missing price was the only reason it was hidden.
     const wasUnpriced = item.price <= 1 && !item.inStock;
     const changes = wasUnpriced && price > 1 ? { price, inStock: true } : { price };
 
@@ -318,7 +316,7 @@ export function ItemsManager({
   }
 
   const typedForm = (
-    <form onSubmit={addItem} className="rounded-2xl bg-white p-4 shadow-card">
+    <form id="add-item-form" onSubmit={addItem} className="rounded-2xl bg-white p-4 shadow-card">
         <div className={clsx('grid gap-3', wide ? 'grid-cols-2' : 'sm:grid-cols-2')}>
           <Input
             label={t.name}
@@ -350,10 +348,18 @@ export function ItemsManager({
         </div>
 
         <p className="mt-2 text-xs text-slate-500">{t.upsertHint}</p>
-      <Button type="submit" className="mt-3" loading={adding}>
-        {t.saveItem}
-      </Button>
     </form>
+  );
+
+  /**
+   * Save lives in the drawer header, not under the form. Below the fields it
+   * was reached by scrolling past them; in the header it is in the same place
+   * every time, and `form` ties it to the form it submits from outside.
+   */
+  const saveAction = (
+    <Button type="submit" form="add-item-form" size="sm" loading={adding}>
+      {t.saveItem}
+    </Button>
   );
 
   /**
@@ -376,7 +382,7 @@ export function ItemsManager({
           price: 1,
           unit: item.unit,
           category: item.category,
-          inStock: false,
+          inStock: true,
         }),
       });
       if (response.ok) created += 1;
@@ -500,7 +506,7 @@ export function ItemsManager({
                       onKeyDown={(event) => {
                         if (event.key === 'Enter') event.currentTarget.blur();
                       }}
-                      className="h-10 w-full rounded-lg border border-slate-300 pl-6 pr-2 text-right text-sm tabular-nums"
+                      className="h-10 w-full rounded-lg border border-slate-300 pl-6 pr-2 text-left text-sm tabular-nums"
                     />
                   </label>
 
@@ -568,9 +574,19 @@ export function ItemsManager({
    * job; they belong on the same sheet.
    */
   const addDrawer = (
-    <Drawer open={drawer === 'add'} title={t.addItem} onClose={() => setDrawer(null)}>
+    <Drawer
+      open={drawer === 'add'}
+      title={t.addItem}
+      action={saveAction}
+      onClose={() => setDrawer(null)}
+    >
       <div className="space-y-4">
-        <VoiceItemAdder slug={slug} items={items} locale={locale} />
+        <VoiceItemAdder
+          slug={slug}
+          items={items}
+          locale={locale}
+          onName={(name) => nameChanged(name)}
+        />
         {typedForm}
       </div>
     </Drawer>
@@ -640,7 +656,12 @@ export function ItemsManager({
 
       {photoAdder}
 
-      <Drawer open={drawer === 'form'} title={t.typeInstead} onClose={() => setDrawer(null)}>
+      <Drawer
+        open={drawer === 'form'}
+        title={t.typeInstead}
+        action={saveAction}
+        onClose={() => setDrawer(null)}
+      >
         {typedForm}
       </Drawer>
 

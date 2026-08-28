@@ -48,7 +48,7 @@ export async function POST(request: Request, { params }: Context) {
         unit: item.unit,
         category: item.category,
         price: 1,
-        inStock: false,
+        inStock: true,
       },
       // Already listed? Leave the owner's own price and stock completely alone.
       update: {},

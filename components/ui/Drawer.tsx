@@ -33,11 +33,18 @@ export function useDrawerClose(): (() => void) | null {
 export function Drawer({
   open,
   title,
+  action,
   onClose,
   children,
 }: {
   open: boolean;
   title: string;
+  /**
+   * The panel's own primary action, in the header rather than at the foot of
+   * the content. A Save button below a form is reached by scrolling past the
+   * form; in the header it is in the same place every time the drawer opens.
+   */
+  action?: React.ReactNode;
   onClose: () => void;
   children: React.ReactNode;
 }) {
@@ -116,6 +123,7 @@ export function Drawer({
       >
         <div className="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
           <h2 className="mr-auto truncate font-bold text-slate-900">{title}</h2>
+          {action}
           <button
             type="button"
             onClick={onClose}

@@ -24,11 +24,14 @@ async function loadShop(slug: string) {
       imageData: true,
       ownerImageData: true,
       items: {
-        // Starter-catalogue rows land at Re 1 and out of stock so the owner can
-        // set a real price before anyone sees them. Until they do, they are not
-        // a product — showing a customer "Atta — Rs 1 — out of stock" makes a
-        // working shop look broken.
-        where: { NOT: { price: { lte: 1 }, inStock: false } },
+        // An unpriced row is not a product yet, whatever its stock says.
+        //
+        // This used to also require the row to be out of stock, which was safe
+        // only while everything unpriced arrived out of stock too. Items now
+        // land in stock — an owner listing what they sell should not have to
+        // then declare they have it — so the price alone has to carry the
+        // guard. Without it a customer would be quoted Re 1 for rice.
+        where: { price: { gt: 1 } },
         orderBy: [{ category: 'asc' }, { inStock: 'desc' }, { name: 'asc' }],
         select: {
           id: true,

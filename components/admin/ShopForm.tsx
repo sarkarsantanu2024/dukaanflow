@@ -45,7 +45,7 @@ export type ShopFormImages = {
 const EMPTY: ShopFormValues = {
   name: '',
   ownerName: '',
-  locale: 'en',
+  locale: 'bn',
   slug: '',
   type: 'GROCERY',
   phone: '',
