@@ -3,7 +3,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'DukaanFlow — Scan → Select → WhatsApp',
+  title: 'DukaanFlow — Scan → Select → Order',
   description:
     'QR-to-WhatsApp ordering for local grocery shops and restaurants. No app, no login for shop owners.',
   robots: { index: false, follow: false },

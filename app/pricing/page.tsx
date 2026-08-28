@@ -259,7 +259,7 @@ export default function PricingPage() {
           <Link href="/" className="underline">
             DukaanFlow
           </Link>{' '}
-          · Scan → Select → WhatsApp
+          · Scan → Select → Order
         </p>
       </section>
     </main>

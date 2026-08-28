@@ -67,13 +67,14 @@ export function LoginForm() {
         onChange={(event) => setPassword(event.target.value)}
         error={error}
       />
-      <Button
-        type="submit"
-        size="lg"
-        fullWidth
-        loading={submitting}
-        disabled={!username || !password}
-      >
+      {/* Not disabled on empty fields.
+
+          A password manager fills these inputs without firing React's change
+          event, so the state stayed empty, the button stayed grey, and the one
+          person who has to sign in here could not — with both fields visibly
+          full in front of them. The check bought nothing anyway: the server
+          validates, and an empty submit already returns a message. */}
+      <Button type="submit" size="lg" fullWidth loading={submitting}>
         Sign in
       </Button>
     </form>

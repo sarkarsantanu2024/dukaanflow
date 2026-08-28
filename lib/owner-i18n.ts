@@ -103,6 +103,24 @@ type OwnerDictionary = {
   sessionEnded: string;
   /** Says which screen settles a WhatsApp order, so nobody rings one up twice. */
   tillOrdersNote: string;
+  hoursTitle: string;
+  hoursNotSet: string;
+  hoursSet: string;
+  hoursChange: string;
+  hoursOpen: string;
+  hoursClose: string;
+  hoursHint: string;
+  hoursClear: string;
+  hoursSaved: string;
+  shopIsOpen: string;
+  shopIsClosed: string;
+  shopCloseNow: string;
+  shopOpenAgain: string;
+  shopOpenNow: string;
+  shopClosedNow: string;
+  closedNoteLabel: string;
+  closedNotePlaceholder: string;
+  closedNoteHint: string;
   markConfirmed: string;
   markCompleted: string;
   markCancelled: string;
@@ -295,6 +313,24 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     newOrderAlert: 'New order',
     sessionEnded: 'Your session has ended. Please sign in with your PIN again.',
     tillOrdersNote: 'This is for customers at the counter. WhatsApp orders are paid for on the Orders page — ringing one up here would count it twice.',
+    hoursTitle: 'Shop hours',
+    hoursNotSet: 'Not set',
+    hoursSet: 'Set',
+    hoursChange: 'Change',
+    hoursOpen: 'Opens',
+    hoursClose: 'Closes',
+    hoursHint: 'Customers see this on your shop page. It does not stop orders — use “Accepting orders” for that.',
+    hoursClear: 'Clear',
+    hoursSaved: 'Shop hours saved',
+    shopIsOpen: 'Shop is open',
+    shopIsClosed: 'Shop is closed',
+    shopCloseNow: 'Close the shop',
+    shopOpenAgain: 'Open the shop',
+    shopOpenNow: 'Shop is open again',
+    shopClosedNow: 'Shop closed — customers will see why',
+    closedNoteLabel: 'Why the shop is closed',
+    closedNotePlaceholder: 'Back at 5 · family function',
+    closedNoteHint: 'Customers see this on your shop page. Leave it blank if you would rather not say.',
     markConfirmed: 'Accept',
     markCompleted: 'Mark done',
     markCancelled: 'Cancel',
@@ -489,6 +525,24 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     newOrderAlert: 'নতুন অর্ডার',
     sessionEnded: 'আপনার সময় শেষ। আবার PIN দিয়ে ঢুকুন।',
     tillOrdersNote: 'এটা দোকানে আসা খদ্দেরের জন্য। অনলাইন অর্ডারের টাকা “অর্ডার” পাতায় নিন — এখানে তুললে দুবার হিসাব হবে।',
+    hoursTitle: 'দোকানের সময়',
+    hoursNotSet: 'দেওয়া হয়নি',
+    hoursSet: 'দিন',
+    hoursChange: 'বদলান',
+    hoursOpen: 'খোলে',
+    hoursClose: 'বন্ধ হয়',
+    hoursHint: 'খদ্দের এটা আপনার দোকানের পাতায় দেখবে। এতে অর্ডার বন্ধ হয় না — তার জন্য “অর্ডার নিচ্ছি” বন্ধ করুন।',
+    hoursClear: 'মুছুন',
+    hoursSaved: 'দোকানের সময় সেভ হয়েছে',
+    shopIsOpen: 'দোকান খোলা',
+    shopIsClosed: 'দোকান বন্ধ',
+    shopCloseNow: 'দোকান বন্ধ করুন',
+    shopOpenAgain: 'দোকান খুলুন',
+    shopOpenNow: 'দোকান আবার খুলল',
+    shopClosedNow: 'দোকান বন্ধ — খদ্দের কারণ দেখতে পাবে',
+    closedNoteLabel: 'কেন বন্ধ',
+    closedNotePlaceholder: '৫টায় ফিরব · বাড়িতে অনুষ্ঠান',
+    closedNoteHint: 'খদ্দের এটা আপনার দোকানের পাতায় দেখবে। না লিখলেও চলবে।',
     markConfirmed: 'নিলাম',
     markCompleted: 'হয়ে গেছে',
     markCancelled: 'বাতিল',
@@ -683,6 +737,24 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     newOrderAlert: 'नया ऑर्डर',
     sessionEnded: 'आपका सत्र समाप्त हो गया। दोबारा PIN से आएँ।',
     tillOrdersNote: 'यह दुकान पर आए ग्राहक के लिए है। व्हाट्सएप ऑर्डर का पैसा “ऑर्डर” पेज पर लें — यहाँ जोड़ने से दो बार गिना जाएगा।',
+    hoursTitle: 'दुकान का समय',
+    hoursNotSet: 'नहीं दिया',
+    hoursSet: 'डालें',
+    hoursChange: 'बदलें',
+    hoursOpen: 'खुलती है',
+    hoursClose: 'बंद होती है',
+    hoursHint: 'ग्राहक इसे आपके दुकान पेज पर देखेंगे। इससे ऑर्डर बंद नहीं होते — उसके लिए “ऑर्डर ले रहे हैं” बंद करें।',
+    hoursClear: 'हटाएँ',
+    hoursSaved: 'दुकान का समय सेव हो गया',
+    shopIsOpen: 'दुकान खुली है',
+    shopIsClosed: 'दुकान बंद है',
+    shopCloseNow: 'दुकान बंद करें',
+    shopOpenAgain: 'दुकान खोलें',
+    shopOpenNow: 'दुकान फिर खुल गई',
+    shopClosedNow: 'दुकान बंद — ग्राहक कारण देखेंगे',
+    closedNoteLabel: 'क्यों बंद है',
+    closedNotePlaceholder: '5 बजे लौटेंगे · घर में कार्यक्रम',
+    closedNoteHint: 'ग्राहक इसे आपके दुकान पेज पर देखेंगे। न लिखें तो भी चलेगा।',
     markConfirmed: 'लिया',
     markCompleted: 'हो गया',
     markCancelled: 'रद्द',

@@ -104,6 +104,14 @@ export async function POST(request: Request) {
       // `amount` is the name a Sale's snapshot already uses. This one called it
       // `lineTotal`, and the screen reading it looked for `amount` — so every
       // line showed ₹0 under a correct total. One name for one thing.
+      // Accepted on arrival.
+      //
+      // There used to be an Accept button, and it asked a question the owner
+      // had already answered by having the shop open: of course they will take
+      // an order from their own shop page. It bought one signal — "nobody has
+      // looked at this yet" — at the cost of a tap on every single order, and
+      // that signal is carried better by the waiting count and the bell.
+      status: 'CONFIRMED',
       itemsJson: dbItems.map((item) => ({
         itemId: item.id,
         name: item.name,

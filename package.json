@@ -2,7 +2,7 @@
   "name": "dukaanflow",
   "version": "0.1.0",
   "private": true,
-  "description": "DukaanFlow — Scan → Select → WhatsApp. QR-to-WhatsApp ordering for Indian kirana shops and small restaurants.",
+  "description": "DukaanFlow — Scan → Select → Order. QR ordering for Indian kirana shops and small restaurants.",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

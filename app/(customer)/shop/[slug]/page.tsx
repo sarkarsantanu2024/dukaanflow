@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { StoreFront } from '@/components/customer/StoreFront';
+import { formatClockRange } from '@/lib/hours';
 
 // The menu changes whenever the admin edits an item, so this page is always
 // rendered fresh. Reads go straight to Prisma — no API hop for GETs.
@@ -20,6 +21,9 @@ async function loadShop(slug: string) {
       address: true,
       upiId: true,
       active: true,
+      openTime: true,
+      closeTime: true,
+      closedNote: true,
       deliveryEnabled: true,
       ownerName: true,
       imageData: true,
@@ -62,6 +66,8 @@ export default async function ShopPage({ params }: PageProps) {
 
   if (!shop) notFound();
 
+  const hours = formatClockRange(shop.openTime, shop.closeTime);
+
   if (!shop.active) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-6 text-center">
@@ -71,10 +77,20 @@ export default async function ShopPage({ params }: PageProps) {
           This shop is not accepting orders right now. / এই দোকান এখন অর্ডার নিচ্ছে না। / यह दुकान अभी
           ऑर्डर नहीं ले रही है।
         </p>
+
+        {/* The shopkeeper's own words about why. The difference between a
+            customer trying again tomorrow and deciding the shop has gone. */}
+        {shop.closedNote && (
+          <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-base font-medium text-amber-900">
+            {shop.closedNote}
+          </p>
+        )}
+
+        {hours && <p className="mt-3 text-sm text-slate-500">{hours}</p>}
       </main>
     );
   }
 
-  const { items, active: _active, ...summary } = shop;
+  const { items, active: _active, closedNote: _note, ...summary } = shop;
   return <StoreFront shop={summary} items={items} />;
 }

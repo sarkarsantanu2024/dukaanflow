@@ -232,7 +232,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           <Link href="/" className="font-medium text-slate-500 underline hover:text-brand-700">
             DukaanFlow
           </Link>{' '}
-          · Scan → Select → WhatsApp
+          · Scan → Select → Order
         </p>
       </main>
 

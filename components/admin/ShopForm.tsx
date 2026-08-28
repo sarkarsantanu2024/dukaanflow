@@ -34,6 +34,8 @@ export type ShopFormValues = {
   phone: string;
   address: string;
   state: string;
+  openTime: string;
+  closeTime: string;
   deliveryEnabled: boolean;
   isDemo: boolean;
   upiId: string;
@@ -55,6 +57,8 @@ const EMPTY: ShopFormValues = {
   phone: '',
   address: '',
   state: '',
+  openTime: '',
+  closeTime: '',
   deliveryEnabled: true,
   isDemo: false,
   upiId: '',
@@ -229,6 +233,26 @@ export function ShopForm({
                 onChange={(event) => set('address', event.target.value)}
                 error={errors.address}
                 placeholder="Dum Dum Road, Kolkata"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Shown to customers on the shop page. The owner can change
+                  these from their own app, which is where they usually will —
+                  hours move with a festival or a family illness. */}
+              <Input
+                label="Opens"
+                type="time"
+                value={values.openTime}
+                onChange={(event) => set('openTime', event.target.value)}
+                error={errors.openTime}
+              />
+              <Input
+                label="Closes"
+                type="time"
+                value={values.closeTime}
+                onChange={(event) => set('closeTime', event.target.value)}
+                error={errors.closeTime}
               />
             </div>
 
