@@ -339,6 +339,7 @@ export function OrdersScreen({
                       status: order.status,
                       totalAmount: order.totalAmount,
                       orderType: order.orderType,
+                      lines: order.lines,
                     }),
                   )}`}
                   target="_blank"
