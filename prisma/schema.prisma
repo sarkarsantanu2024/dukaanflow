@@ -62,24 +62,39 @@ enum LedgerKind {
 }
 
 model Shop {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  slug      String   @unique
-  type      ShopType @default(GROCERY)
-  phone     String // 10-digit Indian mobile, digits only
-  address   String   @default("")
-  upiId     String   @default("")
-  active    Boolean  @default(true)
+  id                   String    @id @default(uuid()) @db.Uuid
+  name                 String
+  slug                 String    @unique
+  type                 ShopType  @default(GROCERY)
+  phone                String // 10-digit Indian mobile, digits only
+  address              String    @default("")
+  upiId                String    @default("")
+  active               Boolean   @default(true)
   // Owner access: a bcrypt hash of the 6-digit PIN the Super Admin issues to
   // this shop's owner. Null means the owner cannot sign in at all, which is
   // the default — access is granted deliberately, never by existing.
-  ownerPinHash  String?
-  ownerPinSetAt DateTime?
+  ownerPinHash         String?
+  ownerPinSetAt        DateTime?
   /// One-time invite link, so an owner's first open needs no PIN typing.
   inviteTokenHash      String?
   inviteTokenExpiresAt DateTime?
 
-  ownerName String @default("")
+  /// A demonstration shop, not a real customer.
+  ///
+  /// Marked rather than deleted so there is always something to show, test a
+  /// release against, or walk a prospect through — and marked rather than
+  /// guessed at by name, because "Demo Store" is a name a real shop could
+  /// choose. The console hides these behind a toggle so they never quietly
+  /// inflate a count of how many shops are live.
+  isDemo    Boolean @default(false)
+
+  /// The Indian state this shop trades in, as a code from `lib/states.ts`.
+  /// Blank until somebody fills it in. It exists for one reason: occasions are
+  /// regional — Pohela Boishakh moves goods in West Bengal and nothing in
+  /// Tamil Nadu — so a shop must be placed before its festivals can be.
+  state String @default("")
+
+  ownerName      String @default("")
   /// Storefront and owner photos, held as resized data URLs. Not a blob store:
   /// one ~100 KB image per shop keeps DukaanFlow deployable with nothing but a
   /// database, and the column takes a URL unchanged if that ever changes.
@@ -110,9 +125,13 @@ model Shop {
   payments  Payment[]
   customers Customer[]
   ledger    LedgerEntry[]
+  itemStats ItemPeriodStat[]
+  areaStats AreaPeriodStat[]
 
   @@index([active])
   @@index([subscriptionStatus])
+  @@index([state])
+  @@index([isDemo])
 }
 
 /// A recorded payment. DukaanFlow collects over UPI and the Super Admin records
@@ -226,6 +245,11 @@ model Order {
   customerName    String      @default("")
   customerPhone   String
   customerAddress String      @default("")
+  /// Six digits, or blank. The one part of an address that aggregates: free
+  /// text cannot be counted, and "which localities do our customers come from"
+  /// is unanswerable without a field that means the same thing every time.
+  /// Optional at the till — an order is never refused for want of a pincode.
+  customerPincode String      @default("")
   orderType       OrderType   @default(DELIVERY)
   // Immutable snapshot of what was ordered, at the price charged at that moment.
   // Reporting reads `totalAmount`; it is never recomputed from this JSON.
@@ -238,4 +262,140 @@ model Order {
 
   @@index([shopId, createdAt])
   @@index([status])
+  @@index([shopId, customerPincode])
+}
+
+/// A named occasion. The name, and nothing that changes from year to year.
+///
+/// Entered ONCE and left alone: "Durga Puja" is one row forever, not one row per
+/// year. The name is what year-over-year comparison groups on, so keeping it in
+/// a single place is what stops "Durga Puja" and "Durga puja" becoming two
+/// festivals to every report downstream.
+///
+/// `state` is blank for occasions kept all over India. Regional ones are scoped,
+/// because an occasion that moves nothing in a shop's own state is noise in that
+/// shop's report.
+///
+/// WHEN IT FALLS lives in one of two places, and an occasion needs exactly one:
+///
+///  - `fixedMonth`/`fixedDay` — for occasions on the Gregorian calendar, which
+///    never move. Independence Day is the 15th of August every year and always
+///    will be. These need no yearly upkeep at all, ever.
+///  - `OccasionDate` — for occasions on a lunar or solar-religious calendar,
+///    which move by weeks. Somebody has to say when Diwali fell; no software can
+///    derive it, and guessing would put a wrong festival boundary into every
+///    report permanently.
+///
+/// An occasion with neither simply does not appear in a report for that year,
+/// and the console says which ones are waiting.
+model Occasion {
+  id    String @id @default(uuid()) @db.Uuid
+  name  String
+  /// A state code from `lib/states.ts`, or "" for all of India.
+  state String @default("")
+
+  /// 1–12 and 1–31 for an occasion that never moves; null when it does.
+  fixedMonth Int?
+  fixedDay   Int?
+  /// How many days it runs, counting the first. Pongal is 4, Christmas is 1.
+  spanDays   Int  @default(1)
+
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dates OccasionDate[]
+
+  /// One entry per name per state. The point of the whole table.
+  @@unique([name, state])
+  @@index([state])
+}
+
+/// The days one moving occasion actually fell on, in one year.
+///
+/// Only for occasions that move. A fixed-date occasion never has a row here —
+/// its dates are computed from `fixedMonth`/`fixedDay` for whatever year is
+/// being reported.
+model OccasionDate {
+  id         String @id @default(uuid()) @db.Uuid
+  occasionId String @db.Uuid
+  year       Int
+  /// Inclusive first and last day, as calendar dates in shop time.
+  startsOn   DateTime @db.Date
+  endsOn     DateTime @db.Date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  occasion Occasion @relation(fields: [occasionId], references: [id], onDelete: Cascade)
+
+  @@unique([occasionId, year])
+  @@index([year])
+}
+
+/// What one item took, in one shop, over one year or one occasion inside it.
+///
+/// THIS TABLE EXISTS TO SURVIVE THE PURGE. Orders and sales are deleted on each
+/// shop's subscription anniversary (see `lib/retention.ts`), which would make
+/// year-over-year comparison permanently impossible: you cannot say "Durga Puja
+/// sold better this year" when last year's orders were deleted before this
+/// year's arrived. So the totals are rolled up here first — a few rows per shop
+/// per year instead of thousands — and these are never purged.
+///
+/// Item name and unit are stored, not an item id. The item may be renamed,
+/// re-priced or deleted; what it took in 2026 may not change with it.
+model ItemPeriodStat {
+  id     String @id @default(uuid()) @db.Uuid
+  shopId String @db.Uuid
+  year   Int
+
+  /// `""` for the whole year; otherwise the `Occasion.id` this covers.
+  ///
+  /// A sentinel rather than a nullable column on purpose: in Postgres two NULLs
+  /// are never equal, so a nullable field in the unique key below would let the
+  /// whole-year row be inserted again on every rollup instead of being updated.
+  occasionKey  String @default("")
+  /// The occasion's name as it stood when this was computed. Renaming or
+  /// deleting the occasion must not rewrite what a past year is labelled.
+  occasionName String @default("")
+
+  itemName String
+  itemUnit String @default("")
+
+  quantity     Int
+  revenue      Int // INTEGER RUPEES
+  transactions Int
+
+  computedAt DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, year, occasionKey, itemName, itemUnit])
+  @@index([shopId, year])
+  @@index([occasionName, year])
+}
+
+/// Where a shop's customers ordered from, by pincode, over one year.
+///
+/// The locality half of the same problem `ItemPeriodStat` solves: pincodes are
+/// only on orders, and orders are purged. Rolled up before that happens.
+model AreaPeriodStat {
+  id      String @id @default(uuid()) @db.Uuid
+  shopId  String @db.Uuid
+  year    Int
+  /// Six digits. Never blank — orders without a pincode are simply not counted
+  /// here, and the report says how many those were rather than inventing a row.
+  pincode String
+
+  orders    Int
+  revenue   Int // INTEGER RUPEES
+  /// Distinct phone numbers that ordered from this pincode.
+  customers Int
+
+  computedAt DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, year, pincode])
+  @@index([shopId, year])
 }

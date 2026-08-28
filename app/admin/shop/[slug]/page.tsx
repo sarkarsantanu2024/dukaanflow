@@ -28,6 +28,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
       type: true,
       phone: true,
       address: true,
+      state: true,
       upiId: true,
       active: true,
       id: true,
@@ -109,6 +110,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
               type: shop.type,
               phone: shop.phone,
               address: shop.address,
+              state: shop.state,
               upiId: shop.upiId,
               active: shop.active,
             }}

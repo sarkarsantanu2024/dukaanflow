@@ -62,3 +62,78 @@ export function startOfBusinessDay(now: Date = new Date()): Date {
   shifted.setUTCHours(0, 0, 0, 0);
   return new Date(shifted.getTime() - OFFSET_MINUTES * 60_000);
 }
+
+export type ShopClock = {
+  /** Full year, e.g. 2026. */
+  year: number;
+  /** 1–12, not the 0-based month `Date` deals in. */
+  month: number;
+  /** 1–31. */
+  day: number;
+  /** 0–23 on the shop's wall clock. */
+  hour: number;
+  /** 0 = Monday … 6 = Sunday. The Indian week is read starting Monday. */
+  weekday: number;
+};
+
+/**
+ * An instant broken into the wall-clock parts a shopkeeper would read off it.
+ *
+ * Reporting buckets — busiest hour, busiest day — are meaningless without
+ * this. A shop's evening rush lands between 18:00 and 21:00 IST, which in the
+ * UTC the database stores is 12:30 to 15:30 and straddles no boundary anyone
+ * recognises. Bucketing on the raw timestamp would have told an owner their
+ * shop is busiest at lunchtime.
+ */
+export function shopClock(value: When): ShopClock {
+  const shifted = new Date(toDate(value).getTime() + OFFSET_MINUTES * 60_000);
+  return {
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth() + 1,
+    day: shifted.getUTCDate(),
+    hour: shifted.getUTCHours(),
+    weekday: (shifted.getUTCDay() + 6) % 7,
+  };
+}
+
+/**
+ * Midnight in the shop's timezone on the first of a month, as a real instant.
+ * `month` is 1–12 and may overflow — month 13 is January of the next year,
+ * which is how a period's exclusive end is written.
+ */
+export function shopMonthStart(year: number, month: number): Date {
+  const utcMidnight = Date.UTC(year, month - 1, 1, 0, 0, 0, 0);
+  return new Date(utcMidnight - OFFSET_MINUTES * 60_000);
+}
+
+export const WEEKDAY_NAMES = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+] as const;
+
+export const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
+
+/** "6 pm", "12 noon" — an hour bucket as a shopkeeper would say it. */
+export function formatHourBucket(hour: number): string {
+  if (hour === 0) return '12 midnight';
+  if (hour === 12) return '12 noon';
+  return hour < 12 ? `${hour} am` : `${hour - 12} pm`;
+}

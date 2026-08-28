@@ -8,13 +8,14 @@ import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
 import { formatRupees } from '@/lib/money';
-import { phoneSchema } from '@/lib/validators';
+import { phoneSchema, pincodeSchema } from '@/lib/validators';
 import { dict, type Locale } from '@/lib/i18n';
 
 const checkoutSchema = z.object({
   customerName: z.string().trim().max(60),
   customerPhone: phoneSchema,
   customerAddress: z.string().trim().max(200),
+  customerPincode: pincodeSchema,
 });
 
 export type CheckoutValues = z.infer<typeof checkoutSchema>;
@@ -48,7 +49,12 @@ export function CheckoutSheet({
     formState: { errors },
   } = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { customerName: '', customerPhone: '', customerAddress: '' },
+    defaultValues: {
+      customerName: '',
+      customerPhone: '',
+      customerAddress: '',
+      customerPincode: '',
+    },
   });
 
   // Lock background scroll and move focus into the sheet while it is open.
@@ -145,6 +151,21 @@ export function CheckoutSheet({
               {...register('customerAddress')}
             />
           )}
+
+          {/* Asked on pickup too. "Which localities do our customers come from"
+              is about where the person lives, not how the goods travel — and a
+              customer walking in is exactly the flow worth understanding. */}
+          <Input
+            label={t.pincode}
+            hint={t.optional}
+            type="text"
+            inputMode="numeric"
+            autoComplete="postal-code"
+            maxLength={6}
+            placeholder={t.pincodePlaceholder}
+            error={errors.customerPincode?.message}
+            {...register('customerPincode')}
+          />
 
           <div className="flex gap-2 pt-1">
             <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={submitting}>

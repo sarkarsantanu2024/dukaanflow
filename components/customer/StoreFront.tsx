@@ -98,6 +98,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           customerName: values.customerName,
           customerPhone: values.customerPhone,
           customerAddress: values.customerAddress,
+          customerPincode: values.customerPincode,
           orderType: values.orderType,
           // Only ids and quantities travel to the server. Prices are re-read
           // from the database there — the client never quotes a total.

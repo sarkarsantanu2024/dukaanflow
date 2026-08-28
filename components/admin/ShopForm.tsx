@@ -23,6 +23,7 @@ import { useToast } from '@/components/ui/Toast';
 import { ImagePicker } from './ImagePicker';
 import { slugify } from '@/lib/slug';
 import { SHOP_TYPES, SHOP_TYPE_LABELS } from '@/lib/validators';
+import { STATES } from '@/lib/states';
 
 export type ShopFormValues = {
   name: string;
@@ -32,6 +33,7 @@ export type ShopFormValues = {
   type: (typeof SHOP_TYPES)[number];
   phone: string;
   address: string;
+  state: string;
   upiId: string;
   active: boolean;
 };
@@ -50,6 +52,7 @@ const EMPTY: ShopFormValues = {
   type: 'GROCERY',
   phone: '',
   address: '',
+  state: '',
   upiId: '',
   active: true,
 };
@@ -223,6 +226,26 @@ export function ShopForm({
                 error={errors.address}
                 placeholder="Dum Dum Road, Kolkata"
               />
+            </div>
+
+            <div>
+              {/* Not decoration on the address. Festivals are regional, so the
+                  occasion report can only pick the right ones for this shop
+                  once it knows which state the shop is standing in. */}
+              <Select
+                label="State"
+                hint="for festival reporting"
+                value={values.state}
+                onChange={(event) => set('state', event.target.value)}
+                error={errors.state}
+              >
+                <option value="">Not set</option>
+                {STATES.map((state) => (
+                  <option key={state.code} value={state.code}>
+                    {state.name}
+                  </option>
+                ))}
+              </Select>
             </div>
 
             <div className="sm:col-span-2">

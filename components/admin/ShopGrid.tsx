@@ -27,6 +27,7 @@ export type ShopRow = {
   phone: string;
   active: boolean;
   imageData: string;
+  isDemo: boolean;
   planName: string;
   /** Short state word: Trial, Paid, Due, Cancelled. */
   planState: 'trial' | 'paid' | 'due' | 'cancelled';
@@ -167,7 +168,17 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold leading-tight text-slate-900">{shop.name}</p>
+                  <p className="flex items-center gap-1.5 truncate font-semibold leading-tight text-slate-900">
+                    <span className="truncate">{shop.name}</span>
+                    {/* Labelled on the card, not only behind the toggle: once
+                        demo shops are being shown, nothing else on this screen
+                        distinguishes one from a real customer. */}
+                    {shop.isDemo && (
+                      <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-300">
+                        Demo
+                      </span>
+                    )}
+                  </p>
                   <p className="truncate text-sm text-slate-500">
                     {SHOP_TYPE_LABELS[shop.type]} · +91 {shop.phone}
                   </p>

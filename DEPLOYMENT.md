@@ -30,12 +30,17 @@ DIRECT_URL="postgresql://…….neon.tech/dukaanflow?sslmode=require"
 NEXT_PUBLIC_BASE_URL="https://dukaanflow.vercel.app"
 ```
 
-Generate the two secrets:
+Generate the three secrets:
 
 ```bash
 npm run hash -- "your-strong-admin-password"        # → ADMIN_PASSWORD_HASH
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # → COOKIE_SECRET
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # → CRON_SECRET
 ```
+
+`CRON_SECRET` signs the nightly retention purge — see **Data retention** in the
+operating notes. It must be identical in `.env` and in Vercel, or the job stops
+running and nobody is told.
 
 > **The single most common setup failure.** A bcrypt hash starts `$2a$12$…`, and
 > Next.js runs variable expansion over `.env` files — so `$2a`, `$12` and the
@@ -196,3 +201,60 @@ the phone.
   periodic `pg_dump` if any shop's catalogue is expensive to re-enter.
 - **If logins fail after deploying**, check `ADMIN_PASSWORD_HASH` first — a
   truncated or shell-expanded `$2a$12$…` value is by far the most common cause.
+
+### Data retention
+
+Each shop keeps the orders and counter sales of its **current subscription
+year**. On every anniversary of the day its subscription began, everything from
+before that anniversary is deleted. A shop that started in March is cleared each
+March, one that started in November each November — the window a shop pays for
+is the window it can report on.
+
+The anchor is the earliest `Payment.periodStart` for that shop; a shop that has
+never paid falls back to `createdAt`, when its trial began. A shop inside its
+first year loses nothing.
+
+Orders and sales are the only two tables that grow without limit, and after a
+year they are read by nothing — last year's Tuesday rush does not predict this
+year's.
+
+`vercel.json` runs `/api/cron/purge` daily at 20:30 UTC, which is 2 am in the
+shop. Vercel signs the call with `Authorization: Bearer $CRON_SECRET`; the route
+refuses anything else, and refuses everything when `CRON_SECRET` is unset —
+better a job that visibly stops than a URL that anyone can use to delete rows.
+
+**Never purged:** the khata ledger (a balance is summed from its entries, so
+dropping old ones changes what a customer owes), payment records (which are also
+the anchor this policy is computed from — purging them would move the window),
+`ItemPeriodStat` and `AreaPeriodStat` (see below), and shops, items and
+customers, which do not grow with trade.
+
+**The rollup runs first, and the order is not negotiable.** The same cron rolls
+each year's trade up into `ItemPeriodStat` (per item, per year, and per occasion
+inside it) and `AreaPeriodStat` (per pincode, per year) *before* deleting the
+rows those totals came from. Reverse the two and a shop's first year is deleted
+before it is ever summarised — and unlike raw rows, a summary cannot be
+recomputed from nothing afterwards. This is what makes "did Durga Puja sell
+better than last year" answerable at all: the second Puja arrives long after the
+first one's orders were deleted.
+
+Rolling up by hand, for a year that already happened or after entering its
+occasions late:
+
+```bash
+npm run rollup            # the current year
+npm run rollup -- 2026    # one year
+npm run rollup -- 2024 2026
+```
+
+**The cost, stated plainly:** once a period falls before a shop's cutoff, no
+report can be produced for it. Reports say so themselves rather than showing
+zeroes. If more history matters to you, either export the CSVs before they age
+out or raise `RETENTION_YEARS` in `lib/retention.ts`.
+
+Run it by hand — a dry run first, which deletes nothing:
+
+```bash
+npm run purge            # what would go
+npm run purge -- --write # delete
+```
