@@ -89,7 +89,10 @@ export default async function ShopDetailPage({ params }: PageProps) {
           owner's access are things you look at while changing something else,
           so stacking them above the form pushed the form off the screen and
           left the width empty either side. */}
-      <main className="grid items-start gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:px-6">
+      {/* The reference column holds two QR codes side by side and a
+          subscription form; at 380px their captions were breaking mid-word.
+          It widens again on a larger monitor, where the space exists. */}
+      <main className="grid items-start gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_440px] lg:px-6 2xl:grid-cols-[minmax(0,1fr)_520px]">
         <div className="min-w-0 space-y-6">
           <ShopForm
             initialImages={{

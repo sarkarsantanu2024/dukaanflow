@@ -118,9 +118,34 @@ export function pickLikelyName(lines: ScannedLine[]): string {
     line.height > tallest.height ? line : tallest,
   );
 
-  // Title case, trimmed to the item-name limit the API enforces anyway.
-  return biggest.text
+  return tidyName(biggest.text);
+}
+
+/**
+ * Strips the marks OCR invents out of packet artwork.
+ *
+ * A scanner reads a border, a fold or a bar of colour as punctuation, so a
+ * clean label comes back as "Sunrise |" or "[Rice]". The stray character is
+ * nearly invisible to whoever reads the word, which makes it worse than an
+ * obvious mistake: it survives into the item list, onto the customer's menu,
+ * and into a WhatsApp order, and nobody can see what is wrong with it.
+ *
+ * Only edges and invented runs are touched. Punctuation inside a real name —
+ * "Lay's", "7-Up" — is left exactly where it is.
+ */
+export function tidyName(raw: string): string {
+  const cleaned = raw
+    // Bars, slashes, brackets and underscores are never part of a product name
+    // and are constantly hallucinated out of packet edges.
+    .replace(/[|\\/_[\]{}<>~^*]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    // Then anything non-alphanumeric still clinging to either end.
+    .replace(/^[^\p{L}\p{N}]+/u, '')
+    .replace(/[^\p{L}\p{N})]+$/u, '')
+    .trim();
+
+  return cleaned
     .slice(0, 80)
     .toLowerCase()
-    .replace(/\b[a-z]/g, (character) => character.toUpperCase());
+    .replace(/(^|\s)(\p{L})/gu, (match) => match.toUpperCase());
 }

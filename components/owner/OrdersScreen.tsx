@@ -30,6 +30,19 @@ import { formatRupees } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
 
+/**
+ * An ordered line in the owner's language, falling back to the primary name.
+ * Orders placed before the snapshot carried translations have only that one.
+ */
+function lineName(
+  line: { name: string; nameBn?: string; nameHi?: string },
+  locale: Locale,
+): string {
+  if (locale === 'bn') return line.nameBn || line.name;
+  if (locale === 'hi') return line.nameHi || line.name;
+  return line.name;
+}
+
 export type OrderStatus = 'NEW' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 
 export type OwnerOrder = {
@@ -41,7 +54,14 @@ export type OwnerOrder = {
   status: OrderStatus;
   totalAmount: number;
   createdAt: string;
-  lines: { name: string; unit: string; quantity: number; amount: number }[];
+  lines: {
+    name: string;
+    nameBn?: string;
+    nameHi?: string;
+    unit: string;
+    quantity: number;
+    amount: number;
+  }[];
 };
 
 type Tab = 'ALL' | OrderStatus;
@@ -271,8 +291,8 @@ export function OrdersScreen({
                     className="flex justify-between gap-3 text-slate-600"
                   >
                     <span className="min-w-0 truncate">
-                      {line.name}
-                      {line.unit ? ` ${line.unit}` : ''} × {line.quantity}
+                      {lineName(line, locale)}
+                      {line.unit ? ` · ${line.unit}` : ''} × {line.quantity}
                     </span>
                     <span className="shrink-0 tabular-nums">{formatRupees(line.amount)}</span>
                   </li>
