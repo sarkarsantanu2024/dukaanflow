@@ -113,39 +113,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
               active: shop.active,
             }}
           />
-        </div>
-
-        <div className="space-y-6 lg:sticky lg:top-[4.25rem]">
-          <QrPanel slug={shop.slug} shopName={shop.name} upiId={shop.upiId} />
-
-          <SubscriptionPanel
-          slug={shop.slug}
-          state={{
-            plan: shop.plan,
-            status: shop.subscriptionStatus,
-            itemCount: billing?.itemCount ?? shop._count.items,
-            itemLimit: billing?.itemLimit ?? 25,
-            trialEndsAt: shop.trialEndsAt?.toISOString() ?? null,
-            currentPeriodEnd: shop.currentPeriodEnd?.toISOString() ?? null,
-            payments: shop.payments.map((payment) => ({
-              id: payment.id,
-              amount: payment.amount,
-              plan: payment.plan,
-              periodEnd: payment.periodEnd.toISOString(),
-              method: payment.method,
-            })),
-          }}
-        />
-
-          <OwnerAccessPanel
-            slug={shop.slug}
-            baseUrl={baseUrl()}
-            hasPin={Boolean(shop.ownerPinHash)}
-            setAt={shop.ownerPinSetAt ? formatDay(shop.ownerPinSetAt) : null}
-          />
-        </div>
-
-        <section className="min-w-0 lg:col-span-2">
+        <section className="min-w-0">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
             Recent orders ({shop._count.orders})
           </h2>
@@ -184,6 +152,38 @@ export default async function ShopDetailPage({ params }: PageProps) {
           </p>
           <DeleteShopButton slug={shop.slug} shopName={shop.name} />
         </section>
+        </div>
+
+        <div className="space-y-6 lg:sticky lg:top-[4.25rem]">
+          <QrPanel slug={shop.slug} shopName={shop.name} upiId={shop.upiId} />
+
+          <SubscriptionPanel
+          slug={shop.slug}
+          state={{
+            plan: shop.plan,
+            status: shop.subscriptionStatus,
+            itemCount: billing?.itemCount ?? shop._count.items,
+            itemLimit: billing?.itemLimit ?? 25,
+            trialEndsAt: shop.trialEndsAt?.toISOString() ?? null,
+            currentPeriodEnd: shop.currentPeriodEnd?.toISOString() ?? null,
+            payments: shop.payments.map((payment) => ({
+              id: payment.id,
+              amount: payment.amount,
+              plan: payment.plan,
+              periodEnd: payment.periodEnd.toISOString(),
+              method: payment.method,
+            })),
+          }}
+        />
+
+          <OwnerAccessPanel
+            slug={shop.slug}
+            baseUrl={baseUrl()}
+            hasPin={Boolean(shop.ownerPinHash)}
+            setAt={shop.ownerPinSetAt ? formatDay(shop.ownerPinSetAt) : null}
+          />
+        </div>
+
       </main>
     </>
   );

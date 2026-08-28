@@ -25,7 +25,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { useToast } from '@/components/ui/Toast';
-import { PhoneIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { formatRupees } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
@@ -264,6 +264,15 @@ export function OrdersScreen({
                   <p className="truncate font-semibold text-slate-900">
                     {order.customerName || '—'} · {order.customerPhone}
                   </p>
+                  {/* Where it goes belongs with who it is for, not under the
+                      list of what is in it — sitting there it read as another
+                      line of the order. */}
+                  {order.customerAddress && (
+                    <p className="flex items-start gap-1 text-xs text-slate-500">
+                      <PinIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <span className="min-w-0">{order.customerAddress}</span>
+                    </p>
+                  )}
                   <p className="text-xs text-slate-500">
                     {order.orderType === 'DELIVERY' ? t.delivery : t.pickup} ·{' '}
                     {formatClock(order.createdAt)}
@@ -298,10 +307,6 @@ export function OrdersScreen({
                   </li>
                 ))}
               </ul>
-
-              {order.customerAddress && (
-                <p className="mt-2 text-sm text-slate-500">{order.customerAddress}</p>
-              )}
 
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
                 <p className="mr-auto font-bold tabular-nums text-slate-900">
