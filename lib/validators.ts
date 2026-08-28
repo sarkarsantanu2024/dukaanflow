@@ -192,6 +192,8 @@ export const saleSchema = z.object({
 export const ledgerSchema = z.object({
   customerPhone: phoneSchema,
   customerName: z.string().trim().max(60).default(''),
+  /** Which para or lane — free text, to tell two Rekhas apart. */
+  customerArea: z.string().trim().max(60).default(''),
   kind: z.enum(['DEBIT', 'CREDIT']),
   amount: z
     .number({ invalid_type_error: 'Enter an amount' })

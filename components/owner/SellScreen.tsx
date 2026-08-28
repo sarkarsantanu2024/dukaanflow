@@ -18,6 +18,7 @@ import { CartIcon } from '@/components/ui/Icon';
 import { SwipeToRemove } from '@/components/ui/SwipeToRemove';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { handledExpiredSession } from './sessionGuard';
 import clsx from 'clsx';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useToast } from '@/components/ui/Toast';
@@ -149,6 +150,7 @@ export function SellScreen({
       });
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
 
+      if (handledExpiredSession({ response, slug, t, push })) return;
       if (!response.ok) {
         push(payload.error ?? t.networkError, 'error');
         return;

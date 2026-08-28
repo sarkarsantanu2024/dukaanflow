@@ -194,6 +194,13 @@ model Customer {
   shopId    String   @db.Uuid
   name      String   @default("")
   phone     String // 10-digit Indian mobile, digits only
+  /// Which para, lane or block this regular is from.
+  ///
+  /// Free text on purpose, unlike the pincode on an order: this is not for
+  /// aggregating, it is for telling two customers apart. A shopkeeper with
+  /// three Rekhas in the book knows them as "Rekha Di, bazaar side" — the
+  /// phone number is the key, but nobody recognises anybody by it.
+  area      String   @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

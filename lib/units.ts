@@ -39,3 +39,31 @@ export function unitsFor(type: ShopType): string[] {
 
 /** Shared id so one datalist can serve every unit field on a page. */
 export const UNIT_LIST_ID = 'dukaanflow-units';
+
+/**
+ * The canonical spelling of a unit, so two ways of typing one thing become one
+ * item rather than two rows a customer cannot tell apart.
+ *
+ * "1KG", "1kg", " 1  kg " and "1 kg" are the same pack size, and only the last
+ * of them should ever reach the database. Without this the unique key on
+ * (shop, name, unit) is satisfied by every variant spelling, and the shop ends
+ * up listing rice at three prices.
+ *
+ * Lowercase is safe here in a way it would not be for a name: units in this
+ * product are already written lowercase throughout `BY_TYPE` above, and a
+ * shopkeeper typing "1 KG" means the same shelf as one typing "1 kg".
+ */
+export function normaliseUnit(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    // "1kg" -> "1 kg", "500ml" -> "500 ml": a digit running into a word is a
+    // number and its unit, always.
+    .replace(/(\d)\s*([a-z])/g, '$1 $2')
+    .replace(/\s+/g, ' ');
+}
+
+/** Item names keep their capitals; only the spacing is tidied. */
+export function normaliseItemName(value: string): string {
+  return value.trim().replace(/\s+/g, ' ');
+}

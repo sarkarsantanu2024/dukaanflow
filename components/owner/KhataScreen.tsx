@@ -29,6 +29,8 @@ export type KhataCustomer = {
   id: string;
   name: string;
   phone: string;
+  /** Which para or lane, when one was recorded. */
+  area: string;
   balance: number;
   entries: {
     id: string;
@@ -58,7 +60,7 @@ export function KhataScreen({
 
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', amount: '', note: '' });
+  const [form, setForm] = useState({ name: '', phone: '', area: '', amount: '', note: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   async function addEntry(kind: 'DEBIT' | 'CREDIT') {
@@ -71,6 +73,7 @@ export function KhataScreen({
         body: JSON.stringify({
           customerPhone: form.phone,
           customerName: form.name,
+          customerArea: form.area,
           kind,
           amount: Number(form.amount),
           note: form.note,
@@ -87,7 +90,7 @@ export function KhataScreen({
         return;
       }
 
-      setForm({ name: '', phone: '', amount: '', note: '' });
+      setForm({ name: '', phone: '', area: '', amount: '', note: '' });
       router.refresh();
     } catch {
       push(t.networkError, 'error');
@@ -162,7 +165,9 @@ export function KhataScreen({
                       {customer.name || `+91 ${customer.phone}`}
                     </span>
                     <span className="block truncate text-sm text-slate-500">
-                      {customer.name ? `+91 ${customer.phone}` : ''}
+                      {[customer.name ? `+91 ${customer.phone}` : '', customer.area]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </span>
                   </span>
 
@@ -267,6 +272,15 @@ export function KhataScreen({
             onChange={(event) => setForm({ ...form, phone: event.target.value })}
             error={errors.customerPhone}
             placeholder="9876543210"
+          />
+          {/* Free text, and not required. Its job is telling two Rekhas apart
+              on a list of forty names, not feeding a report. */}
+          <Input
+            label={t.khataArea}
+            value={form.area}
+            onChange={(event) => setForm({ ...form, area: event.target.value })}
+            error={errors.customerArea}
+            placeholder="Bazaar side"
           />
           <Input
             label={t.khataAmount}

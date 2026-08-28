@@ -16,6 +16,8 @@ export type CustomerBalance = {
   id: string;
   name: string;
   phone: string;
+  /** Which para or lane, when the shopkeeper recorded one. */
+  area: string;
   /** Positive: the customer owes the shop. Negative: the shop owes them. */
   balance: number;
   lastEntryAt: Date | null;
@@ -26,7 +28,7 @@ export async function customerBalances(shopId: string): Promise<CustomerBalance[
   const [customers, sums, latest] = await Promise.all([
     prisma.customer.findMany({
       where: { shopId },
-      select: { id: true, name: true, phone: true },
+      select: { id: true, name: true, phone: true, area: true },
     }),
     prisma.ledgerEntry.groupBy({
       by: ['customerId', 'kind'],
@@ -52,6 +54,7 @@ export async function customerBalances(shopId: string): Promise<CustomerBalance[
     .map((customer) => ({
       id: customer.id,
       name: customer.name,
+      area: customer.area,
       phone: customer.phone,
       balance: owed.get(customer.id) ?? 0,
       lastEntryAt: lastSeen.get(customer.id) ?? null,
@@ -72,13 +75,16 @@ export async function upsertCustomer(
   shopId: string,
   phone: string,
   name: string,
-): Promise<{ id: string; name: string; phone: string }> {
+  area = '',
+): Promise<{ id: string; name: string; phone: string; area: string }> {
   return prisma.customer.upsert({
     where: { shopId_phone: { shopId, phone } },
-    create: { shopId, phone, name },
-    // A blank name on a later visit must not wipe the one already recorded.
-    update: name ? { name } : {},
-    select: { id: true, name: true, phone: true },
+    create: { shopId, phone, name, area },
+    // A blank field on a later visit means "unchanged", never "clear it". The
+    // till sends no area at all, and a counter sale must not erase the para
+    // somebody typed into the khata page last week.
+    update: { ...(name ? { name } : {}), ...(area ? { area } : {}) },
+    select: { id: true, name: true, phone: true, area: true },
   });
 }
 

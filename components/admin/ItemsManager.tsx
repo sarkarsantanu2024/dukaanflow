@@ -513,7 +513,7 @@ export function ItemsManager({
           <EmptyState title={t.noMatch} />
         ) : (
           <ul className={clsx('space-y-2', wide && 'xl:grid xl:grid-cols-2 xl:gap-2 xl:space-y-0')}>
-            {visible.map((item) => (
+            {visible.map((item, index) => (
               <li
                 key={item.id}
                 className={clsx(
@@ -529,6 +529,16 @@ export function ItemsManager({
                     so every card lines up with the one above it. All controls
                     are the same 40px height. */}
                 <div className="flex items-start gap-2">
+                  {/* Numbered so the list can be counted down without counting.
+                      An owner checking their stock against a shelf wants to
+                      know they are on the ninth of eleven, and the number of
+                      the row they are looking at is the cheapest way to say so.
+                      It follows the filtered view, because that is the list in
+                      front of them. */}
+                  <span className="mt-0.5 w-6 shrink-0 text-right text-sm font-semibold tabular-nums text-slate-400">
+                    {index + 1}.
+                  </span>
+
                   <div className="min-w-0 flex-1">
                     {/* The owner reads their own language first. */}
                     <p className="truncate font-semibold leading-tight text-slate-900">
