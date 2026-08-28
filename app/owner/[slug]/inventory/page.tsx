@@ -35,6 +35,7 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
       nameBn: true,
       nameHi: true,
       price: true,
+          priced: true,
       unit: true,
       category: true,
       inStock: true,

@@ -50,6 +50,9 @@ export async function POST(request: Request, { params }: Context) {
         unit: item.unit,
         category: item.category,
         price: 1,
+        // A placeholder, not a price — the row stays off the shop page until
+        // somebody says what it actually costs.
+        priced: false,
         inStock: true,
       },
       // Already listed? Leave the owner's own price and stock completely alone.

@@ -30,10 +30,14 @@ export type PlanSpec = {
 };
 
 export const PLAN_SPECS: Record<Plan, PlanSpec> = {
+  // The enum value stays FREE because it is written into every existing row and
+  // renaming it would need a migration for no gain — but nothing is free any
+  // more. The name and price a shopkeeper sees are read from here, which is
+  // exactly what this file exists for.
   FREE: {
     id: 'FREE',
-    name: 'Free',
-    price: 0,
+    name: 'Basic',
+    price: 99,
     itemLimit: 25,
     tagline: 'Enough for a tea stall or a small counter.',
     features: [

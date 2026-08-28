@@ -29,7 +29,7 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = itemUpsertSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { nameBn, nameHi, price, category, inStock } = parsed.data;
+  const { nameBn, nameHi, price, category, inStock, priced } = parsed.data;
 
   // Canonical spelling before anything else touches these.
   //
@@ -67,6 +67,7 @@ export async function POST(request: Request, { params }: Context) {
     nameBn: true,
     nameHi: true,
     price: true,
+    priced: true,
     unit: true,
     category: true,
     inStock: true,
@@ -79,6 +80,9 @@ export async function POST(request: Request, { params }: Context) {
         // a quick voice re-price must not wipe names typed by hand earlier.
         data: {
           price,
+          // A re-price is always deliberate, so it puts the item on sale even
+          // if it arrived as a placeholder.
+          priced: priced || undefined,
           category,
           inStock,
           ...(nameBn ? { nameBn } : {}),
@@ -87,7 +91,7 @@ export async function POST(request: Request, { params }: Context) {
         select: shape,
       })
     : await prisma.item.create({
-        data: { shopId, name, nameBn, nameHi, price, unit, category, inStock },
+        data: { shopId, name, nameBn, nameHi, price, priced, unit, category, inStock },
         select: shape,
       });
 

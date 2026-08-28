@@ -54,6 +54,10 @@ type OwnerDictionary = {
   addItem: string;
   clashTitle: string;
   clashHint: string;
+  /** Shown while items sit at Re 1 and are therefore invisible to customers. */
+  unpricedTitle: string;
+  unpricedHint: string;
+  notOnSale: string;
   photoAdd: string;
   photoAddHint: string;
   photoReading: string;
@@ -243,6 +247,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     addItem: 'Add an item',
     clashTitle: 'Two items share a name',
     clashHint: 'Add a pack size to each, so a customer can tell them apart.',
+    unpricedTitle: 'Customers cannot see these yet',
+    unpricedHint: 'Set a price on each one and save. Until a price is given the item stays off the shop page — better an item nobody sees than rice offered at a price nobody chose.',
+    notOnSale: 'No price set',
     photoAdd: 'Add by photo',
     photoAddHint: 'Point the camera at the packet. The photo is not saved.',
     photoReading: 'Reading the packet…',
@@ -431,6 +438,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     nameBn: 'বাংলা নাম',
     nameHi: 'হিন্দি নাম',
     addItem: 'জিনিস যোগ করুন',
+    unpricedTitle: 'খদ্দের এগুলো দেখতে পাচ্ছে না',
+    unpricedHint: 'প্রত্যেকটার দাম লিখে সেভ করুন। দাম না দেওয়া পর্যন্ত দোকানের পাতায় দেখা যাবে না।',
+    notOnSale: 'দাম দেওয়া হয়নি',
     clashTitle: 'একই নামে দুটি জিনিস',
     clashHint: 'প্রতিটিতে পরিমাণ দিন, তাহলে ক্রেতা আলাদা করতে পারবে।',
     photoAdd: 'ছবি তুলে যোগ করুন',
@@ -621,6 +631,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     nameBn: 'बंगाली नाम',
     nameHi: 'हिंदी नाम',
     addItem: 'सामान जोड़ें',
+    unpricedTitle: 'ग्राहक इन्हें नहीं देख पा रहे',
+    unpricedHint: 'हर एक का दाम लिखकर सेव करें। दाम दिए बिना दुकान के पेज पर नहीं दिखेगा।',
+    notOnSale: 'दाम नहीं दिया',
     clashTitle: 'एक ही नाम के दो सामान',
     clashHint: 'हर एक में मात्रा डालिए, ताकि ग्राहक फर्क समझ सके।',
     photoAdd: 'फोटो से जोड़ें',

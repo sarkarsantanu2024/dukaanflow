@@ -108,7 +108,11 @@ export default async function AdminDashboard() {
 
   const live = rows.filter((row) => row.active).length;
   const attention = rows.filter((row) => row.attention).length;
-  const paying = rows.filter((row) => row.planState === 'paid' && row.planName !== 'Free').length;
+  // Every plan costs money now, so a shop on a settled subscription is a
+  // paying shop. This used to subtract the free tier by comparing the display
+  // name — which would have silently kept excluding the cheapest paying shops
+  // the moment that name changed.
+  const paying = rows.filter((row) => row.planState === 'paid').length;
   const orders = rows.reduce((sum, row) => sum + row.orderCount, 0);
 
   return (

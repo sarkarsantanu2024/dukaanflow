@@ -245,6 +245,21 @@ model Item {
   nameBn    String   @default("")
   nameHi    String   @default("")
   price     Int // INTEGER RUPEES
+  /**
+   * Has a human actually chosen this price?
+   *
+   * This used to be inferred from `price > 1`, which was wrong in a way that
+   * cost a shop its whole storefront: a kirana really does sell a toffee, a
+   * matchbox or a single biscuit for one rupee, and every one of them was
+   * silently hidden from customers as "not priced yet".
+   *
+   * Items arriving from the starter catalogue, voice or a photograph land here
+   * `false` at a placeholder Re 1 — an invented price is worse than no item at
+   * all. The moment somebody sets a price, any price, this becomes true and the
+   * item goes on sale. One rupee chosen and one rupee never touched are
+   * different facts, and only a separate column can tell them apart.
+   */
+  priced    Boolean  @default(false)
   unit      String   @default("")
   category  String   @default("")
   inStock   Boolean  @default(true)

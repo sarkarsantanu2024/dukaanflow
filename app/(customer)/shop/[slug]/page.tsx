@@ -27,12 +27,11 @@ async function loadShop(slug: string) {
       items: {
         // An unpriced row is not a product yet, whatever its stock says.
         //
-        // This used to also require the row to be out of stock, which was safe
-        // only while everything unpriced arrived out of stock too. Items now
-        // land in stock — an owner listing what they sell should not have to
-        // then declare they have it — so the price alone has to carry the
-        // guard. Without it a customer would be quoted Re 1 for rice.
-        where: { price: { gt: 1 } },
+        // The guard used to be `price > 1`, which quietly hid every genuine one
+        // rupee item a kirana sells — a toffee, a matchbox, one biscuit. A
+        // placeholder price and a chosen price are different facts, so `priced`
+        // records which this is and Re 1 can mean what it says.
+        where: { priced: true },
         orderBy: [{ category: 'asc' }, { inStock: 'desc' }, { name: 'asc' }],
         select: {
           id: true,

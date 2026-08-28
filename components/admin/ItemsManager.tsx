@@ -27,6 +27,8 @@ export type AdminItem = {
   nameBn: string;
   nameHi: string;
   price: number;
+  /** False while the price is still the placeholder nobody chose. */
+  priced: boolean;
   unit: string;
   category: string;
   inStock: boolean;
@@ -173,6 +175,9 @@ export function ItemsManager({
       (group) => group.length > 1 && group.some((item) => !item.unit.trim()),
     );
   }, [items]);
+
+  /** Rows a customer cannot see, because nobody has priced them yet. */
+  const unpricedCount = useMemo(() => items.filter((item) => !item.priced).length, [items]);
 
   const categories = useMemo(
     () => Array.from(new Set(items.map((item) => item.category).filter(Boolean))).sort(),
@@ -328,13 +333,18 @@ export function ItemsManager({
       push(`${t.price} — 1, 2, 3…`, 'error');
       return;
     }
-    if (price === item.price) return;
+    // Typing the same number back is still an act of pricing: it is how an
+    // owner confirms that a placeholder Re 1 really is one rupee.
+    if (price === item.price && item.priced) return;
 
     // New rows arrive in stock now, so pricing one no longer has to switch it
     // on — but a row the owner had marked out *while* unpriced still should,
     // since the missing price was the only reason it was hidden.
-    const wasUnpriced = item.price <= 1 && !item.inStock;
-    const changes = wasUnpriced && price > 1 ? { price, inStock: true } : { price };
+    const changes = {
+      price,
+      priced: true,
+      ...(!item.priced && !item.inStock ? { inStock: true } : {}),
+    };
 
     if (await patchItem(item.id, changes)) {
       push(`${displayName(item, locale)} → ${formatRupees(price)}`, 'success');
@@ -406,6 +416,9 @@ export function ItemsManager({
           nameBn: item.nameBn,
           nameHi: item.nameHi,
           price: 1,
+          // A placeholder, not a price. Keeps the row off the shop page until
+          // somebody says what it actually costs.
+          priced: false,
           unit: item.unit,
           category: item.category,
           inStock: true,
@@ -462,6 +475,15 @@ export function ItemsManager({
 
   const list = (
     <section className="min-w-0">
+      {unpricedCount > 0 && (
+        <div className="mb-3 rounded-2xl border border-amber-300 bg-amber-50 p-3">
+          <p className="text-sm font-semibold text-amber-900">
+            {t.unpricedTitle} — {unpricedCount}
+          </p>
+          <p className="mt-0.5 text-sm text-amber-800">{t.unpricedHint}</p>
+        </div>
+      )}
+
       {clashes.length > 0 && (
         <div className="mb-3 rounded-2xl border border-amber-300 bg-amber-50 p-3">
           <p className="text-sm font-semibold text-amber-900">{t.clashTitle}</p>
@@ -551,8 +573,13 @@ export function ItemsManager({
                     </p>
                   </div>
 
-                  <Badge tone={item.inStock ? 'green' : 'red'}>
-                    {item.inStock ? t.inStock : t.outOfStock}
+                  {/* An unpriced row is invisible to customers, so saying
+                      "In stock" about it is the most misleading thing this
+                      screen could do — the shop looks stocked and the shop
+                      page is empty. The missing price is the fact that
+                      matters, so it is the one shown. */}
+                  <Badge tone={!item.priced ? 'amber' : item.inStock ? 'green' : 'red'}>
+                    {!item.priced ? t.notOnSale : item.inStock ? t.inStock : t.outOfStock}
                   </Badge>
                 </div>
 

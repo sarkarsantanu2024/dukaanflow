@@ -292,6 +292,9 @@ export function VoiceItemAdder({
           nameBn: draft.nameBn,
           nameHi: draft.nameHi,
           price: 1,
+          // A placeholder, not a price. Keeps the row off the shop page until
+          // somebody says what it actually costs.
+          priced: false,
           unit: '',
           category: draft.category,
           inStock: true,
