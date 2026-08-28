@@ -302,6 +302,10 @@ model Order {
   /// is unanswerable without a field that means the same thing every time.
   /// Optional at the till — an order is never refused for want of a pincode.
   customerPincode String      @default("")
+  /// The para or lane, in the customer's own words. Free text, unlike the
+  /// pincode beside it: that one is counted, this one is how a delivery is
+  /// actually found and how a shopkeeper recognises a regular.
+  customerArea    String      @default("")
   orderType       OrderType   @default(DELIVERY)
   // Immutable snapshot of what was ordered, at the price charged at that moment.
   // Reporting reads `totalAmount`; it is never recomputed from this JSON.

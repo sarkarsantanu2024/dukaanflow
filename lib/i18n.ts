@@ -34,6 +34,9 @@ type Dictionary = {
   orderPlacedTitle: string;
   orderPlacedHint: string;
   orderPlacedDone: string;
+  area: string;
+  areaPlaceholder: string;
+  savedForNextTime: string;
   optional: string;
   required: string;
   delivery: string;
@@ -90,6 +93,9 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     orderPlacedTitle: 'Order sent to the shop',
     orderPlacedHint: 'The shop has it now. They will call you when it is ready.',
     orderPlacedDone: 'Done',
+    area: 'Area',
+    areaPlaceholder: 'Bazaar side, near the school',
+    savedForNextTime: 'Saved on this phone — next time you only tap Place order.',
     optional: 'optional',
     required: 'required',
     delivery: 'Delivery',
@@ -142,6 +148,9 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     orderPlacedTitle: 'অর্ডার দোকানে পৌঁছে গেছে',
     orderPlacedHint: 'দোকান অর্ডারটি পেয়েছে। তৈরি হলে ওঁরা ফোন করবেন।',
     orderPlacedDone: 'ঠিক আছে',
+    area: 'পাড়া',
+    areaPlaceholder: 'বাজারের দিকে, স্কুলের কাছে',
+    savedForNextTime: 'এই ফোনে সেভ হয়ে গেল — পরের বার শুধু অর্ডার দিন।',
     pincode: 'পিন কোড',
     // ASCII digits even in Bengali: the field takes ASCII, and a placeholder
     // showing ৭০০ invites a value the validator will reject.
@@ -198,6 +207,9 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     orderPlacedTitle: 'ऑर्डर दुकान तक पहुँच गया',
     orderPlacedHint: 'दुकान को ऑर्डर मिल गया है। तैयार होने पर वे फ़ोन करेंगे।',
     orderPlacedDone: 'ठीक है',
+    area: 'इलाक़ा',
+    areaPlaceholder: 'बाज़ार की तरफ़, स्कूल के पास',
+    savedForNextTime: 'इस फ़ोन में सेव हो गया — अगली बार सिर्फ़ ऑर्डर करें।',
     pincode: 'पिन कोड',
     pincodePlaceholder: '700028',
     optional: 'वैकल्पिक',

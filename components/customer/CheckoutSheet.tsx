@@ -16,6 +16,7 @@ const checkoutSchema = z.object({
   customerPhone: phoneSchema,
   customerAddress: z.string().trim().max(200),
   customerPincode: pincodeSchema,
+  customerArea: z.string().trim().max(60),
 });
 
 export type CheckoutValues = z.infer<typeof checkoutSchema>;
@@ -31,6 +32,7 @@ export function CheckoutSheet({
   totalAmount,
   locale,
   deliveryEnabled = true,
+  remembered,
 }: {
   open: boolean;
   onClose: () => void;
@@ -41,6 +43,8 @@ export function CheckoutSheet({
   locale: Locale;
   /** Collection-only shops never show the choice at all. */
   deliveryEnabled?: boolean;
+  /** What this phone gave last time, so nobody types it twice. */
+  remembered?: Partial<CheckoutValues> | null;
 }) {
   const t = dict(locale);
   // A shop that cannot deliver starts and stays on pickup. Offering the choice
@@ -54,16 +58,39 @@ export function CheckoutSheet({
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      customerName: '',
-      customerPhone: '',
-      customerAddress: '',
-      customerPincode: '',
+      customerName: remembered?.customerName ?? '',
+      customerPhone: remembered?.customerPhone ?? '',
+      customerAddress: remembered?.customerAddress ?? '',
+      customerPincode: remembered?.customerPincode ?? '',
+      customerArea: remembered?.customerArea ?? '',
     },
   });
+
+  /**
+   * Fill the form once the saved details have loaded.
+   *
+   * `defaultValues` is read on the very first render, and what this phone
+   * remembers is read from localStorage in an effect a tick later — so without
+   * this the prefill would arrive too late every single time and the boxes
+   * would sit empty. Re-running on open also means a customer who cleared a
+   * field and backed out gets their saved details again rather than the blanks
+   * they left behind.
+   */
+  useEffect(() => {
+    if (!open) return;
+    reset({
+      customerName: remembered?.customerName ?? '',
+      customerPhone: remembered?.customerPhone ?? '',
+      customerAddress: remembered?.customerAddress ?? '',
+      customerPincode: remembered?.customerPincode ?? '',
+      customerArea: remembered?.customerArea ?? '',
+    });
+  }, [open, remembered, reset]);
 
   // Lock background scroll and move focus into the sheet while it is open.
   useEffect(() => {
@@ -85,7 +112,11 @@ export function CheckoutSheet({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
+    /* Centred rather than a bottom sheet. On a laptop the sheet sat glued to
+       the bottom edge with the shop showing above it, which read as a browser
+       notification rather than the checkout; on a phone `items-center` still
+       fills the screen because the panel is taller than the space. */
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
       <div
         className="absolute inset-0 bg-slate-900/50"
         onClick={onClose}
@@ -96,7 +127,7 @@ export function CheckoutSheet({
         role="dialog"
         aria-modal="true"
         aria-label={t.yourOrder}
-        className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white p-4 pb-6 shadow-sheet"
+        className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-4 pb-6 shadow-sheet"
       >
         <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-300" />
 
@@ -168,6 +199,15 @@ export function CheckoutSheet({
               {...register('customerAddress')}
             />
           )}
+
+          <Input
+            label={t.area}
+            hint={t.optional}
+            autoComplete="address-level3"
+            placeholder={t.areaPlaceholder}
+            error={errors.customerArea?.message}
+            {...register('customerArea')}
+          />
 
           {/* Asked on pickup too. "Which localities do our customers come from"
               is about where the person lives, not how the goods travel — and a

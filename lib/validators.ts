@@ -194,6 +194,7 @@ export const orderSchema = z.object({
   customerPhone: phoneSchema,
   customerAddress: z.string().trim().max(200).default(''),
   customerPincode: pincodeSchema,
+  customerArea: z.string().trim().max(60).default(''),
   orderType: z.enum(['DELIVERY', 'PICKUP']),
   items: z
     .array(z.object({ itemId: z.string().uuid(), quantity: quantitySchema }))

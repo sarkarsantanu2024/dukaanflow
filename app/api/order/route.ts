@@ -3,6 +3,7 @@ import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { orderSchema } from '@/lib/validators';
 import type { OrderLine } from '@/lib/whatsapp';
+import { upsertCustomer } from '@/lib/khata';
 
 export const runtime = 'nodejs';
 
@@ -26,8 +27,16 @@ export async function POST(request: Request) {
   const parsed = orderSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { shopSlug, customerName, customerPhone, customerAddress, customerPincode, orderType, items } =
-    parsed.data;
+  const {
+    shopSlug,
+    customerName,
+    customerPhone,
+    customerAddress,
+    customerPincode,
+    customerArea,
+    orderType,
+    items,
+  } = parsed.data;
 
   const shop = await prisma.shop.findUnique({
     where: { slug: shopSlug },
@@ -98,6 +107,7 @@ export async function POST(request: Request) {
       customerPhone,
       customerAddress,
       customerPincode,
+      customerArea,
       orderType,
       // Snapshot: prices here are what was quoted, regardless of later edits.
       //
@@ -130,6 +140,15 @@ export async function POST(request: Request) {
     },
     select: { id: true },
   });
+
+  // Every order makes the customer known to the shop.
+  //
+  // Until now a Customer row only appeared when somebody took goods on credit,
+  // so a shop with fifty regulars ordering weekly had an empty customer list
+  // and a khata that could not name any of them. The upsert never clears a
+  // field it was not given, so a blank name on a later order leaves the one
+  // already recorded alone.
+  await upsertCustomer(shop.id, customerPhone, customerName, customerArea);
 
   // No WhatsApp handoff any more.
   //
