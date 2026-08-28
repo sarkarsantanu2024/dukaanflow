@@ -212,6 +212,10 @@ model Customer {
   shopId    String   @db.Uuid
   name      String   @default("")
   phone     String // 10-digit Indian mobile, digits only
+  /// Where they live, as last given on an order. Kept on the customer so the
+  /// console can show it without reading back through their orders — and so a
+  /// delivery still has an address after those orders are purged.
+  address   String   @default("")
   /// Which para, lane or block this regular is from.
   ///
   /// Free text on purpose, unlike the pincode on an order: this is not for

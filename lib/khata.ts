@@ -79,15 +79,20 @@ export async function upsertCustomer(
   phone: string,
   name: string,
   area = '',
-): Promise<{ id: string; name: string; phone: string; area: string }> {
+  address = '',
+): Promise<{ id: string; name: string; phone: string; area: string; address: string }> {
   return prisma.customer.upsert({
     where: { shopId_phone: { shopId, phone } },
-    create: { shopId, phone, name, area },
+    create: { shopId, phone, name, area, address },
     // A blank field on a later visit means "unchanged", never "clear it". The
     // till sends no area at all, and a counter sale must not erase the para
     // somebody typed into the khata page last week.
-    update: { ...(name ? { name } : {}), ...(area ? { area } : {}) },
-    select: { id: true, name: true, phone: true, area: true },
+    update: {
+      ...(name ? { name } : {}),
+      ...(area ? { area } : {}),
+      ...(address ? { address } : {}),
+    },
+    select: { id: true, name: true, phone: true, area: true, address: true },
   });
 }
 
