@@ -77,6 +77,11 @@ export const shopCreateSchema = z.object({
   type: z.enum(SHOP_TYPES),
   phone: phoneSchema,
   address: z.string().trim().max(200).default(''),
+  /// Collection-only shops turn this off; the storefront then never offers
+  /// delivery and the order route refuses it.
+  deliveryEnabled: z.boolean().default(true),
+  /// A demonstration shop. Hidden from the console behind a toggle.
+  isDemo: z.boolean().default(false),
   /// A code from `lib/states.ts`; blank means nobody has said yet. Occasion
   /// reporting is scoped by state, so a blank shop sees only all-India ones.
   state: z
@@ -201,6 +206,15 @@ export const ledgerDeleteSchema = z.object({ id: z.string().uuid('Unknown entry'
 export const orderStatusSchema = z.object({
   id: z.string().uuid('Unknown order'),
   status: z.enum(['NEW', 'CONFIRMED', 'COMPLETED', 'CANCELLED']),
+  /**
+   * Did the money arrive? Only read when completing an order.
+   *
+   * Defaults to false, and false is the consequential answer: completing an
+   * order the customer has not paid for posts the total to their khata. The
+   * default is deliberate — an owner who taps past this question has still
+   * given goods away, and the debt should exist whether or not they told us.
+   */
+  paymentReceived: z.boolean().default(false),
 });
 
 /** A calendar day as `YYYY-MM-DD`, which is what a date input sends. */

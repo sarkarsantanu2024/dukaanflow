@@ -29,6 +29,8 @@ export default async function ShopDetailPage({ params }: PageProps) {
       phone: true,
       address: true,
       state: true,
+      deliveryEnabled: true,
+      isDemo: true,
       upiId: true,
       active: true,
       id: true,
@@ -111,41 +113,17 @@ export default async function ShopDetailPage({ params }: PageProps) {
               phone: shop.phone,
               address: shop.address,
               state: shop.state,
+              deliveryEnabled: shop.deliveryEnabled,
+              isDemo: shop.isDemo,
               upiId: shop.upiId,
               active: shop.active,
             }}
           />
-        <section className="min-w-0">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Recent orders ({shop._count.orders})
-          </h2>
-          <div className="rounded-2xl bg-white p-4 shadow-card">
-            {shop.orders.length === 0 ? (
-              <p className="py-4 text-center text-sm text-slate-500">
-                No orders yet. Orders appear here the moment a customer sends one on WhatsApp.
-              </p>
-            ) : (
-              <ul className="divide-y divide-slate-100">
-                {shop.orders.map((order) => (
-                  <li key={order.id} className="flex items-center justify-between gap-3 py-2.5">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-800">
-                        {order.customerName || 'Guest'} · {order.customerPhone}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {order.orderType === 'DELIVERY' ? 'Delivery' : 'Pickup'} ·{' '}
-                        {formatDayTime(order.createdAt)}
-                      </p>
-                    </div>
-                    <p className="shrink-0 font-bold text-slate-900">
-                      {formatRupees(order.totalAmount)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </section>
+        {/* The order list lived here and has gone to the owner's app, where it
+            is worked rather than looked at. The console had a read-only copy of
+            the same rows with no way to act on any of them, which made this the
+            longest section on the page and the least useful. Counts stay on the
+            dashboard; the queue belongs to whoever fills it. */}
 
         <section className="rounded-2xl border border-red-200 bg-red-50 p-4">
           <h2 className="font-semibold text-red-800">Danger zone</h2>
@@ -157,7 +135,12 @@ export default async function ShopDetailPage({ params }: PageProps) {
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-[4.25rem]">
-          <QrPanel slug={shop.slug} shopName={shop.name} upiId={shop.upiId} />
+          <QrPanel
+            slug={shop.slug}
+            shopName={shop.name}
+            upiId={shop.upiId}
+            upiQrData={shop.upiQrData}
+          />
 
           <SubscriptionPanel
           slug={shop.slug}

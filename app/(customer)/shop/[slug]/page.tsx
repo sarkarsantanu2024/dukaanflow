@@ -20,6 +20,7 @@ async function loadShop(slug: string) {
       address: true,
       upiId: true,
       active: true,
+      deliveryEnabled: true,
       ownerName: true,
       imageData: true,
       ownerImageData: true,

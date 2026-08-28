@@ -27,6 +27,7 @@ import clsx from 'clsx';
 import { useToast } from '@/components/ui/Toast';
 import { PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { formatRupees } from '@/lib/money';
+import { NewOrderChime } from './NewOrderChime';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
 
@@ -93,6 +94,8 @@ export function OrdersScreen({
   const { push } = useToast();
   const t = ownerDict(locale);
   const [busyId, setBusyId] = useState<string | null>(null);
+  /** The order whose payment question is currently open, if any. */
+  const [settling, setSettling] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab | null>(null);
 
   const counts = useMemo(() => {
@@ -143,18 +146,28 @@ export function OrdersScreen({
     );
   }, [orders, activeTab]);
 
-  async function setStatus(id: string, status: OrderStatus) {
+  async function setStatus(id: string, status: OrderStatus, paymentReceived = false) {
     setBusyId(id);
     try {
       const response = await fetch(`/api/admin/shop/${slug}/order`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ id, status, paymentReceived }),
       });
       if (!response.ok) {
         push(t.networkError, 'error');
         return;
       }
+
+      // Say it out loud when money has just become a debt. An owner who taps
+      // "not yet" and sees nothing happen has no reason to believe the khata
+      // knows about it, and will go and write it on paper as well.
+      const payload = (await response.json().catch(() => ({}))) as { khataAmount?: number };
+      if (payload.khataAmount && payload.khataAmount > 0) {
+        push(`${t.paymentKhataDone} · ${formatRupees(payload.khataAmount)}`, 'success');
+      }
+
+      setSettling(null);
       router.refresh();
     } catch {
       push(t.networkError, 'error');
@@ -208,6 +221,12 @@ export function OrdersScreen({
           </dd>
         </div>
       </dl>
+
+      {/* The chime lives beside the counts it reacts to, and its own state —
+          on, off — is the answer to "will I be told about the next one". */}
+      <div className="flex justify-end">
+        <NewOrderChime slug={slug} newCount={counts.NEW} locale={locale} />
+      </div>
 
       {/* Sticky, because marking off ten orders means scrolling — and the tab
           you are working is the one piece of state you must not lose. */}
@@ -344,16 +363,41 @@ export function OrdersScreen({
                     {t.markConfirmed}
                   </button>
                 )}
-                {order.status === 'CONFIRMED' && (
-                  <button
-                    type="button"
-                    disabled={busyId === order.id}
-                    onClick={() => setStatus(order.id, 'COMPLETED')}
-                    className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
-                  >
-                    {t.markCompleted}
-                  </button>
-                )}
+                {order.status === 'CONFIRMED' &&
+                  (settling === order.id ? (
+                    /* The one question that decides where the money goes, asked
+                       at the only moment the owner knows the answer. Two plain
+                       buttons rather than a dialog: this is a phone held in one
+                       hand across a counter. */
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-700">{t.paymentAsk}</span>
+                      <button
+                        type="button"
+                        disabled={busyId === order.id}
+                        onClick={() => setStatus(order.id, 'COMPLETED', true)}
+                        className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
+                      >
+                        {t.paymentGot}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyId === order.id}
+                        onClick={() => setStatus(order.id, 'COMPLETED', false)}
+                        className="inline-flex h-10 items-center rounded-lg border border-amber-400 bg-amber-50 px-4 text-sm font-semibold text-amber-800 disabled:opacity-50"
+                      >
+                        {t.paymentKhata}
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busyId === order.id}
+                      onClick={() => setSettling(order.id)}
+                      className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      {t.markCompleted}
+                    </button>
+                  ))}
                 {(order.status === 'NEW' || order.status === 'CONFIRMED') && (
                   <button
                     type="button"

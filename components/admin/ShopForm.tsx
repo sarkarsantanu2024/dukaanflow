@@ -34,6 +34,8 @@ export type ShopFormValues = {
   phone: string;
   address: string;
   state: string;
+  deliveryEnabled: boolean;
+  isDemo: boolean;
   upiId: string;
   active: boolean;
 };
@@ -53,6 +55,8 @@ const EMPTY: ShopFormValues = {
   phone: '',
   address: '',
   state: '',
+  deliveryEnabled: true,
+  isDemo: false,
   upiId: '',
   active: true,
 };
@@ -350,6 +354,40 @@ export function ShopForm({
               <span className="block text-sm text-slate-500">
                 Unticked, the shop page shows &ldquo;closed&rdquo; and takes no orders. Items and
                 order history are kept.
+              </span>
+            </span>
+          </label>
+
+          <label className="mt-3 flex items-start gap-3 rounded-xl border border-slate-200 p-3">
+            <input
+              type="checkbox"
+              checked={values.deliveryEnabled}
+              onChange={(event) => set('deliveryEnabled', event.target.checked)}
+              className="mt-0.5 h-5 w-5 rounded border-slate-300 text-brand-600 focus:ring-brand-600"
+            />
+            <span>
+              <span className="block font-medium text-slate-800">Delivers to the door</span>
+              <span className="block text-sm text-slate-500">
+                Unticked, customers are never offered delivery — the shop page shows pickup only,
+                and a delivery order is refused even if somebody tries. Use this for a counter with
+                nobody to send out.
+              </span>
+            </span>
+          </label>
+
+          <label className="mt-3 flex items-start gap-3 rounded-xl border border-slate-200 p-3">
+            <input
+              type="checkbox"
+              checked={values.isDemo}
+              onChange={(event) => set('isDemo', event.target.checked)}
+              className="mt-0.5 h-5 w-5 rounded border-slate-300 text-brand-600 focus:ring-brand-600"
+            />
+            <span>
+              <span className="block font-medium text-slate-800">Demonstration shop</span>
+              <span className="block text-sm text-slate-500">
+                Hidden from the shops list and left out of every report unless the demo toggle is
+                on. Untick this the moment a demo becomes a real customer, or its trade will not be
+                counted.
               </span>
             </span>
           </label>

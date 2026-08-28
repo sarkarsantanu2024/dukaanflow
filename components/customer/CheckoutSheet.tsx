@@ -30,6 +30,7 @@ export function CheckoutSheet({
   totalItems,
   totalAmount,
   locale,
+  deliveryEnabled = true,
 }: {
   open: boolean;
   onClose: () => void;
@@ -38,9 +39,16 @@ export function CheckoutSheet({
   totalItems: number;
   totalAmount: number;
   locale: Locale;
+  /** Collection-only shops never show the choice at all. */
+  deliveryEnabled?: boolean;
 }) {
   const t = dict(locale);
-  const [orderType, setOrderType] = useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
+  // A shop that cannot deliver starts and stays on pickup. Offering the choice
+  // and then refusing it at the server would be a worse version of not
+  // offering it.
+  const [orderType, setOrderType] = useState<'DELIVERY' | 'PICKUP'>(
+    deliveryEnabled ? 'DELIVERY' : 'PICKUP',
+  );
   const panelRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -100,24 +108,33 @@ export function CheckoutSheet({
         </div>
 
         <form onSubmit={handleSubmit((values) => onSubmit({ ...values, orderType }))} className="space-y-4">
-          <div className="grid grid-cols-2 gap-2" role="group" aria-label="Order type">
-            {(['DELIVERY', 'PICKUP'] as const).map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setOrderType(option)}
-                aria-pressed={orderType === option}
-                className={clsx(
-                  'h-12 rounded-xl border-2 text-sm font-semibold transition',
-                  orderType === option
-                    ? 'border-brand-600 bg-brand-50 text-brand-700'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
-                )}
-              >
-                {option === 'DELIVERY' ? `🛵 ${t.delivery}` : `🏪 ${t.pickup}`}
-              </button>
-            ))}
-          </div>
+          {/* A collection-only shop gets no chooser at all — not a disabled
+              delivery button, which reads as something that might work later.
+              One line saying where to come is the whole message. */}
+          {deliveryEnabled ? (
+            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Order type">
+              {(['DELIVERY', 'PICKUP'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setOrderType(option)}
+                  aria-pressed={orderType === option}
+                  className={clsx(
+                    'h-12 rounded-xl border-2 text-sm font-semibold transition',
+                    orderType === option
+                      ? 'border-brand-600 bg-brand-50 text-brand-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+                  )}
+                >
+                  {option === 'DELIVERY' ? `🛵 ${t.delivery}` : `🏪 ${t.pickup}`}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-xl bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-700">
+              🏪 {t.pickup}
+            </p>
+          )}
 
           <Input
             label={t.name}

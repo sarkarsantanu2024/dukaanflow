@@ -249,6 +249,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         totalItems={totalItems}
         totalAmount={totalAmount}
         locale={locale}
+        deliveryEnabled={shop.deliveryEnabled}
       />
     </div>
   );

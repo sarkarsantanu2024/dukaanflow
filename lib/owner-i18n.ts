@@ -87,6 +87,14 @@ type OwnerDictionary = {
   orderConfirmed: string;
   orderCompleted: string;
   orderCancelled: string;
+  /** The paid-or-khata question asked when finishing an order. */
+  paymentAsk: string;
+  paymentGot: string;
+  paymentKhata: string;
+  paymentKhataDone: string;
+  soundOn: string;
+  soundOff: string;
+  newOrderAlert: string;
   markConfirmed: string;
   markCompleted: string;
   markCancelled: string;
@@ -262,10 +270,17 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     orders: 'Orders',
     noOrders: 'No orders yet',
     noOrdersHint: 'Orders appear here the moment a customer sends one from your QR.',
-    orderNew: 'New',
-    orderConfirmed: 'Confirmed',
-    orderCompleted: 'Done',
+    orderNew: 'Order placed',
+    orderConfirmed: 'Preparing',
+    orderCompleted: 'Completed',
     orderCancelled: 'Cancelled',
+    paymentAsk: 'Has the customer paid?',
+    paymentGot: 'Paid',
+    paymentKhata: 'Not yet — put on khata',
+    paymentKhataDone: 'Added to khata',
+    soundOn: 'Sound on',
+    soundOff: 'Sound off',
+    newOrderAlert: 'New order',
     markConfirmed: 'Accept',
     markCompleted: 'Mark done',
     markCancelled: 'Cancel',
@@ -443,10 +458,17 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     orders: 'অর্ডার',
     noOrders: 'এখনও কোনো অর্ডার নেই',
     noOrdersHint: 'আপনার QR থেকে কেউ অর্ডার পাঠালেই এখানে দেখাবে।',
-    orderNew: 'নতুন',
-    orderConfirmed: 'নেওয়া হয়েছে',
+    orderNew: 'অর্ডার এসেছে',
+    orderConfirmed: 'তৈরি হচ্ছে',
     orderCompleted: 'হয়ে গেছে',
     orderCancelled: 'বাতিল',
+    paymentAsk: 'খদ্দের কি টাকা দিয়েছে?',
+    paymentGot: 'টাকা পেয়েছি',
+    paymentKhata: 'এখনও দেয়নি — খাতায় লিখুন',
+    paymentKhataDone: 'খাতায় যোগ হয়েছে',
+    soundOn: 'আওয়াজ চালু',
+    soundOff: 'আওয়াজ বন্ধ',
+    newOrderAlert: 'নতুন অর্ডার',
     markConfirmed: 'নিলাম',
     markCompleted: 'হয়ে গেছে',
     markCancelled: 'বাতিল',
@@ -624,10 +646,17 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     orders: 'ऑर्डर',
     noOrders: 'अभी कोई ऑर्डर नहीं',
     noOrdersHint: 'आपके QR से कोई ऑर्डर भेजते ही यहाँ दिखेगा।',
-    orderNew: 'नया',
-    orderConfirmed: 'लिया',
+    orderNew: 'ऑर्डर आया',
+    orderConfirmed: 'तैयार हो रहा है',
     orderCompleted: 'हो गया',
     orderCancelled: 'रद्द',
+    paymentAsk: 'क्या ग्राहक ने पैसे दिए?',
+    paymentGot: 'पैसे मिल गए',
+    paymentKhata: 'अभी नहीं — खाते में लिखें',
+    paymentKhataDone: 'खाते में जोड़ा गया',
+    soundOn: 'आवाज़ चालू',
+    soundOff: 'आवाज़ बंद',
+    newOrderAlert: 'नया ऑर्डर',
     markConfirmed: 'लिया',
     markCompleted: 'हो गया',
     markCancelled: 'रद्द',
