@@ -43,7 +43,7 @@ export function InventoryScreen({
   const [starter, setStarter] = useState(items.length < 5);
 
   const outOfStock = items.filter((item) => !item.inStock).length;
-  const unpriced = items.filter((item) => item.price <= 1).length;
+  const unpriced = items.filter((item) => !item.priced).length;
 
   if (welcome) {
     return (

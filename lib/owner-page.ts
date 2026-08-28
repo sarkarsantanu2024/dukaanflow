@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { prisma } from './prisma';
 import { currentOwnerSlug, requireAdmin } from './guard';
 import { shopEntitlement } from './billing';
+import { PLAN_SPECS } from './plans';
 import { baseUrl } from './qr';
 import type { Locale } from './i18n';
 import type { PlanState } from '@/components/owner/PlanBanner';
@@ -37,7 +38,7 @@ export async function loadOwnerShop(slug: string) {
   const billing = await shopEntitlement(shop.id);
 
   const plan: PlanState = {
-    planName: billing?.plan.name ?? 'Free',
+    planName: billing?.plan.name ?? PLAN_SPECS.FREE.name,
     status: billing?.status ?? 'ACTIVE',
     itemCount: billing?.itemCount ?? 0,
     itemLimit: billing?.itemLimit ?? 25,

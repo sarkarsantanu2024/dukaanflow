@@ -131,10 +131,13 @@ export default function PricingPage() {
                 <h3 className="text-lg font-bold text-slate-900">{spec.name}</h3>
                 <p className="mt-2 flex items-baseline gap-1">
                   <span className="text-4xl font-bold tabular-nums text-slate-900">
-                    {spec.price === 0 ? '₹0' : `₹${spec.price}`}
+                    ₹{spec.price}
                   </span>
                   <span className="text-sm text-slate-500">
-                    {spec.price === 0 ? 'forever' : '/ month'}
+                    {/* No tier is free any more, so the "forever" case that
+                        used to sit here would only ever be a lie waiting to be
+                        printed. Every plan is monthly. */}
+                    / month
                   </span>
                 </p>
                 <p className="mt-1 text-sm text-slate-500">{spec.tagline}</p>

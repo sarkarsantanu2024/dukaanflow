@@ -57,12 +57,19 @@ export async function POST(request: Request) {
       nameHi: true,
       unit: true,
       price: true,
+      priced: true,
       inStock: true,
     },
   });
 
   if (dbItems.length !== requested.size) {
     return fail('Some items are no longer available. Please refresh the page.', 409);
+  }
+
+  // The storefront never lists these, but a stale tab or a hand-made payload
+  // could still name one, and a placeholder Re 1 must never become a sale.
+  if (dbItems.some((item) => !item.priced)) {
+    return fail('Some items are not on sale yet. Please refresh the page.', 409);
   }
 
   const outOfStock = dbItems.filter((item) => !item.inStock);

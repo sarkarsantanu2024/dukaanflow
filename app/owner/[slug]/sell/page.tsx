@@ -43,6 +43,7 @@ export default async function SellPage({ params }: PageProps) {
         nameBn: true,
         nameHi: true,
         price: true,
+          priced: true,
         unit: true,
         category: true,
         inStock: true,
@@ -116,7 +117,7 @@ export default async function SellPage({ params }: PageProps) {
       <MenuBroadcast
         shopName={shop.name}
         shopUrl={`${baseUrl()}/shop/${shop.slug}`}
-        items={items.filter((item) => item.inStock && item.price > 1)}
+        items={items.filter((item) => item.inStock && item.priced)}
         customers={customers}
         locale={locale}
       />

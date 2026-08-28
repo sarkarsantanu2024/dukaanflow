@@ -31,6 +31,7 @@ export default async function ItemsPage({ params }: PageProps) {
           nameBn: true,
           nameHi: true,
           price: true,
+          priced: true,
           unit: true,
           category: true,
           inStock: true,
