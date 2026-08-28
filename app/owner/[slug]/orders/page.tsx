@@ -17,17 +17,28 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-/** The order snapshot is JSON, so it is narrowed here rather than trusted. */
-function toLines(itemsJson: unknown): OwnerOrder['lines'] {
+type Translations = Map<string, { nameBn: string; nameHi: string }>;
+
+/**
+ * The order snapshot is JSON, so it is narrowed here rather than trusted.
+ *
+ * Snapshots only began carrying translations recently, so orders taken before
+ * that hold one name and would read in English on a Bengali screen. Where the
+ * item is still listed, its current names fill the gap — the snapshot stays the
+ * authority on price and quantity, which are the parts that must never move,
+ * and borrows only the wording.
+ */
+function toLines(itemsJson: unknown, known: Translations): OwnerOrder['lines'] {
   if (!Array.isArray(itemsJson)) return [];
   return itemsJson.flatMap((row) => {
     if (!row || typeof row !== 'object') return [];
     const line = row as Record<string, unknown>;
+    const fallback = known.get(String(line.itemId ?? ''));
     return [
       {
         name: String(line.name ?? ''),
-        nameBn: String(line.nameBn ?? ''),
-        nameHi: String(line.nameHi ?? ''),
+        nameBn: String(line.nameBn ?? fallback?.nameBn ?? ''),
+        nameHi: String(line.nameHi ?? fallback?.nameHi ?? ''),
         unit: String(line.unit ?? ''),
         quantity: Number(line.quantity ?? 0),
         // The order route writes `lineTotal`; this read `amount`, which was
@@ -64,6 +75,15 @@ export default async function OrdersPage({ params }: PageProps) {
     },
   });
 
+  // Only the names, and only for items still on the list.
+  const current = await prisma.item.findMany({
+    where: { shopId: shop.id },
+    select: { id: true, nameBn: true, nameHi: true },
+  });
+  const known: Translations = new Map(
+    current.map((item) => [item.id, { nameBn: item.nameBn, nameHi: item.nameHi }]),
+  );
+
   const orders: OwnerOrder[] = rows.map((row) => ({
     id: row.id,
     customerName: row.customerName,
@@ -73,7 +93,7 @@ export default async function OrdersPage({ params }: PageProps) {
     status: row.status,
     totalAmount: row.totalAmount,
     createdAt: row.createdAt.toISOString(),
-    lines: toLines(row.itemsJson),
+    lines: toLines(row.itemsJson, known),
   }));
 
   return (
