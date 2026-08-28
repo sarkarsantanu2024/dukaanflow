@@ -92,7 +92,6 @@ export function SellScreen({
   const t = ownerDict(locale);
 
   const [cart, setCart] = useState<Cart>({});
-  const [query, setQuery] = useState('');
   const [cartOpen, setCartOpen] = useState(false);
   const [paying, setPaying] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -103,15 +102,9 @@ export function SellScreen({
   // read past them every time.
   const sellable = useMemo(() => items.filter((item) => item.inStock), [items]);
 
-  const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return sellable;
-    return sellable.filter((item) =>
-      `${item.name} ${item.nameBn} ${item.nameHi} ${item.unit} ${item.category}`
-        .toLowerCase()
-        .includes(needle),
-    );
-  }, [sellable, query]);
+  // No search: the grid is everything the shop has in stock, straight from the
+  // items list, so there is nothing here that typing could reveal.
+  const visible = sellable;
 
   const lines = useMemo(
     () =>
@@ -290,14 +283,6 @@ export function SellScreen({
         </section>
       )}
 
-      <input
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={t.sellSearch}
-        aria-label={t.sellSearch}
-        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base"
-      />
 
       {visible.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-center text-sm text-slate-500">
