@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ItemsManager, type AdminItem } from '@/components/admin/ItemsManager';
+import { ShopHoursCard } from './ShopHoursCard';
 import type { ShopType } from '@prisma/client';
 import { StarterPicker } from './StarterPicker';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -27,11 +28,21 @@ export function InventoryScreen({
   showWelcome,
   itemLimit,
   shopType,
+  openTime,
+  closeTime,
+  active,
+  closedNote,
 }: {
   slug: string;
   items: AdminItem[];
   catalogue: StarterItem[];
   locale: Locale;
+  /** The hours the shop keeps, as "HH:MM" or blank. */
+  openTime: string;
+  closeTime: string;
+  /** Whether the shutter is up today, and why not when it is down. */
+  active: boolean;
+  closedNote: string;
   showWelcome: boolean;
   itemLimit: number;
   /** Drives which units this shop is offered. */
@@ -84,6 +95,18 @@ export function InventoryScreen({
           </p>
         )}
       </div>
+
+      {/* On this screen rather than behind a settings tab: a fifth tab for two
+          fields would cost every owner a slice of a small screen so a few of
+          them could change something twice a year. */}
+      <ShopHoursCard
+        slug={slug}
+        locale={locale}
+        openTime={openTime}
+        closeTime={closeTime}
+        active={active}
+        closedNote={closedNote}
+      />
 
       {starter && catalogue.length > 0 && (
         <StarterPicker

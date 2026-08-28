@@ -66,6 +66,35 @@ export const upiSchema = z
     'Enter a valid UPI ID like ramu@okaxis',
   );
 
+/** "HH:MM" on a 24-hour clock, or blank for "not said". */
+export const clockTimeSchema = z
+  .string()
+  .trim()
+  .refine(
+    (value) => value === '' || /^([01]\d|2[0-3]):[0-5]\d$/.test(value),
+    'Use a time like 09:30',
+  )
+  .default('');
+
+/**
+ * What the shopkeeper themselves controls about their shop being open.
+ *
+ * Deliberately separate from `shopUpdateSchema`, which is the operator's:
+ * hours, whether the shutter is up today and why not are the shopkeeper's own
+ * business and change with a festival or a family illness.
+ */
+export const shopHoursSchema = z
+  .object({
+    openTime: clockTimeSchema,
+    closeTime: clockTimeSchema,
+    active: z.boolean().optional(),
+    closedNote: z.string().trim().max(120).default(''),
+  })
+  .refine((value) => (value.openTime === '') === (value.closeTime === ''), {
+    message: 'Give both times, or neither',
+    path: ['closeTime'],
+  });
+
 export const shopCreateSchema = z.object({
   name: z.string().trim().min(2, 'Shop name is required').max(80),
   ownerName: z.string().trim().max(60).default(''),
@@ -79,6 +108,8 @@ export const shopCreateSchema = z.object({
   address: z.string().trim().max(200).default(''),
   /// Collection-only shops turn this off; the storefront then never offers
   /// delivery and the order route refuses it.
+  openTime: clockTimeSchema,
+  closeTime: clockTimeSchema,
   deliveryEnabled: z.boolean().default(true),
   /// A demonstration shop. Hidden from the console behind a toggle.
   isDemo: z.boolean().default(false),

@@ -19,7 +19,8 @@ import { SHOP_TYPE_LABELS } from '@/lib/validators';
 import { upiPayUrl } from '@/lib/qr';
 import { LangToggle } from './LangToggle';
 import { BrandMark } from '@/components/ui/BrandMark';
-import { PinIcon, RupeeIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { formatClockRange } from '@/lib/hours';
+import { ClockIcon, PinIcon, RupeeIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import type { Locale } from '@/lib/i18n';
 
 export type ShopSummary = {
@@ -34,6 +35,9 @@ export type ShopSummary = {
   ownerImageData: string;
   /** Off means collection only — the checkout never offers delivery. */
   deliveryEnabled: boolean;
+  /** "HH:MM" each, or blank when the shop has not said. */
+  openTime: string;
+  closeTime: string;
 };
 
 export function ShopHeader({
@@ -47,6 +51,8 @@ export function ShopHeader({
   onLocaleChange: (locale: Locale) => void;
   payLabel: string;
 }) {
+  const hours = formatClockRange(shop.openTime, shop.closeTime);
+
   return (
     <>
       {/* The same bar the console has: white, sticky, hairline beneath. This
@@ -56,7 +62,7 @@ export function ShopHeader({
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
           <BrandMark className="text-sm" />
           <span className="ml-auto hidden text-xs text-slate-400 sm:inline">
-            Scan → Select → WhatsApp
+            Scan → Select → Order
           </span>
           <LangToggle value={locale} onChange={onLocaleChange} />
         </div>
@@ -90,6 +96,15 @@ export function ShopHeader({
                 <p className="mt-2 flex items-start gap-1.5 text-sm text-slate-500">
                   <PinIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
                   <span>{shop.address}</span>
+                </p>
+              )}
+
+              {/* Beside the address, because "where" and "when" are the two
+                  things a shopper checks before setting out. */}
+              {hours && (
+                <p className="mt-1.5 flex items-center gap-1.5 text-sm text-slate-500">
+                  <ClockIcon className="h-4 w-4 shrink-0 text-slate-400" />
+                  <span className="tabular-nums">{hours}</span>
                 </p>
               )}
 

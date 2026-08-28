@@ -31,6 +31,10 @@ export async function loadOwnerShop(slug: string) {
       upiQrData: true,
       ownerImageData: true,
       locale: true,
+      active: true,
+      openTime: true,
+      closeTime: true,
+      closedNote: true,
     },
   });
   if (!shop) notFound();

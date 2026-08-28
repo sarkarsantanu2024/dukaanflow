@@ -79,6 +79,24 @@ model Shop {
   inviteTokenHash      String?
   inviteTokenExpiresAt DateTime?
 
+  /// When the shutter goes up and comes down, as "HH:MM" in shop time, or
+  /// blank when the owner has not said.
+  ///
+  /// Shown to customers and nothing more. It does NOT close the shop page or
+  /// refuse orders: a kirana keeps serving whoever is still at the counter at
+  /// closing time, and software that hard-stops at 21:00 would be wrong about
+  /// the shop rather than the shop being wrong about itself. `active` remains
+  /// the switch that actually stops orders.
+  openTime        String  @default("")
+  closeTime       String  @default("")
+  /// Why the shop is shut, in the shopkeeper's own words — "closed today,
+  /// family function", "back at 5". Shown to customers on the closed page.
+  ///
+  /// A shop that is simply shut says so with `active`; this says why, which is
+  /// the difference between a customer trying again tomorrow and deciding the
+  /// shop has gone.
+  closedNote      String  @default("")
+
   /// Does this shop deliver, or is it collection only?
   ///
   /// A kirana that has nobody to send out should not be offered as a delivery

@@ -5,7 +5,7 @@ export default function LandingPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col items-center justify-center px-6 text-center">
       <BrandMark href="/" className="text-lg" />
-      <h1 className="mt-5 text-4xl font-bold text-slate-900">Scan → Select → WhatsApp</h1>
+      <h1 className="mt-5 text-4xl font-bold text-slate-900">Scan → Select → Order</h1>
       <p className="mt-4 max-w-md text-slate-600">
         Customers scan a QR at the counter, pick what they want, and the order lands in the shop
         owner&apos;s WhatsApp. No app for the shop. No login. No training.

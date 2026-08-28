@@ -31,7 +31,6 @@ import { formatRupees } from '@/lib/money';
 import { buildStatusMessage } from '@/lib/whatsapp';
 import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
-import { NewOrderChime } from './NewOrderChime';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
 
@@ -239,12 +238,6 @@ export function OrdersScreen({
         </div>
       </dl>
 
-      {/* The chime lives beside the counts it reacts to, and its own state —
-          on, off — is the answer to "will I be told about the next one". */}
-      <div className="flex justify-end">
-        <NewOrderChime slug={slug} newCount={counts.NEW} locale={locale} />
-      </div>
-
       {/* The status filter strip lived here. Five chips, four of them usually
           reading zero, above a list short enough to read whole — it cost a row
           of screen and answered a question nobody was asking. The badge on each
@@ -352,17 +345,11 @@ export function OrdersScreen({
 
                 {/* One forward action per state, so the common tap is never a
                     choice: a new order is accepted, an accepted one is done. */}
-                {order.status === 'NEW' && (
-                  <button
-                    type="button"
-                    disabled={busyId === order.id}
-                    onClick={() => setStatus(order.id, 'CONFIRMED')}
-                    className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
-                  >
-                    {t.markConfirmed}
-                  </button>
-                )}
-                {order.status === 'CONFIRMED' &&
+                {/* No Accept button. Orders arrive accepted, so the only
+                    decisions left are "it is done" and "we cannot do it".
+                    `NEW` is still handled below for orders placed before this
+                    changed — they must not become unfinishable. */}
+                {(order.status === 'CONFIRMED' || order.status === 'NEW') &&
                   (settling === order.id ? (
                     /* The one question that decides where the money goes, asked
                        at the only moment the owner knows the answer. Two plain

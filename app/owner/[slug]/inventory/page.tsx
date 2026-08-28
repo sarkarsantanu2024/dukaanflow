@@ -55,6 +55,10 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
         items={items}
         catalogue={starterCatalogue(shop.type)}
         shopType={shop.type}
+        openTime={shop.openTime}
+        closeTime={shop.closeTime}
+        active={shop.active}
+        closedNote={shop.closedNote}
         locale={locale}
         showWelcome={welcome === '1' && items.length === 0}
         itemLimit={plan.itemLimit}
