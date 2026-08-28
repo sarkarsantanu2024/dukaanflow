@@ -143,10 +143,19 @@ export function VoiceItemAdder({
   slug,
   items,
   locale = 'en',
+  onName,
 }: {
   slug: string;
   items: AdminItem[];
   locale?: Locale;
+  /**
+   * Where the mic sits above a form, a new name fills that form instead of
+   * saving on its own — the owner sees the word that was heard, next to the
+   * price box they were going to fill in anyway, and one Save covers both.
+   * Removals and stock changes still act immediately; those name something
+   * already on the list, so there is nothing to review.
+   */
+  onName?: (name: string) => void;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -266,9 +275,18 @@ export function VoiceItemAdder({
 
         const { draft } = command;
 
-        // Listed unpriced and out of stock, exactly as a starter item is: the
-        // owner said what they sell, not what it costs, and nothing reaches a
-        // customer until they say so. Pricing the row puts it on sale.
+        // Handed to the form rather than saved, when there is a form to hand it
+        // to. The word appears in the Name box where the owner can see whether
+        // it was heard correctly before anything is written.
+        if (onName) {
+          onName(draft.name);
+          addEntry({ heard, status: 'done', detail: draftLabel(draft) });
+          announce(draftLabel(draft));
+          return;
+        }
+
+        // Listed unpriced, the way a starter item is: the owner said what they
+        // sell, not what it costs. Pricing the row is the next thing they do.
         const { ok, payload } = await call('POST', {
           name: draft.name,
           nameBn: draft.nameBn,
@@ -276,7 +294,7 @@ export function VoiceItemAdder({
           price: 1,
           unit: '',
           category: draft.category,
-          inStock: false,
+          inStock: true,
         });
 
         if (!ok || !payload.id) {

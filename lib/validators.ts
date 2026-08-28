@@ -68,7 +68,10 @@ export const upiSchema = z
 export const shopCreateSchema = z.object({
   name: z.string().trim().min(2, 'Shop name is required').max(80),
   ownerName: z.string().trim().max(60).default(''),
-  locale: z.enum(['en', 'bn', 'hi']).default('en'),
+  // Bengali by default: that is where the shops are, and an owner handed an
+  // English app has to find the switch before they can read the screen that
+  // holds it.
+  locale: z.enum(['en', 'bn', 'hi']).default('bn'),
   slug: slugSchema.optional().or(z.literal('')),
   type: z.enum(SHOP_TYPES),
   phone: phoneSchema,

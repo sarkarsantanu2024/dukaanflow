@@ -58,6 +58,7 @@ export default async function ItemsPage({ params }: PageProps) {
           slug={shop.slug}
           items={shop.items}
           wide
+          locale="en"
           shopType={shop.type}
           catalogue={catalogue}
           tools={[

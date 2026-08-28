@@ -20,7 +20,10 @@ type Cart = Record<string, number>;
 
 export function StoreFront({ shop, items }: { shop: ShopSummary; items: CustomerItem[] }) {
   const { push } = useToast();
-  const [locale, setLocale] = useState<Locale>('en');
+  // Bengali first, and remembered per shopper after that. A customer who
+  // scans a code at a Kolkata counter should not have to pick a language
+  // before they can read the menu.
+  const [locale, setLocale] = useState<Locale>('bn');
   const [cart, setCart] = useState<Cart>({});
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('');
