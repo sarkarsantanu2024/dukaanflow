@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { handledExpiredSession } from './sessionGuard';
 import clsx from 'clsx';
 import { QRCodeCanvas } from 'qrcode.react';
+import { upiPayUrlWithAmount } from '@/lib/qr';
 import { useToast } from '@/components/ui/Toast';
 import { formatRupees } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -46,16 +47,6 @@ function label(item: SellItem, locale: Locale): string {
   return item.name;
 }
 
-/** UPI intent with the amount filled in — the customer confirms, never types. */
-function upiUrl(upiId: string, shopName: string, amount: number): string {
-  const params = new URLSearchParams({
-    pa: upiId,
-    pn: shopName,
-    am: String(amount),
-    cu: 'INR',
-  });
-  return `upi://pay?${params.toString()}`;
-}
 
 export function SellScreen({
   slug,
@@ -86,7 +77,7 @@ export function SellScreen({
     count: number;
   }[];
   /** Regulars already in the khata, so udhaar is a tap not a typing job. */
-  customers: { id: string; name: string; phone: string }[];
+  customers: { id: string; name: string; phone: string; area: string }[];
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -96,7 +87,7 @@ export function SellScreen({
   const [cartOpen, setCartOpen] = useState(false);
   const [paying, setPaying] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [khata, setKhata] = useState<{ name: string; phone: string } | null>(null);
+  const [khata, setKhata] = useState<{ name: string; phone: string; area: string } | null>(null);
 
   // Only what the shop actually has. A till is for ringing up what is on the
   // shelf, and a grid padded with things that cannot be sold makes the owner
@@ -144,7 +135,11 @@ export function SellScreen({
           items: lines.map((line) => ({ itemId: line.item.id, quantity: line.quantity })),
           paymentMode,
           ...(paymentMode === 'KHATA' && khata
-            ? { customerPhone: khata.phone, customerName: khata.name }
+            ? {
+                customerPhone: khata.phone,
+                customerName: khata.name,
+                customerArea: khata.area,
+              }
             : {}),
         }),
       });
@@ -238,11 +233,20 @@ export function SellScreen({
   );
 
   return (
-    <div className="space-y-4">
+    /* The payment bar is fixed above the tab bar, so it covers the bottom of
+       this list. The shell's own padding clears the tabs and nothing else,
+       which left the last row of items unreachable the moment a cart existed —
+       and the last row is the one an owner is usually reaching for. The extra
+       space appears only while the bar does. */
+    <div className={clsx('space-y-4', lines.length > 0 && 'pb-28')}>
       <div className="flex items-baseline justify-between gap-3 rounded-2xl bg-white p-4 shadow-card">
-        <div>
+        <div className="min-w-0">
           <h2 className="font-semibold text-slate-900">{t.sellTitle}</h2>
           <p className="text-sm text-slate-500">{t.sellHint}</p>
+          {/* The one sentence that keeps the two records apart. An owner who
+              does not know the difference is the only one who ever creates a
+              duplicate, and nothing on this screen used to say. */}
+          <p className="mt-1 text-xs leading-relaxed text-slate-400">{t.tillOrdersNote}</p>
         </div>
         <div className="text-right">
           <p className="text-xs uppercase tracking-wide text-slate-400">{t.sellToday}</p>
@@ -361,7 +365,7 @@ export function SellScreen({
             {upiId ? (
               <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-slate-50 p-4">
                 <QRCodeCanvas
-                  value={upiUrl(upiId, shopName, total)}
+                  value={upiPayUrlWithAmount(upiId, shopName, total)}
                   size={168}
                   includeMargin
                   level="M"
@@ -399,7 +403,7 @@ export function SellScreen({
               <button
                 type="button"
                 disabled={saving}
-                onClick={() => setKhata(khata ?? { name: '', phone: '' })}
+                onClick={() => setKhata(khata ?? { name: '', phone: '', area: '' })}
                 className={clsx(
                   'h-12 rounded-xl border font-semibold disabled:opacity-50',
                   khata
@@ -421,7 +425,7 @@ export function SellScreen({
                       <button
                         key={customer.id}
                         type="button"
-                        onClick={() => setKhata({ name: customer.name, phone: customer.phone })}
+                        onClick={() => setKhata({ name: customer.name, phone: customer.phone, area: customer.area })}
                         className={clsx(
                           'rounded-full border px-3 py-1 text-sm font-medium',
                           khata.phone === customer.phone
@@ -436,6 +440,13 @@ export function SellScreen({
                 )}
 
                 <div className="mt-2 grid grid-cols-2 gap-2">
+                  <input
+                    value={khata.area}
+                    onChange={(event) => setKhata({ ...khata, area: event.target.value })}
+                    placeholder={t.khataArea}
+                    aria-label={t.khataArea}
+                    className="col-span-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-base"
+                  />
                   <input
                     value={khata.name}
                     onChange={(event) => setKhata({ ...khata, name: event.target.value })}

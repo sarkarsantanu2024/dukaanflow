@@ -104,7 +104,14 @@ export default async function OrdersPage({ params }: PageProps) {
       locale={locale}
       plan={plan}
     >
-      <OrdersScreen slug={shop.slug} orders={orders} locale={locale} />
+      <OrdersScreen
+        slug={shop.slug}
+        shopName={shop.name}
+        orders={orders}
+        locale={locale}
+        upiId={shop.upiId}
+        upiQrData={shop.upiQrData}
+      />
     </OwnerShell>
   );
 }

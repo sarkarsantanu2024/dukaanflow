@@ -101,6 +101,8 @@ type OwnerDictionary = {
   newOrderAlert: string;
   /** Shown when a PIN has been reissued and this session no longer counts. */
   sessionEnded: string;
+  /** Says which screen settles a WhatsApp order, so nobody rings one up twice. */
+  tillOrdersNote: string;
   markConfirmed: string;
   markCompleted: string;
   markCancelled: string;
@@ -292,6 +294,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     soundOff: 'Sound off',
     newOrderAlert: 'New order',
     sessionEnded: 'Your session has ended. Please sign in with your PIN again.',
+    tillOrdersNote: 'This is for customers at the counter. WhatsApp orders are paid for on the Orders page — ringing one up here would count it twice.',
     markConfirmed: 'Accept',
     markCompleted: 'Mark done',
     markCancelled: 'Cancel',
@@ -485,6 +488,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     soundOff: 'আওয়াজ বন্ধ',
     newOrderAlert: 'নতুন অর্ডার',
     sessionEnded: 'আপনার সময় শেষ। আবার PIN দিয়ে ঢুকুন।',
+    tillOrdersNote: 'এটা দোকানে আসা খদ্দেরের জন্য। অনলাইন অর্ডারের টাকা “অর্ডার” পাতায় নিন — এখানে তুললে দুবার হিসাব হবে।',
     markConfirmed: 'নিলাম',
     markCompleted: 'হয়ে গেছে',
     markCancelled: 'বাতিল',
@@ -678,6 +682,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     soundOff: 'आवाज़ बंद',
     newOrderAlert: 'नया ऑर्डर',
     sessionEnded: 'आपका सत्र समाप्त हो गया। दोबारा PIN से आएँ।',
+    tillOrdersNote: 'यह दुकान पर आए ग्राहक के लिए है। व्हाट्सएप ऑर्डर का पैसा “ऑर्डर” पेज पर लें — यहाँ जोड़ने से दो बार गिना जाएगा।',
     markConfirmed: 'लिया',
     markCompleted: 'हो गया',
     markCancelled: 'रद्द',

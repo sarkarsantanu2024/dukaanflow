@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useToast } from '@/components/ui/Toast';
 import { SignOutIcon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
+import { OrderBell } from './OrderBell';
 import { OwnerInstallButton } from './OwnerInstallButton';
 import { ownerDict } from '@/lib/owner-i18n';
 import { LOCALE_LABELS, LOCALES, type Locale } from '@/lib/i18n';
@@ -91,6 +92,11 @@ export function OwnerHeader({
           )}
           <h1 className="truncate font-bold text-slate-900">{shopName}</h1>
         </Link>
+
+        {/* First on the right, before the language and install controls: it is
+            the only thing on this bar that ever changes on its own, and it has
+            to be reachable from whichever screen the owner is standing on. */}
+        <OrderBell slug={slug} locale={locale} />
 
         {/* One control instead of three buttons. A native select is also the
             one thing on this bar that a shopkeeper's phone already knows how

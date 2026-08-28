@@ -196,6 +196,8 @@ export const saleSchema = z.object({
   paymentMode: z.enum(['CASH', 'UPI', 'KHATA']).default('CASH'),
   customerPhone: phoneSchema.optional(),
   customerName: z.string().trim().max(60).default(''),
+  /** Which para or lane — the same field the khata page collects. */
+  customerArea: z.string().trim().max(60).default(''),
 });
 
 /** One line of the credit book. */
@@ -227,6 +229,8 @@ export const orderStatusSchema = z.object({
    * given goods away, and the debt should exist whether or not they told us.
    */
   paymentReceived: z.boolean().default(false),
+  /** How it was paid. Blank while unpaid or not yet completed. */
+  paymentMode: z.enum(['', 'CASH', 'UPI']).default(''),
 });
 
 /** A calendar day as `YYYY-MM-DD`, which is what a date input sends. */

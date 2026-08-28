@@ -278,6 +278,7 @@ type OrderRow = {
   totalAmount: number;
   orderType: string;
   status: string;
+  paymentMode: string;
   customerPhone: string;
   customerPincode: string;
   itemsJson: unknown;
@@ -352,6 +353,7 @@ export async function loadReport(
             totalAmount: true,
             orderType: true,
             status: true,
+            paymentMode: true,
             customerPhone: true,
             customerPincode: true,
             itemsJson: true,
@@ -717,6 +719,9 @@ function assemble(input: Ingredients): Report {
 
     orderRevenue += amount;
     tick(orderTypes, order.orderType, amount);
+    // Orders can be paid on the Orders page now, so cash-versus-UPI finally
+    // covers the whole shop rather than only what crossed the till.
+    if (order.paymentMode) tick(paymentModes, order.paymentMode, amount);
     bucket(order.createdAt, amount);
     credit(order.shopId, amount);
     countLines(order.itemsJson, order.shopId);

@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { shopCreateSchema } from '@/lib/validators';
 import { slugify, uniqueSlug } from '@/lib/slug';
+import { TRIAL_DAYS } from '@/lib/plans';
 
 export const runtime = 'nodejs';
 
@@ -15,7 +16,24 @@ export async function POST(request: Request) {
   const parsed = shopCreateSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { name, slug, type, phone, address, upiId, active } = parsed.data;
+  // Everything the form collects. This used to destructure seven fields and
+  // silently drop the rest, so the owner's name, their language, the shop's
+  // state, its delivery setting and the demo flag were all accepted by the
+  // validator and then thrown away — they only ever saved on a later edit.
+  const {
+    name,
+    ownerName,
+    locale,
+    slug,
+    type,
+    phone,
+    address,
+    state,
+    deliveryEnabled,
+    isDemo,
+    upiId,
+    active,
+  } = parsed.data;
 
   const requestedSlug = slug ? slugify(slug) : '';
   if (requestedSlug) {
@@ -31,7 +49,28 @@ export async function POST(request: Request) {
 
   try {
     const shop = await prisma.shop.create({
-      data: { name, slug: finalSlug, type, phone, address, upiId, active },
+      data: {
+        name,
+        ownerName,
+        locale,
+        slug: finalSlug,
+        type,
+        phone,
+        address,
+        state,
+        deliveryEnabled,
+        isDemo,
+        upiId,
+        active,
+        // The trial has to be stamped here, because nothing else ever stamps
+        // it. The console promises "14 days of Pro" on this very screen, and
+        // a shop created without it has a null `trialEndsAt` — which reads to
+        // `entitlement()` as a subscription that ended before it began, and
+        // locks the owner out of their own item list on day one.
+        plan: 'PRO',
+        subscriptionStatus: 'TRIALING',
+        trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000),
+      },
       select: { id: true, slug: true, name: true },
     });
     return ok(shop, 201);

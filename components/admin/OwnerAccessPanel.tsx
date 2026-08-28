@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 export function OwnerAccessPanel({
   slug,
@@ -26,6 +27,7 @@ export function OwnerAccessPanel({
 }) {
   const router = useRouter();
   const { push } = useToast();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [pin, setPin] = useState<string | null>(null);
   const [invite, setInvite] = useState<{ url: string; whatsappUrl: string; pin: string | null } | null>(
     null,
@@ -35,7 +37,17 @@ export function OwnerAccessPanel({
   const link = `${baseUrl}/owner/${slug}`;
 
   async function issue() {
-    if (hasPin && !window.confirm('Issue a new PIN? The old one stops working immediately.')) return;
+    if (
+      hasPin &&
+      !(await confirm({
+        title: 'Issue a new PIN?',
+        message:
+          'The old PIN stops working immediately, and the owner is signed out on every phone they used it on.',
+        confirmLabel: 'Issue new PIN',
+      }))
+    ) {
+      return;
+    }
 
     setBusy(true);
     try {
@@ -89,7 +101,16 @@ export function OwnerAccessPanel({
   }
 
   async function revoke() {
-    if (!window.confirm('Revoke owner access? The owner is signed out everywhere.')) return;
+    if (
+      !(await confirm({
+        title: 'Revoke owner access?',
+        message: 'The owner is signed out everywhere and cannot open their app again until a new PIN is issued.',
+        confirmLabel: 'Revoke access',
+        danger: true,
+      }))
+    ) {
+      return;
+    }
 
     setBusy(true);
     try {
@@ -210,6 +231,8 @@ export function OwnerAccessPanel({
         The link signs the owner in and opens their shop — no PIN to type on the first run. It works
         once, then the PIN is how they come back.
       </p>
+
+      {confirmDialog}
     </section>
   );
 }

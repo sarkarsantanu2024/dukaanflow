@@ -67,3 +67,45 @@ export function toWhatsAppNumber(phone: string): string {
 export function buildWhatsAppUrl(shopPhone: string, message: string): string {
   return `https://wa.me/${toWhatsAppNumber(shopPhone)}?text=${encodeURIComponent(message)}`;
 }
+
+/**
+ * What the owner sends the customer once an order is worked.
+ *
+ * The button used to be a bare `wa.me/<number>` — it opened an empty chat and
+ * left the shopkeeper to type the whole thing themselves, in a hurry, in a
+ * language the keyboard may not be set to. Most never did, so the customer was
+ * never told their order was ready, which is the one message this whole product
+ * exists to get sent.
+ */
+export function buildStatusMessage(input: {
+  shopName: string;
+  customerName: string;
+  status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NEW';
+  totalAmount: number;
+  orderType: 'DELIVERY' | 'PICKUP';
+}): string {
+  const hello = input.customerName ? `Namaste ${input.customerName},` : 'Namaste,';
+  const shop = escapeWhatsAppText(input.shopName);
+
+  const body =
+    input.status === 'COMPLETED'
+      ? input.orderType === 'PICKUP'
+        ? `your order is ready. Please collect it from ${shop}.`
+        : `your order is ready and on its way from ${shop}.`
+      : input.status === 'CONFIRMED'
+        ? `we have your order and are getting it ready. ${shop}`
+        : input.status === 'CANCELLED'
+          ? `sorry — we could not take your order this time. ${shop}`
+          : `we have received your order. ${shop}`;
+
+  // The total goes in only when there is one to state, so a cancellation does
+  // not read like a bill.
+  const total =
+    input.status === 'CANCELLED' || input.totalAmount <= 0
+      ? ''
+      : `
+
+Total: ${plainRupees(input.totalAmount)}`;
+
+  return `${hello} ${body}${total}`;
+}

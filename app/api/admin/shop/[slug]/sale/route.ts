@@ -26,7 +26,7 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = saleSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { items, paymentMode, customerPhone, customerName } = parsed.data;
+  const { items, paymentMode, customerPhone, customerName, customerArea } = parsed.data;
 
   // Goods leaving on credit need somebody to owe for them.
   if (paymentMode === 'KHATA' && !customerPhone) {
@@ -68,7 +68,7 @@ export async function POST(request: Request, { params }: Context) {
 
   // One action at the counter, two records: the sale, and what is now owed.
   if (paymentMode === 'KHATA' && customerPhone) {
-    const customer = await upsertCustomer(shop.id, customerPhone, customerName);
+    const customer = await upsertCustomer(shop.id, customerPhone, customerName, customerArea);
     await prisma.ledgerEntry.create({
       data: {
         shopId: shop.id,

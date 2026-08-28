@@ -148,7 +148,7 @@ export function reportToCsv(report: Report): string {
   );
 
   section(
-    'Payment modes (counter sales)',
+    'Payment modes',
     ['Mode', 'Transactions', 'Revenue'],
     report.paymentModes.map((slot) => [slot.label, slot.transactions, slot.revenue]),
   );
