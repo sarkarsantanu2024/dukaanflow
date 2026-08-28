@@ -18,6 +18,52 @@ import { translateCategory } from '@/lib/speech';
 
 const LOCALE_STORAGE_KEY = 'dukaanflow:locale';
 
+/**
+ * What this phone told a shop last time.
+ *
+ * Kept per browser, not per shop: a customer's name, number and para do not
+ * change between the kirana and the tea stall next door, and asking twice for
+ * the same three facts is the friction that makes somebody give up and walk in
+ * instead.
+ *
+ * Deliberately NOT a gate on the shop page. Demanding a phone number before
+ * anybody can see a price would cost more orders than retyping ever did — the
+ * whole appeal of a QR on a counter is that it opens straight onto the goods.
+ * So the form stays where it was always needed, at checkout, and simply
+ * arrives filled in.
+ */
+const CUSTOMER_STORAGE_KEY = 'dukaanflow:customer';
+
+type RememberedCustomer = {
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  customerPincode: string;
+  customerArea: string;
+};
+
+function readRemembered(): RememberedCustomer | null {
+  try {
+    const raw = window.localStorage.getItem(CUSTOMER_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<RememberedCustomer>;
+    // A phone number is the only field worth restoring on its own; without one
+    // there is nothing here that saves anybody a keystroke.
+    if (typeof parsed.customerPhone !== 'string' || !parsed.customerPhone) return null;
+    return {
+      customerName: parsed.customerName ?? '',
+      customerPhone: parsed.customerPhone,
+      customerAddress: parsed.customerAddress ?? '',
+      customerPincode: parsed.customerPincode ?? '',
+      customerArea: parsed.customerArea ?? '',
+    };
+  } catch {
+    // Private browsing, cleared storage, or a value written by an older
+    // version. Falling back to an empty form is always safe.
+    return null;
+  }
+}
+
 type Cart = Record<string, number>;
 
 export function StoreFront({ shop, items }: { shop: ShopSummary; items: CustomerItem[] }) {
@@ -32,8 +78,17 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [placed, setPlaced] = useState(false);
+  const [remembered, setRemembered] = useState<RememberedCustomer | null>(null);
+  /** Whether the details we prefilled were already on this phone. */
+  const [wasRemembered, setWasRemembered] = useState(false);
 
   const t = dict(locale);
+
+  useEffect(() => {
+    const saved = readRemembered();
+    setRemembered(saved);
+    setWasRemembered(Boolean(saved));
+  }, []);
 
   // Remember the shopper's language across visits to any DukaanFlow shop.
   useEffect(() => {
@@ -102,6 +157,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           customerPhone: values.customerPhone,
           customerAddress: values.customerAddress,
           customerPincode: values.customerPincode,
+          customerArea: values.customerArea,
           orderType: values.orderType,
           // Only ids and quantities travel to the server. Prices are re-read
           // from the database there — the client never quotes a total.
@@ -118,6 +174,21 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
 
       // Remembered before the cart is cleared, so the next visit can offer it.
       rememberOrder(shop.slug, cart);
+
+      // And the person, so the next order needs no typing at all.
+      try {
+        const keep: RememberedCustomer = {
+          customerName: values.customerName,
+          customerPhone: values.customerPhone,
+          customerAddress: values.customerAddress,
+          customerPincode: values.customerPincode,
+          customerArea: values.customerArea,
+        };
+        window.localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(keep));
+        setRemembered(keep);
+      } catch {
+        // Storage refused. The order still went through, which is what matters.
+      }
 
       setCheckoutOpen(false);
       setCart({});
@@ -256,6 +327,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         totalAmount={totalAmount}
         locale={locale}
         deliveryEnabled={shop.deliveryEnabled}
+        remembered={remembered}
       />
 
       <Modal
@@ -270,6 +342,9 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         }
       >
         {t.orderPlacedHint}
+        {!wasRemembered && (
+          <span className="mt-2 block text-slate-500">{t.savedForNextTime}</span>
+        )}
       </Modal>
     </div>
   );

@@ -19,10 +19,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { BrandMark } from '@/components/ui/BrandMark';
-import { BoxIcon, CalendarIcon, ChartIcon, PlusIcon } from '@/components/ui/Icon';
+import { BoxIcon, CalendarIcon, ChartIcon, PhoneIcon, PlusIcon, UsersIcon } from '@/components/ui/Icon';
 
 const NAV = [
   { href: '/admin', label: 'Shops', icon: BoxIcon, exact: true },
+  { href: '/admin/owners', label: 'Owners', icon: PhoneIcon, exact: false },
+  { href: '/admin/customers', label: 'Customers', icon: UsersIcon, exact: false },
   { href: '/admin/shops/new', label: 'Add shop', icon: PlusIcon, exact: true },
   { href: '/admin/reports', label: 'Reports', icon: ChartIcon, exact: false },
   { href: '/admin/occasions', label: 'Occasions', icon: CalendarIcon, exact: false },
