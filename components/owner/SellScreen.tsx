@@ -12,8 +12,9 @@
  * exact amount, so the customer scans and pays without anyone typing figures.
  */
 
+import { Drawer } from '@/components/ui/Drawer';
 import { formatClock } from '@/lib/time';
-import { CloseIcon } from '@/components/ui/Icon';
+import { ChevronRightIcon, CloseIcon } from '@/components/ui/Icon';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -91,6 +92,7 @@ export function SellScreen({
 
   const [cart, setCart] = useState<Cart>({});
   const [query, setQuery] = useState('');
+  const [cartOpen, setCartOpen] = useState(false);
   const [paying, setPaying] = useState(false);
   const [saving, setSaving] = useState(false);
   const [khata, setKhata] = useState<{ name: string; phone: string } | null>(null);
@@ -170,6 +172,59 @@ export function SellScreen({
     }
   }
 
+  /**
+   * The cart, in a drawer.
+   *
+   * It used to sit above the item grid, growing downward as the customer added
+   * things and pushing the grid — the thing being tapped — further off the
+   * screen with every line. The total already lives on the payment bar; this is
+   * where the owner goes when they want to see what makes it up, or change a
+   * quantity.
+   */
+  const cartDrawer = (
+    <Drawer
+      open={cartOpen && lines.length > 0}
+      title={t.sellTotal}
+      onClose={() => setCartOpen(false)}
+    >
+        <ul className="divide-y divide-slate-100 rounded-2xl bg-white shadow-card">
+        {lines.map(({ item, quantity }) => (
+          <li key={item.id} className="flex items-center gap-3 p-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold text-slate-900">
+                {label(item, locale)}
+                {item.unit && <span className="font-normal text-slate-500"> · {item.unit}</span>}
+              </p>
+              <p className="text-sm tabular-nums text-slate-500">
+                {quantity} × {formatRupees(item.price)} ={' '}
+                <strong className="text-slate-800">{formatRupees(item.price * quantity)}</strong>
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1 rounded-xl border border-brand-200 bg-brand-50 p-1">
+              <button
+                type="button"
+                aria-label={`−1 ${label(item, locale)}`}
+                onClick={() => setQuantity(item.id, quantity - 1)}
+                className="h-9 w-9 rounded-lg text-lg font-bold text-brand-700 hover:bg-white"
+              >
+                −
+              </button>
+              <span className="w-7 text-center font-bold tabular-nums">{quantity}</span>
+              <button
+                type="button"
+                aria-label={`+1 ${label(item, locale)}`}
+                onClick={() => setQuantity(item.id, quantity + 1)}
+                className="h-9 w-9 rounded-lg text-lg font-bold text-brand-700 hover:bg-white"
+              >
+                +
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Drawer>
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between gap-3 rounded-2xl bg-white p-4 shadow-card">
@@ -218,44 +273,6 @@ export function SellScreen({
         </section>
       )}
 
-      {lines.length > 0 && (
-        <ul className="divide-y divide-slate-100 rounded-2xl bg-white shadow-card">
-          {lines.map(({ item, quantity }) => (
-            <li key={item.id} className="flex items-center gap-3 p-3">
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-slate-900">
-                  {label(item, locale)}
-                  {item.unit && <span className="font-normal text-slate-500"> · {item.unit}</span>}
-                </p>
-                <p className="text-sm tabular-nums text-slate-500">
-                  {quantity} × {formatRupees(item.price)} ={' '}
-                  <strong className="text-slate-800">{formatRupees(item.price * quantity)}</strong>
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-1 rounded-xl border border-brand-200 bg-brand-50 p-1">
-                <button
-                  type="button"
-                  aria-label={`−1 ${label(item, locale)}`}
-                  onClick={() => setQuantity(item.id, quantity - 1)}
-                  className="h-9 w-9 rounded-lg text-lg font-bold text-brand-700 hover:bg-white"
-                >
-                  −
-                </button>
-                <span className="w-7 text-center font-bold tabular-nums">{quantity}</span>
-                <button
-                  type="button"
-                  aria-label={`+1 ${label(item, locale)}`}
-                  onClick={() => setQuantity(item.id, quantity + 1)}
-                  className="h-9 w-9 rounded-lg text-lg font-bold text-brand-700 hover:bg-white"
-                >
-                  +
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-
       <input
         type="search"
         value={query}
@@ -300,21 +317,37 @@ export function SellScreen({
       {lines.length > 0 && (
         <div className="fixed inset-x-0 bottom-[68px] z-20 border-t border-slate-200 bg-white p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]">
           <div className="mx-auto flex max-w-3xl items-center gap-3">
-            {/* An icon: the word competed with "Take payment" for attention
-                on the one bar where a wrong tap costs the owner a sale. */}
+            {/* Borderless: a boxed ✕ read as a third button on a bar that
+                should offer one. */}
             <button
               type="button"
               onClick={() => setCart({})}
               aria-label={t.sellClear}
               title={t.sellClear}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-500 transition hover:bg-slate-50 hover:text-red-600"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-red-600"
             >
               <CloseIcon className="h-5 w-5" />
             </button>
-            <div className="mr-auto">
-              <p className="text-xs uppercase tracking-wide text-slate-400">{t.sellTotal}</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900">{formatRupees(total)}</p>
-            </div>
+            {/* The count, the total and the way into the detail as one tappable
+                block. A separate icon floating between the figure and the
+                button belonged to neither of them and said nothing; the count
+                says what the icon was gesturing at, and the chevron is the
+                affordance every list on a phone already uses. */}
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className="group mr-auto flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1 text-left transition hover:bg-slate-100"
+            >
+              <span className="min-w-0">
+                <span className="block text-xs leading-tight text-slate-500">
+                  {lines.length} {t.itemsCount}
+                </span>
+                <span className="block text-xl font-bold leading-tight tabular-nums text-slate-900">
+                  {formatRupees(total)}
+                </span>
+              </span>
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-slate-700" />
+            </button>
             <button
               type="button"
               onClick={() => setPaying(true)}
@@ -459,6 +492,7 @@ export function SellScreen({
           </div>
         </div>
       )}
+      {cartDrawer}
     </div>
   );
 }
