@@ -399,6 +399,28 @@ not cover is dropped rather than shown at ₹0. Totals are rolled up nightly int
 `ItemPeriodStat` **before** the retention purge deletes the orders behind them,
 which is the only reason a year-over-year comparison is possible at all.
 
+**The order queue** — three states an owner works through: **Order placed** →
+**Preparing** → **Completed**, plus Cancelled. Completing asks one question,
+*has the customer paid?*, at the only moment the owner knows the answer.
+
+**Unpaid means khata.** Answering "not yet" posts the order total to that
+customer's credit book as a DEBIT in the same breath — goods that left the shop
+unpaid are a debt whether or not anybody wrote it down, and not writing it down
+is what DukaanFlow exists to end. `LedgerEntry.orderId` is unique, so a second
+tap cannot double what is owed, and correcting the answer to "paid" lifts the
+entry again.
+
+**A chime for new orders** — `NewOrderChime` polls every 20s and rings two
+synthesised notes when the unanswered count rises. No audio file: an oscillator
+cannot 404 and stays audible on a cheap handset. Browsers refuse sound the user
+did not ask for, so the owner arms it with a tap and that tap is what unlocks
+the audio; the choice is remembered per device.
+
+**Home delivery is optional per shop.** `Shop.deliveryEnabled` off means the
+storefront shows pickup only — no disabled button, which would read as
+something that might work later — and `POST /api/order` refuses a DELIVERY
+order outright. Hiding is not enforcing.
+
 **Demo shops** — `Shop.isDemo` marks a demonstration shop. Hidden everywhere in
 the console by default, behind a toggle on the shops page (a cookie, so the
 server can filter in the query rather than shipping rows to hide); shown, they

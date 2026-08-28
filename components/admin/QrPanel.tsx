@@ -60,10 +60,18 @@ export function QrPanel({
   slug,
   shopName,
   upiId,
+  upiQrData = '',
 }: {
   slug: string;
   shopName: string;
   upiId: string;
+  /**
+   * The shop's own printed QR, photographed or exported from PhonePe, GPay or
+   * Paytm. Preferred over the one generated from `upiId` whenever it exists:
+   * a merchant QR carries details a plain `upi://pay` link cannot reproduce,
+   * and it is the code already stuck to the counter.
+   */
+  upiQrData?: string;
 }) {
   const { push } = useToast();
   const [upiValue, setUpiValue] = useState(upiId);
@@ -109,7 +117,25 @@ export function QrPanel({
           />
         </div>
 
-        {upiValue.includes('@') && nameValue ? (
+        {upiQrData ? (
+          /* The shop's own uploaded code. It was being saved and then never
+             shown here, so an owner who had given us their real PhonePe QR was
+             told to type a UPI ID to "generate" one — and the code the customer
+             would actually scan sat unused in the database. */
+          <figure className="text-center">
+            {/* Not next/image: this is a data URL of unknown dimensions that
+                needs no optimising, and the loader would refuse it. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={upiQrData}
+              alt={`${shopName} payment QR`}
+              className="mx-auto w-full max-w-[220px] rounded-xl border border-slate-200 bg-white p-2"
+            />
+            <figcaption className="mt-2 text-sm text-slate-500">
+              The shop&rsquo;s own payment QR. Replace or remove it in the form on the left.
+            </figcaption>
+          </figure>
+        ) : upiValue.includes('@') && nameValue ? (
           <QrBlock
             value={upiPayUrl(upiValue, nameValue)}
             fileName={qrFileName(slug, 'upi')}
@@ -118,7 +144,7 @@ export function QrPanel({
         ) : (
           <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-500">
             Enter a UPI ID like <span className="font-mono">ramu@okaxis</span> to generate the
-            payment QR.
+            payment QR, or upload the shop&rsquo;s own from the form on the left.
           </p>
         )}
       </section>

@@ -32,6 +32,8 @@ export type ShopSummary = {
   ownerName: string;
   imageData: string;
   ownerImageData: string;
+  /** Off means collection only — the checkout never offers delivery. */
+  deliveryEnabled: boolean;
 };
 
 export function ShopHeader({

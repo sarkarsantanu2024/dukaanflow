@@ -31,10 +31,16 @@ export async function POST(request: Request) {
 
   const shop = await prisma.shop.findUnique({
     where: { slug: shopSlug },
-    select: { id: true, name: true, phone: true, active: true },
+    select: { id: true, name: true, phone: true, active: true, deliveryEnabled: true },
   });
   if (!shop) return fail('Shop not found', 404);
   if (!shop.active) return fail('This shop is not accepting orders right now', 409);
+
+  // The storefront hides the option, but hiding is not enforcing: a delivery
+  // this shop never offered would be a promise its owner has to break by phone.
+  if (orderType === 'DELIVERY' && !shop.deliveryEnabled) {
+    return fail('This shop is collection only. Please choose Pickup.', 409);
+  }
 
   // Collapse duplicate ids so a repeated line cannot inflate the quantity cap.
   const requested = new Map<string, number>();

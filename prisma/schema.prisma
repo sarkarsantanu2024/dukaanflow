@@ -79,6 +79,14 @@ model Shop {
   inviteTokenHash      String?
   inviteTokenExpiresAt DateTime?
 
+  /// Does this shop deliver, or is it collection only?
+  ///
+  /// A kirana that has nobody to send out should not be offered as a delivery
+  /// shop — a customer choosing Delivery from a shop that cannot deliver is a
+  /// promise the owner never made and has to break by phone. Off means the
+  /// storefront never shows the option and the order route refuses it.
+  deliveryEnabled Boolean @default(true)
+
   /// A demonstration shop, not a real customer.
   ///
   /// Marked rather than deleted so there is always something to show, test a
@@ -208,6 +216,10 @@ model LedgerEntry {
   note       String     @default("")
   /// Set when the entry came from a counter sale rung up on credit.
   saleId     String?    @db.Uuid
+  /// Set when it came from a WhatsApp order the owner completed unpaid.
+  /// Unique, so an order can never be posted to the khata twice — a double tap
+  /// on "not paid yet" would otherwise double what the customer owes.
+  orderId    String?    @unique @db.Uuid
   createdAt  DateTime   @default(now())
 
   shop     Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
@@ -256,6 +268,13 @@ model Order {
   itemsJson       Json
   totalAmount     Int
   status          OrderStatus @default(NEW)
+  /// Did the money arrive? Only meaningful once the order is COMPLETED.
+  ///
+  /// Completing an order without this posts the total to the customer's khata,
+  /// because goods that left the shop unpaid are a debt whether or not anybody
+  /// writes it down — and not writing it down is the thing DukaanFlow exists
+  /// to end.
+  paymentReceived Boolean     @default(false)
   createdAt       DateTime    @default(now())
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
