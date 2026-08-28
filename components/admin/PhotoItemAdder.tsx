@@ -72,7 +72,6 @@ async function prepare(file: File): Promise<string> {
 
 export function PhotoItemAdder({
   catalogue,
-  onIdentified,
   onBatch,
   onError,
   onBusyChange,
@@ -80,11 +79,9 @@ export function PhotoItemAdder({
 }: {
   /** The shop-type catalogue, matched against so a hit is a real item. */
   catalogue: StarterItem[];
-  /** One photo: fill the form so the owner can price it there and then. */
-  onIdentified: (item: Identified) => void;
   /**
-   * Several photos: filling a form per packet would defeat the point, so the
-   * batch is listed straight away — unpriced, the way voice lists things.
+   * What was read, listed straight away and unpriced — the way voice and the
+   * starter catalogue both list things.
    */
   onBatch: (items: Identified[], unreadable: number) => void;
   onError: (message: string) => void;
@@ -163,11 +160,12 @@ export function PhotoItemAdder({
         return;
       }
 
-      // One packet fills the form, where the owner prices it there and then.
-      // Several go straight onto the list: stopping at a form per photo would
-      // undo the reason for picking several.
-      if (files.length === 1 && found.length === 1) onIdentified(found[0]!);
-      else onBatch(found, unreadable);
+      // Straight onto the list, one packet or ten. Opening a form for a single
+      // photo meant the name never reached the list until the owner filled the
+      // rest in — which is the opposite of the point: the camera is for getting
+      // the name down, and the price is set afterwards on the row, the same way
+      // voice and the starter list already work.
+      onBatch(found, unreadable);
     } catch {
       onError('Could not read that photo. Try again, or type the name.');
     } finally {

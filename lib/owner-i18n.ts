@@ -51,6 +51,7 @@ type OwnerDictionary = {
   category: string;
   nameBn: string;
   nameHi: string;
+  addItem: string;
   photoAdd: string;
   photoAddHint: string;
   photoReading: string;
@@ -226,6 +227,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     category: 'Category',
     nameBn: 'Bengali name',
     nameHi: 'Hindi name',
+    addItem: 'Add an item',
     photoAdd: 'Add by photo',
     photoAddHint: 'Point the camera at the packet. The photo is not saved.',
     photoReading: 'Reading the packet…',
@@ -404,6 +406,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     category: 'ভাগ',
     nameBn: 'বাংলা নাম',
     nameHi: 'হিন্দি নাম',
+    addItem: 'জিনিস যোগ করুন',
     photoAdd: 'ছবি তুলে যোগ করুন',
     photoAddHint: 'প্যাকেটের দিকে ক্যামেরা ধরুন। ছবি রাখা হয় না।',
     photoReading: 'পড়া হচ্ছে…',
@@ -582,6 +585,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     category: 'श्रेणी',
     nameBn: 'बंगाली नाम',
     nameHi: 'हिंदी नाम',
+    addItem: 'सामान जोड़ें',
     photoAdd: 'फोटो से जोड़ें',
     photoAddHint: 'पैकेट की ओर कैमरा कीजिए। फोटो सेव नहीं होती।',
     photoReading: 'पढ़ रहे हैं…',

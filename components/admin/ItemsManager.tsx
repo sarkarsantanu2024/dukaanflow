@@ -185,25 +185,6 @@ export function ItemsManager({
     }));
   }
 
-  /**
-   * A recognised photo fills the form and opens it, rather than saving on the
-   * owner's behalf. The one thing a photo cannot tell us is the price, and the
-   * name is a suggestion until someone who knows the shop agrees with it.
-   */
-  function identified(item: Identified) {
-    setDraft({
-      name: item.name,
-      nameBn: item.nameBn,
-      nameHi: item.nameHi,
-      unit: item.unit,
-      category: item.category,
-      price: '',
-    });
-    if (wide) setDrawer('form');
-    else setTyping(true);
-    push(item.name, 'success');
-  }
-
   async function addItem(event: React.FormEvent) {
     event.preventDefault();
     setAdding(true);
@@ -415,7 +396,6 @@ export function ItemsManager({
   const photoAdder = catalogue.length > 0 && (
     <PhotoItemAdder
       catalogue={catalogue}
-      onIdentified={identified}
       onBatch={addIdentified}
       onBusyChange={setScanning}
       openRef={openPhoto}
@@ -424,17 +404,14 @@ export function ItemsManager({
   );
 
   const floatingTools = (
-    <>
-      {photoAdder}
-      <FloatingTools
-        onVoice={() => setDrawer('voice')}
-        onPhoto={() => openPhoto.current?.()}
-        voiceLabel={t.voiceTitle}
-        photoLabel={t.photoAdd}
-        photoBusy={scanning}
-        aboveTabBar={!wide}
-      />
-    </>
+    <FloatingTools
+      onVoice={() => setDrawer('add')}
+      onPhoto={() => openPhoto.current?.()}
+      voiceLabel={t.voiceTitle}
+      photoLabel={t.photoAdd}
+      photoBusy={scanning}
+      aboveTabBar
+    />
   );
 
   const list = (
@@ -584,17 +561,17 @@ export function ItemsManager({
     </datalist>
   );
 
-  const voiceDrawer = (
-    <Drawer open={drawer === 'voice'} title={t.voiceTitle} onClose={() => setDrawer(null)}>
+  /**
+   * One panel for adding something, however the owner prefers to do it. The
+   * mic and the form were two drawers with a link between them, and the outer
+   * one repeated its own title back at itself. Speaking and typing are the same
+   * job; they belong on the same sheet.
+   */
+  const addDrawer = (
+    <Drawer open={drawer === 'add'} title={t.addItem} onClose={() => setDrawer(null)}>
       <div className="space-y-4">
         <VoiceItemAdder slug={slug} items={items} locale={locale} />
-        <button
-          type="button"
-          onClick={() => setDrawer('form')}
-          className="text-sm font-semibold text-brand-700 underline"
-        >
-          {t.typeInstead}
-        </button>
+        {typedForm}
       </div>
     </Drawer>
   );
@@ -605,12 +582,10 @@ export function ItemsManager({
       // trapped underneath them.
       <div className="space-y-4 pb-24">
         {unitOptions}
+        {photoAdder}
         {list}
         {floatingTools}
-        {voiceDrawer}
-        <Drawer open={drawer === 'form'} title={t.typeInstead} onClose={() => setDrawer(null)}>
-          {typedForm}
-        </Drawer>
+        {addDrawer}
       </div>
     );
   }
@@ -636,6 +611,20 @@ export function ItemsManager({
           <span className="block font-semibold text-slate-900">{t.typeInstead}</span>
         </button>
 
+        {catalogue.length > 0 && (
+          <button
+            type="button"
+            onClick={() => openPhoto.current?.()}
+            disabled={scanning}
+            className="w-full rounded-2xl bg-white px-4 py-3 text-left shadow-card transition hover:bg-slate-50 disabled:opacity-60"
+          >
+            <span className="block font-semibold text-slate-900">
+              {scanning ? t.photoReading : t.photoAdd}
+            </span>
+            <span className="mt-0.5 block text-sm text-slate-500">{t.photoAddHint}</span>
+          </button>
+        )}
+
         {tools?.map((tool) => (
           <button
             key={tool.id}
@@ -649,7 +638,7 @@ export function ItemsManager({
         ))}
       </div>
 
-      {floatingTools}
+      {photoAdder}
 
       <Drawer open={drawer === 'form'} title={t.typeInstead} onClose={() => setDrawer(null)}>
         {typedForm}
