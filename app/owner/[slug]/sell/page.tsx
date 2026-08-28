@@ -67,7 +67,7 @@ export default async function SellPage({ params }: PageProps) {
       where: { shopId: shop.id },
       orderBy: { updatedAt: 'desc' },
       take: 12,
-      select: { id: true, name: true, phone: true },
+      select: { id: true, name: true, phone: true, area: true },
     }),
   ]);
 

@@ -290,6 +290,13 @@ model Order {
   itemsJson       Json
   totalAmount     Int
   status          OrderStatus @default(NEW)
+  /// How the money arrived: "CASH", "UPI" or "" while unpaid.
+  ///
+  /// Without this the till was the only screen that could take a payment, so an
+  /// owner whose customer wanted to scan a UPI code had to open Sell and tap
+  /// the items in again — creating a second record of one sale. The double
+  /// count was never carelessness; the app was sending them there.
+  paymentMode     String      @default("")
   /// Did the money arrive? Only meaningful once the order is COMPLETED.
   ///
   /// Completing an order without this posts the total to the customer's khata,

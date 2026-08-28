@@ -36,7 +36,7 @@ export async function PATCH(request: Request, { params }: Context) {
   const parsed = orderStatusSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { id, status, paymentReceived } = parsed.data;
+  const { id, status, paymentReceived, paymentMode } = parsed.data;
 
   // Read it back scoped by shopId, so one shop can never touch another's orders.
   const order = await prisma.order.findFirst({
@@ -56,7 +56,14 @@ export async function PATCH(request: Request, { params }: Context) {
     // Payment only means anything on a completed order. Recording it on a
     // cancelled or still-preparing one would leave a stale "paid" behind if the
     // order later moved somewhere else.
-    data: { status, paymentReceived: status === 'COMPLETED' ? paymentReceived : false },
+    data: {
+      status,
+      paymentReceived: status === 'COMPLETED' ? paymentReceived : false,
+      // Only a completed, paid order has a payment mode. Keeping one on an
+      // order that moved back to preparing would leave a stale "paid by UPI"
+      // behind it.
+      paymentMode: status === 'COMPLETED' && paymentReceived ? paymentMode : '',
+    },
   });
 
   let khataAmount = 0;

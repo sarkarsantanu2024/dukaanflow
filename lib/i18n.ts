@@ -31,6 +31,9 @@ type Dictionary = {
   addressPlaceholder: string;
   pincode: string;
   pincodePlaceholder: string;
+  orderPlacedTitle: string;
+  orderPlacedHint: string;
+  orderPlacedDone: string;
   optional: string;
   required: string;
   delivery: string;
@@ -84,11 +87,14 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     addressPlaceholder: 'House, street, landmark',
     pincode: 'Pincode',
     pincodePlaceholder: '700028',
+    orderPlacedTitle: 'Order sent to the shop',
+    orderPlacedHint: 'The shop has it now. They will call you when it is ready.',
+    orderPlacedDone: 'Done',
     optional: 'optional',
     required: 'required',
     delivery: 'Delivery',
     pickup: 'Pickup',
-    sendOnWhatsApp: 'Send order on WhatsApp',
+    sendOnWhatsApp: 'Place order',
     sending: 'Sending…',
     back: 'Back',
     emptyShop: 'No items yet',
@@ -133,6 +139,9 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     phonePlaceholder: '১০ সংখ্যার মোবাইল নম্বর',
     address: 'ঠিকানা',
     addressPlaceholder: 'বাড়ি, রাস্তা, ল্যান্ডমার্ক',
+    orderPlacedTitle: 'অর্ডার দোকানে পৌঁছে গেছে',
+    orderPlacedHint: 'দোকান অর্ডারটি পেয়েছে। তৈরি হলে ওঁরা ফোন করবেন।',
+    orderPlacedDone: 'ঠিক আছে',
     pincode: 'পিন কোড',
     // ASCII digits even in Bengali: the field takes ASCII, and a placeholder
     // showing ৭০০ invites a value the validator will reject.
@@ -141,7 +150,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     required: 'আবশ্যক',
     delivery: 'ডেলিভারি',
     pickup: 'দোকান থেকে নেব',
-    sendOnWhatsApp: 'হোয়াটসঅ্যাপে অর্ডার পাঠান',
+    sendOnWhatsApp: 'অর্ডার দিন',
     sending: 'পাঠানো হচ্ছে…',
     back: 'পিছনে',
     emptyShop: 'এখনও কোনো জিনিস নেই',
@@ -186,13 +195,16 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     phonePlaceholder: '10 अंकों का मोबाइल नंबर',
     address: 'पता',
     addressPlaceholder: 'मकान, गली, लैंडमार्क',
+    orderPlacedTitle: 'ऑर्डर दुकान तक पहुँच गया',
+    orderPlacedHint: 'दुकान को ऑर्डर मिल गया है। तैयार होने पर वे फ़ोन करेंगे।',
+    orderPlacedDone: 'ठीक है',
     pincode: 'पिन कोड',
     pincodePlaceholder: '700028',
     optional: 'वैकल्पिक',
     required: 'आवश्यक',
     delivery: 'डिलीवरी',
     pickup: 'दुकान से लेंगे',
-    sendOnWhatsApp: 'व्हाट्सएप पर ऑर्डर भेजें',
+    sendOnWhatsApp: 'ऑर्डर करें',
     sending: 'भेजा जा रहा है…',
     back: 'वापस',
     emptyShop: 'अभी कोई सामान नहीं',

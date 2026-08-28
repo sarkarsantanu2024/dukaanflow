@@ -28,6 +28,9 @@ import clsx from 'clsx';
 import { useToast } from '@/components/ui/Toast';
 import { PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { formatRupees } from '@/lib/money';
+import { buildStatusMessage } from '@/lib/whatsapp';
+import { QRCodeCanvas } from 'qrcode.react';
+import { upiPayUrlWithAmount } from '@/lib/qr';
 import { NewOrderChime } from './NewOrderChime';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
@@ -84,12 +87,21 @@ function isToday(iso: string): boolean {
 
 export function OrdersScreen({
   slug,
+  shopName,
   orders,
   locale,
+  upiId,
+  upiQrData,
 }: {
   slug: string;
+  /** Named in the message the owner sends the customer, and in the UPI QR. */
+  shopName: string;
   orders: OwnerOrder[];
   locale: Locale;
+  /** Generates a QR carrying the exact amount, so the customer confirms rather than types. */
+  upiId: string;
+  /** The shop's own printed code, used when there is no UPI ID. */
+  upiQrData: string;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -127,33 +139,36 @@ export function OrdersScreen({
     return { count, takings };
   }, [orders]);
 
-  // Until the owner picks a tab themselves, the screen decides: anything
-  // waiting and that is what they opened the app for.
   const waiting = counts.NEW + counts.CONFIRMED;
-  const activeTab: Tab = tab ?? (counts.NEW > 0 ? 'NEW' : waiting > 0 ? 'CONFIRMED' : 'ALL');
 
   const visible = useMemo(() => {
-    const rows =
-      activeTab === 'ALL' ? [...orders] : orders.filter((order) => order.status === activeTab);
-    // Work still to be done runs oldest first — whoever ordered first is
-    // served first, which is the rule a queue at a counter already follows.
-    // Finished work runs newest first, because that is a record being read
+    // One list, so it has to carry both jobs at once. Work still to be done
+    // sits on top, oldest first — whoever ordered first is served first, the
+    // rule a queue at a counter already follows. Everything finished sits
+    // under it, newest first, because that half is a record being read
     // backwards from now.
-    const oldestFirst = activeTab === 'NEW' || activeTab === 'CONFIRMED';
-    return rows.sort((a, b) =>
-      oldestFirst
+    const rank = (status: OrderStatus) => (status === 'NEW' || status === 'CONFIRMED' ? 0 : 1);
+    return [...orders].sort((a, b) => {
+      const byRank = rank(a.status) - rank(b.status);
+      if (byRank !== 0) return byRank;
+      return rank(a.status) === 0
         ? a.createdAt.localeCompare(b.createdAt)
-        : b.createdAt.localeCompare(a.createdAt),
-    );
-  }, [orders, activeTab]);
+        : b.createdAt.localeCompare(a.createdAt);
+    });
+  }, [orders]);
 
-  async function setStatus(id: string, status: OrderStatus, paymentReceived = false) {
+  async function setStatus(
+    id: string,
+    status: OrderStatus,
+    paymentReceived = false,
+    paymentMode: '' | 'CASH' | 'UPI' = '',
+  ) {
     setBusyId(id);
     try {
       const response = await fetch(`/api/admin/shop/${slug}/order`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status, paymentReceived }),
+        body: JSON.stringify({ id, status, paymentReceived, paymentMode }),
       });
       if (handledExpiredSession({ response, slug, t, push })) return;
       if (!response.ok) {
@@ -230,37 +245,10 @@ export function OrdersScreen({
         <NewOrderChime slug={slug} newCount={counts.NEW} locale={locale} />
       </div>
 
-      {/* Sticky, because marking off ten orders means scrolling — and the tab
-          you are working is the one piece of state you must not lose. */}
-      <div
-        role="tablist"
-        aria-label={t.orders}
-        className="sticky top-[3.25rem] z-10 -mx-4 flex gap-2 overflow-x-auto bg-slate-100/95 px-4 py-2 backdrop-blur"
-      >
-        {TAB_ORDER.map((option) => {
-          const selected = activeTab === option;
-          return (
-            <button
-              key={option}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              onClick={() => setTab(option)}
-              className={clsx(
-                'shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold transition',
-                selected
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-white text-slate-600 ring-1 ring-slate-200',
-              )}
-            >
-              {tabLabel[option]}
-              <span className={clsx('ml-1.5 tabular-nums', selected ? 'text-white/80' : 'text-slate-400')}>
-                {counts[option]}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {/* The status filter strip lived here. Five chips, four of them usually
+          reading zero, above a list short enough to read whole — it cost a row
+          of screen and answered a question nobody was asking. The badge on each
+          card already says what state it is in. */}
 
       {visible.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
@@ -344,7 +332,15 @@ export function OrdersScreen({
                   <PhoneIcon className="h-[18px] w-[18px]" />
                 </a>
                 <a
-                  href={`https://wa.me/91${order.customerPhone}`}
+                  href={`https://wa.me/91${order.customerPhone}?text=${encodeURIComponent(
+                    buildStatusMessage({
+                      shopName,
+                      customerName: order.customerName,
+                      status: order.status,
+                      totalAmount: order.totalAmount,
+                      orderType: order.orderType,
+                    }),
+                  )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={t.messageCustomer}
@@ -371,24 +367,59 @@ export function OrdersScreen({
                        at the only moment the owner knows the answer. Two plain
                        buttons rather than a dialog: this is a phone held in one
                        hand across a counter. */
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-700">{t.paymentAsk}</span>
-                      <button
-                        type="button"
-                        disabled={busyId === order.id}
-                        onClick={() => setStatus(order.id, 'COMPLETED', true)}
-                        className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
-                      >
-                        {t.paymentGot}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busyId === order.id}
-                        onClick={() => setStatus(order.id, 'COMPLETED', false)}
-                        className="inline-flex h-10 items-center rounded-lg border border-amber-400 bg-amber-50 px-4 text-sm font-semibold text-amber-800 disabled:opacity-50"
-                      >
-                        {t.paymentKhata}
-                      </button>
+                    <span className="w-full">
+                      <span className="mb-2 block text-sm font-semibold text-slate-700">
+                        {t.paymentAsk}
+                      </span>
+
+                      {/* The same code the till shows, on the order itself.
+                          Without it the till was the only screen that could
+                          take a UPI payment, so an owner whose customer wanted
+                          to scan had to re-enter the whole order over there —
+                          and that second record is the double count. */}
+                      {(upiId || upiQrData) && (
+                        <span className="mb-3 flex flex-col items-center gap-1.5 rounded-xl bg-slate-50 p-3">
+                          {upiId ? (
+                            <QRCodeCanvas
+                              value={upiPayUrlWithAmount(upiId, shopName, order.totalAmount)}
+                              size={148}
+                              includeMargin
+                              level="M"
+                            />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={upiQrData} alt="UPI QR" className="max-w-[9rem]" />
+                          )}
+                          <span className="text-xs text-slate-600">{t.sellScanToPay}</span>
+                        </span>
+                      )}
+
+                      <span className="grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          disabled={busyId === order.id}
+                          onClick={() => setStatus(order.id, 'COMPLETED', true, 'CASH')}
+                          className="h-10 rounded-lg border border-slate-300 bg-white text-sm font-semibold text-slate-800 disabled:opacity-50"
+                        >
+                          {t.sellCash}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyId === order.id}
+                          onClick={() => setStatus(order.id, 'COMPLETED', true, 'UPI')}
+                          className="h-10 rounded-lg bg-brand-600 text-sm font-semibold text-white disabled:opacity-50"
+                        >
+                          {t.sellUpi}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyId === order.id}
+                          onClick={() => setStatus(order.id, 'COMPLETED', false)}
+                          className="h-10 rounded-lg border border-amber-400 bg-amber-50 text-sm font-semibold text-amber-800 disabled:opacity-50"
+                        >
+                          {t.sellKhata}
+                        </button>
+                      </span>
                     </span>
                   ) : (
                     <button

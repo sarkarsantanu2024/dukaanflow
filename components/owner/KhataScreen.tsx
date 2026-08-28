@@ -19,6 +19,7 @@ import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { WhatsAppIcon } from '@/components/ui/Icon';
 import { formatRupees } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -56,6 +57,7 @@ export function KhataScreen({
 }) {
   const router = useRouter();
   const { push } = useToast();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const t = ownerDict(locale);
 
   const [open, setOpen] = useState<string | null>(null);
@@ -100,7 +102,16 @@ export function KhataScreen({
   }
 
   async function removeEntry(id: string) {
-    if (!window.confirm(t.khataDeleteConfirm)) return;
+    if (
+      !(await confirm({
+        title: t.khataDeleteConfirm,
+        confirmLabel: t.delete,
+        cancelLabel: t.no,
+        danger: true,
+      }))
+    ) {
+      return;
+    }
     setBusy(true);
     try {
       const response = await fetch(`/api/admin/shop/${slug}/khata`, {
@@ -321,6 +332,8 @@ export function KhataScreen({
           </Button>
         </div>
       </section>
+
+      {confirmDialog}
     </div>
   );
 }

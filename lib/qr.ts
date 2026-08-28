@@ -26,3 +26,23 @@ export function upiPayUrl(upiId: string, shopName: string): string {
 export function qrFileName(slug: string, kind: 'shop' | 'upi'): string {
   return `dukaanflow-${slug}-${kind}-qr.png`;
 }
+
+/**
+ * A UPI intent with the amount filled in — the customer confirms rather than
+ * types, which is the difference between a payment that is right and one that
+ * is a digit out.
+ *
+ * Lives here rather than beside one screen because two screens now take
+ * payments: the till, and an order being completed. Two copies of this would
+ * eventually disagree about the payee name or the currency, and the symptom
+ * would be a customer's app showing the wrong shop.
+ */
+export function upiPayUrlWithAmount(upiId: string, shopName: string, amount: number): string {
+  const params = new URLSearchParams({
+    pa: upiId,
+    pn: shopName,
+    am: String(amount),
+    cu: 'INR',
+  });
+  return `upi://pay?${params.toString()}`;
+}

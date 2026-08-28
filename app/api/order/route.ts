@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { orderSchema } from '@/lib/validators';
-import { buildOrderMessage, buildWhatsAppUrl, type OrderLine } from '@/lib/whatsapp';
+import type { OrderLine } from '@/lib/whatsapp';
 
 export const runtime = 'nodejs';
 
@@ -123,19 +123,13 @@ export async function POST(request: Request) {
     select: { id: true },
   });
 
-  const message = buildOrderMessage({
-    shopName: shop.name,
-    orderType,
-    lines,
-    totalAmount,
-    customerName,
-    customerPhone,
-    customerAddress,
-  });
-
-  return ok({
-    orderId: order.id,
-    totalAmount,
-    whatsappUrl: buildWhatsAppUrl(shop.phone, message),
-  });
+  // No WhatsApp handoff any more.
+  //
+  // The order used to be pushed into the owner's WhatsApp as a message the
+  // customer sent. It worked, and at volume it buried the owner's personal
+  // chats under order after order — the one inbox they also use for their
+  // family. The orders now live in the owner's own app, where the header bell
+  // counts them from every screen and can chime, and where each one can
+  // actually be worked rather than only read.
+  return ok({ orderId: order.id, totalAmount });
 }

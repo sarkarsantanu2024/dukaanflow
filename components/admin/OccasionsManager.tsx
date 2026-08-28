@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { TrashIcon } from '@/components/ui/Icon';
 import { STATES, stateName } from '@/lib/states';
 import type { ResolvedOccasion } from '@/lib/occasions';
@@ -47,6 +48,7 @@ export function OccasionsManager({
 }) {
   const router = useRouter();
   const { push } = useToast();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [name, setName] = useState('');
   const [state, setState] = useState('');
@@ -110,7 +112,17 @@ export function OccasionsManager({
   }
 
   async function remove(occasion: ResolvedOccasion) {
-    if (!window.confirm(`Remove ${occasion.name} from the calendar?`)) return;
+    if (
+      !(await confirm({
+        title: `Remove ${occasion.name}?`,
+        message:
+          'Sales already rolled up under this name are kept — they hold the name as a snapshot, not a link.',
+        confirmLabel: 'Remove',
+        danger: true,
+      }))
+    ) {
+      return;
+    }
     const { ok } = await call('DELETE', '/api/admin/occasions', { id: occasion.id });
     if (!ok) {
       push('Could not remove it', 'error');
@@ -230,6 +242,7 @@ export function OccasionsManager({
           </div>
         )}
       </section>
+      {confirmDialog}
     </div>
   );
 }

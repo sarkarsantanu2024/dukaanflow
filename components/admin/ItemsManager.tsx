@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { VoiceItemAdder } from './VoiceItemAdder';
 import { PhotoItemAdder, type Identified } from './PhotoItemAdder';
 import type { StarterItem } from '@/lib/starter-catalogue';
@@ -130,6 +131,7 @@ export function ItemsManager({
 }) {
   const router = useRouter();
   const { push } = useToast();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const t = ownerDict(locale);
   // The typed form is secondary to the mic on a phone, so it starts folded
   // away and opens on request.
@@ -277,7 +279,17 @@ export function ItemsManager({
   }
 
   async function deleteItem(item: AdminItem) {
-    if (!window.confirm(`${item.name} — ${t.deleteConfirm}`)) return;
+    if (
+      !(await confirm({
+        title: item.name,
+        message: t.deleteConfirm,
+        confirmLabel: t.delete,
+        cancelLabel: t.no,
+        danger: true,
+      }))
+    ) {
+      return;
+    }
     setBusyId(item.id);
     try {
       const response = await fetch(`/api/admin/shop/${slug}/items`, {
@@ -752,6 +764,8 @@ export function ItemsManager({
       >
         {openTool?.content}
       </Drawer>
+
+      {confirmDialog}
     </div>
   );
 }

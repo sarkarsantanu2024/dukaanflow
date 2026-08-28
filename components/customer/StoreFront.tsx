@@ -10,6 +10,8 @@ import { CheckoutSheet, type CheckoutSubmit } from './CheckoutSheet';
 import { VoiceOrder } from './VoiceOrder';
 import { RepeatOrder, rememberOrder } from './RepeatOrder';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { translateCategory } from '@/lib/speech';
@@ -29,6 +31,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   const [category, setCategory] = useState<string>('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [placed, setPlaced] = useState(false);
 
   const t = dict(locale);
 
@@ -106,12 +109,9 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         }),
       });
 
-      const payload = (await response.json()) as {
-        whatsappUrl?: string;
-        error?: string;
-      };
+      const payload = (await response.json()) as { orderId?: string; error?: string };
 
-      if (!response.ok || !payload.whatsappUrl) {
+      if (!response.ok || !payload.orderId) {
         push(payload.error ?? t.orderFailed, 'error');
         return;
       }
@@ -119,10 +119,12 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
       // Remembered before the cart is cleared, so the next visit can offer it.
       rememberOrder(shop.slug, cart);
 
-      push(t.openingWhatsApp, 'success');
       setCheckoutOpen(false);
       setCart({});
-      window.location.href = payload.whatsappUrl;
+      // The order used to end with a jump into WhatsApp. Now it ends here, so
+      // something has to tell the customer it worked — an empty cart and no
+      // message reads as a form that silently failed.
+      setPlaced(true);
     } catch {
       push(t.orderFailed, 'error');
     } finally {
@@ -251,6 +253,20 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         locale={locale}
         deliveryEnabled={shop.deliveryEnabled}
       />
+
+      <Modal
+        open={placed}
+        title={t.orderPlacedTitle}
+        tone="success"
+        onClose={() => setPlaced(false)}
+        footer={
+          <Button onClick={() => setPlaced(false)} data-autofocus>
+            {t.orderPlacedDone}
+          </Button>
+        }
+      >
+        {t.orderPlacedHint}
+      </Modal>
     </div>
   );
 }
