@@ -1,3 +1,6 @@
+import { escapeWhatsAppText } from './whatsapp';
+import { formatDay } from './time';
+import { plainRupees } from './money';
 import { prisma } from './prisma';
 
 /**
@@ -94,13 +97,68 @@ export function reminderMessage(
   customerName: string,
   balance: number,
   locale: 'en' | 'bn' | 'hi',
+  /**
+   * The account, newest first. A bare total is a number a customer has no way
+   * to check, and the reply it earns is "for what?" — which is the phone call
+   * this message is supposed to replace. Dates and amounts turn it into
+   * something they can hold against their own memory.
+   */
+  entries: { kind: 'DEBIT' | 'CREDIT'; amount: number; note: string; createdAt: Date | string }[] = [],
 ): string {
   const who = customerName ? `${customerName}, ` : '';
-  if (locale === 'bn') {
-    return `${who}নমস্কার। ${shopName} — আপনার বাকি আছে ₹${balance}। সুবিধামতো দিয়ে দেবেন। ধন্যবাদ।`;
+
+  // Two openings, because the two messages are different sentences. "₹190 is
+  // pending" finishes on its own; a listed account has to introduce the list.
+  const words =
+    locale === 'bn'
+      ? {
+          hello: 'নমস্কার।',
+          pending: 'আপনার বাকি আছে',
+          account: 'আপনার খাতা',
+          please: 'সুবিধামতো দিয়ে দেবেন। ধন্যবাদ।',
+          gave: 'জিনিস',
+          got: 'জমা',
+          total: 'মোট বাকি',
+        }
+      : locale === 'hi'
+        ? {
+            hello: 'नमस्ते।',
+            pending: 'आपका बाकी है',
+            account: 'आपका खाता',
+            please: 'सुविधा हो तो दे दीजिए। धन्यवाद।',
+            gave: 'सामान',
+            got: 'जमा',
+            total: 'कुल बाकी',
+          }
+        : {
+            hello: 'hello.',
+            pending: 'is pending on your account.',
+            account: 'your account so far',
+            please: 'Please pay when convenient. Thank you.',
+            gave: 'Goods',
+            got: 'Paid',
+            total: 'Total due',
+          };
+
+  const greeting = `${who}${words.hello} ${shopName}`;
+
+  if (entries.length === 0) {
+    return `${greeting} — ${plainRupees(balance)} ${words.pending} ${words.please}`;
   }
-  if (locale === 'hi') {
-    return `${who}नमस्ते। ${shopName} — आपका ₹${balance} बाकी है। सुविधा हो तो दे दीजिए। धन्यवाद।`;
-  }
-  return `${who}hello. ${shopName} — ₹${balance} is pending on your account. Please pay when convenient. Thank you.`;
+
+  const head = `${greeting} — ${words.account}`;
+
+  // Oldest first: an account is read downwards, the way it was written.
+  const lines = [...entries]
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .map((entry) => {
+      const sign = entry.kind === 'DEBIT' ? '+' : '−';
+      const label = entry.kind === 'DEBIT' ? words.gave : words.got;
+      const note = entry.note ? ` (${escapeWhatsAppText(entry.note)})` : '';
+      return `${formatDay(entry.createdAt)} · ${label}${note} ${sign}${plainRupees(entry.amount)}`;
+    })
+    .join('\n');
+
+  return `${head}:\n\n${lines}\n\n${words.total}: ${plainRupees(balance)}\n\n${words.please}`;
 }
+

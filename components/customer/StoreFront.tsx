@@ -157,7 +157,11 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base placeholder:text-slate-400 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
               />
 
-              {categories.length > 0 && (
+              {/* Two chips are needed before there is a choice to make. With a
+                  single category, "All" and that category list exactly the same
+                  items, so the row is a control that cannot change anything —
+                  which reads as broken rather than as absent. */}
+              {categories.length > 1 && (
                 <div className="mt-2 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
                   {[
                     { value: '', label: t.all },

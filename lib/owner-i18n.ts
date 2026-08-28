@@ -212,6 +212,10 @@ type OwnerDictionary = {
   khataSave: string;
   khataRemind: string;
   khataHistory: string;
+  khataSettle: string;
+  khataPartHint: string;
+  khataNewCustomer: string;
+  khataNewHint: string;
   khataDelete: string;
   khataDeleteConfirm: string;
 
@@ -416,6 +420,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataAdvance: 'in advance',
     khataSettled: 'settled',
     khataGave: 'Gave goods',
+    khataSettle: 'Mark fully paid',
+    khataPartHint: 'Part payment? Change the amount before tapping.',
+    khataNewCustomer: 'Add someone new',
+    khataNewHint: 'For a customer not in the book yet. Anyone already listed above is quicker to update on their own row.',
     khataGot: 'Got payment',
     khataCustomer: 'Name',
     khataPhone: 'Phone',
@@ -628,6 +636,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataAdvance: 'অগ্রিম',
     khataSettled: 'শোধ',
     khataGave: 'জিনিস দিলাম',
+    khataSettle: 'সব শোধ হয়েছে',
+    khataPartHint: 'কিছুটা দিলে? টাকার অঙ্কটা বদলে নিন।',
+    khataNewCustomer: 'নতুন কাউকে যোগ করুন',
+    khataNewHint: 'যাঁর নাম খাতায় নেই তাঁর জন্য। উপরে নাম থাকলে সেখানেই তাড়াতাড়ি হবে।',
     khataGot: 'টাকা পেলাম',
     khataCustomer: 'নাম',
     khataPhone: 'ফোন',
@@ -840,6 +852,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataAdvance: 'अग्रिम',
     khataSettled: 'चुकता',
     khataGave: 'सामान दिया',
+    khataSettle: 'पूरा भुगतान हो गया',
+    khataPartHint: 'कुछ हिस्सा दिया? रकम बदल लीजिए।',
+    khataNewCustomer: 'नया ग्राहक जोड़ें',
+    khataNewHint: 'जिनका नाम खाते में नहीं है उनके लिए। ऊपर नाम हो तो वहीं जल्दी होगा।',
     khataGot: 'पैसा मिला',
     khataCustomer: 'नाम',
     khataPhone: 'फ़ोन',
