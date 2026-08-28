@@ -23,6 +23,7 @@
 import { formatClock, formatDay, startOfBusinessDay } from '@/lib/time';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { handledExpiredSession } from './sessionGuard';
 import clsx from 'clsx';
 import { useToast } from '@/components/ui/Toast';
 import { PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/ui/Icon';
@@ -154,6 +155,7 @@ export function OrdersScreen({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status, paymentReceived }),
       });
+      if (handledExpiredSession({ response, slug, t, push })) return;
       if (!response.ok) {
         push(t.networkError, 'error');
         return;

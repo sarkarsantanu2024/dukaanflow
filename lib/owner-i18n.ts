@@ -95,6 +95,8 @@ type OwnerDictionary = {
   soundOn: string;
   soundOff: string;
   newOrderAlert: string;
+  /** Shown when a PIN has been reissued and this session no longer counts. */
+  sessionEnded: string;
   markConfirmed: string;
   markCompleted: string;
   markCancelled: string;
@@ -180,6 +182,7 @@ type OwnerDictionary = {
   khataGot: string;
   khataCustomer: string;
   khataPhone: string;
+  khataArea: string;
   khataAmount: string;
   khataNote: string;
   khataSave: string;
@@ -281,6 +284,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     soundOn: 'Sound on',
     soundOff: 'Sound off',
     newOrderAlert: 'New order',
+    sessionEnded: 'Your session has ended. Please sign in with your PIN again.',
     markConfirmed: 'Accept',
     markCompleted: 'Mark done',
     markCancelled: 'Cancel',
@@ -369,6 +373,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataGot: 'Got payment',
     khataCustomer: 'Name',
     khataPhone: 'Phone',
+    khataArea: 'Area',
     khataAmount: 'Amount (₹)',
     khataNote: 'Note',
     khataSave: 'Save entry',
@@ -469,6 +474,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     soundOn: 'আওয়াজ চালু',
     soundOff: 'আওয়াজ বন্ধ',
     newOrderAlert: 'নতুন অর্ডার',
+    sessionEnded: 'আপনার সময় শেষ। আবার PIN দিয়ে ঢুকুন।',
     markConfirmed: 'নিলাম',
     markCompleted: 'হয়ে গেছে',
     markCancelled: 'বাতিল',
@@ -557,6 +563,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataGot: 'টাকা পেলাম',
     khataCustomer: 'নাম',
     khataPhone: 'ফোন',
+    khataArea: 'পাড়া',
     khataAmount: 'টাকা (₹)',
     khataNote: 'নোট',
     khataSave: 'লিখুন',
@@ -657,6 +664,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     soundOn: 'आवाज़ चालू',
     soundOff: 'आवाज़ बंद',
     newOrderAlert: 'नया ऑर्डर',
+    sessionEnded: 'आपका सत्र समाप्त हो गया। दोबारा PIN से आएँ।',
     markConfirmed: 'लिया',
     markCompleted: 'हो गया',
     markCancelled: 'रद्द',
@@ -745,6 +753,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataGot: 'पैसा मिला',
     khataCustomer: 'नाम',
     khataPhone: 'फ़ोन',
+    khataArea: 'इलाक़ा',
     khataAmount: 'रकम (₹)',
     khataNote: 'नोट',
     khataSave: 'लिखें',

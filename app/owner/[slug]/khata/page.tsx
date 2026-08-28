@@ -50,6 +50,7 @@ export default async function KhataPage({ params }: PageProps) {
     id: row.id,
     name: row.name,
     phone: row.phone,
+    area: row.area,
     balance: row.balance,
     entries: byCustomer.get(row.id) ?? [],
   }));

@@ -3,6 +3,7 @@ import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { itemDeleteSchema, itemPatchSchema, itemUpsertSchema } from '@/lib/validators';
 import { checkEditAllowance, checkItemAllowance, markActivated } from '@/lib/billing';
+import { normaliseItemName, normaliseUnit } from '@/lib/units';
 
 export const runtime = 'nodejs';
 
@@ -28,13 +29,30 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = itemUpsertSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { name, nameBn, nameHi, price, unit, category, inStock } = parsed.data;
+  const { nameBn, nameHi, price, category, inStock } = parsed.data;
+
+  // Canonical spelling before anything else touches these.
+  //
+  // The unique key is (shop, name, unit) on the exact strings, which every
+  // variant spelling satisfies: "Rice"/"1kg" and "Rice"/"1 KG" are two rows to
+  // Postgres and one shelf to a shopkeeper. Normalising here is what makes the
+  // key mean what it looks like it means.
+  const name = normaliseItemName(parsed.data.name);
+  const unit = normaliseUnit(parsed.data.unit);
 
   // Re-pricing something the shop already has is an edit, not a new item, so
   // it stays allowed right up to the catalogue limit rather than being refused
   // at it — a shop at its limit must still be able to correct a price.
-  const existing = await prisma.item.findUnique({
-    where: { shopId_name_unit: { shopId, name, unit } },
+  //
+  // Matched case-insensitively, because "rice" typed today must find "Rice"
+  // listed last week rather than sit beside it. The existing row keeps its own
+  // capitalisation: the owner chose it, and a re-price is not a rename.
+  const existing = await prisma.item.findFirst({
+    where: {
+      shopId,
+      name: { equals: name, mode: 'insensitive' },
+      unit: { equals: unit, mode: 'insensitive' },
+    },
     select: { id: true },
   });
 
@@ -43,33 +61,42 @@ export async function POST(request: Request, { params }: Context) {
     : await checkItemAllowance(shopId, 1);
   if (refusal) return fail(refusal.message, refusal.status);
 
-  const item = await prisma.item.upsert({
-    where: { shopId_name_unit: { shopId, name, unit } },
-    create: { shopId, name, nameBn, nameHi, price, unit, category, inStock },
-    // Blank translations on an update mean "unchanged", never "clear it" — a
-    // quick voice re-price must not wipe names typed by hand earlier.
-    update: {
-      price,
-      category,
-      inStock,
-      ...(nameBn ? { nameBn } : {}),
-      ...(nameHi ? { nameHi } : {}),
-    },
-    select: {
-      id: true,
-      name: true,
-      nameBn: true,
-      nameHi: true,
-      price: true,
-      unit: true,
-      category: true,
-      inStock: true,
-    },
-  });
+  const shape = {
+    id: true,
+    name: true,
+    nameBn: true,
+    nameHi: true,
+    price: true,
+    unit: true,
+    category: true,
+    inStock: true,
+  } as const;
+
+  const item = existing
+    ? await prisma.item.update({
+        where: { id: existing.id },
+        // Blank translations on an update mean "unchanged", never "clear it" —
+        // a quick voice re-price must not wipe names typed by hand earlier.
+        data: {
+          price,
+          category,
+          inStock,
+          ...(nameBn ? { nameBn } : {}),
+          ...(nameHi ? { nameHi } : {}),
+        },
+        select: shape,
+      })
+    : await prisma.item.create({
+        data: { shopId, name, nameBn, nameHi, price, unit, category, inStock },
+        select: shape,
+      });
 
   if (!existing) await markActivated(shopId);
 
-  return ok(item, 201);
+  // Which of the two happened is the caller's business. Silently overwriting a
+  // price and reporting "added" is how an owner comes to believe they have two
+  // rows for rice when they have one.
+  return ok({ ...item, duplicate: Boolean(existing) }, existing ? 200 : 201);
 }
 
 /** PATCH — price / stock / category of one existing item. */

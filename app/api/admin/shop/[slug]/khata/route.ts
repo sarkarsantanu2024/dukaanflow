@@ -27,8 +27,8 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = ledgerSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { customerPhone, customerName, kind, amount, note } = parsed.data;
-  const customer = await upsertCustomer(shop.id, customerPhone, customerName);
+  const { customerPhone, customerName, customerArea, kind, amount, note } = parsed.data;
+  const customer = await upsertCustomer(shop.id, customerPhone, customerName, customerArea);
 
   const entry = await prisma.ledgerEntry.create({
     data: { shopId: shop.id, customerId: customer.id, kind, amount, note },
