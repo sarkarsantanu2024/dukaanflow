@@ -13,6 +13,7 @@
  */
 
 import { formatClock } from '@/lib/time';
+import { CloseIcon } from '@/components/ui/Icon';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -299,12 +300,16 @@ export function SellScreen({
       {lines.length > 0 && (
         <div className="fixed inset-x-0 bottom-[68px] z-20 border-t border-slate-200 bg-white p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]">
           <div className="mx-auto flex max-w-3xl items-center gap-3">
+            {/* An icon: the word competed with "Take payment" for attention
+                on the one bar where a wrong tap costs the owner a sale. */}
             <button
               type="button"
               onClick={() => setCart({})}
-              className="shrink-0 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-600"
+              aria-label={t.sellClear}
+              title={t.sellClear}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-500 transition hover:bg-slate-50 hover:text-red-600"
             >
-              {t.sellClear}
+              <CloseIcon className="h-5 w-5" />
             </button>
             <div className="mr-auto">
               <p className="text-xs uppercase tracking-wide text-slate-400">{t.sellTotal}</p>
