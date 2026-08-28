@@ -14,7 +14,8 @@
 
 import { Drawer } from '@/components/ui/Drawer';
 import { formatClock } from '@/lib/time';
-import { ChevronRightIcon, CloseIcon } from '@/components/ui/Icon';
+import { CartIcon } from '@/components/ui/Icon';
+import { SwipeToRemove } from '@/components/ui/SwipeToRemove';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -189,7 +190,12 @@ export function SellScreen({
     >
         <ul className="divide-y divide-slate-100 rounded-2xl bg-white shadow-card">
         {lines.map(({ item, quantity }) => (
-          <li key={item.id} className="flex items-center gap-3 p-3">
+          <li key={item.id}>
+            <SwipeToRemove
+              onRemove={() => setQuantity(item.id, 0)}
+              label={`${t.delete} — ${label(item, locale)}`}
+            >
+              <div className="flex items-center gap-3 p-3">
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold text-slate-900">
                 {label(item, locale)}
@@ -219,6 +225,8 @@ export function SellScreen({
                 +
               </button>
             </div>
+              </div>
+            </SwipeToRemove>
           </li>
         ))}
       </ul>
@@ -317,37 +325,15 @@ export function SellScreen({
       {lines.length > 0 && (
         <div className="fixed inset-x-0 bottom-[68px] z-20 border-t border-slate-200 bg-white p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]">
           <div className="mx-auto flex max-w-3xl items-center gap-3">
-            {/* Borderless: a boxed ✕ read as a third button on a bar that
-                should offer one. */}
-            <button
-              type="button"
-              onClick={() => setCart({})}
-              aria-label={t.sellClear}
-              title={t.sellClear}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-red-600"
-            >
-              <CloseIcon className="h-5 w-5" />
-            </button>
-            {/* The count, the total and the way into the detail as one tappable
-                block. A separate icon floating between the figure and the
-                button belonged to neither of them and said nothing; the count
-                says what the icon was gesturing at, and the chevron is the
-                affordance every list on a phone already uses. */}
-            <button
-              type="button"
-              onClick={() => setCartOpen(true)}
-              className="group mr-auto flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1 text-left transition hover:bg-slate-100"
-            >
-              <span className="min-w-0">
-                <span className="block text-xs leading-tight text-slate-500">
-                  {lines.length} {t.itemsCount}
-                </span>
-                <span className="block text-xl font-bold leading-tight tabular-nums text-slate-900">
-                  {formatRupees(total)}
-                </span>
-              </span>
-              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-slate-700" />
-            </button>
+            <div className="mr-auto min-w-0">
+              <p className="text-xs leading-tight text-slate-500">
+                {lines.length} {t.itemsCount}
+              </p>
+              <p className="text-xl font-bold leading-tight tabular-nums text-slate-900">
+                {formatRupees(total)}
+              </p>
+            </div>
+
             <button
               type="button"
               onClick={() => setPaying(true)}
@@ -492,6 +478,26 @@ export function SellScreen({
           </div>
         </div>
       )}
+      {/* The way into the cart, in the corner the phone reserves for it —
+          clear of the payment bar so the two never argue over a thumb. The
+          badge is the whole label: a number beside a basket needs no word, in
+          any of the three languages. */}
+      {lines.length > 0 && (
+        <div className="no-print fixed inset-x-0 bottom-[9.75rem] z-30 mx-auto flex max-w-3xl justify-end px-4">
+          <button
+            type="button"
+            onClick={() => setCartOpen(true)}
+            aria-label={`${lines.length} ${t.itemsCount}`}
+            className="relative inline-flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-xl transition hover:bg-slate-50"
+          >
+            <CartIcon className="h-6 w-6" />
+            <span className="absolute -right-0.5 -top-0.5 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-600 px-1.5 text-xs font-bold tabular-nums text-white">
+              {lines.length}
+            </span>
+          </button>
+        </div>
+      )}
+
       {cartDrawer}
     </div>
   );

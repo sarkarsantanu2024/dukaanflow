@@ -174,6 +174,15 @@ export function QrIcon(props: IconProps) {
   );
 }
 
+export function CartIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3 6h18l-1.6 9.2a2 2 0 0 1-2 1.8H7.6a2 2 0 0 1-2-1.8L4 6" />
+      <path d="M9 21h.01M17 21h.01" />
+    </Svg>
+  );
+}
+
 export function ChevronRightIcon(props: IconProps) {
   return (
     <Svg {...props}>
