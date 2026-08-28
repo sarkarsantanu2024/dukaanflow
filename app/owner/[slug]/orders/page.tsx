@@ -26,6 +26,8 @@ function toLines(itemsJson: unknown): OwnerOrder['lines'] {
     return [
       {
         name: String(line.name ?? ''),
+        nameBn: String(line.nameBn ?? ''),
+        nameHi: String(line.nameHi ?? ''),
         unit: String(line.unit ?? ''),
         quantity: Number(line.quantity ?? 0),
         // The order route writes `lineTotal`; this read `amount`, which was

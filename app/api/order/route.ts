@@ -43,7 +43,15 @@ export async function POST(request: Request) {
 
   const dbItems = await prisma.item.findMany({
     where: { id: { in: [...requested.keys()] }, shopId: shop.id },
-    select: { id: true, name: true, unit: true, price: true, inStock: true },
+    select: {
+      id: true,
+      name: true,
+      nameBn: true,
+      nameHi: true,
+      unit: true,
+      price: true,
+      inStock: true,
+    },
   });
 
   if (dbItems.length !== requested.size) {
@@ -84,6 +92,12 @@ export async function POST(request: Request) {
       itemsJson: dbItems.map((item) => ({
         itemId: item.id,
         name: item.name,
+        // All three, because the snapshot has to stand on its own: the item may
+        // be renamed or deleted long before the owner reads the order back, and
+        // an order that can only be read in English is no use to a shopkeeper
+        // whose app is in Bengali.
+        nameBn: item.nameBn,
+        nameHi: item.nameHi,
         unit: item.unit,
         price: item.price,
         quantity: requested.get(item.id)!,

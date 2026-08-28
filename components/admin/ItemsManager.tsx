@@ -148,6 +148,32 @@ export function ItemsManager({
   const [unitDrafts, setUnitDrafts] = useState<Record<string, string>>({});
   const units = unitsFor(shopType);
 
+  /**
+   * Items a customer cannot tell apart.
+   *
+   * Two pack sizes of one product is normal for a kirana — Dal 500 g beside Dal
+   * 1 kg is a shop doing its job, and merging them would destroy a real price.
+   * What is not normal is the same name where at least one row has no pack
+   * size, because then the menu simply lists the word twice and a customer
+   * picking either has no idea which they are getting.
+   *
+   * So this flags only the ambiguous case, and the fix is the unit box already
+   * sitting on the row.
+   */
+  const clashes = useMemo(() => {
+    const byName = new Map<string, AdminItem[]>();
+    for (const item of items) {
+      const key = item.name.trim().toLowerCase();
+      const group = byName.get(key);
+      if (group) group.push(item);
+      else byName.set(key, [item]);
+    }
+
+    return [...byName.values()].filter(
+      (group) => group.length > 1 && group.some((item) => !item.unit.trim()),
+    );
+  }, [items]);
+
   const categories = useMemo(
     () => Array.from(new Set(items.map((item) => item.category).filter(Boolean))).sort(),
     [items],
@@ -422,6 +448,23 @@ export function ItemsManager({
 
   const list = (
     <section className="min-w-0">
+      {clashes.length > 0 && (
+        <div className="mb-3 rounded-2xl border border-amber-300 bg-amber-50 p-3">
+          <p className="text-sm font-semibold text-amber-900">{t.clashTitle}</p>
+          <p className="mt-0.5 text-sm text-amber-800">{t.clashHint}</p>
+          <ul className="mt-2 flex flex-wrap gap-1.5">
+            {clashes.map((group) => (
+              <li
+                key={group[0]!.id}
+                className="rounded-full bg-white px-2.5 py-1 text-sm font-medium text-amber-900 ring-1 ring-amber-200"
+              >
+                {displayName(group[0]!, locale)} × {group.length}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             type="search"

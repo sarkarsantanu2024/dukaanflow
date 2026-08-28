@@ -52,6 +52,8 @@ type OwnerDictionary = {
   nameBn: string;
   nameHi: string;
   addItem: string;
+  clashTitle: string;
+  clashHint: string;
   photoAdd: string;
   photoAddHint: string;
   photoReading: string;
@@ -228,6 +230,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     nameBn: 'Bengali name',
     nameHi: 'Hindi name',
     addItem: 'Add an item',
+    clashTitle: 'Two items share a name',
+    clashHint: 'Add a pack size to each, so a customer can tell them apart.',
     photoAdd: 'Add by photo',
     photoAddHint: 'Point the camera at the packet. The photo is not saved.',
     photoReading: 'Reading the packet…',
@@ -407,6 +411,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     nameBn: 'বাংলা নাম',
     nameHi: 'হিন্দি নাম',
     addItem: 'জিনিস যোগ করুন',
+    clashTitle: 'একই নামে দুটি জিনিস',
+    clashHint: 'প্রতিটিতে পরিমাণ দিন, তাহলে ক্রেতা আলাদা করতে পারবে।',
     photoAdd: 'ছবি তুলে যোগ করুন',
     photoAddHint: 'প্যাকেটের দিকে ক্যামেরা ধরুন। ছবি রাখা হয় না।',
     photoReading: 'পড়া হচ্ছে…',
@@ -586,6 +592,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     nameBn: 'बंगाली नाम',
     nameHi: 'हिंदी नाम',
     addItem: 'सामान जोड़ें',
+    clashTitle: 'एक ही नाम के दो सामान',
+    clashHint: 'हर एक में मात्रा डालिए, ताकि ग्राहक फर्क समझ सके।',
     photoAdd: 'फोटो से जोड़ें',
     photoAddHint: 'पैकेट की ओर कैमरा कीजिए। फोटो सेव नहीं होती।',
     photoReading: 'पढ़ रहे हैं…',
