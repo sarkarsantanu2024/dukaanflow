@@ -228,6 +228,10 @@ Momo ₹70). The seed is idempotent — re-running refreshes prices, never dupli
 | `npm run db:migrate` / `db:deploy` | Migrate (dev / prod) |
 | `npm run db:seed` | Seed sample shops |
 | `npx tsx scripts/backfill-item-names.ts` | Fill Bengali/Hindi item names (`--write`) |
+| `npx tsx scripts/fix-legacy-stock.ts` | Put Re 1 starter items back in stock (`--write`) |
+| `npm run purge` | Delete each shop's orders/sales past its subscription year (`-- --write`) |
+| `npm run rollup` | Roll a year up into the permanent stat tables (`-- 2026`) |
+| `npm run demo` | Create the demo grocery shop (`-- --orders`, `-- --remove`) |
 | `npm run vercel:env` | Print deployment-ready env values |
 | `npm run db:studio` | Prisma Studio |
 
@@ -360,6 +364,46 @@ activate/deactivate, delete (typed-name confirmation), search, counts.
 
 **Items** — add/upsert by `name+unit`, inline price edit (commits on blur/Enter),
 stock toggle, delete, categories, search.
+
+**Reports** (`/admin/reports`) — a monthly or yearly business report for **one
+shop or one business type**, printable and downloadable as CSV. What sells and
+what takes the money; the busiest hour and the busiest weekday, bucketed on the
+shop's own clock rather than the server's; the shape of the period day by day or
+month by month; WhatsApp orders against counter sales; payment mode, delivery
+against pickup, and what became of each order; a shop leaderboard; proven
+sellers currently marked out of stock; and items listed that sold nothing.
+
+**Occasions** — what each festival moved, and how that compares with the same
+festival last year, from the calendar kept under **Occasions**. **Localities** —
+where customers ordered from, by pincode, with the number who left it blank
+stated rather than hidden.
+
+Every number comes from the immutable snapshot on each `Order` and `Sale`, so
+re-pricing or renaming an item cannot rewrite last month's report.
+
+**Occasions** (`/admin/occasions`) — the Super Admin's festival calendar. An
+occasion is **a name**, entered once and never re-entered; one click loads the
+36 common Indian ones.
+
+**Nobody types dates.** Fixed festivals (Independence Day, Christmas, Pongal)
+are placed by arithmetic on `fixedMonth`/`fixedDay`. Moving ones (Diwali, Eid,
+Durga Puja) take their dates from `lib/occasion-dates.ts`, shipped with the
+software for 2025–2027 — good to about a day, and overridable per year per
+occasion from the list when regional practice differs. `lib/occasions.ts` is the
+one place that resolves a name into a span of days; the report and the rollup
+both ask it.
+
+`Shop.state` decides which regional occasions reach a shop; a shop with no state
+set sees all-India ones only, and an occasion scoped to a state the report does
+not cover is dropped rather than shown at ₹0. Totals are rolled up nightly into
+`ItemPeriodStat` **before** the retention purge deletes the orders behind them,
+which is the only reason a year-over-year comparison is possible at all.
+
+**Demo shops** — `Shop.isDemo` marks a demonstration shop. Hidden everywhere in
+the console by default, behind a toggle on the shops page (a cookie, so the
+server can filter in the query rather than shipping rows to hide); shown, they
+carry a Demo badge. Reports exclude them unless the toggle is on or the shop is
+named outright, so a demo never inflates a live count.
 
 **Three-language item names** — every item carries an English, Bengali and
 Hindi name, and the customer page shows the one matching their toggle, falling

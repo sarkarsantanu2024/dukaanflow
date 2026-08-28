@@ -19,11 +19,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { BrandMark } from '@/components/ui/BrandMark';
-import { BoxIcon, PlusIcon } from '@/components/ui/Icon';
+import { BoxIcon, CalendarIcon, ChartIcon, PlusIcon } from '@/components/ui/Icon';
 
 const NAV = [
   { href: '/admin', label: 'Shops', icon: BoxIcon, exact: true },
   { href: '/admin/shops/new', label: 'Add shop', icon: PlusIcon, exact: true },
+  { href: '/admin/reports', label: 'Reports', icon: ChartIcon, exact: false },
+  { href: '/admin/occasions', label: 'Occasions', icon: CalendarIcon, exact: false },
 ];
 
 export function AdminChrome({ children }: { children: React.ReactNode }) {

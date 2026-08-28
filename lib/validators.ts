@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isStateCode } from './states';
 
 export const SHOP_TYPES = [
   'GROCERY',
@@ -76,6 +77,14 @@ export const shopCreateSchema = z.object({
   type: z.enum(SHOP_TYPES),
   phone: phoneSchema,
   address: z.string().trim().max(200).default(''),
+  /// A code from `lib/states.ts`; blank means nobody has said yet. Occasion
+  /// reporting is scoped by state, so a blank shop sees only all-India ones.
+  state: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .refine((value) => value === '' || isStateCode(value), 'Pick a state')
+    .default(''),
   upiId: upiSchema.default(''),
   active: z.boolean().default(true),
 });
@@ -118,11 +127,27 @@ export const bulkSchema = z.object({
   text: z.string().min(1, 'Paste at least one line').max(20000),
 });
 
+/**
+ * An Indian pincode, or nothing at all.
+ *
+ * Optional by design: an order is never refused for want of one. But a value
+ * that is present must be six digits not starting with zero, because a
+ * half-typed "700" in the data is worse than a blank — a blank is honestly
+ * absent, and a wrong one lands in somebody's report as a real locality.
+ */
+export const pincodeSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/\s/g, ''))
+  .refine((value) => value === '' || /^[1-9]\d{5}$/.test(value), 'Enter a 6-digit pincode')
+  .default('');
+
 export const orderSchema = z.object({
   shopSlug: slugSchema,
   customerName: z.string().trim().max(60).default(''),
   customerPhone: phoneSchema,
   customerAddress: z.string().trim().max(200).default(''),
+  customerPincode: pincodeSchema,
   orderType: z.enum(['DELIVERY', 'PICKUP']),
   items: z
     .array(z.object({ itemId: z.string().uuid(), quantity: quantitySchema }))
@@ -177,6 +202,66 @@ export const orderStatusSchema = z.object({
   id: z.string().uuid('Unknown order'),
   status: z.enum(['NEW', 'CONFIRMED', 'COMPLETED', 'CANCELLED']),
 });
+
+/** A calendar day as `YYYY-MM-DD`, which is what a date input sends. */
+const daySchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Pick a date');
+
+/**
+ * One occasion: a name, and whether it moves.
+ *
+ * No dates. An occasion is entered once and left alone — "Durga Puja" is one
+ * row forever. When it falls is a separate, yearly matter, and for the many
+ * occasions that never move it is not a matter at all.
+ */
+export const occasionSchema = z.object({
+  name: z.string().trim().min(2, 'Name the occasion').max(60),
+  state: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .refine((value) => value === '' || isStateCode(value), 'Pick a state')
+    .default(''),
+  /** Both together, or neither: a half-set fixed date could not be resolved. */
+  fixedMonth: z.number().int().min(1).max(12).nullable().default(null),
+  fixedDay: z.number().int().min(1).max(31).nullable().default(null),
+  // A festival is days, not seasons. Sixty days is already generous — Ramzan is
+  // thirty — and a longer span would swallow ordinary trade into a festival.
+  spanDays: z.number().int().min(1, 'At least one day').max(60, 'At most 60 days').default(1),
+  note: z.string().trim().max(200).default(''),
+}).refine((value) => (value.fixedMonth === null) === (value.fixedDay === null), {
+  message: 'Give both the month and the day, or neither',
+  path: ['fixedDay'],
+});
+
+export const occasionUpdateSchema = z.object({ id: z.string().uuid('Unknown occasion') });
+
+/** The days one moving occasion fell on, in one year. */
+export const occasionDateSchema = z
+  .object({
+    occasionId: z.string().uuid('Unknown occasion'),
+    startsOn: daySchema,
+    endsOn: daySchema,
+  })
+  .refine((value) => value.endsOn >= value.startsOn, {
+    message: 'The last day cannot be before the first',
+    path: ['endsOn'],
+  })
+  .refine(
+    (value) =>
+      (Date.parse(`${value.endsOn}T00:00:00Z`) - Date.parse(`${value.startsOn}T00:00:00Z`)) /
+        86_400_000 <=
+      60,
+    { message: 'An occasion cannot run longer than 60 days', path: ['endsOn'] },
+  )
+  .refine((value) => value.startsOn.slice(0, 4) === value.endsOn.slice(0, 4), {
+    // The year is taken from the start date, so a span crossing new year would
+    // be filed under one year and half-lived in another.
+    message: 'An occasion cannot cross into the next year',
+    path: ['endsOn'],
+  });
 
 /** Names picked from the shop-type starter catalogue. */
 export const starterSchema = z.object({

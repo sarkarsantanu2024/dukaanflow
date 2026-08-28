@@ -12,11 +12,13 @@ type Context = { params: Promise<{ slug: string }> };
 /**
  * Adds picked items from the shop-type starter catalogue.
  *
- * They arrive priced at ₹1 and marked out of stock: an item with an invented
- * price is worse than no item at all, so nothing a customer sees goes live
- * until the owner sets a real price. The names, units, categories and all three
- * translations are already correct, which is the part that takes an evening to
- * dictate.
+ * They arrive priced at ₹1 and in stock. An item with an invented price is
+ * worse than no item at all, so nothing a customer sees goes live until the
+ * owner sets a real price — but that hiding is done on the price alone, by the
+ * storefront. Stock is the owner's word about their own shelf, and nothing but
+ * the owner should ever be the one to say a thing has run out. The names,
+ * units, categories and all three translations are already correct, which is
+ * the part that takes an evening to dictate.
  */
 export async function POST(request: Request, { params }: Context) {
   if (!sameOrigin(request)) return fail('Bad request', 403);

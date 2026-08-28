@@ -1,5 +1,5 @@
 /**
- * Prints the five environment variables in the form Vercel expects.
+ * Prints the environment variables Vercel needs, in the form it expects.
  *
  *   npm run vercel:env
  *
@@ -20,6 +20,9 @@ const KEYS = [
   'COOKIE_SECRET',
   'NEXT_PUBLIC_BASE_URL',
   'NEXT_PUBLIC_SUPPORT_PHONE',
+  // Signs the daily retention purge. Without it the cron refuses to run and
+  // the order and sale tables grow forever.
+  'CRON_SECRET',
 ] as const;
 
 console.log('\nPaste each value into Vercel → Settings → Environment Variables.');

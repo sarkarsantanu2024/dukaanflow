@@ -28,7 +28,8 @@ export function FloatingTools({
   aboveTabBar = false,
 }: {
   onVoice: () => void;
-  onPhoto: () => void;
+  /** Omit to drop the camera entirely — the console has no packet to photograph. */
+  onPhoto?: () => void;
   voiceLabel: string;
   photoLabel: string;
   photoBusy?: boolean;
@@ -45,17 +46,20 @@ export function FloatingTools({
     >
       <div className="pointer-events-auto flex flex-col items-end gap-3">
         {/* Secondary, and smaller, so the pair reads as one primary action with
-            an alternative rather than two competing buttons. */}
-        <button
-          type="button"
-          onClick={onPhoto}
-          disabled={photoBusy}
-          aria-label={photoLabel}
-          title={photoLabel}
-          className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-brand-700 shadow-lg transition hover:bg-slate-50 disabled:opacity-60"
-        >
-          {photoBusy ? <Spinner className="h-5 w-5" /> : <CameraIcon className="h-6 w-6" />}
-        </button>
+            an alternative rather than two competing buttons. Absent entirely
+            where there is nothing to photograph, leaving the mic alone. */}
+        {onPhoto && (
+          <button
+            type="button"
+            onClick={onPhoto}
+            disabled={photoBusy}
+            aria-label={photoLabel}
+            title={photoLabel}
+            className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-brand-700 shadow-lg transition hover:bg-slate-50 disabled:opacity-60"
+          >
+            {photoBusy ? <Spinner className="h-5 w-5" /> : <CameraIcon className="h-6 w-6" />}
+          </button>
+        )}
 
         <button
           type="button"

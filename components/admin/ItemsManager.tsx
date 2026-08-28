@@ -423,9 +423,23 @@ export function ItemsManager({
     if (created > 0) router.refresh();
   }
 
+  /**
+   * Photographing a packet is the shop owner's tool, not the console's.
+   *
+   * The Super Admin is at a desk with the shop on the phone; they have no
+   * packet to point a camera at, so the button was dead weight on that screen
+   * and read as a feature that did not work. The owner, standing in front of
+   * the shelf, is exactly who it was built for — so it stays there and goes
+   * from here, rather than being deleted.
+   *
+   * `wide` is the console's layout, which makes it the honest test of which of
+   * the two is rendering this.
+   */
+  const photoAvailable = !wide && catalogue.length > 0;
+
   // Only offered when there is a catalogue to match against — without one the
   // scan can do no better than the largest text on the wrapper.
-  const photoAdder = catalogue.length > 0 && (
+  const photoAdder = photoAvailable && (
     <PhotoItemAdder
       catalogue={catalogue}
       onBatch={addIdentified}
@@ -438,7 +452,7 @@ export function ItemsManager({
   const floatingTools = (
     <FloatingTools
       onVoice={() => setDrawer('add')}
-      onPhoto={() => openPhoto.current?.()}
+      onPhoto={photoAvailable ? () => openPhoto.current?.() : undefined}
       voiceLabel={t.voiceTitle}
       photoLabel={t.photoAdd}
       photoBusy={scanning}
@@ -669,20 +683,6 @@ export function ItemsManager({
         >
           <span className="block font-semibold text-slate-900">{t.typeInstead}</span>
         </button>
-
-        {catalogue.length > 0 && (
-          <button
-            type="button"
-            onClick={() => openPhoto.current?.()}
-            disabled={scanning}
-            className="w-full rounded-2xl bg-white px-4 py-3 text-left shadow-card transition hover:bg-slate-50 disabled:opacity-60"
-          >
-            <span className="block font-semibold text-slate-900">
-              {scanning ? t.photoReading : t.photoAdd}
-            </span>
-            <span className="mt-0.5 block text-sm text-slate-500">{t.photoAddHint}</span>
-          </button>
-        )}
 
         {tools?.map((tool) => (
           <button

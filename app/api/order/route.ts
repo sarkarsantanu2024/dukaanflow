@@ -26,7 +26,8 @@ export async function POST(request: Request) {
   const parsed = orderSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { shopSlug, customerName, customerPhone, customerAddress, orderType, items } = parsed.data;
+  const { shopSlug, customerName, customerPhone, customerAddress, customerPincode, orderType, items } =
+    parsed.data;
 
   const shop = await prisma.shop.findUnique({
     where: { slug: shopSlug },
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
       customerName,
       customerPhone,
       customerAddress,
+      customerPincode,
       orderType,
       // Snapshot: prices here are what was quoted, regardless of later edits.
       //

@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { HeaderAction } from '@/components/admin/HeaderAction';
 import { ShopGrid, type ShopRow } from '@/components/admin/ShopGrid';
+import { DemoToggle } from '@/components/admin/DemoToggle';
+import { demoFilter, showingDemoShops } from '@/lib/demo';
 import { PlusIcon } from '@/components/ui/Icon';
 import { entitlement, type Plan, type SubStatus } from '@/lib/plans';
 
@@ -39,25 +41,32 @@ function attentionFor(
 }
 
 export default async function AdminDashboard() {
-  const shops = await prisma.shop.findMany({
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      type: true,
-      phone: true,
-      active: true,
-      imageData: true,
-      plan: true,
-      subscriptionStatus: true,
-      trialEndsAt: true,
-      currentPeriodEnd: true,
-      activatedAt: true,
-      createdAt: true,
-      _count: { select: { items: true, orders: true } },
-    },
-  });
+  const showingDemo = await showingDemoShops();
+
+  const [shops, demoCount] = await Promise.all([
+    prisma.shop.findMany({
+      where: demoFilter(showingDemo),
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        type: true,
+        phone: true,
+        active: true,
+        imageData: true,
+        isDemo: true,
+        plan: true,
+        subscriptionStatus: true,
+        trialEndsAt: true,
+        currentPeriodEnd: true,
+        activatedAt: true,
+        createdAt: true,
+        _count: { select: { items: true, orders: true } },
+      },
+    }),
+    prisma.shop.count({ where: { isDemo: true } }),
+  ]);
 
   const rows: ShopRow[] = shops.map((shop) => {
     const state = entitlement({
@@ -84,6 +93,7 @@ export default async function AdminDashboard() {
       phone: shop.phone,
       active: shop.active,
       imageData: shop.imageData,
+      isDemo: shop.isDemo,
       planName:
         state.status === 'TRIALING' && state.trialDaysLeft !== null
           ? `Trial · ${state.trialDaysLeft}d`
@@ -116,6 +126,12 @@ export default async function AdminDashboard() {
           <Stat label="Paying" value={paying} />
           <Stat label="Orders" value={orders} />
           <Stat label="Need attention" value={attention} tone={attention > 0 ? 'warn' : undefined} />
+          {/* Pushed to the end of the strip: it changes what the numbers to its
+              left are counting, so it belongs beside them rather than in the
+              header where it would read as another way to add a shop. */}
+          <div className="ml-auto">
+            <DemoToggle showing={showingDemo} count={demoCount} />
+          </div>
         </dl>
 
         <ShopGrid shops={rows} />

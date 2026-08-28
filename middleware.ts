@@ -68,6 +68,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
+  /* ---------------- Console APIs ---------------- */
+  // Super Admin only, and no owner exception: a report spans every shop. An API
+  // answers 401 rather than redirecting to a sign-in form nobody can render.
+  if (pathname.startsWith('/api/admin/')) {
+    if (await isAdmin(request)) return NextResponse.next();
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
   /* ---------------- Super Admin ---------------- */
   if (pathname === '/admin/login') {
     if (await isAdmin(request)) return NextResponse.redirect(new URL('/admin', request.url));
@@ -87,5 +95,7 @@ export const config = {
     '/owner/:path*',
     // Protect admin mutations too — belt and braces alongside the per-route check.
     '/api/admin/shop/:path*',
+    '/api/admin/reports/:path*',
+    '/api/admin/occasions/:path*',
   ],
 };
