@@ -83,6 +83,8 @@ export function buildStatusMessage(input: {
   status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NEW';
   totalAmount: number;
   orderType: 'DELIVERY' | 'PICKUP';
+  /** What was ordered. A total with nothing behind it cannot be checked. */
+  lines: { name: string; unit: string; quantity: number; amount: number }[];
 }): string {
   const hello = input.customerName ? `Namaste ${input.customerName},` : 'Namaste,';
   const shop = escapeWhatsAppText(input.shopName);
@@ -98,14 +100,22 @@ export function buildStatusMessage(input: {
           ? `sorry — we could not take your order this time. ${shop}`
           : `we have received your order. ${shop}`;
 
-  // The total goes in only when there is one to state, so a cancellation does
-  // not read like a bill.
-  const total =
-    input.status === 'CANCELLED' || input.totalAmount <= 0
-      ? ''
-      : `
+  // A cancellation is not a bill, so it carries neither items nor a total.
+  if (input.status === 'CANCELLED' || input.totalAmount <= 0) {
+    return `${hello} ${body}`;
+  }
 
-Total: ${plainRupees(input.totalAmount)}`;
+  // The items, not just the sum. A customer who is told "Total: ₹130" has
+  // nothing to check it against, and the one question they will ask on the
+  // phone is what the ₹130 was for — which is the call this message exists to
+  // save. Same bullet shape the order message used, so it reads familiarly.
+  const items = input.lines
+    .map((line) => {
+      const label = escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
+      return `• ${label} ×${line.quantity} = ${plainRupees(line.amount)}`;
+    })
+    .join('\n');
 
-  return `${hello} ${body}${total}`;
+  const itemBlock = items ? `\n\n${items}` : '';
+  return `${hello} ${body}${itemBlock}\n\nTotal: ${plainRupees(input.totalAmount)}`;
 }
