@@ -28,7 +28,11 @@ function toLines(itemsJson: unknown): OwnerOrder['lines'] {
         name: String(line.name ?? ''),
         unit: String(line.unit ?? ''),
         quantity: Number(line.quantity ?? 0),
-        amount: Number(line.amount ?? 0),
+        // The order route writes `lineTotal`; this read `amount`, which was
+        // never there — so every line on every order showed ₹0 while the total
+        // underneath it was right. `amount` stays as a fallback in case any row
+        // was ever written under that name.
+        amount: Number(line.lineTotal ?? line.amount ?? 0),
       },
     ];
   });

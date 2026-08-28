@@ -77,13 +77,17 @@ export async function POST(request: Request) {
       customerAddress,
       orderType,
       // Snapshot: prices here are what was quoted, regardless of later edits.
+      //
+      // `amount` is the name a Sale's snapshot already uses. This one called it
+      // `lineTotal`, and the screen reading it looked for `amount` — so every
+      // line showed ₹0 under a correct total. One name for one thing.
       itemsJson: dbItems.map((item) => ({
         itemId: item.id,
         name: item.name,
         unit: item.unit,
         price: item.price,
         quantity: requested.get(item.id)!,
-        lineTotal: item.price * requested.get(item.id)!,
+        amount: item.price * requested.get(item.id)!,
       })),
       totalAmount,
     },
