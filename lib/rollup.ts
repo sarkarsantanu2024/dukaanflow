@@ -100,7 +100,7 @@ export async function rollupYear(
           createdAt: true,
           totalAmount: true,
           customerPhone: true,
-          customerPincode: true,
+          customerArea: true,
           itemsJson: true,
         },
       }),
@@ -208,10 +208,10 @@ export async function rollupYear(
 
     const areas = new Map<string, { orders: number; revenue: number; phones: Set<string> }>();
     for (const order of orders) {
-      // No pincode, no row. An "unknown" bucket would sit at the top of every
+      // No area, no row. An "unknown" bucket would sit at the top of every
       // locality chart for the next year and say nothing.
-      if (!order.customerPincode) continue;
-      const area = areas.get(order.customerPincode) ?? {
+      if (!order.customerArea) continue;
+      const area = areas.get(order.customerArea) ?? {
         orders: 0,
         revenue: 0,
         phones: new Set<string>(),
@@ -219,16 +219,16 @@ export async function rollupYear(
       area.orders += 1;
       area.revenue += order.totalAmount;
       area.phones.add(order.customerPhone);
-      areas.set(order.customerPincode, area);
+      areas.set(order.customerArea, area);
     }
 
-    for (const [pincode, area] of areas) {
+    for (const [label, area] of areas) {
       await prisma.areaPeriodStat.upsert({
-        where: { shopId_year_pincode: { shopId: shop.id, year, pincode } },
+        where: { shopId_year_area: { shopId: shop.id, year, area: label } },
         create: {
           shopId: shop.id,
           year,
-          pincode,
+          area: label,
           orders: area.orders,
           revenue: area.revenue,
           customers: area.phones.size,

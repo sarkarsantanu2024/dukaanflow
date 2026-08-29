@@ -24,7 +24,7 @@
  * `AreaPeriodStat` for a whole year, for the same reason.
  *
  * Neither is ever inferred. An occasion nobody has dated does not appear, and
- * orders with no pincode are counted and named rather than folded into a
+ * orders with no area are counted and named rather than folded into a
  * bucket. A confident number built on nothing is the one output worse than a
  * missing one.
  */
@@ -233,17 +233,17 @@ export type Report = {
   /** Occasions are only reportable once somebody enters the calendar. */
   occasionCalendarEmpty: boolean;
 
-  /** ③ Where the customers are, by pincode. */
+  /** ③ Where the customers are, by the area they gave. */
   localities: {
-    pincode: string;
+    area: string;
     orders: number;
     revenue: number;
     customers: number;
-    /** Share of pincoded orders, 0–100. */
+    /** Share of orders that named an area, 0–100. */
     share: number;
   }[];
-  /** Orders in the period that carried no pincode — the honesty denominator. */
-  ordersWithoutPincode: number;
+  /** Orders in the period that named no area — the honesty denominator. */
+  ordersWithoutArea: number;
 
   /** ④ When trade happens, on the shop's own clock. */
   byHour: BucketRow[];
@@ -280,7 +280,7 @@ type OrderRow = {
   status: string;
   paymentMode: string;
   customerPhone: string;
-  customerPincode: string;
+  customerArea: string;
   itemsJson: unknown;
 };
 
@@ -355,7 +355,7 @@ export async function loadReport(
             status: true,
             paymentMode: true,
             customerPhone: true,
-            customerPincode: true,
+            customerArea: true,
             itemsJson: true,
           },
         }),
@@ -517,7 +517,7 @@ async function loadOccasions(
 /* ------------------------------------------------------------ ③ localities */
 
 /**
- * Where the customers ordered from, by pincode.
+ * Where the customers ordered from, by the area they gave.
  *
  * A yearly report reads the rollup, which survives the purge and is
  * authoritative for a whole calendar year. Anything shorter is computed from
@@ -533,19 +533,19 @@ async function loadLocalities(
   if (period.granularity === 'year') {
     const stats = await prisma.areaPeriodStat.findMany({
       where: { shopId: { in: shopIds }, year: period.year },
-      select: { pincode: true, orders: true, revenue: true, customers: true },
+      select: { area: true, orders: true, revenue: true, customers: true },
     });
 
     const merged = new Map<string, { orders: number; revenue: number; customers: number }>();
     for (const stat of stats) {
-      const row = merged.get(stat.pincode) ?? { orders: 0, revenue: 0, customers: 0 };
+      const row = merged.get(stat.area) ?? { orders: 0, revenue: 0, customers: 0 };
       row.orders += stat.orders;
       row.revenue += stat.revenue;
       // Summing distinct counts across shops double-counts anyone who orders
       // from two of them. Accepted: the alternative is keeping phone numbers in
       // the rollup forever, which is a privacy cost for a rounding error.
       row.customers += stat.customers;
-      merged.set(stat.pincode, row);
+      merged.set(stat.area, row);
     }
 
     if (merged.size > 0) return finish(merged, orders);
@@ -553,8 +553,8 @@ async function loadLocalities(
 
   const live = new Map<string, { orders: number; revenue: number; phones: Set<string> }>();
   for (const order of orders) {
-    if (order.status === 'CANCELLED' || !order.customerPincode) continue;
-    const row = live.get(order.customerPincode) ?? {
+    if (order.status === 'CANCELLED' || !order.customerArea) continue;
+    const row = live.get(order.customerArea) ?? {
       orders: 0,
       revenue: 0,
       phones: new Set<string>(),
@@ -562,12 +562,12 @@ async function loadLocalities(
     row.orders += 1;
     row.revenue += order.totalAmount;
     row.phones.add(order.customerPhone);
-    live.set(order.customerPincode, row);
+    live.set(order.customerArea, row);
   }
 
   const merged = new Map(
-    [...live.entries()].map(([pincode, row]) => [
-      pincode,
+    [...live.entries()].map(([area, row]) => [
+      area,
       { orders: row.orders, revenue: row.revenue, customers: row.phones.size },
     ]),
   );
@@ -580,8 +580,8 @@ function finish(
 ): { rows: Report['localities']; missing: number } {
   const total = [...merged.values()].reduce((sum, row) => sum + row.orders, 0);
   const rows = [...merged.entries()]
-    .map(([pincode, row]) => ({
-      pincode,
+    .map(([area, row]) => ({
+      area,
       orders: row.orders,
       revenue: row.revenue,
       customers: row.customers,
@@ -590,7 +590,7 @@ function finish(
     .sort((a, b) => b.orders - a.orders);
 
   const missing = orders.filter(
-    (order) => order.status !== 'CANCELLED' && !order.customerPincode,
+    (order) => order.status !== 'CANCELLED' && !order.customerArea,
   ).length;
 
   return { rows, missing };
@@ -897,12 +897,12 @@ function assemble(input: Ingredients): Report {
   }
   if (localities.rows.length === 0) {
     caveats.push(
-      'No order in this period carried a pincode, so there is no locality breakdown. The pincode box on the shop page is optional, and older orders predate it.',
+      'No order in this period named an area, so there is no locality breakdown. Orders placed before the area box existed carry none.',
     );
   } else if (localities.missing > 0) {
     const counted = localities.rows.reduce((sum, row) => sum + row.orders, 0);
     caveats.push(
-      `The locality breakdown covers ${counted} of ${counted + localities.missing} orders — the rest left the pincode blank, so the shares are of what was given, not of everything.`,
+      `The locality breakdown covers ${counted} of ${counted + localities.missing} orders — the rest named no area, so the shares are of what was given, not of everything.`,
     );
   }
 
@@ -929,7 +929,7 @@ function assemble(input: Ingredients): Report {
     occasions,
     occasionCalendarEmpty: occasions.length === 0,
     localities: localities.rows,
-    ordersWithoutPincode: localities.missing,
+    ordersWithoutArea: localities.missing,
     deadProducts: [...dead.entries()]
       .map(([label, holders]) => ({ label, shops: holders.size }))
       .sort((a, b) => b.shops - a.shops || a.label.localeCompare(b.label))

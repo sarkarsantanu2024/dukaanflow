@@ -15,7 +15,7 @@ export const metadata = { title: 'DukaanFlow — Reports' };
  * The Super Admin's business report, for one business type and one period.
  *
  * Every section answers a question somebody would otherwise ask by hand. Where
- * an answer is thin — no pincode on an order, no occasion dated for a year —
+ * an answer is thin — no area on an order, no occasion dated for a year —
  * the page says so in its caveats rather than presenting a gap as a zero.
  *
  * The page prints. The chrome is already `no-print`, so Ctrl+P — or the button
@@ -148,21 +148,21 @@ export default async function ReportsPage({
           <Section
             title="Where customers come from"
             note={
-              report.ordersWithoutPincode > 0
-                ? `By pincode, from the orders that gave one. ${report.ordersWithoutPincode} order${report.ordersWithoutPincode === 1 ? '' : 's'} left it blank and ${report.ordersWithoutPincode === 1 ? 'is' : 'are'} not counted below.`
-                : 'By pincode, taken from the order form.'
+              report.ordersWithoutArea > 0
+                ? `By area, from the orders that gave one. ${report.ordersWithoutArea} order${report.ordersWithoutArea === 1 ? '' : 's'} named none and ${report.ordersWithoutArea === 1 ? 'is' : 'are'} not counted below.`
+                : 'By the area customers gave at checkout.'
             }
           >
             {report.localities.length === 0 ? (
               <Nothing>
-                No order in this period carried a pincode. The box is optional on the shop page, and
-                orders placed before it existed have none.
+                No order in this period named an area. Orders placed before the area box existed
+                carry none.
               </Nothing>
             ) : (
               <Table
-                head={['Pincode', 'Orders', 'Share', 'Customers', 'Revenue']}
+                head={['Area', 'Orders', 'Share', 'Customers', 'Revenue']}
                 rows={report.localities.map((area) => [
-                  area.pincode,
+                  area.area,
                   area.orders,
                   `${area.share}%`,
                   area.customers,

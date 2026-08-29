@@ -103,10 +103,10 @@ export function reportToCsv(report: Report): string {
 
   section(
     'Where customers come from',
-    ['Pincode', 'Orders', 'Share %', 'Customers', 'Revenue'],
+    ['Area', 'Orders', 'Share %', 'Customers', 'Revenue'],
     [
       ...report.localities.map((area) => [
-        area.pincode,
+        area.area,
         area.orders,
         area.share,
         area.customers,
@@ -114,8 +114,8 @@ export function reportToCsv(report: Report): string {
       ]),
       // Named, not hidden: a share table that quietly omits its denominator is
       // how a chart of 40% of the orders gets read as all of them.
-      ...(report.ordersWithoutPincode > 0
-        ? [['(no pincode given)', report.ordersWithoutPincode, '', '', '']]
+      ...(report.ordersWithoutArea > 0
+        ? [['(no area given)', report.ordersWithoutArea, '', '', '']]
         : []),
     ],
   );

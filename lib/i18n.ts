@@ -29,8 +29,6 @@ type Dictionary = {
   phonePlaceholder: string;
   address: string;
   addressPlaceholder: string;
-  pincode: string;
-  pincodePlaceholder: string;
   orderPlacedTitle: string;
   orderPlacedHint: string;
   orderPlacedDone: string;
@@ -88,8 +86,6 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     phonePlaceholder: '10-digit mobile number',
     address: 'Address',
     addressPlaceholder: 'House, street, landmark',
-    pincode: 'Pincode',
-    pincodePlaceholder: '700028',
     orderPlacedTitle: 'Order sent to the shop',
     orderPlacedHint: 'The shop has it now. They will call you when it is ready.',
     orderPlacedDone: 'Done',
@@ -151,10 +147,6 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     area: 'পাড়া',
     areaPlaceholder: 'বাজারের দিকে, স্কুলের কাছে',
     savedForNextTime: 'এই ফোনে সেভ হয়ে গেল — পরের বার শুধু অর্ডার দিন।',
-    pincode: 'পিন কোড',
-    // ASCII digits even in Bengali: the field takes ASCII, and a placeholder
-    // showing ৭০০ invites a value the validator will reject.
-    pincodePlaceholder: '700028',
     optional: 'ঐচ্ছিক',
     required: 'আবশ্যক',
     delivery: 'ডেলিভারি',
@@ -210,8 +202,6 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     area: 'इलाक़ा',
     areaPlaceholder: 'बाज़ार की तरफ़, स्कूल के पास',
     savedForNextTime: 'इस फ़ोन में सेव हो गया — अगली बार सिर्फ़ ऑर्डर करें।',
-    pincode: 'पिन कोड',
-    pincodePlaceholder: '700028',
     optional: 'वैकल्पिक',
     required: 'आवश्यक',
     delivery: 'डिलीवरी',

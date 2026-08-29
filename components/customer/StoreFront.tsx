@@ -38,7 +38,6 @@ type RememberedCustomer = {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
-  customerPincode: string;
   customerArea: string;
 };
 
@@ -54,7 +53,6 @@ function readRemembered(): RememberedCustomer | null {
       customerName: parsed.customerName ?? '',
       customerPhone: parsed.customerPhone,
       customerAddress: parsed.customerAddress ?? '',
-      customerPincode: parsed.customerPincode ?? '',
       customerArea: parsed.customerArea ?? '',
     };
   } catch {
@@ -156,7 +154,6 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           customerName: values.customerName,
           customerPhone: values.customerPhone,
           customerAddress: values.customerAddress,
-          customerPincode: values.customerPincode,
           customerArea: values.customerArea,
           orderType: values.orderType,
           // Only ids and quantities travel to the server. Prices are re-read
@@ -181,7 +178,6 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           customerName: values.customerName,
           customerPhone: values.customerPhone,
           customerAddress: values.customerAddress,
-          customerPincode: values.customerPincode,
           customerArea: values.customerArea,
         };
         window.localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(keep));

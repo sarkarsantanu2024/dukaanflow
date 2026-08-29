@@ -32,7 +32,6 @@ export async function POST(request: Request) {
     customerName,
     customerPhone,
     customerAddress,
-    customerPincode,
     customerArea,
     orderType,
     items,
@@ -106,8 +105,7 @@ export async function POST(request: Request) {
       customerName,
       customerPhone,
       customerAddress,
-      customerPincode,
-      customerArea,
+        customerArea,
       orderType,
       // Snapshot: prices here are what was quoted, regardless of later edits.
       //

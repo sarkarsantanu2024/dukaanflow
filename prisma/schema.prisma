@@ -218,10 +218,8 @@ model Customer {
   address   String   @default("")
   /// Which para, lane or block this regular is from.
   ///
-  /// Free text on purpose, unlike the pincode on an order: this is not for
-  /// aggregating, it is for telling two customers apart. A shopkeeper with
-  /// three Rekhas in the book knows them as "Rekha Di, bazaar side" — the
-  /// phone number is the key, but nobody recognises anybody by it.
+  /// Where they order from, and how a shopkeeper tells two Rekhas apart. The
+  /// phone number is the key, but nobody recognises anybody by one.
   area      String   @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -301,14 +299,9 @@ model Order {
   customerName    String      @default("")
   customerPhone   String
   customerAddress String      @default("")
-  /// Six digits, or blank. The one part of an address that aggregates: free
-  /// text cannot be counted, and "which localities do our customers come from"
-  /// is unanswerable without a field that means the same thing every time.
-  /// Optional at the till — an order is never refused for want of a pincode.
-  customerPincode String      @default("")
-  /// The para or lane, in the customer's own words. Free text, unlike the
-  /// pincode beside it: that one is counted, this one is how a delivery is
-  /// actually found and how a shopkeeper recognises a regular.
+  /// The para or lane, in the customer's own words. How a delivery is actually
+  /// found, how a shopkeeper recognises a regular, and what the locality report
+  /// groups on.
   customerArea    String      @default("")
   orderType       OrderType   @default(DELIVERY)
   // Immutable snapshot of what was ordered, at the price charged at that moment.
@@ -336,7 +329,7 @@ model Order {
 
   @@index([shopId, createdAt])
   @@index([status])
-  @@index([shopId, customerPincode])
+  @@index([shopId, customerArea])
 }
 
 /// A named occasion. The name, and nothing that changes from year to year.
@@ -449,27 +442,33 @@ model ItemPeriodStat {
   @@index([occasionName, year])
 }
 
-/// Where a shop's customers ordered from, by pincode, over one year.
+/// Where a shop's customers ordered from, by area, over one year.
 ///
-/// The locality half of the same problem `ItemPeriodStat` solves: pincodes are
+/// The locality half of the same problem `ItemPeriodStat` solves: areas are
 /// only on orders, and orders are purged. Rolled up before that happens.
 model AreaPeriodStat {
   id      String @id @default(uuid()) @db.Uuid
   shopId  String @db.Uuid
   year    Int
-  /// Six digits. Never blank — orders without a pincode are simply not counted
-  /// here, and the report says how many those were rather than inventing a row.
-  pincode String
+  /// The para or lane, as the customer wrote it. Never blank — orders with no
+  /// area are simply not counted here, and the report says how many those were
+  /// rather than inventing a row.
+  ///
+  /// This was a pincode. A six-digit code aggregates perfectly and nobody in a
+  /// para thinks in one; asking for it bought tidy grouping at the cost of a
+  /// field customers skipped. The area they already type is the answer they
+  /// were going to give anyway.
+  area String
 
   orders    Int
   revenue   Int // INTEGER RUPEES
-  /// Distinct phone numbers that ordered from this pincode.
+  /// Distinct phone numbers that ordered from this area.
   customers Int
 
   computedAt DateTime @updatedAt
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
-  @@unique([shopId, year, pincode])
+  @@unique([shopId, year, area])
   @@index([shopId, year])
 }

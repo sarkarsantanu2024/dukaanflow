@@ -94,7 +94,7 @@ async function main() {
  * A fortnight of plausible trade, so the reports have a shape to show.
  *
  * Deliberately uneven: an evening peak, busier weekends, and a couple of
- * pincodes — a flat random spread would make every chart a straight line and
+ * areas — a flat random spread would make every chart a straight line and
  * demonstrate nothing.
  */
 async function seedTrade(shopId: string) {
@@ -110,7 +110,7 @@ async function seedTrade(shopId: string) {
     return;
   }
 
-  const PINCODES = ['700028', '700028', '700028', '700074', '700074', '700055'];
+  const AREAS = ['Bazaar side', 'Bazaar side', 'Bazaar side', 'Station road', 'Station road', 'School lane'];
   const PHONES = ['9800000011', '9800000022', '9800000033', '9800000044'];
   // Shop-hour weights, 6am to 9pm: a morning trickle and an evening rush.
   const HOURS = [7, 8, 9, 9, 10, 11, 17, 18, 18, 19, 19, 19, 20, 20, 21];
@@ -171,7 +171,7 @@ async function seedTrade(shopId: string) {
             customerName: '',
             customerPhone: PHONES[seed % PHONES.length],
             customerAddress: '',
-            customerPincode: PINCODES[seed % PINCODES.length],
+            customerArea: AREAS[seed % AREAS.length],
             orderType: seed % 4 === 0 ? 'PICKUP' : 'DELIVERY',
             itemsJson: lines,
             totalAmount,

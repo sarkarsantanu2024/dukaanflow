@@ -173,34 +173,28 @@ export const bulkSchema = z.object({
   text: z.string().min(1, 'Paste at least one line').max(20000),
 });
 
-/**
- * An Indian pincode, or nothing at all.
- *
- * Optional by design: an order is never refused for want of one. But a value
- * that is present must be six digits not starting with zero, because a
- * half-typed "700" in the data is worse than a blank — a blank is honestly
- * absent, and a wrong one lands in somebody's report as a real locality.
- */
-export const pincodeSchema = z
-  .string()
-  .trim()
-  .transform((value) => value.replace(/\s/g, ''))
-  .refine((value) => value === '' || /^[1-9]\d{5}$/.test(value), 'Enter a 6-digit pincode')
-  .default('');
-
-export const orderSchema = z.object({
-  shopSlug: slugSchema,
-  customerName: z.string().trim().max(60).default(''),
-  customerPhone: phoneSchema,
-  customerAddress: z.string().trim().max(200).default(''),
-  customerPincode: pincodeSchema,
-  customerArea: z.string().trim().max(60).default(''),
-  orderType: z.enum(['DELIVERY', 'PICKUP']),
-  items: z
-    .array(z.object({ itemId: z.string().uuid(), quantity: quantitySchema }))
-    .min(1, 'Add at least one item')
-    .max(60, 'Too many items in one order'),
-});
+export const orderSchema = z
+  .object({
+    shopSlug: slugSchema,
+    // Every field is now required. A shop that cannot name or find the person
+    // who ordered has to ring them to ask, which is the phone call the order
+    // was supposed to replace — and the details are typed once per phone, ever.
+    customerName: z.string().trim().min(1, 'Please give your name').max(60),
+    customerPhone: phoneSchema,
+    customerAddress: z.string().trim().max(200).default(''),
+    customerArea: z.string().trim().min(1, 'Which area are you in?').max(60),
+    orderType: z.enum(['DELIVERY', 'PICKUP']),
+    items: z
+      .array(z.object({ itemId: z.string().uuid(), quantity: quantitySchema }))
+      .min(1, 'Add at least one item')
+      .max(60, 'Too many items in one order'),
+  })
+  // Only a delivery needs somewhere to be delivered to. Demanding an address
+  // from somebody walking in to collect would be asking for nothing.
+  .refine((value) => value.orderType !== 'DELIVERY' || value.customerAddress.length > 0, {
+    message: 'Where should we deliver it?',
+    path: ['customerAddress'],
+  });
 
 export const loginSchema = z.object({
   username: z.string().trim().min(1, 'Username is required').max(60),
