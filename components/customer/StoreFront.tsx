@@ -90,7 +90,10 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
 
   const [submitting, setSubmitting] = useState(false);
   /** The order that just went through, so it can be tracked and followed. */
-  const [placed, setPlaced] = useState<{ orderId: string } | null>(null);
+  const [placed, setPlaced] = useState<{
+    orderId: string;
+    orderType: 'DELIVERY' | 'PICKUP';
+  } | null>(null);
   /**
    * The order that could not be sent, and the WhatsApp message that carries it
    * instead.
@@ -311,7 +314,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
       // The order used to end with a jump into WhatsApp. Now it ends here, so
       // something has to tell the customer it worked — an empty cart and no
       // message reads as a form that silently failed.
-      setPlaced({ orderId: payload.orderId });
+      setPlaced({ orderId: payload.orderId, orderType: values.orderType });
     } catch {
       /**
        * Three tries and the network never answered.
@@ -580,6 +583,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         <OrderPlaced
           orderId={placed.orderId}
           shopSlug={shop.slug}
+          orderType={placed.orderType}
           locale={locale}
           wasRemembered={wasRemembered}
           onClose={() => setPlaced(null)}

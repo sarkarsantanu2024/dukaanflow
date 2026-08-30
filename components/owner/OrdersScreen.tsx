@@ -69,6 +69,13 @@ export type OwnerOrder = {
   deliveryFeePaise: number;
   /** Has the owner already cut this order down to what they had? */
   revised: boolean;
+  /**
+   * Has this customer's phone agreed to be told things, so the server can
+   * reach them on its own?
+   *
+   * When it can, the owner is shown nothing to tap. See `worthMessaging`.
+   */
+  reachable: boolean;
   createdAt: string;
   lines: {
     /** Blank on orders taken before the snapshot carried it. */
@@ -81,6 +88,37 @@ export type OwnerOrder = {
     amountPaise: number;
   }[];
 };
+
+/**
+ * IS THIS ORDER WORTH LEAVING THE APP FOR?
+ *
+ * The WhatsApp button used to sit on every card in every state, and by the
+ * evening that is thirty invitations to do something that is usually either
+ * unnecessary or already done. The real cost is not the tap: it is that
+ * WhatsApp opens over the till, the owner sends, and then has to find their way
+ * back — twice per order, in the middle of a rush.
+ *
+ * So the button appears only when a message would actually tell the customer
+ * something they do not otherwise learn:
+ *
+ *  - **Cancelled — always, even when the phone has notifications.** This is the
+ *    one piece of news that costs somebody a walk to the shop if it fails to
+ *    arrive, and a notification is exactly the thing that arrives late on the
+ *    phones this market runs on. Belt and braces, deliberately.
+ *  - **Ready for collection — only if we cannot tell them ourselves.** They
+ *    have to walk over, so somebody has to say so.
+ *  - **Ready for delivery — never.** The bag arriving at the door is the
+ *    message. A text saying "it is on its way" reaches them roughly when the
+ *    delivery boy does.
+ *  - **Still preparing — never.** An order that arrived accepted has nothing to
+ *    report, and "we have your order" is news to nobody who just placed one.
+ */
+function worthMessaging(order: OwnerOrder): boolean {
+  if (order.status === 'CANCELLED') return true;
+  if (order.status !== 'COMPLETED') return false;
+  if (order.orderType === 'DELIVERY') return false;
+  return !order.reachable;
+}
 
 type Tab = 'ALL' | OrderStatus;
 
@@ -602,24 +640,44 @@ export function OrdersScreen({
                 </ul>
               )}
 
-              {/* THE MESSAGE THAT MUST NOT BE SKIPPED.
-                  A push has already gone to whoever allowed one, and push is
-                  never the system of record — on half the phones in this
-                  market it will not arrive. So after an order is cut, the
-                  WhatsApp message stays on the card until the owner sends it,
-                  pre-written, one tap. */}
-              {pendingShare?.orderId === order.id && (
-                <a
-                  href={pendingShare.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setPendingShare(null)}
-                  className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white"
-                >
-                  <WhatsAppIcon className="h-5 w-5" />
-                  {t.reviseTellCustomer}
-                </a>
-              )}
+              {/* AFTER AN ORDER IS CUT, WHO SAYS SO.
+                  A cut order changes what the customer pays, so somebody has
+                  to tell them — but not necessarily the shopkeeper. The server
+                  has already sent it to any phone that agreed to be told, and
+                  the tracking page carries the full new list.
+
+                  So this is loud only when the server could not reach them: a
+                  green bar that stays put until it is sent. When it could, it
+                  shrinks to one line saying so, with a quiet way to send it
+                  anyway — the owner who wants to add a word of their own can,
+                  and everyone else carries on serving. */}
+              {pendingShare?.orderId === order.id &&
+                (order.reachable ? (
+                  <p className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+                    <CheckIcon className="h-4 w-4 shrink-0 text-brand-600" />
+                    {t.reviseToldCustomer}
+                    <a
+                      href={pendingShare.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setPendingShare(null)}
+                      className="ml-auto shrink-0 font-semibold text-[#25D366] underline"
+                    >
+                      {t.reviseSendAnyway}
+                    </a>
+                  </p>
+                ) : (
+                  <a
+                    href={pendingShare.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setPendingShare(null)}
+                    className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white"
+                  >
+                    <WhatsAppIcon className="h-5 w-5" />
+                    {t.reviseTellCustomer}
+                  </a>
+                ))}
 
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
                 <p className="mr-auto font-bold tabular-nums text-slate-900">
@@ -635,24 +693,30 @@ export function OrdersScreen({
                 >
                   <PhoneIcon className="h-[18px] w-[18px]" />
                 </a>
-                <a
-                  href={`https://wa.me/91${order.customerPhone}?text=${encodeURIComponent(
-                    buildStatusMessage({
-                      shopName,
-                      customerName: order.customerName,
-                      status: order.status,
-                      totalAmountPaise: order.totalAmountPaise,
-                      orderType: order.orderType,
-                      lines: order.lines,
-                    }),
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={t.messageCustomer}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-[#25D366]"
-                >
-                  <WhatsAppIcon className="h-[18px] w-[18px]" />
-                </a>
+                {/* Only when a message would tell the customer something they
+                    do not otherwise learn — see `worthMessaging` above. On
+                    every other card there is simply nothing here, and the
+                    owner never leaves the app. */}
+                {worthMessaging(order) && (
+                  <a
+                    href={`https://wa.me/91${order.customerPhone}?text=${encodeURIComponent(
+                      buildStatusMessage({
+                        shopName,
+                        customerName: order.customerName,
+                        status: order.status,
+                        totalAmountPaise: order.totalAmountPaise,
+                        orderType: order.orderType,
+                        lines: order.lines,
+                      }),
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={t.messageCustomer}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-[#25D366]"
+                  >
+                    <WhatsAppIcon className="h-[18px] w-[18px]" />
+                  </a>
+                )}
 
                 {/* "We only have one." The third answer, between doing the
                     order and turning it away — and the one a kirana actually

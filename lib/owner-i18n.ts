@@ -275,6 +275,9 @@ type OwnerDictionary = {
   reviseDone: string;
   reviseNothingLeft: string;
   reviseTellCustomer: string;
+  /** Shown instead, when the server already reached the customer itself. */
+  reviseToldCustomer: string;
+  reviseSendAnyway: string;
   reviseWas: string;
   revisedBadge: string;
 
@@ -562,6 +565,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     reviseDone: 'Order changed',
     reviseNothingLeft: 'Nothing would be left. Cancel the order instead, so the customer is told properly.',
     reviseTellCustomer: 'Send the change on WhatsApp',
+    reviseToldCustomer: 'Customer has been told',
+    reviseSendAnyway: 'Send anyway',
     reviseWas: 'was',
     revisedBadge: 'Changed',
 
@@ -841,6 +846,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     reviseDone: 'অর্ডার বদলেছে',
     reviseNothingLeft: 'কিছুই থাকবে না। বরং অর্ডারটা বাতিল করুন, তাহলে খদ্দের ঠিকভাবে জানবে।',
     reviseTellCustomer: 'হোয়াটসঅ্যাপে বদলটা পাঠান',
+    reviseToldCustomer: 'খদ্দেরকে জানানো হয়ে গেছে',
+    reviseSendAnyway: 'তবু পাঠান',
     reviseWas: 'ছিল',
     revisedBadge: 'বদলেছে',
 
@@ -1120,6 +1127,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     reviseDone: 'ऑर्डर बदल गया',
     reviseNothingLeft: 'कुछ भी नहीं बचेगा। बेहतर है ऑर्डर रद्द कीजिए, ताकि ग्राहक को ठीक से पता चले।',
     reviseTellCustomer: 'बदलाव व्हाट्सएप पर भेजें',
+    reviseToldCustomer: 'ग्राहक को बता दिया गया है',
+    reviseSendAnyway: 'फिर भी भेजें',
     reviseWas: 'था',
     revisedBadge: 'बदला',
 
