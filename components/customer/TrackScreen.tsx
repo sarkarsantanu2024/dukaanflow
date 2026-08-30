@@ -24,6 +24,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatPaise } from '@/lib/money';
 import { formatClock, formatDay } from '@/lib/time';
 import { BrandMark } from '@/components/ui/BrandMark';
@@ -71,6 +72,7 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
   // when they follow a link out of a notification.
   const [locale, setLocale] = useState<Locale>('bn');
   const t = dict(locale);
+  const router = useRouter();
 
   useEffect(() => {
     const saved = window.localStorage.getItem(LOCALE_STORAGE_KEY);
@@ -81,6 +83,35 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
     setLocale(next);
     window.localStorage.setItem(LOCALE_STORAGE_KEY, next);
   }
+
+  /**
+   * Keeps itself current while the order is still live.
+   *
+   * FOR THE CUSTOMER WHO SAID NO TO NOTIFICATIONS — and for a shop that only
+   * does collection, where every order ends with somebody deciding when to walk
+   * over. Without this they have a page that was true when it loaded and a
+   * shopkeeper who has to message them by hand; with it, leaving the tab open
+   * is enough.
+   *
+   * Only while there is something to wait for: a completed or cancelled order
+   * has reached its last state and will never change again, so polling it would
+   * be a request every half minute, forever, for nothing.
+   *
+   * `document.hidden` is checked on each tick rather than a listener, because a
+   * phone with this in a background tab is a phone in somebody's pocket — and
+   * that is exactly the case that should cost the server nothing.
+   */
+  const waiting = order?.status === 'NEW' || order?.status === 'CONFIRMED';
+
+  useEffect(() => {
+    if (!waiting) return;
+    // Half a minute. A kirana order takes minutes to fill, so anything faster
+    // is load without news; anything slower and the page feels stuck.
+    const timer = setInterval(() => {
+      if (!document.hidden) router.refresh();
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, [waiting, router]);
 
   const header = (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">

@@ -36,12 +36,23 @@ import { dict, type Locale } from '@/lib/i18n';
 export function OrderPlaced({
   orderId,
   shopSlug,
+  orderType,
   locale,
   wasRemembered,
   onClose,
 }: {
   orderId: string;
   shopSlug: string;
+  /**
+   * Delivery or collection — which changes what the offer is worth saying.
+   *
+   * A delivery customer learns their order is ready when the bag arrives at
+   * the door. A collection customer has to decide when to walk over, so being
+   * told is the difference between waiting at a counter and not. Same feature,
+   * and only one of them has a reason to grant a permission they can never be
+   * asked for twice.
+   */
+  orderType: 'DELIVERY' | 'PICKUP';
   locale: Locale;
   /** Were this phone's details already saved before this order? */
   wasRemembered: boolean;
@@ -95,8 +106,12 @@ export function OrderPlaced({
           and nothing else: they will be told when it is ready. */}
       {canAsk && (
         <div className="mt-3 rounded-xl bg-slate-50 p-3">
-          <p className="font-semibold text-slate-900">{t.notifyTitle}</p>
-          <p className="mt-0.5 text-sm text-slate-600">{t.notifyBody}</p>
+          <p className="font-semibold text-slate-900">
+            {orderType === 'PICKUP' ? t.notifyTitlePickup : t.notifyTitle}
+          </p>
+          <p className="mt-0.5 text-sm text-slate-600">
+            {orderType === 'PICKUP' ? t.notifyBodyPickup : t.notifyBody}
+          </p>
           <div className="mt-2.5 flex gap-2">
             <button
               type="button"

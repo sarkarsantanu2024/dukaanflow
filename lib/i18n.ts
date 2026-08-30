@@ -108,6 +108,15 @@ type Dictionary = {
   /** Being told what happened to this order, without asking. */
   notifyTitle: string;
   notifyBody: string;
+  /**
+   * The same offer, for an order the customer has to come and collect.
+   *
+   * Worth its own wording: somebody waiting to be told when to walk over has a
+   * concrete reason to say yes, and the permission prompt is one-shot — the
+   * sentence that goes with it is the only lever there is on whether they do.
+   */
+  notifyTitlePickup: string;
+  notifyBodyPickup: string;
   notifyYes: string;
   notifyLater: string;
   notifyOn: string;
@@ -224,6 +233,9 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
 
     notifyTitle: 'Shall we tell you when it is ready?',
     notifyBody: 'Your phone will let you know when the shop has it ready. Nothing else, ever.',
+    notifyTitlePickup: 'We will tell you when to come',
+    notifyBodyPickup:
+      'You are collecting this yourself, so let us tell you the moment it is ready — no waiting at the counter, no phone calls. Nothing else, ever.',
     notifyYes: 'Yes, tell me',
     notifyLater: 'No thanks',
     notifyOn: 'We will let you know',
@@ -336,6 +348,9 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
 
     notifyTitle: 'তৈরি হলে জানিয়ে দেব?',
     notifyBody: 'দোকান তৈরি করে দিলেই আপনার ফোনে জানিয়ে দেব। আর কিছু নয়।',
+    notifyTitlePickup: 'কখন আসবেন, জানিয়ে দেব',
+    notifyBodyPickup:
+      'আপনি নিজে এসে নেবেন, তাই তৈরি হওয়া মাত্রই ফোনে জানিয়ে দেব — দোকানে দাঁড়িয়ে থাকতে হবে না, ফোনও করতে হবে না। আর কিছু নয়।',
     notifyYes: 'হ্যাঁ, জানাবেন',
     notifyLater: 'দরকার নেই',
     notifyOn: 'জানিয়ে দেব',
@@ -448,6 +463,9 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
 
     notifyTitle: 'तैयार होने पर बता दें?',
     notifyBody: 'दुकान के तैयार करते ही आपके फोन पर बता देंगे। और कुछ नहीं।',
+    notifyTitlePickup: 'कब आना है, बता देंगे',
+    notifyBodyPickup:
+      'आप खुद लेने आ रहे हैं, तो तैयार होते ही फोन पर बता देंगे — काउंटर पर खड़े रहने या फ़ोन करने की ज़रूरत नहीं। और कुछ नहीं।',
     notifyYes: 'हाँ, बताइए',
     notifyLater: 'रहने दीजिए',
     notifyOn: 'बता देंगे',

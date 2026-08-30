@@ -106,6 +106,29 @@ export default async function OrdersPage({ params }: PageProps) {
     current.map((item) => [item.id, { nameBn: item.nameBn, nameHi: item.nameHi }]),
   );
 
+  /**
+   * Which customers this shop can reach without the owner lifting a finger.
+   *
+   * THIS IS WHAT DECIDES WHETHER A WHATSAPP BUTTON APPEARS AT ALL. The server
+   * already tells these phones when their order is ready or has changed — so
+   * showing the owner a "message the customer" button as well is asking them to
+   * do, by hand, in a rush, a job that is already done. Two messages for one
+   * event is also two interruptions for the customer.
+   *
+   * A phone number rather than a customer id, because that is what both an
+   * order and a subscription carry, and a `Customer` row can be purged and
+   * remade underneath both of them.
+   */
+  const reachable = new Set(
+    (
+      await prisma.pushSubscription.findMany({
+        where: { shopId: shop.id, role: 'CUSTOMER' },
+        select: { customerPhone: true },
+        distinct: ['customerPhone'],
+      })
+    ).map((row) => row.customerPhone),
+  );
+
   const orders: OwnerOrder[] = rows.map((row) => ({
     id: row.id,
     customerName: row.customerName,
@@ -116,6 +139,7 @@ export default async function OrdersPage({ params }: PageProps) {
     totalAmountPaise: row.totalAmountPaise,
     deliveryFeePaise: row.deliveryFeePaise,
     revised: row.revisedAt !== null,
+    reachable: reachable.has(row.customerPhone),
     createdAt: row.createdAt.toISOString(),
     lines: toLines(row.itemsJson, known),
   }));
