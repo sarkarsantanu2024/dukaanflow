@@ -1,7 +1,9 @@
+import { parsePaise } from './money';
+
 /**
  * Parser for the admin bulk-update textarea.
  *
- *   Price mode:  "Rice 1 kg = 68"
+ *   Price mode:  "Rice 1 kg = 68" or "Rice 1 kg = 68.50"
  *   Stock mode:  "Rice 1 kg = out"
  *
  * One line per item. The left side is matched against `name + " " + unit` as
@@ -10,7 +12,7 @@
  */
 
 export type ParsedLine =
-  | { kind: 'price'; raw: string; label: string; price: number }
+  | { kind: 'price'; raw: string; label: string; pricePaise: number }
   | { kind: 'stock'; raw: string; label: string; inStock: boolean };
 
 export type ParseResult = { parsed: ParsedLine[]; failed: string[] };
@@ -40,14 +42,16 @@ export function parseBulk(text: string, mode: 'price' | 'stock'): ParseResult {
     }
 
     if (mode === 'price') {
-      // Tolerate "₹68", "68/-", "68.00" — shopkeepers paste from anywhere.
-      const digits = value.replace(/[₹,\s]/g, '').replace(/\/-$/, '');
-      const price = Number(digits);
-      if (!Number.isFinite(price) || !Number.isInteger(price) || price < 1 || price > 100000) {
+      // Tolerate "₹68", "68/-", "68.50" — shopkeepers paste from anywhere.
+      // `parsePaise` handles the rupees-and-paise arithmetic; this only has to
+      // strip the decoration a pasted price list arrives wrapped in.
+      const cleaned = value.replace(/\/-$/, '').trim();
+      const pricePaise = parsePaise(cleaned);
+      if (pricePaise === null || pricePaise < 50 || pricePaise > 10_000_000) {
         failed.push(line);
         continue;
       }
-      parsed.push({ kind: 'price', raw: line, label, price });
+      parsed.push({ kind: 'price', raw: line, label, pricePaise });
     } else {
       const token = value.toLowerCase();
       if (STOCK_IN.has(token)) parsed.push({ kind: 'stock', raw: line, label, inStock: true });

@@ -13,7 +13,7 @@ import { useConfirm } from '@/components/ui/useConfirm';
 import { VoiceItemAdder } from './VoiceItemAdder';
 import { PhotoItemAdder, type Identified } from './PhotoItemAdder';
 import type { StarterItem } from '@/lib/starter-catalogue';
-import { formatRupees } from '@/lib/money';
+import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import { suggestNames, translateCategory } from '@/lib/speech';
 import { unitsFor, UNIT_LIST_ID } from '@/lib/units';
 import { Drawer } from '@/components/ui/Drawer';
@@ -27,7 +27,7 @@ export type AdminItem = {
   name: string;
   nameBn: string;
   nameHi: string;
-  price: number;
+  pricePaise: number;
   /** False while the price is still the placeholder nobody chose. */
   priced: boolean;
   unit: string;
@@ -231,7 +231,7 @@ export function ItemsManager({
           name: draft.name,
           nameBn: draft.nameBn,
           nameHi: draft.nameHi,
-          price: Number(draft.price),
+          pricePaise: parsePaise(draft.price) ?? 0,
           unit: draft.unit,
           category: draft.category,
           inStock: true,
@@ -334,32 +334,33 @@ export function ItemsManager({
     const raw = priceDrafts[item.id];
     if (raw === undefined) return;
 
-    const price = Number(raw);
+    const pricePaise = parsePaise(raw);
     setPriceDrafts((current) => {
       const next = { ...current };
       delete next[item.id];
       return next;
     });
 
-    if (!Number.isInteger(price) || price < 1) {
-      push(`${t.price} — 1, 2, 3…`, 'error');
+    // 50 paise is the floor, so a toffee is listable — see priceSchema.
+    if (pricePaise === null || pricePaise < 50) {
+      push(`${t.price} — 10, 12.50, 68…`, 'error');
       return;
     }
     // Typing the same number back is still an act of pricing: it is how an
     // owner confirms that a placeholder Re 1 really is one rupee.
-    if (price === item.price && item.priced) return;
+    if (pricePaise === item.pricePaise && item.priced) return;
 
     // New rows arrive in stock now, so pricing one no longer has to switch it
     // on — but a row the owner had marked out *while* unpriced still should,
     // since the missing price was the only reason it was hidden.
     const changes = {
-      price,
+      pricePaise,
       priced: true,
       ...(!item.priced && !item.inStock ? { inStock: true } : {}),
     };
 
     if (await patchItem(item.id, changes)) {
-      push(`${displayName(item, locale)} → ${formatRupees(price)}`, 'success');
+      push(`${displayName(item, locale)} → ${formatPaise(pricePaise)}`, 'success');
     }
   }
 
@@ -377,13 +378,12 @@ export function ItemsManager({
           <Input
             label={t.price}
             required
-            type="number"
-            inputMode="numeric"
-            min={1}
+            type="text"
+            inputMode="decimal"
             value={draft.price}
             onChange={(event) => setDraft({ ...draft, price: event.target.value })}
             error={errors.price}
-            placeholder="68"
+            placeholder="68 or 68.50"
           />
           <Input
             label={t.unit}
@@ -427,7 +427,7 @@ export function ItemsManager({
           name: item.name,
           nameBn: item.nameBn,
           nameHi: item.nameHi,
-          price: 1,
+          pricePaise: 100,
           // A placeholder, not a price. Keeps the row off the shop page until
           // somebody says what it actually costs.
           priced: false,
@@ -601,11 +601,15 @@ export function ItemsManager({
                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">
                       ₹
                     </span>
+                    {/* `decimal` rather than `number`: paise mean the field
+                        now takes "12.50", and a number spinner on a phone
+                        offers a keypad without a decimal point on some
+                        Android keyboards. */}
                     <input
-                      type="number"
-                      min={1}
+                      type="text"
+                      inputMode="decimal"
                       aria-label={`${t.price} — ${displayName(item, locale)}`}
-                      value={priceDrafts[item.id] ?? String(item.price)}
+                      value={priceDrafts[item.id] ?? paiseToInput(item.pricePaise)}
                       onChange={(event) =>
                         setPriceDrafts((current) => ({ ...current, [item.id]: event.target.value }))
                       }

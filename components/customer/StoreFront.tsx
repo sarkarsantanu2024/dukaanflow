@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import clsx from 'clsx';
+import { SearchIcon } from '@/components/ui/Icon';
 import { ShopHeader, type ShopSummary } from './ShopHeader';
 import { ItemCard, itemName, type CustomerItem } from './ItemCard';
 import { CartBar } from './CartBar';
+import { CartDrawer, type CartLine } from './CartDrawer';
 import { CheckoutSheet, type CheckoutSubmit } from './CheckoutSheet';
 import { VoiceOrder } from './VoiceOrder';
 import { RepeatOrder, rememberOrder } from './RepeatOrder';
@@ -14,7 +16,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
-import { translateCategory } from '@/lib/speech';
+import { matchesSearch, translateCategory } from '@/lib/speech';
 
 const LOCALE_STORAGE_KEY = 'dukaanflow:locale';
 
@@ -64,6 +66,11 @@ function readRemembered(): RememberedCustomer | null {
 
 type Cart = Record<string, number>;
 
+/**
+ * How many items a shop needs before a search box earns its place on its page.
+ */
+const SEARCH_FROM = 15;
+
 export function StoreFront({ shop, items }: { shop: ShopSummary; items: CustomerItem[] }) {
   const { push } = useToast();
   // Bengali first, and remembered per shopper after that. A customer who
@@ -74,6 +81,8 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
   const [placed, setPlaced] = useState(false);
   const [remembered, setRemembered] = useState<RememberedCustomer | null>(null);
@@ -105,29 +114,63 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   );
 
   const visibleItems = useMemo(() => {
-    const needle = query.trim().toLowerCase();
     return items.filter((item) => {
       if (category && item.category !== category) return false;
-      if (!needle) return true;
-      // Search all three names, so typing "চাল" finds an item listed as Rice.
-      return `${item.name} ${item.nameBn} ${item.nameHi} ${item.unit} ${item.category}`
-        .toLowerCase()
-        .includes(needle);
+      // All three names, and spelling-tolerant: "ata" has to find "Atta", and
+      // "chawal" an item listed only as "Rice". See `matchesSearch`.
+      return matchesSearch(
+        [item.name, item.nameBn, item.nameHi, item.unit, item.category],
+        query,
+      );
     });
   }, [items, query, category]);
 
-  const { totalItems, totalAmount } = useMemo(() => {
+  const { totalItems, totalAmountPaise } = useMemo(() => {
     let count = 0;
     let amount = 0;
     for (const item of items) {
       const quantity = cart[item.id] ?? 0;
       if (quantity > 0) {
         count += quantity;
-        amount += quantity * item.price;
+        amount += quantity * item.pricePaise;
       }
     }
-    return { totalItems: count, totalAmount: amount };
+    return { totalItems: count, totalAmountPaise: amount };
   }, [cart, items]);
+
+  /**
+   * What is in the basket, as lines to show.
+   *
+   * Built from `items` rather than from the cart's own keys so the order
+   * matches the menu the shopper just scrolled — a basket that lists things in
+   * the order they happened to be tapped is a basket they have to re-read.
+   */
+  const cartLines: CartLine[] = useMemo(
+    () =>
+      items
+        .filter((item) => (cart[item.id] ?? 0) > 0)
+        .map((item) => ({
+          id: item.id,
+          label: itemName(item, locale),
+          unit: item.unit,
+          quantity: cart[item.id]!,
+          pricePaise: item.pricePaise,
+        })),
+    [items, cart, locale],
+  );
+
+  /**
+   * ADDING SOMETHING NEVER OPENS THE BASKET.
+   *
+   * It used to, and it was wrong in the ordinary case: a shopper picking eight
+   * things had a panel thrown over the menu on the first tap and then went on
+   * choosing behind it, or closed it and had it come back. The count and total
+   * on the floating button already say the tap registered, which is all the
+   * feedback an add actually needs.
+   *
+   * The basket opens on the basket button, and closes only on its own close or
+   * on checkout — nothing here opens or shuts it.
+   */
 
   /** Voice adds are relative — saying "rice" twice means two of them. */
   function addQuantity(itemId: string, more: number) {
@@ -206,23 +249,49 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
       {/* One column of controls above one grid of items, at every width — the
           same shape the rest of the product uses. Only the number of items in a
           row changes with the screen. */}
-      <main className="mx-auto max-w-6xl px-4 py-4 lg:py-6">
+      {/* The basket floats OVER the menu and never reflows it. Reserving width
+          for it moved every card sideways the moment it opened — the item the
+          shopper was reaching for slid out from under their thumb, and the
+          whole grid re-laid itself on each open and close. */}
+      <main className="mx-auto max-w-6xl px-4 pb-28 pt-4 lg:pt-6">
         {items.length === 0 ? (
           <EmptyState title={t.emptyShop} hint={t.emptyShopHint} />
         ) : (
           <>
-            {/* Search stays the full width of the menu it filters, and pins
-                directly beneath the brand bar so it is still there ten items
-                down. `top` clears that bar rather than hiding behind it. */}
+            {/* FILTERS LIVE WITH THE LIST; ACTIONS FLOAT.
+                That is the whole rule, and breaking it is what made the
+                floating search box unusable. A search field parked in the
+                empty space to the right of the grid has no visual
+                relationship to the grid, so nothing on screen says what
+                typing in it will do — the shopper has to guess. The mic and
+                the basket float because they DO something; search and
+                categories narrow what is below them, so they sit above it.
+
+                Sticky, so both are still reachable ten items down. */}
             <div className="sticky top-[3.25rem] z-10 -mx-4 bg-slate-100/95 px-4 pb-2 pt-3 backdrop-blur">
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={t.search}
-                aria-label={t.search}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base placeholder:text-slate-400 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
-              />
+              {/* SEARCH ONLY WHEN THERE IS SOMETHING TO SEARCH.
+                  A shop with a dozen items fits in a screen and a half of
+                  scrolling, which is faster than typing and needs nothing
+                  explained. A search box over it solves a problem the shopper
+                  does not have and asks them to work out why it is there.
+
+                  Same rule the category chips below have always followed:
+                  they hide themselves when there is only one category,
+                  because a filter that cannot change anything reads as
+                  broken rather than as absent. */}
+              {items.length >= SEARCH_FROM && (
+              <div className="relative">
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder={t.search}
+                  aria-label={t.search}
+                  className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-base placeholder:text-slate-400 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
+                />
+              </div>
+              )}
 
               {/* Two chips are needed before there is a choice to make. With a
                   single category, "All" and that category list exactly the same
@@ -257,22 +326,12 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
               )}
             </div>
 
-            {/* Matched against the whole menu, not the filtered view — a
-                shopper speaking an item should never be blocked by a search
-                term still sitting in the box. */}
-            <VoiceOrder items={items} locale={locale} onAdd={addQuantity} />
-
-            {/* Offered only while the cart is empty — once a shopper has begun
-                choosing, suggesting they start over is noise. */}
-            {totalItems === 0 && (
-              <RepeatOrder
-                slug={shop.slug}
-                items={items}
-                locale={locale}
-                onRepeat={(lines) => {
-                  for (const line of lines) addQuantity(line.id, line.quantity);
-                }}
-              />
+            {/* What the search actually did. Without this a shopper who typed
+                a stray letter sees a short list and no reason for it. */}
+            {query.trim() !== '' && visibleItems.length > 0 && (
+              <p className="mt-2 text-sm text-slate-500">
+                {visibleItems.length} / {items.length}
+              </p>
             )}
 
             {visibleItems.length === 0 ? (
@@ -298,6 +357,25 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           </>
         )}
 
+        {/* Below the menu, not above it. This is what the shopper bought LAST
+            time; the shop's actual list is what they came for, and a panel
+            offering four old items was standing between them and it. Folded
+            shut as well, so it is an answer to a question the shopper can ask
+            rather than one asked of them on arrival.
+
+            Still only while the basket is empty — once they have begun
+            choosing, suggesting they start over is noise. */}
+        {totalItems === 0 && (
+          <RepeatOrder
+            slug={shop.slug}
+            items={items}
+            locale={locale}
+            onRepeat={(lines) => {
+              for (const line of lines) addQuantity(line.id, line.quantity);
+            }}
+          />
+        )}
+
         <p className="mt-8 text-center text-xs text-slate-400">
           Powered by{' '}
           <Link href="/" className="font-medium text-slate-500 underline hover:text-brand-700">
@@ -307,11 +385,40 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         </p>
       </main>
 
-      <CartBar
-        totalItems={totalItems}
-        totalAmount={totalAmount}
-        onContinue={() => setCheckoutOpen(true)}
+      {/* Everything a shopper reaches for, in the one corner their thumb
+          already rests in.
+
+          Two things only — speak an order, and open the basket. Both DO
+          something; search and categories only narrow the list, so they live
+          above the list instead.
+
+          The wrapper is `pointer-events-none` and only the buttons themselves
+          take a click, so the gaps between them are still the live page — a
+          fixed box here once swallowed taps and left a card underneath
+          refusing to respond. `main` also carries enough bottom padding that
+          the last card scrolls clear rather than living under the stack. */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-3 px-4">
+          <VoiceOrder items={items} locale={locale} onAdd={addQuantity} />
+
+          {!cartOpen && (
+            <CartBar
+              totalItems={totalItems}
+              totalAmountPaise={totalAmountPaise}
+              onReview={() => setCartOpen(true)}
+              locale={locale}
+            />
+          )}
+      </div>
+
+      <CartDrawer
+        open={cartOpen}
+        lines={cartLines}
+        totalPaise={totalAmountPaise}
         locale={locale}
+        onClose={() => setCartOpen(false)}
+        onSetQuantity={setQuantity}
+        onClear={() => setCart({})}
+        onContinue={() => setCheckoutOpen(true)}
       />
 
       <CheckoutSheet
@@ -320,7 +427,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         onSubmit={placeOrder}
         submitting={submitting}
         totalItems={totalItems}
-        totalAmount={totalAmount}
+        totalAmountPaise={totalAmountPaise}
         locale={locale}
         deliveryEnabled={shop.deliveryEnabled}
         remembered={remembered}

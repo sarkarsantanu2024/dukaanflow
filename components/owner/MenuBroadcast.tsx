@@ -18,11 +18,11 @@ import { useState } from 'react';
 import clsx from 'clsx';
 import { useToast } from '@/components/ui/Toast';
 import { WhatsAppIcon } from '@/components/ui/Icon';
-import { formatRupees } from '@/lib/money';
+import { formatPaise } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
 
-export type MenuItem = { id: string; name: string; nameBn: string; nameHi: string; price: number; unit: string };
+export type MenuItem = { id: string; name: string; nameBn: string; nameHi: string; pricePaise: number; unit: string };
 
 function label(item: MenuItem, locale: Locale): string {
   const name = locale === 'bn' ? item.nameBn || item.name : locale === 'hi' ? item.nameHi || item.name : item.name;
@@ -51,7 +51,7 @@ export function MenuBroadcast({
   const message = [
     `${shopName} — ${t.menuToday}:`,
     '',
-    ...chosen.map((item) => `• ${label(item, locale)} — ${formatRupees(item.price)}`),
+    ...chosen.map((item) => `• ${label(item, locale)} — ${formatPaise(item.pricePaise)}`),
     '',
     shopUrl,
   ].join('\n');

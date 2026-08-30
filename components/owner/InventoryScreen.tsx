@@ -16,7 +16,7 @@ import type { ShopType } from '@prisma/client';
 import { StarterPicker } from './StarterPicker';
 import { ownerDict } from '@/lib/owner-i18n';
 import { VoiceArt } from '@/components/ui/ShopArt';
-import { formatRupees } from '@/lib/money';
+import { formatPaise } from '@/lib/money';
 import type { StarterItem } from '@/lib/starter-catalogue';
 import type { Locale } from '@/lib/i18n';
 
@@ -91,7 +91,7 @@ export function InventoryScreen({
         )}
         {unpriced > 0 && (
           <p className="text-sm tabular-nums text-slate-500">
-            {unpriced} × {formatRupees(1)}
+            {unpriced} × {formatPaise(100)}
           </p>
         )}
       </div>

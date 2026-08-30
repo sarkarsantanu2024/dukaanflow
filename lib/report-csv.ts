@@ -12,7 +12,20 @@
  */
 
 import { formatDayTime } from './time';
+import { PAISE_PER_RUPEE } from './money';
 import type { Report } from './analytics';
+
+/**
+ * Money for a spreadsheet: rupees with two decimals, unformatted.
+ *
+ * Not `formatPaise`. That produces "₹1,250" for a person to read, and a
+ * spreadsheet handed a currency symbol and a thousands separator stores text —
+ * so the column will not sum, which is the first thing anybody does with an
+ * exported report. A bare "1250.00" is a number in every locale Excel opens.
+ */
+function rupees(paise: number): string {
+  return (Math.round(paise) / PAISE_PER_RUPEE).toFixed(2);
+}
 
 /**
  * RFC 4180 quoting. A leading `=`, `+`, `-` or `@` is also prefixed with a
@@ -59,9 +72,9 @@ export function reportToCsv(report: Report): string {
     'Headline',
     ['Measure', 'Value'],
     [
-      ['Revenue', h.revenue],
+      ['Revenue (₹)', rupees(h.revenuePaise)],
       ['Transactions', h.transactions],
-      ['Average basket', h.averageBasket],
+      ['Average basket (₹)', rupees(h.averageBasketPaise)],
       ['Shops in scope', h.shops],
       ['Shops with no trade', h.silentShops],
       ['Customers who ordered', h.customers],
@@ -74,10 +87,10 @@ export function reportToCsv(report: Report): string {
 
   section(
     'Best selling items',
-    ['Item', 'Revenue', 'Quantity', 'Transactions', 'Shops selling it', 'Share of revenue %'],
+    ['Item', 'Revenue (₹)', 'Quantity', 'Transactions', 'Shops selling it', 'Share of revenuePaise %'],
     report.topProducts.map((product) => [
       product.label,
-      product.revenue,
+      rupees(product.revenuePaise),
       product.quantity,
       product.transactions,
       product.shops,
@@ -87,30 +100,30 @@ export function reportToCsv(report: Report): string {
 
   section(
     'Occasions',
-    ['Occasion', 'Dates', 'Revenue', 'Last year', 'Change %', 'Moved most'],
+    ['Occasion', 'Dates', 'Revenue (₹)', 'Last year (₹)', 'Change %', 'Moved most'],
     report.occasions.map((occasion) => [
       occasion.name,
       occasion.when,
-      occasion.revenue,
-      occasion.lastYearRevenue ?? '',
+      rupees(occasion.revenuePaise),
+      occasion.lastYearRevenuePaise === null ? '' : rupees(occasion.lastYearRevenuePaise),
       occasion.change ?? '',
       occasion.topItems
         .slice(0, 5)
-        .map((item) => `${item.label} (${item.revenue})`)
+        .map((item) => `${item.label} (${rupees(item.revenuePaise)})`)
         .join('; '),
     ]),
   );
 
   section(
     'Where customers come from',
-    ['Area', 'Orders', 'Share %', 'Customers', 'Revenue'],
+    ['Area', 'Orders', 'Share %', 'Customers', 'Revenue (₹)'],
     [
       ...report.localities.map((area) => [
         area.area,
         area.orders,
         area.share,
         area.customers,
-        area.revenue,
+        rupees(area.revenuePaise),
       ]),
       // Named, not hidden: a share table that quietly omits its denominator is
       // how a chart of 40% of the orders gets read as all of them.
@@ -122,58 +135,66 @@ export function reportToCsv(report: Report): string {
 
   section(
     'Busiest hours (shop time)',
-    ['Hour', 'Transactions', 'Revenue'],
-    report.byHour.map((slot) => [slot.label, slot.transactions, slot.revenue]),
+    ['Hour', 'Transactions', 'Revenue (₹)'],
+    report.byHour.map((slot) => [slot.label, slot.transactions, rupees(slot.revenuePaise)]),
   );
 
   section(
     'Busiest days of the week',
-    ['Day', 'Transactions', 'Revenue'],
-    report.byWeekday.map((slot) => [slot.label, slot.transactions, slot.revenue]),
+    ['Day', 'Transactions', 'Revenue (₹)'],
+    report.byWeekday.map((slot) => [slot.label, slot.transactions, rupees(slot.revenuePaise)]),
   );
 
   section(
     report.period.granularity === 'year' ? 'Month by month' : 'Day by day',
-    [report.period.granularity === 'year' ? 'Month' : 'Day', 'Transactions', 'Revenue'],
-    report.overTime.map((slot) => [slot.label, slot.transactions, slot.revenue]),
+    [report.period.granularity === 'year' ? 'Month' : 'Day', 'Transactions', 'Revenue (₹)'],
+    report.overTime.map((slot) => [slot.label, slot.transactions, rupees(slot.revenuePaise)]),
   );
 
   section(
     'Where the money came from',
-    ['Channel', 'Transactions', 'Revenue'],
+    ['Channel', 'Transactions', 'Revenue (₹)'],
     [
-      ['WhatsApp orders', report.channels.orders.transactions, report.channels.orders.revenue],
-      ['Counter sales', report.channels.counter.transactions, report.channels.counter.revenue],
+      ['WhatsApp orders', report.channels.orders.transactions, rupees(report.channels.orders.revenuePaise)],
+      ['Counter sales', report.channels.counter.transactions, rupees(report.channels.counter.revenuePaise)],
     ],
   );
 
   section(
     'Payment modes',
-    ['Mode', 'Transactions', 'Revenue'],
-    report.paymentModes.map((slot) => [slot.label, slot.transactions, slot.revenue]),
+    ['Mode', 'Transactions', 'Revenue (₹)'],
+    report.paymentModes.map((slot) => [slot.label, slot.transactions, rupees(slot.revenuePaise)]),
   );
 
   section(
     'Delivery or pickup',
-    ['Type', 'Orders', 'Revenue'],
-    report.orderTypes.map((slot) => [slot.label, slot.transactions, slot.revenue]),
+    ['Type', 'Orders', 'Revenue (₹)'],
+    report.orderTypes.map((slot) => [slot.label, slot.transactions, rupees(slot.revenuePaise)]),
   );
 
   section(
     'Order outcomes',
     ['Status', 'Orders', 'Value'],
-    report.orderStatuses.map((slot) => [slot.label, slot.transactions, slot.revenue]),
+    report.orderStatuses.map((slot) => [slot.label, slot.transactions, rupees(slot.revenuePaise)]),
   );
 
   section(
     report.singleShop ? 'This shop' : 'Shops',
-    ['Shop', 'Type', 'Revenue', 'Transactions', 'Average basket', 'Items listed', 'Items that sold nothing'],
+    [
+      'Shop',
+      'Type',
+      'Revenue (₹)',
+      'Transactions',
+      'Average basket (₹)',
+      'Items listed',
+      'Items that sold nothing',
+    ],
     report.shops.map((shop) => [
       shop.name,
       shop.typeLabel,
-      shop.revenue,
+      rupees(shop.revenuePaise),
       shop.transactions,
-      shop.averageBasket,
+      rupees(shop.averageBasketPaise),
       shop.items,
       shop.deadItems,
     ]),
@@ -182,7 +203,7 @@ export function reportToCsv(report: Report): string {
   section(
     'Proven sellers currently out of stock',
     ['Item', 'Shop', 'Revenue this period'],
-    report.outOfStockSellers.map((entry) => [entry.label, entry.shop, entry.revenue]),
+    report.outOfStockSellers.map((entry) => [entry.label, entry.shop, rupees(entry.revenuePaise)]),
   );
 
   section(

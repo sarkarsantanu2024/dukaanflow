@@ -25,7 +25,6 @@ import { MicButton } from '@/components/voice/MicButton';
 import { speak, useVoice, type VoiceErrorCode } from '@/components/voice/useVoice';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import { formatRupees } from '@/lib/money';
 import {
   resolveSpokenCommand,
   spokenYesNo,
@@ -389,7 +388,7 @@ export function VoiceItemAdder({
                 name: action.item.name,
                 nameBn: action.item.nameBn,
                 nameHi: action.item.nameHi,
-                price: action.item.price,
+                price: action.item.pricePaise,
                 unit: action.item.unit,
                 category: action.item.category,
                 inStock: action.item.inStock,

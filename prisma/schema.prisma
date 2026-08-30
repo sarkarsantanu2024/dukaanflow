@@ -1,5 +1,12 @@
 // DukaanFlow — Prisma schema
-// Money is stored as INTEGER RUPEES everywhere. No floats, no paise.
+//
+// MONEY IS STORED AS INTEGER PAISE EVERYWHERE. Never floats, never rupees.
+//
+// Every column holding money says "Paise" in its name. That is not decoration:
+// a rupee figure and a paise figure are both plain integers, so nothing but the
+// name stops one being written where the other is expected, and the symptom of
+// getting it wrong is a price that is a hundred times off in somebody's shop.
+// If a field holds money and does not say Paise, it is a bug.
 
 generator client {
   provider = "prisma-client-js"
@@ -45,6 +52,7 @@ enum Plan {
   FREE
   STARTER
   PRO
+  EX
 }
 
 enum SubStatus {
@@ -87,15 +95,15 @@ model Shop {
   /// closing time, and software that hard-stops at 21:00 would be wrong about
   /// the shop rather than the shop being wrong about itself. `active` remains
   /// the switch that actually stops orders.
-  openTime        String  @default("")
-  closeTime       String  @default("")
+  openTime   String @default("")
+  closeTime  String @default("")
   /// Why the shop is shut, in the shopkeeper's own words — "closed today,
   /// family function", "back at 5". Shown to customers on the closed page.
   ///
   /// A shop that is simply shut says so with `active`; this says why, which is
   /// the difference between a customer trying again tomorrow and deciding the
   /// shop has gone.
-  closedNote      String  @default("")
+  closedNote String @default("")
 
   /// Does this shop deliver, or is it collection only?
   ///
@@ -112,7 +120,7 @@ model Shop {
   /// guessed at by name, because "Demo Store" is a name a real shop could
   /// choose. The console hides these behind a toggle so they never quietly
   /// inflate a count of how many shops are live.
-  isDemo    Boolean @default(false)
+  isDemo Boolean @default(false)
 
   /// The Indian state this shop trades in, as a code from `lib/states.ts`.
   /// Blank until somebody fills it in. It exists for one reason: occasions are
@@ -166,8 +174,21 @@ model Shop {
 model Payment {
   id          String   @id @default(uuid()) @db.Uuid
   shopId      String   @db.Uuid
-  amount      Int // INTEGER RUPEES
+  /// What the shop paid DukaanFlow. The listing service is priced at 50 paise
+  /// an item, so this needs the finer unit even when every plan price is whole.
+  amountPaise Int
   plan        Plan
+  /// "SUBSCRIPTION" — bought time on a plan.
+  /// "LISTING" — the operator catalogued the shop's items, charged per item.
+  ///
+  /// A string rather than an enum so the set can grow without a migration, and
+  /// separate from `method` because that says how the money arrived, not what
+  /// it bought. Service revenue and subscription revenue answer different
+  /// questions and must not be summed as one number by accident.
+  kind        String   @default("SUBSCRIPTION")
+  /// For a LISTING charge, how many items were listed. Zero otherwise.
+  itemsListed Int      @default(0)
+  /// Equal for a one-off charge, which buys no time.
   periodStart DateTime
   periodEnd   DateTime
   /// "UPI", "CASH", "RAZORPAY", …
@@ -187,14 +208,17 @@ model Payment {
 /// answer different questions: orders are a queue to work through, sales are
 /// what the day took.
 model Sale {
-  id          String   @id @default(uuid()) @db.Uuid
-  shopId      String   @db.Uuid
-  /// Immutable snapshot: name, unit, quantity and the price charged.
-  itemsJson   Json
-  totalAmount Int // INTEGER RUPEES
+  id               String   @id @default(uuid()) @db.Uuid
+  shopId           String   @db.Uuid
+  /// Immutable snapshot: name, unit, quantity and the price charged, in PAISE.
+  /// Keys inside carry the unit in their names too (`pricePaise`,
+  /// `amountPaise`) — JSON gets no help from the compiler, so the name is the
+  /// only thing standing between a reader and a hundredfold error.
+  itemsJson        Json
+  totalAmountPaise Int
   /// "CASH" or "UPI".
-  paymentMode String   @default("CASH")
-  createdAt   DateTime @default(now())
+  paymentMode      String   @default("CASH")
+  createdAt        DateTime @default(now())
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
@@ -235,19 +259,19 @@ model Customer {
 /// never stored: a running total that can drift from its own history is how a
 /// paper khata starts an argument, and the whole point is to end those.
 model LedgerEntry {
-  id         String     @id @default(uuid()) @db.Uuid
-  shopId     String     @db.Uuid
-  customerId String     @db.Uuid
-  kind       LedgerKind
-  amount     Int // INTEGER RUPEES, always positive
-  note       String     @default("")
+  id          String     @id @default(uuid()) @db.Uuid
+  shopId      String     @db.Uuid
+  customerId  String     @db.Uuid
+  kind        LedgerKind
+  amountPaise Int // always positive; the kind decides the direction
+  note        String     @default("")
   /// Set when the entry came from a counter sale rung up on credit.
-  saleId     String?    @db.Uuid
+  saleId      String?    @db.Uuid
   /// Set when it came from a WhatsApp order the owner completed unpaid.
   /// Unique, so an order can never be posted to the khata twice — a double tap
   /// on "not paid yet" would otherwise double what the customer owes.
-  orderId    String?    @unique @db.Uuid
-  createdAt  DateTime   @default(now())
+  orderId     String?    @unique @db.Uuid
+  createdAt   DateTime   @default(now())
 
   shop     Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
@@ -257,34 +281,32 @@ model LedgerEntry {
 }
 
 model Item {
-  id        String   @id @default(uuid()) @db.Uuid
-  shopId    String   @db.Uuid
+  id         String   @id @default(uuid()) @db.Uuid
+  shopId     String   @db.Uuid
   // `name` is the primary name and always set — it is what a customer sees
   // when their own language is blank. The other two are optional overrides.
-  name      String
-  nameBn    String   @default("")
-  nameHi    String   @default("")
-  price     Int // INTEGER RUPEES
+  name       String
+  nameBn     String   @default("")
+  nameHi     String   @default("")
+  pricePaise Int
   /**
    * Has a human actually chosen this price?
-   *
    * This used to be inferred from `price > 1`, which was wrong in a way that
    * cost a shop its whole storefront: a kirana really does sell a toffee, a
    * matchbox or a single biscuit for one rupee, and every one of them was
    * silently hidden from customers as "not priced yet".
-   *
    * Items arriving from the starter catalogue, voice or a photograph land here
    * `false` at a placeholder Re 1 — an invented price is worse than no item at
    * all. The moment somebody sets a price, any price, this becomes true and the
    * item goes on sale. One rupee chosen and one rupee never touched are
    * different facts, and only a separate column can tell them apart.
    */
-  priced    Boolean  @default(false)
-  unit      String   @default("")
-  category  String   @default("")
-  inStock   Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  priced     Boolean  @default(false)
+  unit       String   @default("")
+  category   String   @default("")
+  inStock    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
@@ -294,36 +316,37 @@ model Item {
 }
 
 model Order {
-  id              String      @id @default(uuid()) @db.Uuid
-  shopId          String      @db.Uuid
-  customerName    String      @default("")
-  customerPhone   String
-  customerAddress String      @default("")
+  id               String      @id @default(uuid()) @db.Uuid
+  shopId           String      @db.Uuid
+  customerName     String      @default("")
+  customerPhone    String
+  customerAddress  String      @default("")
   /// The para or lane, in the customer's own words. How a delivery is actually
   /// found, how a shopkeeper recognises a regular, and what the locality report
   /// groups on.
-  customerArea    String      @default("")
-  orderType       OrderType   @default(DELIVERY)
-  // Immutable snapshot of what was ordered, at the price charged at that moment.
-  // Reporting reads `totalAmount`; it is never recomputed from this JSON.
-  itemsJson       Json
-  totalAmount     Int
-  status          OrderStatus @default(NEW)
+  customerArea     String      @default("")
+  orderType        OrderType   @default(DELIVERY)
+  // Immutable snapshot of what was ordered, at the price charged at that
+  // moment, in PAISE — see the note on Sale.itemsJson about naming.
+  // Reporting reads `totalAmountPaise`; it is never recomputed from this JSON.
+  itemsJson        Json
+  totalAmountPaise Int
+  status           OrderStatus @default(NEW)
   /// How the money arrived: "CASH", "UPI" or "" while unpaid.
   ///
   /// Without this the till was the only screen that could take a payment, so an
   /// owner whose customer wanted to scan a UPI code had to open Sell and tap
   /// the items in again — creating a second record of one sale. The double
   /// count was never carelessness; the app was sending them there.
-  paymentMode     String      @default("")
+  paymentMode      String      @default("")
   /// Did the money arrive? Only meaningful once the order is COMPLETED.
   ///
   /// Completing an order without this posts the total to the customer's khata,
   /// because goods that left the shop unpaid are a debt whether or not anybody
   /// writes it down — and not writing it down is the thing DukaanFlow exists
   /// to end.
-  paymentReceived Boolean     @default(false)
-  createdAt       DateTime    @default(now())
+  paymentReceived  Boolean     @default(false)
+  createdAt        DateTime    @default(now())
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
@@ -384,8 +407,8 @@ model Occasion {
 /// its dates are computed from `fixedMonth`/`fixedDay` for whatever year is
 /// being reported.
 model OccasionDate {
-  id         String @id @default(uuid()) @db.Uuid
-  occasionId String @db.Uuid
+  id         String   @id @default(uuid()) @db.Uuid
+  occasionId String   @db.Uuid
   year       Int
   /// Inclusive first and last day, as calendar dates in shop time.
   startsOn   DateTime @db.Date
@@ -430,7 +453,7 @@ model ItemPeriodStat {
   itemUnit String @default("")
 
   quantity     Int
-  revenue      Int // INTEGER RUPEES
+  revenuePaise Int
   transactions Int
 
   computedAt DateTime @updatedAt
@@ -447,9 +470,9 @@ model ItemPeriodStat {
 /// The locality half of the same problem `ItemPeriodStat` solves: areas are
 /// only on orders, and orders are purged. Rolled up before that happens.
 model AreaPeriodStat {
-  id      String @id @default(uuid()) @db.Uuid
-  shopId  String @db.Uuid
-  year    Int
+  id     String @id @default(uuid()) @db.Uuid
+  shopId String @db.Uuid
+  year   Int
   /// The para or lane, as the customer wrote it. Never blank — orders with no
   /// area are simply not counted here, and the report says how many those were
   /// rather than inventing a row.
@@ -458,12 +481,12 @@ model AreaPeriodStat {
   /// para thinks in one; asking for it bought tidy grouping at the cost of a
   /// field customers skipped. The area they already type is the answer they
   /// were going to give anyway.
-  area String
+  area   String
 
-  orders    Int
-  revenue   Int // INTEGER RUPEES
+  orders       Int
+  revenuePaise Int
   /// Distinct phone numbers that ordered from this area.
-  customers Int
+  customers    Int
 
   computedAt DateTime @updatedAt
 

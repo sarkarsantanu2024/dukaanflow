@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { StoreFront } from '@/components/customer/StoreFront';
 import { formatClockRange } from '@/lib/hours';
+import { entitlement, type Plan, type SubStatus } from '@/lib/plans';
 
 // The menu changes whenever the admin edits an item, so this page is always
 // rendered fresh. Reads go straight to Prisma — no API hop for GETs.
@@ -25,6 +26,10 @@ async function loadShop(slug: string) {
       closeTime: true,
       closedNote: true,
       deliveryEnabled: true,
+      plan: true,
+      subscriptionStatus: true,
+      trialEndsAt: true,
+      currentPeriodEnd: true,
       ownerName: true,
       imageData: true,
       ownerImageData: true,
@@ -42,7 +47,7 @@ async function loadShop(slug: string) {
           name: true,
           nameBn: true,
           nameHi: true,
-          price: true,
+          pricePaise: true,
           unit: true,
           category: true,
           inStock: true,
@@ -68,7 +73,17 @@ export default async function ShopPage({ params }: PageProps) {
 
   const hours = formatClockRange(shop.openTime, shop.closeTime);
 
-  if (!shop.active) {
+  // Three months unpaid takes the storefront offline. Derived on read rather
+  // than stored, so it lifts the instant a payment is recorded — an owner who
+  // has just paid must not wait on a nightly job to reopen.
+  const billing = entitlement({
+    plan: shop.plan as Plan,
+    subscriptionStatus: shop.subscriptionStatus as SubStatus,
+    trialEndsAt: shop.trialEndsAt,
+    currentPeriodEnd: shop.currentPeriodEnd,
+  });
+
+  if (!shop.active || billing.autoPaused) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-6 text-center">
         <p className="text-5xl">🔒</p>
@@ -91,6 +106,15 @@ export default async function ShopPage({ params }: PageProps) {
     );
   }
 
-  const { items, active: _active, closedNote: _note, ...summary } = shop;
+  const {
+    items,
+    active: _active,
+    closedNote: _note,
+    plan: _plan,
+    subscriptionStatus: _status,
+    trialEndsAt: _trialEnds,
+    currentPeriodEnd: _periodEnd,
+    ...summary
+  } = shop;
   return <StoreFront shop={summary} items={items} />;
 }

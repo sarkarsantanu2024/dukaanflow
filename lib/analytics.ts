@@ -86,15 +86,13 @@ export function buildPeriod(
 
 /* ------------------------------------------------------- snapshot decoding */
 
-type SnapshotLine = { name: string; unit: string; quantity: number; amount: number };
+type SnapshotLine = { name: string; unit: string; quantity: number; amountPaise: number };
 
 /**
  * Reads the item lines out of an order's or a sale's JSON snapshot.
  *
- * Defensive on purpose: these rows were written by several versions of the
- * app. Orders placed before the two shapes were reconciled call the line total
- * `lineTotal` rather than `amount`, and a report that silently totals those as
- * zero is worse than one that refuses to run.
+ * Defensive on purpose: these rows were written by several versions of the app,
+ * in two different units. See `linePaise` below for which key means what.
  */
 function readLines(json: unknown): SnapshotLine[] {
   if (!Array.isArray(json)) return [];
@@ -108,15 +106,35 @@ function readLines(json: unknown): SnapshotLine[] {
     if (!name) continue;
 
     const quantity = toNumber(row.quantity);
-    const amount = toNumber(row.amount ?? row.lineTotal ?? toNumber(row.price) * quantity);
     lines.push({
       name,
       unit: typeof row.unit === 'string' ? row.unit.trim() : '',
       quantity,
-      amount,
+      amountPaise: linePaise(row, quantity),
     });
   }
   return lines;
+}
+
+/**
+ * What one snapshot line came to, in paise.
+ *
+ * THE KEY NAMES CARRY THE UNIT, and getting this wrong is a hundredfold error
+ * in a report. Snapshots written since money moved to paise use `amountPaise`
+ * and `pricePaise`. Older rows use `amount`, `lineTotal` or `price`, and those
+ * hold RUPEES — so they are multiplied here rather than read as paise, which
+ * would report every historical order at one per cent of its real value.
+ *
+ * Preferring the paise keys means a row that somehow carries both is read as
+ * the newer shape, which is the one that was written last.
+ */
+function linePaise(row: Record<string, unknown>, quantity: number): number {
+  if (row.amountPaise !== undefined) return toNumber(row.amountPaise);
+  if (row.pricePaise !== undefined) return toNumber(row.pricePaise) * quantity;
+
+  const legacyRupees =
+    row.amount ?? row.lineTotal ?? (row.price === undefined ? undefined : toNumber(row.price) * quantity);
+  return legacyRupees === undefined ? 0 : Math.round(toNumber(legacyRupees) * 100);
 }
 
 function toNumber(value: unknown): number {
@@ -149,28 +167,28 @@ export type ProductRow = {
   name: string;
   unit: string;
   /** Integer rupees taken by this product over the period. */
-  revenue: number;
+  revenuePaise: number;
   /** Units sold. Safe to sum: every row here shares one unit. */
   quantity: number;
   /** How many separate orders or sales included it. */
   transactions: number;
   /** Distinct shops that sold it — a product only one shop moves is a niche. */
   shops: number;
-  /** Share of total period revenue, 0–100. */
+  /** Share of total period revenuePaise, 0–100. */
   revenueShare: number;
 };
 
-export type BucketRow = { label: string; transactions: number; revenue: number };
+export type BucketRow = { label: string; transactions: number; revenuePaise: number };
 
 export type ShopRow = {
   name: string;
   slug: string;
   type: ShopTypeId;
   typeLabel: string;
-  revenue: number;
+  revenuePaise: number;
   transactions: number;
   /** Integer rupees. */
-  averageBasket: number;
+  averageBasketPaise: number;
   /** Live items in the catalogue right now. */
   items: number;
   /** Items that took no money at all this period. */
@@ -192,10 +210,10 @@ export type Report = {
   generatedAt: Date;
 
   headline: {
-    revenue: number;
+    revenuePaise: number;
     transactions: number;
     /** Integer rupees. */
-    averageBasket: number;
+    averageBasketPaise: number;
     shops: number;
     /** Shops that took no money this period — the churn watch list. */
     silentShops: number;
@@ -210,7 +228,7 @@ export type Report = {
   /** The tail: listed, still listed, sold nothing. Dead shelf space. */
   deadProducts: { label: string; shops: number }[];
   /** Top sellers a shop is currently showing as unavailable — live lost sales. */
-  outOfStockSellers: { label: string; shop: string; slug: string; revenue: number }[];
+  outOfStockSellers: { label: string; shop: string; slug: string; revenuePaise: number }[];
 
   /**
    * ② What each occasion moved, and how that compares with last year.
@@ -223,12 +241,12 @@ export type Report = {
     name: string;
     /** The occasion's own dates this period, for the label. */
     when: string;
-    revenue: number;
+    revenuePaise: number;
     /** Same occasion, same shops, the year before. Null if there is no history. */
-    lastYearRevenue: number | null;
+    lastYearRevenuePaise: number | null;
     /** Change against last year, as a percentage. Null without history. */
     change: number | null;
-    topItems: { label: string; quantity: number; revenue: number }[];
+    topItems: { label: string; quantity: number; revenuePaise: number }[];
   }[];
   /** Occasions are only reportable once somebody enters the calendar. */
   occasionCalendarEmpty: boolean;
@@ -237,7 +255,7 @@ export type Report = {
   localities: {
     area: string;
     orders: number;
-    revenue: number;
+    revenuePaise: number;
     customers: number;
     /** Share of orders that named an area, 0–100. */
     share: number;
@@ -253,9 +271,9 @@ export type Report = {
 
   channels: {
     /** Arrived from a customer's phone via the QR page. */
-    orders: { transactions: number; revenue: number };
+    orders: { transactions: number; revenuePaise: number };
     /** Rung up at the counter on the owner's own app. */
-    counter: { transactions: number; revenue: number };
+    counter: { transactions: number; revenuePaise: number };
   };
   paymentModes: BucketRow[];
   orderTypes: BucketRow[];
@@ -275,7 +293,7 @@ export type Report = {
 type OrderRow = {
   shopId: string;
   createdAt: Date;
-  totalAmount: number;
+  totalAmountPaise: number;
   orderType: string;
   status: string;
   paymentMode: string;
@@ -287,7 +305,7 @@ type OrderRow = {
 type SaleRow = {
   shopId: string;
   createdAt: Date;
-  totalAmount: number;
+  totalAmountPaise: number;
   paymentMode: string;
   itemsJson: unknown;
 };
@@ -350,7 +368,7 @@ export async function loadReport(
           select: {
             shopId: true,
             createdAt: true,
-            totalAmount: true,
+            totalAmountPaise: true,
             orderType: true,
             status: true,
             paymentMode: true,
@@ -364,7 +382,7 @@ export async function loadReport(
           select: {
             shopId: true,
             createdAt: true,
-            totalAmount: true,
+            totalAmountPaise: true,
             paymentMode: true,
             itemsJson: true,
           },
@@ -451,7 +469,7 @@ async function loadOccasions(
       shopId: { in: shopIds },
       occasionKey: { in: rows.map((row) => row.id) },
     },
-    select: { occasionKey: true, itemName: true, itemUnit: true, quantity: true, revenue: true },
+    select: { occasionKey: true, itemName: true, itemUnit: true, quantity: true, revenuePaise: true },
   });
 
   // Last year's figures are matched by NAME, not by id: "Durga Puja 2026" and
@@ -463,43 +481,43 @@ async function loadOccasions(
       year: period.year - 1,
       occasionName: { in: rows.map((row) => row.name) },
     },
-    select: { occasionName: true, revenue: true },
+    select: { occasionName: true, revenuePaise: true },
   });
 
   const priorByName = new Map<string, number>();
   for (const stat of priorStats) {
     if (!stat.occasionName) continue;
-    priorByName.set(stat.occasionName, (priorByName.get(stat.occasionName) ?? 0) + stat.revenue);
+    priorByName.set(stat.occasionName, (priorByName.get(stat.occasionName) ?? 0) + stat.revenuePaise);
   }
 
   const built = rows.map((row) => {
     const mine = stats.filter((stat) => stat.occasionKey === row.id);
-    const revenue = mine.reduce((sum, stat) => sum + stat.revenue, 0);
+    const revenuePaise = mine.reduce((sum, stat) => sum + stat.revenuePaise, 0);
 
-    const items = new Map<string, { quantity: number; revenue: number }>();
+    const items = new Map<string, { quantity: number; revenuePaise: number }>();
     for (const stat of mine) {
       const label = stat.itemUnit ? `${stat.itemName} · ${stat.itemUnit}` : stat.itemName;
-      const tally = items.get(label) ?? { quantity: 0, revenue: 0 };
+      const tally = items.get(label) ?? { quantity: 0, revenuePaise: 0 };
       tally.quantity += stat.quantity;
-      tally.revenue += stat.revenue;
+      tally.revenuePaise += stat.revenuePaise;
       items.set(label, tally);
     }
 
-    const lastYearRevenue = priorByName.get(row.name) ?? null;
+    const lastYearRevenuePaise = priorByName.get(row.name) ?? null;
 
     return {
       name: row.name,
       when: row.startsOn === row.endsOn ? row.startsOn! : `${row.startsOn} → ${row.endsOn}`,
-      revenue,
-      lastYearRevenue,
+      revenuePaise,
+      lastYearRevenuePaise,
       // A rise from zero is not a percentage, it is a first year. Left null.
       change:
-        lastYearRevenue && lastYearRevenue > 0
-          ? Math.round(((revenue - lastYearRevenue) / lastYearRevenue) * 1000) / 10
+        lastYearRevenuePaise && lastYearRevenuePaise > 0
+          ? Math.round(((revenuePaise - lastYearRevenuePaise) / lastYearRevenuePaise) * 1000) / 10
           : null,
       topItems: [...items.entries()]
         .map(([label, tally]) => ({ label, ...tally }))
-        .sort((a, b) => b.revenue - a.revenue)
+        .sort((a, b) => b.revenuePaise - a.revenuePaise)
         .slice(0, 8),
       order: row.from!.getTime(),
     };
@@ -510,7 +528,7 @@ async function loadOccasions(
   // bottom, where they still say something worth knowing: a festival that has
   // not happened yet, or one that passed without the tills noticing.
   return built
-    .sort((a, b) => b.revenue - a.revenue || a.order - b.order)
+    .sort((a, b) => b.revenuePaise - a.revenuePaise || a.order - b.order)
     .map(({ order, ...occasion }) => occasion);
 }
 
@@ -533,14 +551,14 @@ async function loadLocalities(
   if (period.granularity === 'year') {
     const stats = await prisma.areaPeriodStat.findMany({
       where: { shopId: { in: shopIds }, year: period.year },
-      select: { area: true, orders: true, revenue: true, customers: true },
+      select: { area: true, orders: true, revenuePaise: true, customers: true },
     });
 
-    const merged = new Map<string, { orders: number; revenue: number; customers: number }>();
+    const merged = new Map<string, { orders: number; revenuePaise: number; customers: number }>();
     for (const stat of stats) {
-      const row = merged.get(stat.area) ?? { orders: 0, revenue: 0, customers: 0 };
+      const row = merged.get(stat.area) ?? { orders: 0, revenuePaise: 0, customers: 0 };
       row.orders += stat.orders;
-      row.revenue += stat.revenue;
+      row.revenuePaise += stat.revenuePaise;
       // Summing distinct counts across shops double-counts anyone who orders
       // from two of them. Accepted: the alternative is keeping phone numbers in
       // the rollup forever, which is a privacy cost for a rounding error.
@@ -551,16 +569,16 @@ async function loadLocalities(
     if (merged.size > 0) return finish(merged, orders);
   }
 
-  const live = new Map<string, { orders: number; revenue: number; phones: Set<string> }>();
+  const live = new Map<string, { orders: number; revenuePaise: number; phones: Set<string> }>();
   for (const order of orders) {
     if (order.status === 'CANCELLED' || !order.customerArea) continue;
     const row = live.get(order.customerArea) ?? {
       orders: 0,
-      revenue: 0,
+      revenuePaise: 0,
       phones: new Set<string>(),
     };
     row.orders += 1;
-    row.revenue += order.totalAmount;
+    row.revenuePaise += order.totalAmountPaise;
     row.phones.add(order.customerPhone);
     live.set(order.customerArea, row);
   }
@@ -568,14 +586,14 @@ async function loadLocalities(
   const merged = new Map(
     [...live.entries()].map(([area, row]) => [
       area,
-      { orders: row.orders, revenue: row.revenue, customers: row.phones.size },
+      { orders: row.orders, revenuePaise: row.revenuePaise, customers: row.phones.size },
     ]),
   );
   return finish(merged, orders);
 }
 
 function finish(
-  merged: Map<string, { orders: number; revenue: number; customers: number }>,
+  merged: Map<string, { orders: number; revenuePaise: number; customers: number }>,
   orders: OrderRow[],
 ): { rows: Report['localities']; missing: number } {
   const total = [...merged.values()].reduce((sum, row) => sum + row.orders, 0);
@@ -583,7 +601,7 @@ function finish(
     .map(([area, row]) => ({
       area,
       orders: row.orders,
-      revenue: row.revenue,
+      revenuePaise: row.revenuePaise,
       customers: row.customers,
       share: total > 0 ? Math.round((row.orders / total) * 1000) / 10 : 0,
     }))
@@ -635,7 +653,7 @@ function assemble(input: Ingredients): Report {
     label: string;
     name: string;
     unit: string;
-    revenue: number;
+    revenuePaise: number;
     quantity: number;
     transactions: number;
     shops: Set<string>;
@@ -653,14 +671,14 @@ function assemble(input: Ingredients): Report {
           label: productLabel(line),
           name: line.name,
           unit: line.unit,
-          revenue: 0,
+          revenuePaise: 0,
           quantity: 0,
           transactions: 0,
           shops: new Set(),
         };
         products.set(key, tally);
       }
-      tally.revenue += line.amount;
+      tally.revenuePaise += line.amountPaise;
       tally.quantity += line.quantity;
       tally.shops.add(shopId);
       if (!seenHere.has(key)) {
@@ -672,38 +690,38 @@ function assemble(input: Ingredients): Report {
 
   /* --- buckets -------------------------------------------------------- */
 
-  const hourly = Array.from({ length: 24 }, () => ({ transactions: 0, revenue: 0 }));
-  const weekly = Array.from({ length: 7 }, () => ({ transactions: 0, revenue: 0 }));
-  const timeline = new Map<string, { order: number; transactions: number; revenue: number }>();
+  const hourly = Array.from({ length: 24 }, () => ({ transactions: 0, revenuePaise: 0 }));
+  const weekly = Array.from({ length: 7 }, () => ({ transactions: 0, revenuePaise: 0 }));
+  const timeline = new Map<string, { order: number; transactions: number; revenuePaise: number }>();
 
   function bucket(when: Date, amount: number) {
     const clock = shopClock(when);
     hourly[clock.hour].transactions += 1;
-    hourly[clock.hour].revenue += amount;
+    hourly[clock.hour].revenuePaise += amount;
     weekly[clock.weekday].transactions += 1;
-    weekly[clock.weekday].revenue += amount;
+    weekly[clock.weekday].revenuePaise += amount;
 
     // A yearly report walks months; a monthly one walks days of the month.
     const order = period.granularity === 'year' ? clock.month : clock.day;
-    const slot = timeline.get(String(order)) ?? { order, transactions: 0, revenue: 0 };
+    const slot = timeline.get(String(order)) ?? { order, transactions: 0, revenuePaise: 0 };
     slot.transactions += 1;
-    slot.revenue += amount;
+    slot.revenuePaise += amount;
     timeline.set(String(order), slot);
   }
 
   /* --- the two channels ----------------------------------------------- */
 
-  const perShop = new Map<string, { revenue: number; transactions: number }>();
+  const perShop = new Map<string, { revenuePaise: number; transactions: number }>();
   function credit(shopId: string, amount: number) {
-    const row = perShop.get(shopId) ?? { revenue: 0, transactions: 0 };
-    row.revenue += amount;
+    const row = perShop.get(shopId) ?? { revenuePaise: 0, transactions: 0 };
+    row.revenuePaise += amount;
     row.transactions += 1;
     perShop.set(shopId, row);
   }
 
-  const orderTypes = new Map<string, { transactions: number; revenue: number }>();
-  const orderStatuses = new Map<string, { transactions: number; revenue: number }>();
-  const paymentModes = new Map<string, { transactions: number; revenue: number }>();
+  const orderTypes = new Map<string, { transactions: number; revenuePaise: number }>();
+  const orderStatuses = new Map<string, { transactions: number; revenuePaise: number }>();
+  const paymentModes = new Map<string, { transactions: number; revenuePaise: number }>();
 
   let orderRevenue = 0;
   let counterRevenue = 0;
@@ -712,9 +730,9 @@ function assemble(input: Ingredients): Report {
     // A cancelled order is a thing that happened but not money that was taken.
     // It counts in the funnel and nowhere else.
     const cancelled = order.status === 'CANCELLED';
-    const amount = cancelled ? 0 : order.totalAmount;
+    const amount = cancelled ? 0 : order.totalAmountPaise;
 
-    tick(orderStatuses, order.status, order.totalAmount);
+    tick(orderStatuses, order.status, order.totalAmountPaise);
     if (cancelled) continue;
 
     orderRevenue += amount;
@@ -728,15 +746,15 @@ function assemble(input: Ingredients): Report {
   }
 
   for (const sale of sales) {
-    counterRevenue += sale.totalAmount;
-    tick(paymentModes, sale.paymentMode, sale.totalAmount);
-    bucket(sale.createdAt, sale.totalAmount);
-    credit(sale.shopId, sale.totalAmount);
+    counterRevenue += sale.totalAmountPaise;
+    tick(paymentModes, sale.paymentMode, sale.totalAmountPaise);
+    bucket(sale.createdAt, sale.totalAmountPaise);
+    credit(sale.shopId, sale.totalAmountPaise);
     countLines(sale.itemsJson, sale.shopId);
   }
 
   const liveOrders = orders.filter((order) => order.status !== 'CANCELLED');
-  const revenue = orderRevenue + counterRevenue;
+  const revenuePaise = orderRevenue + counterRevenue;
   const transactions = liveOrders.length + sales.length;
 
   /* --- customers ------------------------------------------------------ */
@@ -768,22 +786,22 @@ function assemble(input: Ingredients): Report {
     }
   }
 
-  const ranked = [...products.values()].sort((a, b) => b.revenue - a.revenue);
+  const ranked = [...products.values()].sort((a, b) => b.revenuePaise - a.revenuePaise);
   const topProducts: ProductRow[] = ranked.slice(0, 25).map((tally) => ({
     label: tally.label,
     name: tally.name,
     unit: tally.unit,
-    revenue: tally.revenue,
+    revenuePaise: tally.revenuePaise,
     quantity: tally.quantity,
     transactions: tally.transactions,
     shops: tally.shops.size,
-    revenueShare: revenue > 0 ? round1((tally.revenue / revenue) * 100) : 0,
+    revenueShare: revenuePaise > 0 ? round1((tally.revenuePaise / revenuePaise) * 100) : 0,
   }));
 
   // A proven seller sitting behind an "Out of stock" badge is the one loss on
   // this page that is still happening while it is being read.
   const topKeys = new Map(
-    ranked.slice(0, 25).map((tally) => [productKey(tally), tally.revenue]),
+    ranked.slice(0, 25).map((tally) => [productKey(tally), tally.revenuePaise]),
   );
   const outOfStockSellers: Report['outOfStockSellers'] = [];
   for (const shop of shops) {
@@ -795,16 +813,16 @@ function assemble(input: Ingredients): Report {
         label: productLabel(item),
         shop: shop.name,
         slug: shop.slug,
-        revenue: sellerRevenue,
+        revenuePaise: sellerRevenue,
       });
     }
   }
-  outOfStockSellers.sort((a, b) => b.revenue - a.revenue);
+  outOfStockSellers.sort((a, b) => b.revenuePaise - a.revenuePaise);
 
   /* --- shops ---------------------------------------------------------- */
 
   const shopRows: ShopRow[] = shops.map((shop) => {
-    const totals = perShop.get(shop.id) ?? { revenue: 0, transactions: 0 };
+    const totals = perShop.get(shop.id) ?? { revenuePaise: 0, transactions: 0 };
     const deadHere = shop.items.filter((item) => !soldKeys.has(productKey(item))).length;
 
     return {
@@ -812,14 +830,14 @@ function assemble(input: Ingredients): Report {
       slug: shop.slug,
       type: shop.type as ShopTypeId,
       typeLabel: SHOP_TYPE_LABELS[shop.type as ShopTypeId] ?? shop.type,
-      revenue: totals.revenue,
+      revenuePaise: totals.revenuePaise,
       transactions: totals.transactions,
-      averageBasket: totals.transactions > 0 ? Math.round(totals.revenue / totals.transactions) : 0,
+      averageBasketPaise: totals.transactions > 0 ? Math.round(totals.revenuePaise / totals.transactions) : 0,
       items: shop.items.length,
       deadItems: deadHere,
     };
   });
-  shopRows.sort((a, b) => b.revenue - a.revenue);
+  shopRows.sort((a, b) => b.revenuePaise - a.revenuePaise);
 
   /* --- caveats -------------------------------------------------------- */
 
@@ -915,9 +933,9 @@ function assemble(input: Ingredients): Report {
     generatedAt: now,
 
     headline: {
-      revenue,
+      revenuePaise,
       transactions,
-      averageBasket: transactions > 0 ? Math.round(revenue / transactions) : 0,
+      averageBasketPaise: transactions > 0 ? Math.round(revenuePaise / transactions) : 0,
       shops: shops.length,
       silentShops: shops.filter((shop) => !perShop.has(shop.id)).length,
       customers: phones.size,
@@ -943,18 +961,18 @@ function assemble(input: Ingredients): Report {
         label: period.granularity === 'year' ? MONTH_NAMES[slot.order - 1] : label,
         order: slot.order,
         transactions: slot.transactions,
-        revenue: slot.revenue,
+        revenuePaise: slot.revenuePaise,
       }))
       .sort((a, b) => a.order - b.order)
-      .map(({ label, transactions: count, revenue: amount }) => ({
+      .map(({ label, transactions: count, revenuePaise: amount }) => ({
         label,
         transactions: count,
-        revenue: amount,
+        revenuePaise: amount,
       })),
 
     channels: {
-      orders: { transactions: liveOrders.length, revenue: orderRevenue },
-      counter: { transactions: sales.length, revenue: counterRevenue },
+      orders: { transactions: liveOrders.length, revenuePaise: orderRevenue },
+      counter: { transactions: sales.length, revenuePaise: counterRevenue },
     },
     paymentModes: mapToRows(paymentModes),
     orderTypes: mapToRows(orderTypes),
@@ -972,17 +990,17 @@ function assemble(input: Ingredients): Report {
 }
 
 function tick(
-  target: Map<string, { transactions: number; revenue: number }>,
+  target: Map<string, { transactions: number; revenuePaise: number }>,
   key: string,
   amount: number,
 ) {
-  const row = target.get(key) ?? { transactions: 0, revenue: 0 };
+  const row = target.get(key) ?? { transactions: 0, revenuePaise: 0 };
   row.transactions += 1;
-  row.revenue += amount;
+  row.revenuePaise += amount;
   target.set(key, row);
 }
 
-function mapToRows(source: Map<string, { transactions: number; revenue: number }>): BucketRow[] {
+function mapToRows(source: Map<string, { transactions: number; revenuePaise: number }>): BucketRow[] {
   return [...source.entries()]
     .map(([label, row]) => ({ label, ...row }))
     .sort((a, b) => b.transactions - a.transactions);

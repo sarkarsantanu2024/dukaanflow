@@ -20,6 +20,24 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 type Translations = Map<string, { nameBn: string; nameHi: string }>;
 
 /**
+ * What one snapshot line came to, in paise.
+ *
+ * The same two-unit problem the reports have (see `linePaise` in
+ * lib/analytics.ts): rows written since money moved to paise use `amountPaise`,
+ * older ones use `amount` or `lineTotal` and hold RUPEES. Reading an old row as
+ * paise would show a ₹130 order as ₹1.30 on the owner's own screen.
+ */
+function snapshotPaise(line: Record<string, unknown>): number {
+  const num = (value: unknown) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  if (line.amountPaise !== undefined) return num(line.amountPaise);
+  const legacyRupees = line.lineTotal ?? line.amount;
+  return legacyRupees === undefined ? 0 : Math.round(num(legacyRupees) * 100);
+}
+
+/**
  * The order snapshot is JSON, so it is narrowed here rather than trusted.
  *
  * Snapshots only began carrying translations recently, so orders taken before
@@ -41,11 +59,8 @@ function toLines(itemsJson: unknown, known: Translations): OwnerOrder['lines'] {
         nameHi: String(line.nameHi ?? fallback?.nameHi ?? ''),
         unit: String(line.unit ?? ''),
         quantity: Number(line.quantity ?? 0),
-        // The order route writes `lineTotal`; this read `amount`, which was
-        // never there — so every line on every order showed ₹0 while the total
-        // underneath it was right. `amount` stays as a fallback in case any row
-        // was ever written under that name.
-        amount: Number(line.lineTotal ?? line.amount ?? 0),
+        // Paise, decoded defensively — see `snapshotPaise` above.
+        amountPaise: snapshotPaise(line),
       },
     ];
   });
@@ -53,7 +68,7 @@ function toLines(itemsJson: unknown, known: Translations): OwnerOrder['lines'] {
 
 export default async function OrdersPage({ params }: PageProps) {
   const { slug } = await params;
-  const { shop, plan, locale } = await loadOwnerShop(slug);
+  const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
 
   const rows = await prisma.order.findMany({
     where: { shopId: shop.id },
@@ -69,7 +84,7 @@ export default async function OrdersPage({ params }: PageProps) {
       customerAddress: true,
       orderType: true,
       status: true,
-      totalAmount: true,
+      totalAmountPaise: true,
       createdAt: true,
       itemsJson: true,
     },
@@ -91,7 +106,7 @@ export default async function OrdersPage({ params }: PageProps) {
     customerAddress: row.customerAddress,
     orderType: row.orderType,
     status: row.status,
-    totalAmount: row.totalAmount,
+    totalAmountPaise: row.totalAmountPaise,
     createdAt: row.createdAt.toISOString(),
     lines: toLines(row.itemsJson, known),
   }));
@@ -101,6 +116,7 @@ export default async function OrdersPage({ params }: PageProps) {
       slug={shop.slug}
       shopName={shop.name}
       ownerImage={shop.ownerImageData}
+      roadblock={roadblock}
       locale={locale}
       plan={plan}
     >

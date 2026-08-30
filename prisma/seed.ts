@@ -1,3 +1,4 @@
+import { rupeesToPaise } from '../lib/money';
 import { PrismaClient, ShopType } from '@prisma/client';
 import { shopUrl } from '../lib/qr';
 
@@ -66,11 +67,11 @@ async function main() {
         create: {
           shopId: record.id,
           name: item.name,
-          price: item.price,
+          pricePaise: rupeesToPaise(item.price),
           unit: item.unit ?? '',
           category: item.category ?? '',
         },
-        update: { price: item.price, category: item.category ?? '' },
+        update: { pricePaise: rupeesToPaise(item.price), category: item.category ?? '' },
       });
     }
 

@@ -41,12 +41,19 @@ export const slugSchema = z
   .max(60, 'Slug is too long')
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, numbers and hyphens only');
 
-/** Integer rupees, ₹1 – ₹100000. */
+/**
+ * A price in PAISE, 50 paise to ₹1,00,000.
+ *
+ * Integer paise, not rupees: the client parses what the shopkeeper typed with
+ * `parsePaise` and sends the paise figure, so "12.50" arrives here as 1250. The
+ * floor is 50 paise rather than a rupee because a kirana really does sell a
+ * toffee at fifty paise, and the old whole-rupee rule made that unlistable.
+ */
 export const priceSchema = z
   .number({ invalid_type_error: 'Price must be a number' })
-  .int('Price must be a whole number of rupees')
-  .min(1, 'Price must be at least ₹1')
-  .max(100000, 'Price looks too large');
+  .int('Price must be a whole number of paise')
+  .min(50, 'Price must be at least 50 paise')
+  .max(10_000_000, 'Price looks too large');
 
 export const quantitySchema = z.number().int().min(1, 'Minimum 1').max(99, 'Maximum 99 per item');
 
@@ -137,7 +144,7 @@ export const itemUpsertSchema = z.object({
   name: itemNameSchema,
   nameBn: altNameSchema,
   nameHi: altNameSchema,
-  price: priceSchema,
+  pricePaise: priceSchema,
   /**
    * Did a human choose this price?
    *
@@ -154,7 +161,7 @@ export const itemUpsertSchema = z.object({
 
 export const itemPatchSchema = z.object({
   id: z.string().uuid('Unknown item'),
-  price: priceSchema.optional(),
+  pricePaise: priceSchema.optional(),
   priced: z.boolean().optional(),
   // Editable because the pack size is the shop's own decision: a starter item
   // arrives at "1 kg" and the shop that sells rice by the 5 kg bag must be able
@@ -233,11 +240,12 @@ export const ledgerSchema = z.object({
   /** Which para or lane — free text, to tell two Rekhas apart. */
   customerArea: z.string().trim().max(60).default(''),
   kind: z.enum(['DEBIT', 'CREDIT']),
-  amount: z
+  /** PAISE. The client parses what was typed with `parsePaise`. */
+  amountPaise: z
     .number({ invalid_type_error: 'Enter an amount' })
-    .int('Whole rupees only')
-    .min(1, 'Enter at least ₹1')
-    .max(1000000, 'That looks too large'),
+    .int('Whole paise only')
+    .min(1, 'Enter an amount')
+    .max(100_000_000, 'That looks too large'),
   note: z.string().trim().max(120).default(''),
 });
 
@@ -325,10 +333,19 @@ export const starterSchema = z.object({
 });
 
 export const subscriptionSchema = z.object({
-  plan: z.enum(['FREE', 'STARTER', 'PRO']),
+  plan: z.enum(['FREE', 'STARTER', 'PRO', 'EX']),
   months: z.number().int().min(1).max(24).default(1),
   /// Set to change plan/state without recording money — corrections and cancellations.
   status: z.enum(['TRIALING', 'ACTIVE', 'PAST_DUE', 'CANCELLED']).optional(),
+  /**
+   * Set to bill the cataloguing service instead of subscription time: how many
+   * items the operator listed for this shop. Priced at 50 paise each with a ₹99
+   * floor (lib/plans.ts) and recorded as a one-off that buys no period.
+   *
+   * The server prices it from this count rather than taking an amount, so the
+   * console can never record a figure the price list does not agree with.
+   */
+  listedItems: z.number().int().min(1).max(5000).optional(),
   method: z.string().trim().max(20).default('UPI'),
   reference: z.string().trim().max(60).default(''),
   note: z.string().trim().max(200).default(''),

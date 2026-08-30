@@ -1,3 +1,4 @@
+import { rupeesToPaise } from '../lib/money';
 /**
  * Creates one demonstration grocery shop with ten listed items.
  *
@@ -76,7 +77,14 @@ async function main() {
   for (const item of ITEMS) {
     const result = await prisma.item.upsert({
       where: { shopId_name_unit: { shopId: shop.id, name: item.name, unit: item.unit } },
-      create: { shopId: shop.id, ...item, inStock: true },
+      // The list above is written in rupees because a person maintains it;
+      // `price` is dropped here so only the paise figure reaches the row.
+      create: (({ price, ...rest }) => ({
+        shopId: shop.id,
+        ...rest,
+        pricePaise: rupeesToPaise(price),
+        inStock: true,
+      }))(item),
       update: {},
       select: { createdAt: true, updatedAt: true },
     });
@@ -100,7 +108,7 @@ async function main() {
 async function seedTrade(shopId: string) {
   const items = await prisma.item.findMany({
     where: { shopId },
-    select: { id: true, name: true, nameBn: true, nameHi: true, unit: true, price: true },
+    select: { id: true, name: true, nameBn: true, nameHi: true, unit: true, pricePaise: true },
   });
   if (items.length === 0) return;
 
@@ -144,12 +152,12 @@ async function seedTrade(shopId: string) {
           nameBn: item.nameBn,
           nameHi: item.nameHi,
           unit: item.unit,
-          price: item.price,
+          pricePaise: item.pricePaise,
           quantity,
-          amount: item.price * quantity,
+          amountPaise: item.pricePaise * quantity,
         };
       });
-      const totalAmount = lines.reduce((sum, line) => sum + line.amount, 0);
+      const totalAmountPaise = lines.reduce((sum, line) => sum + line.amountPaise, 0);
 
       // Two thirds arrive on WhatsApp, one third is rung up at the counter —
       // roughly what a shop running both looks like.
@@ -158,7 +166,7 @@ async function seedTrade(shopId: string) {
           data: {
             shopId,
             itemsJson: lines.map(({ itemId, nameBn, nameHi, ...rest }) => rest),
-            totalAmount,
+            totalAmountPaise,
             paymentMode: seed % 2 === 0 ? 'CASH' : 'UPI',
             createdAt: when,
           },
@@ -174,7 +182,7 @@ async function seedTrade(shopId: string) {
             customerArea: AREAS[seed % AREAS.length],
             orderType: seed % 4 === 0 ? 'PICKUP' : 'DELIVERY',
             itemsJson: lines,
-            totalAmount,
+            totalAmountPaise,
             status: daysAgo > 1 ? 'COMPLETED' : 'NEW',
             createdAt: when,
           },

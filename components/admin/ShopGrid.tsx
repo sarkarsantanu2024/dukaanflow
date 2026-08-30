@@ -15,7 +15,14 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { BoxIcon, ExternalIcon, PlusIcon, SearchIcon } from '@/components/ui/Icon';
+import {
+  BoxIcon,
+  ClockIcon,
+  ExternalIcon,
+  PinIcon,
+  PlusIcon,
+  SearchIcon,
+} from '@/components/ui/Icon';
 import { SHOP_TYPE_LABELS, SHOP_TYPES } from '@/lib/validators';
 import { ShopRowActions } from './ShopRowActions';
 
@@ -25,6 +32,10 @@ export type ShopRow = {
   slug: string;
   type: (typeof SHOP_TYPES)[number];
   phone: string;
+  /** Street address, or blank when the shop has not given one. */
+  address: string;
+  /** Already formatted for reading — "9 am – 9 pm" — or blank when unset. */
+  hours: string;
   active: boolean;
   imageData: string;
   isDemo: boolean;
@@ -48,11 +59,13 @@ const PLAN_TONE: Record<ShopRow['planState'], string> = {
 type Filter = 'all' | 'attention' | 'paused';
 
 /**
- * auto-fill rather than a fixed column count: the row keeps filling with 300px
+ * auto-fill rather than a fixed column count: the row keeps filling with 380px
  * cards for as wide as the window happens to be, instead of three cards
- * stretching across a desk monitor.
+ * stretching across a desk monitor. 380 rather than 300 because at 300 the
+ * name, the plan badge and the phone number all competed for one line and the
+ * phone — the thing an operator actually calls — was the part that got cut.
  */
-const CARD_GRID = 'grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]';
+const CARD_GRID = 'grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(380px,1fr))]';
 
 export function ShopGrid({ shops }: { shops: ShopRow[] }) {
   const [query, setQuery] = useState('');
@@ -146,7 +159,7 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
             <li
               key={shop.id}
               className={clsx(
-                'flex flex-col overflow-hidden rounded-2xl bg-white shadow-card',
+                'flex flex-col overflow-hidden rounded-2xl border border-brand-100/70 bg-white shadow-card transition hover:border-brand-200 hover:shadow-md',
                 !shop.active && 'opacity-75',
               )}
             >
@@ -156,14 +169,14 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                   <img
                     src={shop.imageData}
                     alt=""
-                    className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+                    className="h-14 w-14 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
                   />
                 ) : (
                   <span
                     aria-hidden
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100"
+                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100"
                   >
-                    <BoxIcon className="h-5 w-5" />
+                    <BoxIcon className="h-6 w-6" />
                   </span>
                 )}
 
@@ -179,9 +192,15 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                       </span>
                     )}
                   </p>
-                  <p className="truncate text-sm text-slate-500">
-                    {SHOP_TYPE_LABELS[shop.type]} · +91 {shop.phone}
-                  </p>
+                  <p className="truncate text-sm text-slate-500">{SHOP_TYPE_LABELS[shop.type]}</p>
+                  {/* Its own line, and never truncated: the phone is what the
+                      operator dials, so a long shop type must not eat it. */}
+                  <a
+                    href={`tel:+91${shop.phone}`}
+                    className="mt-0.5 inline-block text-sm font-medium tabular-nums text-slate-700 hover:text-brand-700"
+                  >
+                    +91 {shop.phone}
+                  </a>
                 </div>
 
                 <span
@@ -192,6 +211,33 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                 >
                   {shop.active ? shop.planName : 'Paused'}
                 </span>
+              </div>
+
+              {/* Hours and address, and said plainly when they are missing: a
+                  shop with no hours on its page is something the operator can
+                  fix, so a blank line here would hide the job rather than the
+                  gap. */}
+              <div className="space-y-1 px-4 pb-3 text-sm">
+                <p
+                  className={clsx(
+                    'flex items-center gap-1.5',
+                    shop.hours ? 'text-slate-600' : 'text-slate-400',
+                  )}
+                >
+                  <ClockIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <span className="truncate">{shop.hours || 'Hours not set'}</span>
+                </p>
+                <p
+                  className={clsx(
+                    'flex items-start gap-1.5',
+                    shop.address ? 'text-slate-600' : 'text-slate-400',
+                  )}
+                >
+                  <PinIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  {/* Two lines, then clipped: an address is worth the room a
+                      phone number is not, but not a card of unbounded height. */}
+                  <span className="line-clamp-2">{shop.address || 'No address'}</span>
+                </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-3 text-xs text-slate-500">
@@ -209,7 +255,7 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                 </p>
               )}
 
-              <div className="mt-auto flex items-center gap-2 border-t border-slate-100 px-4 py-2.5">
+              <div className="mt-auto flex items-center gap-2 border-t border-brand-100/70 bg-brand-50/40 px-4 py-2.5">
                 <Link
                   href={`/admin/shop/${shop.slug}/items`}
                   className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700"

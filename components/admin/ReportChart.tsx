@@ -16,13 +16,13 @@
  */
 
 import clsx from 'clsx';
-import { formatRupees } from '@/lib/money';
+import { formatPaise } from '@/lib/money';
 
-export type ChartRow = { label: string; transactions: number; revenue: number };
+export type ChartRow = { label: string; transactions: number; revenuePaise: number };
 
 function tooltip(row: ChartRow): string {
   const trade = `${row.transactions} ${row.transactions === 1 ? 'sale' : 'sales'}`;
-  return `${row.label} — ${trade}, ${formatRupees(row.revenue)}`;
+  return `${row.label} — ${trade}, ${formatPaise(row.revenuePaise)}`;
 }
 
 /**
@@ -87,9 +87,9 @@ export function BarList({
   rows: ChartRow[];
   empty: string;
   /** Which number sets the bar length. The other is still shown beside it. */
-  measure?: 'transactions' | 'revenue';
+  measure?: 'transactions' | 'revenuePaise';
 }) {
-  const value = (row: ChartRow) => (measure === 'revenue' ? row.revenue : row.transactions);
+  const value = (row: ChartRow) => (measure === 'revenuePaise' ? row.revenuePaise : row.transactions);
   const peak = Math.max(...rows.map(value), 0);
   if (peak === 0) return <ChartEmpty>{empty}</ChartEmpty>;
 
@@ -111,7 +111,7 @@ export function BarList({
               />
             </span>
             <span className="text-right text-sm font-semibold tabular-nums text-slate-900">
-              {measure === 'revenue' ? formatRupees(row.revenue) : row.transactions}
+              {measure === 'revenuePaise' ? formatPaise(row.revenuePaise) : row.transactions}
             </span>
           </li>
         );

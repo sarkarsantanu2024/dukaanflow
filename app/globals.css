@@ -7,8 +7,11 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* The ground is tinted rather than white. Cards, sheets and tables are the
+     white things on this page — when the page itself is white too, nothing
+     reads as raised and every screen flattens into one sheet of paper. */
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply min-h-dvh bg-app bg-fixed text-slate-900 antialiased;
   }
 
   /* Number inputs: hide spinners so price fields stay thumb-friendly. */

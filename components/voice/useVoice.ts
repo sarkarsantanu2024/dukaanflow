@@ -251,18 +251,48 @@ export function speak(text: string, lang: VoiceLang, onDone?: () => void) {
   const synth = window.speechSynthesis;
   synth.cancel();
 
+  // The voice list is loaded asynchronously in Chrome: the very first
+  // `getVoices()` of a session usually returns an empty array, and everything
+  // spoken before `voiceschanged` fires therefore got the browser's default
+  // voice — on Windows that is a US English one, reading Bengali letter by
+  // letter. Waiting for the list is the difference between the app answering
+  // in the shopper's language and it answering in gibberish.
+  const voices = synth.getVoices();
+  if (voices.length === 0) {
+    let retried = false;
+    const retry = () => {
+      if (retried) return;
+      retried = true;
+      window.speechSynthesis.removeEventListener('voiceschanged', retry);
+      speak(text, lang, onDone);
+    };
+    synth.addEventListener('voiceschanged', retry);
+    // If the list never arrives, do not leave the caller hanging: the mic is
+    // waiting on `onDone` to come back on.
+    window.setTimeout(retry, 1000);
+    return;
+  }
+
+  // A voice that actually speaks the target language, or none at all.
+  const exact = voices.find((voice) => voice.lang.replace('_', '-') === lang);
+  const loose = voices.find((voice) => voice.lang.slice(0, 2) === lang.slice(0, 2));
+  const chosen = exact ?? loose;
+
+  if (!chosen) {
+    // Nothing installed for this language — stay silent rather than read
+    // Bengali or Hindi text aloud in an English voice. That is not a spoken
+    // reply, it is noise, and the same words are already on the screen where
+    // the shopper can read them. Most Windows machines have no Bengali voice;
+    // most Android phones do.
+    onDone?.();
+    return;
+  }
+
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang;
   utterance.rate = 1;
   utterance.volume = 1;
-
-  // Pick a voice that actually speaks the target language when one is
-  // installed; otherwise the default voice reads Hindi with an English accent.
-  const voices = synth.getVoices();
-  const exact = voices.find((voice) => voice.lang === lang);
-  const loose = voices.find((voice) => voice.lang.startsWith(lang.slice(0, 2)));
-  const chosen = exact ?? loose;
-  if (chosen) utterance.voice = chosen;
+  utterance.voice = chosen;
 
   let finished = false;
   const done = () => {

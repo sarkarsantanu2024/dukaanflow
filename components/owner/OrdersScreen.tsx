@@ -16,7 +16,7 @@
  *
  * The strip at the top is the other question, asked once at closing: what did
  * today take? Cancelled orders are excluded from it — money that never arrived
- * is not takings, and an owner checking the figure against the cash drawer must
+ * is not takingsPaise, and an owner checking the figure against the cash drawer must
  * not find the app optimistic.
  */
 
@@ -27,7 +27,7 @@ import { handledExpiredSession } from './sessionGuard';
 import clsx from 'clsx';
 import { useToast } from '@/components/ui/Toast';
 import { PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/ui/Icon';
-import { formatRupees } from '@/lib/money';
+import { formatPaise } from '@/lib/money';
 import { buildStatusMessage } from '@/lib/whatsapp';
 import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
@@ -56,7 +56,7 @@ export type OwnerOrder = {
   customerAddress: string;
   orderType: 'DELIVERY' | 'PICKUP';
   status: OrderStatus;
-  totalAmount: number;
+  totalAmountPaise: number;
   createdAt: string;
   lines: {
     name: string;
@@ -64,7 +64,7 @@ export type OwnerOrder = {
     nameHi?: string;
     unit: string;
     quantity: number;
-    amount: number;
+    amountPaise: number;
   }[];
 };
 
@@ -124,18 +124,18 @@ export function OrdersScreen({
 
   const today = useMemo(() => {
     let count = 0;
-    let takings = 0;
+    let takingsPaise = 0;
     for (const order of orders) {
       if (!isToday(order.createdAt) || order.status === 'CANCELLED') continue;
       count += 1;
       // Only money the owner has actually agreed to. An order sitting
-      // unanswered is not takings, and a figure checked against the cash
+      // unanswered is not takingsPaise, and a figure checked against the cash
       // drawer must never be the optimistic one.
       if (order.status === 'CONFIRMED' || order.status === 'COMPLETED') {
-        takings += order.totalAmount;
+        takingsPaise += order.totalAmountPaise;
       }
     }
-    return { count, takings };
+    return { count, takingsPaise };
   }, [orders]);
 
   const waiting = counts.NEW + counts.CONFIRMED;
@@ -178,9 +178,9 @@ export function OrdersScreen({
       // Say it out loud when money has just become a debt. An owner who taps
       // "not yet" and sees nothing happen has no reason to believe the khata
       // knows about it, and will go and write it on paper as well.
-      const payload = (await response.json().catch(() => ({}))) as { khataAmount?: number };
-      if (payload.khataAmount && payload.khataAmount > 0) {
-        push(`${t.paymentKhataDone} · ${formatRupees(payload.khataAmount)}`, 'success');
+      const payload = (await response.json().catch(() => ({}))) as { khataAmountPaise?: number };
+      if (payload.khataAmountPaise && payload.khataAmountPaise > 0) {
+        push(`${t.paymentKhataDone} · ${formatPaise(payload.khataAmountPaise)}`, 'success');
       }
 
       setSettling(null);
@@ -222,7 +222,7 @@ export function OrdersScreen({
         <div>
           <dt className="text-xs text-slate-500">{t.ordersTakings}</dt>
           <dd className="text-xl font-bold tabular-nums text-slate-900">
-            {formatRupees(today.takings)}
+            {formatPaise(today.takingsPaise)}
           </dd>
         </div>
         <div className="ml-auto text-right">
@@ -305,14 +305,14 @@ export function OrdersScreen({
                       {lineName(line, locale)}
                       {line.unit ? ` · ${line.unit}` : ''} × {line.quantity}
                     </span>
-                    <span className="shrink-0 tabular-nums">{formatRupees(line.amount)}</span>
+                    <span className="shrink-0 tabular-nums">{formatPaise(line.amountPaise)}</span>
                   </li>
                 ))}
               </ul>
 
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
                 <p className="mr-auto font-bold tabular-nums text-slate-900">
-                  {formatRupees(order.totalAmount)}
+                  {formatPaise(order.totalAmountPaise)}
                 </p>
 
                 {/* Reaching the customer is one tap from the order, not a
@@ -330,7 +330,7 @@ export function OrdersScreen({
                       shopName,
                       customerName: order.customerName,
                       status: order.status,
-                      totalAmount: order.totalAmount,
+                      totalAmountPaise: order.totalAmountPaise,
                       orderType: order.orderType,
                       lines: order.lines,
                     }),
@@ -369,7 +369,7 @@ export function OrdersScreen({
                         <span className="mb-3 flex flex-col items-center gap-1.5 rounded-xl bg-slate-50 p-3">
                           {upiId ? (
                             <QRCodeCanvas
-                              value={upiPayUrlWithAmount(upiId, shopName, order.totalAmount)}
+                              value={upiPayUrlWithAmount(upiId, shopName, order.totalAmountPaise)}
                               size={148}
                               includeMargin
                               level="M"

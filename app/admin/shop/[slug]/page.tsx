@@ -10,7 +10,6 @@ import { DeleteShopButton } from '@/components/admin/DeleteShopButton';
 import { OwnerAccessPanel } from '@/components/admin/OwnerAccessPanel';
 import { SubscriptionPanel } from '@/components/admin/SubscriptionPanel';
 import { shopEntitlement } from '@/lib/billing';
-import { formatRupees } from '@/lib/money';
 import { baseUrl } from '@/lib/qr';
 
 export const dynamic = 'force-dynamic';
@@ -51,7 +50,15 @@ export default async function ShopDetailPage({ params }: PageProps) {
       payments: {
         orderBy: { createdAt: 'desc' },
         take: 5,
-        select: { id: true, amount: true, plan: true, periodEnd: true, method: true },
+        select: {
+          id: true,
+          amountPaise: true,
+          plan: true,
+          kind: true,
+          itemsListed: true,
+          periodEnd: true,
+          method: true,
+        },
       },
       orders: {
         orderBy: { createdAt: 'desc' },
@@ -61,7 +68,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
           customerName: true,
           customerPhone: true,
           orderType: true,
-          totalAmount: true,
+          totalAmountPaise: true,
           createdAt: true,
         },
       },
@@ -157,8 +164,10 @@ export default async function ShopDetailPage({ params }: PageProps) {
             currentPeriodEnd: shop.currentPeriodEnd?.toISOString() ?? null,
             payments: shop.payments.map((payment) => ({
               id: payment.id,
-              amount: payment.amount,
+              amountPaise: payment.amountPaise,
               plan: payment.plan,
+              kind: payment.kind,
+              itemsListed: payment.itemsListed,
               periodEnd: payment.periodEnd.toISOString(),
               method: payment.method,
             })),

@@ -33,8 +33,6 @@ export default async function PosterPage({ params }: PageProps) {
           slug={shop.slug}
           phone={shop.phone}
           address={shop.address}
-          upiId={shop.upiId}
-          upiQrData={shop.upiQrData}
         />
       </main>
     </>

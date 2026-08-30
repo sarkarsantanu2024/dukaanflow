@@ -8,11 +8,12 @@
  * metered — orders, QR scans and customers are all unlimited on every plan, so
  * a shop is never punished for selling well.
  *
- * Prices are whole rupees per month, matching the integer-rupees rule used
- * everywhere else in the codebase.
+ * Plan prices are whole rupees per month. The listing service below is priced
+ * in paise, because 50 paise an item is not expressible in rupees — see
+ * lib/money.ts for which unit a given number is in.
  */
 
-export const PLANS = ['FREE', 'STARTER', 'PRO'] as const;
+export const PLANS = ['FREE', 'STARTER', 'PRO', 'EX'] as const;
 export type Plan = (typeof PLANS)[number];
 
 export const SUB_STATUSES = ['TRIALING', 'ACTIVE', 'PAST_DUE', 'CANCELLED'] as const;
@@ -50,12 +51,12 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
   STARTER: {
     id: 'STARTER',
     name: 'Starter',
-    price: 199,
-    itemLimit: 150,
+    price: 149,
+    itemLimit: 100,
     tagline: 'The everyday kirana plan.',
     features: [
-      'Up to 150 items',
-      'Everything in Free',
+      'Up to 100 items',
+      'Everything in Basic',
       'Order history in the app',
       'Bulk price and stock updates',
     ],
@@ -63,31 +64,88 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
   PRO: {
     id: 'PRO',
     name: 'Pro',
-    price: 499,
-    // A ceiling rather than true "unlimited": a catalogue past this is a
-    // different kind of business, and should be a conversation, not a silent
-    // bill. Nothing breaks at the limit — the owner is told and can ask.
-    itemLimit: 2000,
-    tagline: 'Full grocery stores and restaurants.',
+    price: 249,
+    itemLimit: 250,
+    tagline: 'A full kirana counter.',
     features: [
-      'Up to 2,000 items',
+      'Up to 250 items',
       'Everything in Starter',
       'Storefront and owner photos',
       'Priority support on WhatsApp',
     ],
   },
+  EX: {
+    id: 'EX',
+    name: 'EX',
+    price: 449,
+    // A ceiling rather than true "unlimited": a catalogue past this is a
+    // different kind of business, and should be a conversation with the
+    // operator, not a silent bill.
+    itemLimit: 1000,
+    tagline: 'Full grocery stores and restaurants.',
+    features: [
+      'Up to 1,000 items',
+      'Everything in Pro',
+      'Bulk listing service available',
+      'Priority support on WhatsApp',
+    ],
+  },
 };
 
-export const PLAN_ORDER: Plan[] = ['FREE', 'STARTER', 'PRO'];
+export const PLAN_ORDER: Plan[] = ['FREE', 'STARTER', 'PRO', 'EX'];
 
-/** Free days of Pro when a shop is created, so onboarding is never blocked. */
+/**
+ * What DukaanFlow charges to catalogue a shop's items for them.
+ *
+ * This sells against the onboarding failure the console already flags: a shop
+ * onboarded, QR printed, and nothing ever listed. The operator does the
+ * cataloguing and charges for it — 50 paise an item, never less than ₹99.
+ *
+ * The floor is the point. At 50 paise, listing 25 items earns ₹12.50, which is
+ * less than the phone call that arranges it — so without a minimum the smallest
+ * jobs cost more to sell than they bring in, and those are exactly the shops
+ * that need the service most.
+ */
+export const LISTING_PAISE_PER_ITEM = 50;
+export const LISTING_MINIMUM_PAISE = 9_900;
+
+/** What listing `items` items costs, in paise. */
+export function listingChargePaise(items: number): number {
+  const counted = Math.max(0, Math.trunc(items));
+  if (counted === 0) return 0;
+  return Math.max(LISTING_MINIMUM_PAISE, counted * LISTING_PAISE_PER_ITEM);
+}
+
+/** The item count at which per-item pricing overtakes the floor — 198. */
+export const LISTING_MINIMUM_ITEMS = LISTING_MINIMUM_PAISE / LISTING_PAISE_PER_ITEM;
+
+/**
+ * Free days when a shop is created, so onboarding is never blocked.
+ *
+ * The trial grants the TOP plan, not a middle one. A shop being evaluated must
+ * never hit a catalogue limit while deciding whether to buy — the owner would
+ * read it as the product failing rather than as a tier they have outgrown, and
+ * they would be right to, because nobody has quoted them a price yet.
+ */
 export const TRIAL_DAYS = 14;
+export const TRIAL_PLAN: Plan = 'EX';
 
 /**
  * Days after a period ends before item editing stops. A shop whose payment is
  * a few days late should not lose the ability to fix a price.
  */
 export const GRACE_DAYS = 7;
+
+/**
+ * Days a shop may go unpaid before its storefront is taken offline.
+ *
+ * Three months, and deliberately long. Losing editing is an inconvenience the
+ * owner notices at once; taking the shop page down costs them real orders from
+ * customers who did nothing wrong, so it is the last step, not the first. The
+ * clock runs from the end of the last paid period — or from the end of the
+ * trial for a shop that never paid at all.
+ */
+export const AUTO_PAUSE_DAYS = 90;
 
 export type ShopBilling = {
   plan: Plan;
@@ -110,6 +168,18 @@ export type Entitlement = {
   /** True once the period has ended but grace has not. */
   inGrace: boolean;
   expiresOn: Date | null;
+  /**
+   * The shop has been unpaid past `AUTO_PAUSE_DAYS` and its storefront is off.
+   *
+   * Derived, never stored. A stored flag would need something to run on a
+   * schedule to set it, and a shop whose pause depended on a cron that missed a
+   * night would be live when it should not be — or, worse, still paused for
+   * hours after the owner paid. Computed from the dates, it is correct on every
+   * read and it un-pauses the instant a payment lands.
+   */
+  autoPaused: boolean;
+  /** Days until the storefront goes offline, or null once it has. */
+  daysUntilAutoPause: number | null;
 };
 
 function daysBetween(from: Date, to: Date): number {
@@ -119,11 +189,15 @@ function daysBetween(from: Date, to: Date): number {
 /**
  * Works out what a shop may do right now.
  *
- * Deliberately generous at the edges: a trial that has not expired grants Pro,
- * an unpaid period keeps working through the grace window, and a lapsed shop
- * loses *editing* only — its QR keeps working and customers can still order.
- * Taking a live shop offline over a late payment would cost the owner real
- * sales, and nobody renews software that did that to them.
+ * Three steps down, not one: a trial or paid period runs normally; when it ends
+ * the owner loses *editing* and meets the roadblock, but the shop page stays up
+ * and customers can still order; and only after `AUTO_PAUSE_DAYS` unpaid does
+ * the storefront go offline too.
+ *
+ * The middle step is the one that matters. Taking a live shop down the day a
+ * payment is late costs the owner real sales from customers who did nothing
+ * wrong, and nobody renews software that did that to them. Three months is long
+ * enough that a shop only reaches the last step by having genuinely stopped.
  */
 export function entitlement(shop: ShopBilling, now = new Date()): Entitlement {
   const trialing =
@@ -131,14 +205,16 @@ export function entitlement(shop: ShopBilling, now = new Date()): Entitlement {
 
   if (trialing) {
     return {
-      plan: PLAN_SPECS.PRO,
+      plan: PLAN_SPECS[TRIAL_PLAN],
       status: 'TRIALING',
-      itemLimit: PLAN_SPECS.PRO.itemLimit,
+      itemLimit: PLAN_SPECS[TRIAL_PLAN].itemLimit,
       canEdit: true,
       blockedReason: null,
       trialDaysLeft: Math.max(0, daysBetween(now, shop.trialEndsAt!)),
       inGrace: false,
       expiresOn: shop.trialEndsAt,
+      autoPaused: false,
+      daysUntilAutoPause: null,
     };
   }
 
@@ -155,15 +231,28 @@ export function entitlement(shop: ShopBilling, now = new Date()): Entitlement {
       trialDaysLeft: null,
       inGrace: false,
       expiresOn: null,
+      autoPaused: false,
+      daysUntilAutoPause: null,
     };
   }
 
-  const periodEnd = shop.currentPeriodEnd;
-  const expired = !periodEnd || periodEnd <= now;
-  const graceEnds = periodEnd ? new Date(periodEnd.getTime() + GRACE_DAYS * 86_400_000) : null;
+  // A shop that never paid is measured from the end of its trial, not from
+  // never: without this its unpaid clock would have no start and it could sit
+  // blocked but live forever.
+  const lapsedFrom = shop.currentPeriodEnd ?? shop.trialEndsAt;
+  const expired = !lapsedFrom || lapsedFrom <= now;
+  const graceEnds = lapsedFrom ? new Date(lapsedFrom.getTime() + GRACE_DAYS * 86_400_000) : null;
   const inGrace = expired && graceEnds !== null && graceEnds > now;
 
-  const canEdit = shop.subscriptionStatus === 'CANCELLED' ? false : !expired || inGrace;
+  const cancelled = shop.subscriptionStatus === 'CANCELLED';
+  const canEdit = cancelled ? false : !expired || inGrace;
+
+  // Cancelling is a decision somebody made, so it takes effect now rather than
+  // waiting out three months of a clock that is no longer counting anything.
+  const pauseOn = lapsedFrom
+    ? new Date(lapsedFrom.getTime() + AUTO_PAUSE_DAYS * 86_400_000)
+    : null;
+  const autoPaused = cancelled || (expired && pauseOn !== null && pauseOn <= now);
 
   return {
     plan: spec,
@@ -173,7 +262,10 @@ export function entitlement(shop: ShopBilling, now = new Date()): Entitlement {
     blockedReason: canEdit ? null : 'expired',
     trialDaysLeft: null,
     inGrace,
-    expiresOn: periodEnd,
+    expiresOn: lapsedFrom,
+    autoPaused,
+    daysUntilAutoPause:
+      autoPaused || !pauseOn ? null : Math.max(0, daysBetween(now, pauseOn)),
   };
 }
 

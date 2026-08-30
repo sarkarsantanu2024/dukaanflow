@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function InventoryPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const { welcome } = await searchParams;
-  const { shop, plan, locale } = await loadOwnerShop(slug);
+  const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
 
   const items = await prisma.item.findMany({
     where: { shopId: shop.id },
@@ -34,7 +34,7 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
       name: true,
       nameBn: true,
       nameHi: true,
-      price: true,
+      pricePaise: true,
           priced: true,
       unit: true,
       category: true,
@@ -47,6 +47,7 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
       slug={shop.slug}
       shopName={shop.name}
       ownerImage={shop.ownerImageData}
+      roadblock={roadblock}
       locale={locale}
       plan={plan}
     >

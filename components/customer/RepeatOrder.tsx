@@ -14,7 +14,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { formatRupees } from '@/lib/money';
+import clsx from 'clsx';
+import { formatPaise } from '@/lib/money';
 import { dict, type Locale } from '@/lib/i18n';
 import type { CustomerItem } from './ItemCard';
 import { itemName } from './ItemCard';
@@ -50,6 +51,7 @@ export function RepeatOrder({
 }) {
   const t = dict(locale);
   const [order, setOrder] = useState<StoredOrder | null>(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -76,7 +78,7 @@ export function RepeatOrder({
 
   if (available.length === 0) return null;
 
-  const total = available.reduce((sum, line) => sum + line.item.price * line.quantity, 0);
+  const total = available.reduce((sum, line) => sum + line.item.pricePaise * line.quantity, 0);
 
   function dismiss() {
     setOrder(null);
@@ -87,44 +89,88 @@ export function RepeatOrder({
     }
   }
 
-  return (
-    <section className="mt-2 rounded-2xl border border-brand-200 bg-brand-50/70 p-3">
-      <p className="font-semibold text-slate-900">{t.repeatTitle}</p>
-      <p className="mt-0.5 text-xs text-slate-500">{t.repeatHint}</p>
+  const count = available.reduce((sum, line) => sum + line.quantity, 0);
 
-      <ul className="mt-2 space-y-0.5 text-sm text-slate-700">
+  return (
+    <section className="mt-6 overflow-hidden rounded-2xl border border-brand-200 bg-white">
+      {/* Folded shut. Down here below the menu it is a thing the shopper can
+          go and look for, not a panel that greets them with somebody else's
+          shopping — and the summary line is enough to decide whether opening
+          it is worth the tap. */}
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 bg-brand-50 px-4 py-3 text-left transition hover:bg-brand-100"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold text-slate-900">{t.repeatTitle}</span>
+          <span className="mt-0.5 block truncate text-xs text-slate-500">
+            {count} {t.items} · {formatPaise(total)}
+          </span>
+        </span>
+        <span
+          aria-hidden
+          className={clsx(
+            'shrink-0 text-slate-400 transition-transform',
+            open && 'rotate-180',
+          )}
+        >
+          ▾
+        </span>
+      </button>
+
+      {/* One item per row on white, with the quantity as a chip rather than
+          "× 1" tacked onto the name. The old list ran four dense grey lines of
+          "Atta · 1 kg × 1" against a right-aligned price — three numbers per
+          line, in two units, with nothing separating the pack size from how
+          many of them. Nobody could see at a glance what they were about to
+          re-order, which is the only thing this panel is for. */}
+      {open && (
+        <>
+      <ul className="divide-y divide-slate-100">
         {available.map(({ item, quantity }) => (
-          <li key={item.id} className="flex justify-between gap-3">
-            <span className="min-w-0 truncate">
-              {itemName(item, locale)}
-              {item.unit ? ` · ${item.unit}` : ''} × {quantity}
+          <li key={item.id} className="flex items-center gap-3 px-4 py-2">
+            <span className="flex h-7 min-w-[1.75rem] shrink-0 items-center justify-center rounded-lg bg-brand-100 px-1.5 text-sm font-bold tabular-nums text-brand-800">
+              {quantity}
             </span>
-            <span className="shrink-0 tabular-nums text-slate-500">
-              {formatRupees(item.price * quantity)}
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium text-slate-800">
+                {itemName(item, locale)}
+              </span>
+              {item.unit && <span className="block text-xs text-slate-400">{item.unit}</span>}
+            </span>
+            <span className="shrink-0 text-sm tabular-nums text-slate-600">
+              {formatPaise(item.pricePaise * quantity)}
             </span>
           </li>
         ))}
       </ul>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50 p-3">
         <button
           type="button"
           onClick={() => {
             onRepeat(available.map((line) => ({ id: line.item.id, quantity: line.quantity })));
             setOrder(null);
           }}
-          className="h-11 rounded-xl bg-brand-600 px-4 font-semibold text-white hover:bg-brand-700"
+          className="h-11 rounded-xl bg-brand-600 px-5 font-semibold text-white transition hover:bg-brand-700"
         >
-          {t.repeatAdd} · {formatRupees(total)}
+          {t.repeatAdd} · {formatPaise(total)}
         </button>
+        <span className="text-xs text-slate-500">
+          {count} {t.items}
+        </span>
         <button
           type="button"
           onClick={dismiss}
-          className="h-11 rounded-xl px-3 text-sm font-medium text-slate-500 hover:bg-white"
+          className="ml-auto h-11 rounded-xl px-3 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-slate-700"
         >
           {t.repeatDismiss}
         </button>
       </div>
+        </>
+      )}
     </section>
   );
 }

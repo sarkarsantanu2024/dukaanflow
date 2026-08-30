@@ -43,7 +43,7 @@ export async function PATCH(request: Request, { params }: Context) {
     where: { id, shopId: shop.id },
     select: {
       id: true,
-      totalAmount: true,
+      totalAmountPaise: true,
       customerName: true,
       customerPhone: true,
       itemsJson: true,
@@ -68,7 +68,7 @@ export async function PATCH(request: Request, { params }: Context) {
 
   let khataAmount = 0;
 
-  if (status === 'COMPLETED' && !paymentReceived && order.totalAmount > 0) {
+  if (status === 'COMPLETED' && !paymentReceived && order.totalAmountPaise > 0) {
     const existing = await prisma.ledgerEntry.findUnique({
       where: { orderId: order.id },
       select: { id: true },
@@ -81,12 +81,12 @@ export async function PATCH(request: Request, { params }: Context) {
           shopId: shop.id,
           customerId: customer.id,
           kind: 'DEBIT',
-          amount: order.totalAmount,
+          amountPaise: order.totalAmountPaise,
           note: summarise(order.itemsJson),
           orderId: order.id,
         },
       });
-      khataAmount = order.totalAmount;
+      khataAmount = order.totalAmountPaise;
     }
   }
 

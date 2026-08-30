@@ -13,6 +13,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { MicButton } from '@/components/voice/MicButton';
+import { CloseIcon } from '@/components/ui/Icon';
 import { speak, useVoice } from '@/components/voice/useVoice';
 import { parseSpokenOrder, spokenYesNo, type VoiceLang } from '@/lib/speech';
 import { dict, type Locale } from '@/lib/i18n';
@@ -40,6 +41,7 @@ export function VoiceOrder({
   const t = dict(locale);
   const lang = RECOGNITION_LANG[locale];
   const [feedback, setFeedback] = useState('');
+  const [dismissed, setDismissed] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   const itemsRef = useRef(items);
@@ -143,19 +145,45 @@ export function VoiceOrder({
 
   if (!supported) return null;
 
+  // What the mic has to say right now, or nothing. Floating, there is no card
+  // standing permanently open to hold this — the bubble appears only when
+  // there is something to read and gets out of the way again afterwards.
+  //
+  // `dismissed` is what makes "not available on this browser" closable. That
+  // message is set once by the support check and never clears itself, so
+  // without a way out it was a box sitting permanently over the menu, covering
+  // the items it was telling the shopper to tap instead.
+  const line = listening && interim ? interim : feedback;
+  const hasSomethingToSay =
+    listening || Boolean(line) || Boolean(errorCode) || suggestions.length > 0;
+  const speaking = hasSomethingToSay && !dismissed;
+
   return (
-    <div className="mt-2 rounded-2xl bg-white p-3 shadow-card">
-      <div className="flex items-center gap-3">
-        <MicButton
-          listening={listening}
-          onClick={toggle}
-          label={listening ? t.voiceListening : t.voiceOrder}
-        />
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-slate-900">{listening ? t.voiceListening : t.voiceOrder}</p>
-          <p className="mt-0.5 truncate text-sm text-slate-500">
-            {listening && interim ? interim : feedback || t.voiceHint}
-          </p>
+    <div className="pointer-events-auto relative">
+      {/* Anchored above the mic rather than stacked with it in the flow: as a
+          sibling it was 20rem wide and shoved the search and basket buttons
+          across the screen every time the mic had something to say. */}
+      {speaking && (
+        <div className="absolute bottom-full right-0 mb-3 w-[min(20rem,calc(100vw-2rem))] rounded-2xl bg-white p-3 shadow-lg ring-1 ring-slate-200">
+          <div className="flex items-start gap-2">
+            <p className="min-w-0 flex-1 text-sm font-semibold text-slate-900">
+              {listening ? t.voiceListening : t.voiceOrder}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setDismissed(true);
+                setSuggestions([]);
+                setFeedback('');
+                if (listening) stop();
+              }}
+              aria-label={t.close}
+              className="-m-1 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              <CloseIcon className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="mt-0.5 text-sm text-slate-500">{line || t.voiceHint}</p>
           {/* A shopper can act on a permission prompt; the rest — work-profile
               policy, no HTTPS, no network — they cannot, so those all point back
               to the Add buttons rather than asking for a fix they cannot make. */}
@@ -164,41 +192,56 @@ export function VoiceOrder({
               {errorCode === 'not-allowed' ? t.voiceDenied : t.voiceUnavailable}
             </p>
           )}
-        </div>
-      </div>
 
-      {suggestions.length > 0 && (
-        <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
-          <p className="text-sm text-amber-900">
-            {t.voiceDidYouMean}{' '}
-            <strong>
-              {suggestions.map((entry) => `${entry.quantity} × ${entry.label}`).join(', ')}
-            </strong>
-          </p>
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                accept(suggestions);
-                setSuggestions([]);
-                setFeedback(
-                  `${suggestions.map((e) => `${e.quantity} ${e.label}`).join(', ')} — ${t.voiceAdded}`,
-                );
-              }}
-              className="h-10 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700"
-            >
-              {t.voiceYes}
-            </button>
-            <button
-              type="button"
-              onClick={() => setSuggestions([])}
-              className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              {t.voiceNo}
-            </button>
-          </div>
+          {suggestions.length > 0 && (
+            <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
+              <p className="text-sm text-amber-900">
+                {t.voiceDidYouMean}{' '}
+                <strong>
+                  {suggestions.map((entry) => `${entry.quantity} × ${entry.label}`).join(', ')}
+                </strong>
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    accept(suggestions);
+                    setSuggestions([]);
+                    setFeedback(
+                      `${suggestions.map((e) => `${e.quantity} ${e.label}`).join(', ')} — ${t.voiceAdded}`,
+                    );
+                  }}
+                  className="h-10 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700"
+                >
+                  {t.voiceYes}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSuggestions([])}
+                  className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  {t.voiceNo}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Dark, not green. Every card behind this one carries a green Add
+          button, and a green mic floating over them read as one more of those
+          rather than as the tool it is. */}
+      <MicButton
+        listening={listening}
+        tone="dark"
+        onClick={() => {
+          // Reaching for the mic is asking for its bubble back.
+          setDismissed(false);
+          toggle();
+        }}
+        label={listening ? t.voiceListening : t.voiceOrder}
+        className="shadow-lg ring-4 ring-slate-100/70"
+      />
     </div>
   );
 }

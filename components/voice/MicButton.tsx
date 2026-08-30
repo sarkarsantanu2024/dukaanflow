@@ -7,11 +7,21 @@ export function MicButton({
   listening,
   onClick,
   label,
+  tone = 'brand',
   className,
 }: {
   listening: boolean;
   onClick: () => void;
   label: string;
+  /**
+   * `brand` for the owner's app, where the mic is the primary way in.
+   *
+   * `dark` for the shopper's storefront, where it floats over a menu whose
+   * every card already carries a green Add button — a green mic on top of
+   * those read as one more of them, and the two greens touching at the corner
+   * made both harder to pick out, not easier.
+   */
+  tone?: 'brand' | 'dark';
   className?: string;
 }) {
   return (
@@ -26,7 +36,9 @@ export function MicButton({
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
         listening
           ? 'bg-red-600 text-white focus-visible:outline-red-600'
-          : 'bg-brand-600 text-white hover:bg-brand-700 focus-visible:outline-brand-600',
+          : tone === 'dark'
+            ? 'bg-slate-900 text-white hover:bg-slate-800 focus-visible:outline-slate-900'
+            : 'bg-brand-600 text-white hover:bg-brand-700 focus-visible:outline-brand-600',
         className,
       )}
     >

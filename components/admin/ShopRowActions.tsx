@@ -16,6 +16,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
+import { TypeToConfirmDialog } from '@/components/ui/Modal';
 
 export function ShopRowActions({
   slug,
@@ -29,6 +30,7 @@ export function ShopRowActions({
   const router = useRouter();
   const { push } = useToast();
   const [busy, setBusy] = useState(false);
+  const [asking, setAsking] = useState(false);
 
   async function toggleActive() {
     setBusy(true);
@@ -51,17 +53,10 @@ export function ShopRowActions({
     }
   }
 
+  // Typing the name is deliberate friction — deleting a shop also deletes
+  // every item, order and sale recorded against it. The dialog holds that
+  // check now, so by the time this runs the name already matches.
   async function remove() {
-    // Typing the name is deliberate friction — deleting a shop also deletes
-    // every item, order and sale recorded against it.
-    const typed = window.prompt(
-      `Deleting "${shopName}" removes its items, orders and sales permanently.\n\nType the shop name to confirm:`,
-    );
-    if (typed !== shopName) {
-      if (typed !== null) push('Name did not match — nothing was deleted', 'info');
-      return;
-    }
-
     setBusy(true);
     try {
       const response = await fetch(`/api/admin/shop/${slug}`, { method: 'DELETE' });
@@ -75,6 +70,7 @@ export function ShopRowActions({
       push('Network error. Please try again.', 'error');
     } finally {
       setBusy(false);
+      setAsking(false);
     }
   }
 
@@ -90,12 +86,29 @@ export function ShopRowActions({
       </button>
       <button
         type="button"
-        onClick={remove}
+        onClick={() => setAsking(true)}
         disabled={busy}
         className="rounded-md px-2 py-1 font-semibold text-slate-400 underline-offset-2 hover:text-red-600 hover:underline disabled:opacity-50"
       >
         Delete
       </button>
+
+      <TypeToConfirmDialog
+        open={asking}
+        title="Delete this shop?"
+        message={
+          <>
+            This removes <strong>{shopName}</strong>, its items, orders and sales
+            permanently. Its QR stops working and nothing can be restored.
+          </>
+        }
+        expected={shopName}
+        inputLabel={`Type "${shopName}" to confirm`}
+        confirmLabel="Delete shop"
+        busy={busy}
+        onConfirm={remove}
+        onCancel={() => setAsking(false)}
+      />
     </>
   );
 }

@@ -30,7 +30,7 @@ export default async function ItemsPage({ params }: PageProps) {
           name: true,
           nameBn: true,
           nameHi: true,
-          price: true,
+          pricePaise: true,
           priced: true,
           unit: true,
           category: true,
