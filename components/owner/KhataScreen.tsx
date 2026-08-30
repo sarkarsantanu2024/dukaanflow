@@ -21,10 +21,11 @@ import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { handledExpiredSession } from './sessionGuard';
-import { WhatsAppIcon } from '@/components/ui/Icon';
+import { TrashIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import { reminderMessage } from '@/lib/khata';
+import { ItemNotePicker, type PickableItem } from './ItemNotePicker';
 import type { Locale } from '@/lib/i18n';
 
 export type KhataCustomer = {
@@ -47,12 +48,15 @@ export function KhataScreen({
   slug,
   shopName,
   customers,
+  items,
   outstandingPaise,
   locale,
 }: {
   slug: string;
   shopName: string;
   customers: KhataCustomer[];
+  /** The shop's own list, so goods given on credit are picked, not typed. */
+  items: PickableItem[];
   outstandingPaise: number;
   locale: Locale;
 }) {
@@ -63,10 +67,25 @@ export function KhataScreen({
 
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', area: '', amountPaise: '', note: '' });
+  /**
+   * `amount` HOLDS RUPEES — what the shopkeeper typed into a box marked ₹.
+   *
+   * It used to be called `amountPaise` and was sent to the server unconverted,
+   * so ₹250 of goods was written to the book as 250 paise: two rupees fifty.
+   * Every khata in the product was out by a hundred, and it looked plausible
+   * enough on screen that nothing complained. Rupees in the field, paise on the
+   * wire, and `parsePaise` is the only crossing point.
+   */
+  const [form, setForm] = useState({ name: '', phone: '', area: '', amount: '', note: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   async function addEntry(kind: 'DEBIT' | 'CREDIT') {
+    const amountPaise = parsePaise(form.amount);
+    if (amountPaise === null || amountPaise < 1) {
+      setErrors({ amountPaise: t.khataAmount });
+      return;
+    }
+
     setBusy(true);
     setErrors({});
     try {
@@ -78,7 +97,7 @@ export function KhataScreen({
           customerName: form.name,
           customerArea: form.area,
           kind,
-          amountPaise: Number(form.amountPaise),
+          amountPaise,
           note: form.note,
         }),
       });
@@ -93,7 +112,7 @@ export function KhataScreen({
         return;
       }
 
-      setForm({ name: '', phone: '', area: '', amountPaise: '', note: '' });
+      setForm({ name: '', phone: '', area: '', amount: '', note: '' });
       router.refresh();
     } catch {
       push(t.networkError, 'error');
@@ -291,13 +310,21 @@ export function KhataScreen({
                             {entry.kind === 'DEBIT' ? '+' : '−'}
                             {formatPaise(entry.amountPaise)}
                           </span>
+                          {/* A bin, sized as a real target and asking before
+                              it acts. It was a small underlined word at the
+                              end of every row — the same weight as the date
+                              beside it, and the only way to correct a
+                              mistyped line. A khata that cannot be corrected
+                              is one the shopkeeper stops trusting. */}
                           <button
                             type="button"
                             onClick={() => removeEntry(entry.id)}
                             disabled={busy}
-                            className="shrink-0 text-xs text-slate-400 underline hover:text-red-600"
+                            aria-label={`${t.khataDelete} — ${formatPaise(entry.amountPaise)}`}
+                            title={t.khataDelete}
+                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                           >
-                            {t.khataDelete}
+                            <TrashIcon className="h-4 w-4" />
                           </button>
                         </li>
                       ))}
@@ -305,9 +332,13 @@ export function KhataScreen({
 
                     <SettleRow
                       customer={customer}
+                      items={items}
+                      locale={locale}
                       t={t}
                       busy={busy}
-                      onSettle={(kind, amountPaise) => addFor(customer, kind, amountPaise)}
+                      onSettle={(kind, amountPaise, note) =>
+                        addFor(customer, kind, amountPaise, note)
+                      }
                     />
                   </div>
                 )}
@@ -351,20 +382,24 @@ export function KhataScreen({
           />
           <Input
             label={t.khataAmount}
-            type="number"
-            inputMode="numeric"
-            min={1}
-            value={form.amountPaise}
-            onChange={(event) => setForm({ ...form, amountPaise: event.target.value })}
+            inputMode="decimal"
+            value={form.amount}
+            onChange={(event) => setForm({ ...form, amount: event.target.value })}
             error={errors.amountPaise}
             placeholder="250"
           />
-          <Input
-            label={t.khataNote}
-            value={form.note}
-            onChange={(event) => setForm({ ...form, note: event.target.value })}
-            error={errors.note}
-            placeholder="chal, tel"
+          {/* The note used to be an empty box with "chal, tel" as its
+              placeholder: typing, on a phone, in a script the keyboard may not
+              be set to, while a customer waits — and it left the amount to be
+              worked out in the shopkeeper's head. The picks write the note and
+              add themselves up. */}
+          <ItemNotePicker
+            items={items}
+            locale={locale}
+            onNoteChange={(note) => setForm((current) => ({ ...current, note }))}
+            onUseTotal={(paise) =>
+              setForm((current) => ({ ...current, amount: paiseToInput(paise) }))
+            }
           />
         </div>
 
@@ -373,7 +408,7 @@ export function KhataScreen({
           <Button
             variant="secondary"
             loading={busy}
-            disabled={!form.phone || !form.amountPaise}
+            disabled={!form.phone || !form.amount}
             onClick={() => addEntry('DEBIT')}
             className="border-amber-300 text-amber-800"
           >
@@ -381,7 +416,7 @@ export function KhataScreen({
           </Button>
           <Button
             loading={busy}
-            disabled={!form.phone || !form.amountPaise}
+            disabled={!form.phone || !form.amount}
             onClick={() => addEntry('CREDIT')}
           >
             {t.khataGot}
@@ -405,26 +440,50 @@ export function KhataScreen({
  */
 function SettleRow({
   customer,
+  items,
+  locale,
   t,
   busy,
   onSettle,
 }: {
   customer: KhataCustomer;
+  items: PickableItem[];
+  locale: Locale;
   t: ReturnType<typeof ownerDict>;
   busy: boolean;
-  onSettle: (kind: 'DEBIT' | 'CREDIT', amountPaise: number) => void;
+  onSettle: (kind: 'DEBIT' | 'CREDIT', amountPaise: number, note: string) => void;
 }) {
   const owed = Math.max(0, customer.balancePaise);
-  const [amountPaise, setAmount] = useState(owed > 0 ? String(owed) : '');
 
-  // The balancePaise moves when an entry is added, so the box has to follow it —
+  /**
+   * The box holds RUPEES, like every other money field a shopkeeper types into.
+   *
+   * It used to be prefilled with the balance in paise — a ₹5 debt put "500" in
+   * a box labelled ₹, and an owner who corrected that to "250" recorded two
+   * rupees fifty. The figure round-tripped, so the arithmetic looked right
+   * while the screen lied about it.
+   */
+  const [amount, setAmount] = useState(owed > 0 ? paiseToInput(owed) : '');
+
+  // The balance moves when an entry is added, so the box has to follow it —
   // otherwise the next tap pays off a figure that is no longer true.
   useEffect(() => {
-    setAmount(owed > 0 ? String(owed) : '');
+    setAmount(owed > 0 ? paiseToInput(owed) : '');
   }, [owed]);
 
-  const value = Number(amountPaise);
-  const valid = Number.isFinite(value) && value >= 1;
+  /**
+   * What was handed over, on the row where it is handed over.
+   *
+   * The picker only existed on the "somebody new" form at the foot of the
+   * page, which is the rarer case by far — a khata is mostly the same twenty
+   * names, week after week. Giving goods to one of them recorded an amount and
+   * nothing else, so the history read "Gave goods · ₹130" with no way to
+   * settle an argument about what the ₹130 was.
+   */
+  const [note, setNote] = useState('');
+
+  const value = parsePaise(amount);
+  const valid = value !== null && value >= 1;
   const settlesInFull = valid && value === owed && owed > 0;
 
   return (
@@ -433,10 +492,8 @@ function SettleRow({
         <label className="relative">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">₹</span>
           <input
-            type="number"
-            min={1}
-            inputMode="numeric"
-            value={amountPaise}
+            inputMode="decimal"
+            value={amount}
             onChange={(event) => setAmount(event.target.value)}
             aria-label={t.khataAmount}
             className="h-10 w-28 rounded-lg border border-slate-300 pl-6 pr-2 text-base tabular-nums"
@@ -446,7 +503,7 @@ function SettleRow({
         <Button
           size="sm"
           disabled={busy || !valid}
-          onClick={() => onSettle('CREDIT', value)}
+          onClick={() => value !== null && onSettle('CREDIT', value, note)}
         >
           {settlesInFull ? t.khataSettle : t.khataGot}
         </Button>
@@ -455,10 +512,19 @@ function SettleRow({
           size="sm"
           variant="secondary"
           disabled={busy || !valid}
-          onClick={() => onSettle('DEBIT', value)}
+          onClick={() => value !== null && onSettle('DEBIT', value, note)}
         >
           {t.khataGave}
         </Button>
+      </div>
+
+      <div className="mt-2">
+        <ItemNotePicker
+          items={items}
+          locale={locale}
+          onNoteChange={setNote}
+          onUseTotal={(paise) => setAmount(paiseToInput(paise))}
+        />
       </div>
 
       {owed > 0 && <p className="mt-1.5 text-xs text-slate-500">{t.khataPartHint}</p>}

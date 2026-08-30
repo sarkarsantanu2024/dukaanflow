@@ -22,7 +22,7 @@ export default async function KhataPage({ params }: PageProps) {
   const { slug } = await params;
   const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
 
-  const [balances, entries] = await Promise.all([
+  const [balances, entries, items] = await Promise.all([
     customerBalances(shop.id),
     prisma.ledgerEntry.findMany({
       where: { shopId: shop.id },
@@ -37,6 +37,13 @@ export default async function KhataPage({ params }: PageProps) {
         note: true,
         createdAt: true,
       },
+    }),
+    // Only what the shop actually has on the shelf: goods given on credit are
+    // picked from this rather than typed into a note box.
+    prisma.item.findMany({
+      where: { shopId: shop.id, inStock: true },
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
+      select: { id: true, name: true, nameBn: true, nameHi: true, unit: true, pricePaise: true },
     }),
   ]);
 
@@ -73,6 +80,7 @@ export default async function KhataPage({ params }: PageProps) {
         slug={shop.slug}
         shopName={shop.name}
         customers={customers}
+        items={items}
         outstandingPaise={totalOutstanding(balances)}
         locale={locale}
       />

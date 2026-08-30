@@ -32,6 +32,8 @@ export type ShopFormValues = {
   slug: string;
   type: (typeof SHOP_TYPES)[number];
   phone: string;
+  /** Whoever runs the deliveries, or blank. */
+  labourPhone: string;
   address: string;
   state: string;
   openTime: string;
@@ -55,6 +57,7 @@ const EMPTY: ShopFormValues = {
   slug: '',
   type: 'GROCERY',
   phone: '',
+  labourPhone: '',
   address: '',
   state: '',
   openTime: '',
@@ -319,6 +322,19 @@ export function ShopForm({
               value={values.phone}
               onChange={(event) => set('phone', event.target.value)}
               error={errors.phone}
+              placeholder="9876543210"
+            />
+
+            {/* The other number this shop runs on. It sits with the owner
+                rather than in a section of its own: a shop either has somebody
+                doing the running or it does not, and that is one field. */}
+            <Input
+              label="Delivery helper's WhatsApp"
+              hint="optional — lets the owner forward the day's round in one tap"
+              inputMode="numeric"
+              value={values.labourPhone}
+              onChange={(event) => set('labourPhone', event.target.value)}
+              error={errors.labourPhone}
               placeholder="9876543210"
             />
 

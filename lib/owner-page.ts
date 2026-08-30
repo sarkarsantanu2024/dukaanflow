@@ -30,6 +30,7 @@ export async function loadOwnerShop(slug: string) {
       phone: true,
       upiId: true,
       upiQrData: true,
+      labourPhone: true,
       ownerImageData: true,
       locale: true,
       active: true,

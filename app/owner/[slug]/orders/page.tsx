@@ -125,6 +125,7 @@ export default async function OrdersPage({ params }: PageProps) {
         locale={locale}
         upiId={shop.upiId}
         upiQrData={shop.upiQrData}
+        labourPhone={shop.labourPhone}
       />
     </OwnerShell>
   );

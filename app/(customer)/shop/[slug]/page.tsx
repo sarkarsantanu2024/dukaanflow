@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { StoreFront } from '@/components/customer/StoreFront';
 import { formatClockRange } from '@/lib/hours';
 import { liveNotice } from '@/lib/notice';
+import { SHOP_TYPE_LABELS } from '@/lib/validators';
 import { SiteFooter } from '@/components/ui/SiteFooter';
 import { entitlement, type Plan, type SubStatus } from '@/lib/plans';
 
@@ -64,9 +65,29 @@ async function loadShop(slug: string) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const shop = await prisma.shop.findUnique({ where: { slug }, select: { name: true } });
+  const shop = await prisma.shop.findUnique({
+    where: { slug },
+    select: { name: true, type: true, address: true, phone: true },
+  });
+  if (!shop) return { title: 'Shop not found' };
+
+  /**
+   * What a scanner, WhatsApp or a search result shows for this link.
+   *
+   * The card image itself is `opengraph-image.tsx` beside this file, which the
+   * framework attaches on its own. This is the text under it: the trade, where
+   * the shop is, and the number to ring — the same three things the page opens
+   * with, for anyone who has only the link.
+   */
+  const description = [SHOP_TYPE_LABELS[shop.type], shop.address, `+91 ${shop.phone}`]
+    .filter(Boolean)
+    .join(' · ');
+
   return {
-    title: shop ? `${shop.name} — Order on WhatsApp` : 'Shop not found',
+    title: `${shop.name} — Order on WhatsApp`,
+    description,
+    openGraph: { title: shop.name, description, type: 'website' },
+    twitter: { card: 'summary_large_image', title: shop.name, description },
   };
 }
 

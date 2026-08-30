@@ -26,9 +26,10 @@ import { useRouter } from 'next/navigation';
 import { handledExpiredSession } from './sessionGuard';
 import clsx from 'clsx';
 import { useToast } from '@/components/ui/Toast';
-import { CheckIcon, PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { CheckIcon, CloseIcon, PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { formatPaise } from '@/lib/money';
-import { buildRoundMessage, buildStatusMessage } from '@/lib/whatsapp';
+import { buildRoundMessage, buildStatusMessage, toWhatsAppNumber } from '@/lib/whatsapp';
 import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -91,10 +92,19 @@ export function OrdersScreen({
   locale,
   upiId,
   upiQrData,
+  labourPhone,
 }: {
   slug: string;
   /** Named in the message the owner sends the customer, and in the UPI QR. */
   shopName: string;
+  /**
+   * Whoever runs the deliveries, set by the operator, or blank.
+   *
+   * Blank is a supported state, not a missing setting: the send button then
+   * opens WhatsApp's own contact picker, which is also how the round reaches a
+   * second boy or the owner's son on a day the usual one is off.
+   */
+  labourPhone: string;
   orders: OwnerOrder[];
   locale: Locale;
   /** Generates a QR carrying the exact amount, so the customer confirms rather than types. */
@@ -104,6 +114,7 @@ export function OrdersScreen({
 }) {
   const router = useRouter();
   const { push } = useToast();
+  const { confirm, dialog } = useConfirm();
   const t = ownerDict(locale);
   const [busyId, setBusyId] = useState<string | null>(null);
   /** The order whose payment question is currently open, if any. */
@@ -257,12 +268,12 @@ export function OrdersScreen({
           separate customer messages, and the address is the part that gets
           lost doing that at six in the evening.
 
-          No number is stored for him: the link opens WhatsApp's own contact
-          picker, so the owner sends it to whoever is working today — which is
-          also how it reaches a second boy, or the owner's own son. */}
+          Straight to his number when the operator has set one, and to
+          WhatsApp's contact picker when they have not — which is also how the
+          round reaches a second boy, or the owner's own son. */}
       {pending.length > 0 && (
         <a
-          href={`https://wa.me/?text=${encodeURIComponent(
+          href={`https://wa.me/${labourPhone ? toWhatsAppNumber(labourPhone) : ''}?text=${encodeURIComponent(
             buildRoundMessage({ shopName, orders: pending }),
           )}`}
           target="_blank"
@@ -462,14 +473,34 @@ export function OrdersScreen({
                       <CheckIcon className="h-5 w-5" />
                     </button>
                   ))}
+                {/* An icon like the other three, and now behind a question.
+                    It was the odd one out as a word because it is the one act
+                    on this card with no undo, and an unlabelled ✗ beside a ✓
+                    is a mis-tap that turns a customer away. Asking first buys
+                    the consistency safely — and the dialog says what it means
+                    in the owner's own language, which the icon cannot. */}
                 {(order.status === 'NEW' || order.status === 'CONFIRMED') && (
                   <button
                     type="button"
                     disabled={busyId === order.id}
-                    onClick={() => setStatus(order.id, 'CANCELLED')}
-                    className="inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    onClick={async () => {
+                      if (
+                        await confirm({
+                          title: t.markCancelled,
+                          message: t.markCancelledConfirm,
+                          confirmLabel: t.markCancelled,
+                          cancelLabel: t.no,
+                          danger: true,
+                        })
+                      ) {
+                        void setStatus(order.id, 'CANCELLED');
+                      }
+                    }}
+                    aria-label={t.markCancelled}
+                    title={t.markCancelled}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                   >
-                    {t.markCancelled}
+                    <CloseIcon className="h-5 w-5" />
                   </button>
                 )}
               </div>
@@ -477,6 +508,8 @@ export function OrdersScreen({
           ))}
         </ul>
       )}
+
+      {dialog}
     </div>
   );
 }

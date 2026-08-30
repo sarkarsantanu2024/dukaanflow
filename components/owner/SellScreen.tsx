@@ -44,6 +44,8 @@ export type SellItem = {
   nameBn: string;
   nameHi: string;
   pricePaise: number;
+  /** Has a human chosen this price, or is it still the Re 1 placeholder? */
+  priced: boolean;
   unit: string;
   category: string;
   inStock: boolean;
@@ -92,10 +94,21 @@ export function SellScreen({
   const [category, setCategory] = useState('');
   const [khata, setKhata] = useState<{ name: string; phone: string; area: string } | null>(null);
 
-  // Only what the shop actually has. A till is for ringing up what is on the
-  // shelf, and a grid padded with things that cannot be sold makes the owner
-  // read past them every time.
-  const sellable = useMemo(() => items.filter((item) => item.inStock), [items]);
+  /**
+   * What the shop can actually sell: in stock, and priced by a human.
+   *
+   * The `priced` half was missing, and it was expensive. Items added by voice,
+   * by photograph or from the starter catalogue land at a placeholder of Re 1
+   * with `priced: false`; the customer's page hides those, and the till was
+   * showing them at ₹1 and would ring one up at ₹1. A shopkeeper who taps
+   * "Rice" during a rush and takes a rupee for it has been failed by the
+   * screen, and the shop's own till disagreed with its shop page about what
+   * was even for sale.
+   */
+  const sellable = useMemo(
+    () => items.filter((item) => item.inStock && item.priced),
+    [items],
+  );
 
   const categories = useMemo(
     () => Array.from(new Set(sellable.map((item) => item.category).filter(Boolean))).sort(),
