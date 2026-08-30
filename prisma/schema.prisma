@@ -144,6 +144,15 @@ model Shop {
   /// Tamil Nadu — so a shop must be placed before its festivals can be.
   state String @default("")
 
+  /// Whoever runs the deliveries, as a 10-digit mobile, or blank.
+  ///
+  /// Not a user: the delivery boy has no login and never will — he has a phone
+  /// with WhatsApp on it, which is the whole of it. This is only so the owner
+  /// can forward the round to him in one tap instead of dictating four
+  /// addresses at six in the evening. Blank means the send button opens
+  /// WhatsApp's own contact picker instead.
+  labourPhone    String @default("")
+
   ownerName      String @default("")
   /// Storefront and owner photos, held as resized data URLs. Not a blob store:
   /// one ~100 KB image per shop keeps DukaanFlow deployable with nothing but a

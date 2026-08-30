@@ -42,7 +42,9 @@ const LANG_STORAGE_KEY = 'dukaanflow:voice-lang';
 /** How to put back whatever a spoken command just did. */
 type Undo =
   | { type: 'delete'; itemId: string }
-  | { type: 'price'; itemId: string; price: number }
+  // PAISE, and named so. An undo that quietly restores a hundredth of the old
+  // price is the worst kind of bug: it looks like it worked.
+  | { type: 'price'; itemId: string; pricePaise: number }
   | { type: 'recreate'; item: AdminItem }
   | { type: 'stock'; itemId: string; inStock: boolean };
 
@@ -290,7 +292,14 @@ export function VoiceItemAdder({
           name: draft.name,
           nameBn: draft.nameBn,
           nameHi: draft.nameHi,
-          price: 1,
+          // `pricePaise`, and 100 of them — Re 1.
+          //
+          // This said `price: 1`, which was wrong twice over. The API takes
+          // `pricePaise` and rejects a body without it, so every voice-added
+          // item on a wide screen failed validation and the owner was told
+          // only "could not save"; and 1 paise would have been refused anyway,
+          // the floor being 50.
+          pricePaise: 100,
           // A placeholder, not a price. Keeps the row off the shop page until
           // somebody says what it actually costs.
           priced: false,
@@ -381,14 +390,14 @@ export function VoiceItemAdder({
       action.type === 'delete'
         ? await call('DELETE', { id: action.itemId })
         : action.type === 'price'
-          ? await call('PATCH', { id: action.itemId, price: action.price })
+          ? await call('PATCH', { id: action.itemId, pricePaise: action.pricePaise })
           : action.type === 'stock'
             ? await call('PATCH', { id: action.itemId, inStock: action.inStock })
             : await call('POST', {
                 name: action.item.name,
                 nameBn: action.item.nameBn,
                 nameHi: action.item.nameHi,
-                price: action.item.pricePaise,
+                pricePaise: action.item.pricePaise,
                 unit: action.item.unit,
                 category: action.item.category,
                 inStock: action.item.inStock,

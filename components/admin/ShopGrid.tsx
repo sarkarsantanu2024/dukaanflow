@@ -165,7 +165,12 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
             <li
               key={shop.id}
               className={clsx(
-                'flex flex-col overflow-hidden rounded-2xl border border-brand-100/70 bg-white shadow-card transition hover:border-brand-200 hover:shadow-md',
+                // NOT `overflow-hidden`. The card clipped its own contents,
+                // which silently swallowed the report menu: an absolutely
+                // positioned panel anchored to a button in the footer was cut
+                // off at the card's edge, so the download simply never
+                // appeared. The footer rounds its own bottom corners instead.
+                'flex flex-col rounded-2xl border border-brand-100/70 bg-white shadow-card transition hover:border-brand-200 hover:shadow-md',
                 !shop.active && 'opacity-75',
               )}
             >
@@ -278,7 +283,7 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                   a download as well as the two buttons, and a card at the
                   narrow end of the grid would otherwise clip whichever came
                   last — which is the destructive one. */}
-              <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-brand-100/70 bg-brand-50/40 px-4 py-2.5">
+              <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-b-2xl border-t border-brand-100/70 bg-brand-50/40 px-4 py-2.5">
                 <Link
                   href={`/admin/shop/${shop.slug}/items`}
                   className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700"

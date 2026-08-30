@@ -121,6 +121,24 @@ export const shopNoticeSchema = z
     path: ['noticeText'],
   });
 
+/**
+ * A mobile number that may simply not have been given.
+ *
+ * `phoneSchema` refuses a blank, which is right for a shop's own WhatsApp — a
+ * shop with no number cannot take an order. It is wrong for the delivery
+ * helper's, which most shops will not have at all.
+ */
+export const optionalPhoneSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/[\s()-]/g, ''))
+  .transform((value) => value.replace(/^(\+?91|0)/, ''))
+  .refine(
+    (value) => value === '' || /^[6-9]\d{9}$/.test(value),
+    'Enter a valid 10-digit mobile number, or leave it blank',
+  )
+  .default('');
+
 export const shopCreateSchema = z.object({
   name: z.string().trim().min(2, 'Shop name is required').max(80),
   ownerName: z.string().trim().max(60).default(''),
@@ -131,6 +149,8 @@ export const shopCreateSchema = z.object({
   slug: slugSchema.optional().or(z.literal('')),
   type: z.enum(SHOP_TYPES),
   phone: phoneSchema,
+  /// Whoever runs the deliveries. Optional — most shops have nobody.
+  labourPhone: optionalPhoneSchema,
   address: z.string().trim().max(200).default(''),
   /// Collection-only shops turn this off; the storefront then never offers
   /// delivery and the order route refuses it.

@@ -104,24 +104,41 @@ export function ShopHeader({
       <div className="mx-auto max-w-6xl px-4 pt-3">
         <div className="rounded-2xl bg-white p-3 shadow-card">
           <div className="flex items-center gap-3">
-            {/* The shopfront if there is one, the owner's face otherwise: the
-                point of the picture is telling somebody at the counter that
-                they scanned the right code, and either does that. */}
-            {shop.imageData || shop.ownerImageData ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={shop.imageData || shop.ownerImageData}
-                alt=""
-                className="h-16 w-16 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
-              />
-            ) : (
-              <span
-                aria-hidden
-                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-2xl font-bold text-brand-800"
-              >
-                {shop.name.trim().charAt(0).toUpperCase()}
-              </span>
-            )}
+            {/* BOTH PICTURES, IN THE SPACE OF ONE.
+                The shopfront says "this is the shop you are standing in"; the
+                owner's face says who the money is going to, and a shopper
+                deciding whether to hand it over looks at a face. Stacking them
+                as tile and badge keeps the pair inside 64px — a row each, as
+                it was before, cost a third of the screen. */}
+            <span className="relative shrink-0">
+              {shop.imageData || shop.ownerImageData ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={shop.imageData || shop.ownerImageData}
+                  alt=""
+                  className="h-16 w-16 rounded-xl object-cover ring-1 ring-slate-200"
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  className="flex h-16 w-16 items-center justify-center rounded-xl bg-brand-100 text-2xl font-bold text-brand-800"
+                >
+                  {shop.name.trim().charAt(0).toUpperCase()}
+                </span>
+              )}
+
+              {/* Only when it is a second picture. With no shopfront photo the
+                  owner's face is already the tile, and a badge of the same
+                  photo over itself reads as a rendering fault. */}
+              {shop.imageData && shop.ownerImageData && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={shop.ownerImageData}
+                  alt=""
+                  className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full object-cover ring-2 ring-white"
+                />
+              )}
+            </span>
 
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-lg font-bold leading-tight text-slate-900">
@@ -134,8 +151,18 @@ export function ShopHeader({
 
               {/* Where and when, tucked under the name rather than given a
                   band of their own. */}
+              {/* The number in words as well as behind the button. A shopper
+                  who wants to ring from a landline, or save the shop to their
+                  contacts, cannot read a number out of an icon. */}
+              <a
+                href={`tel:+91${shop.phone}`}
+                className="text-xs font-semibold tabular-nums text-slate-600 hover:text-brand-700"
+              >
+                +91 {shop.phone}
+              </a>
+
               {(shop.address || hours) && (
-                <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
                   {shop.address && (
                     <span className="flex min-w-0 items-center gap-1">
                       <PinIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />

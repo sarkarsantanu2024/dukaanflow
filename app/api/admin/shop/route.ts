@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     slug,
     type,
     phone,
+    labourPhone,
     address,
     state,
     openTime,
@@ -58,6 +59,10 @@ export async function POST(request: Request) {
         slug: finalSlug,
         type,
         phone,
+        // The delivery helper's number, which the create form asks for and
+        // this route was dropping on the floor — the exact fault the comment
+        // above describes, repeated the moment a field was added.
+        labourPhone,
         address,
         state,
         openTime,

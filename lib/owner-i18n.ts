@@ -124,6 +124,8 @@ type OwnerDictionary = {
   markConfirmed: string;
   markCompleted: string;
   markCancelled: string;
+  /** Asked before an order is turned away — the one act here with no undo. */
+  markCancelledConfirm: string;
   ordersAll: string;
   ordersToday: string;
   ordersTakings: string;
@@ -190,15 +192,10 @@ type OwnerDictionary = {
 
   networkError: string;
 
-  sellTitle: string;
-  sellHint: string;
-  sellSearch: string;
-  sellEmpty: string;
   sellTakePayment: string;
   sellCash: string;
   sellUpi: string;
   sellScanToPay: string;
-  sellDone: string;
   sellRecorded: string;
   sellMissingItem: string;
   sellKhata: string;
@@ -218,7 +215,11 @@ type OwnerDictionary = {
   khataPhone: string;
   khataArea: string;
   khataAmount: string;
-  khataNote: string;
+  /** Picking what was handed over, from the shop's own list. */
+  khataItems: string;
+  khataItemsPick: string;
+  khataItemsClose: string;
+  khataItemsUseTotal: string;
   khataSave: string;
   khataRemind: string;
   khataHistory: string;
@@ -345,7 +346,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noticeFinished: 'Finished — customers can no longer see it',
     markConfirmed: 'Accept',
     markCompleted: 'Mark done',
-    markCancelled: 'Cancel',
+    markCancelled: 'Cancel order',
+    markCancelledConfirm: 'The customer is not served and the order cannot be brought back.',
     ordersAll: 'All',
     ordersToday: 'Today',
     ordersTakings: 'Takings',
@@ -420,15 +422,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
 
     networkError: 'Network error. Please try again.',
 
-    sellTitle: 'Sell',
-    sellHint: 'Tap what the customer is buying.',
-    sellSearch: 'Search to add',
-    sellEmpty: 'Nothing added yet',
     sellTakePayment: 'Take payment',
     sellCash: 'Cash',
     sellUpi: 'UPI',
     sellScanToPay: 'Ask the customer to scan',
-    sellDone: 'Done',
     sellRecorded: 'Sale recorded',
     sellMissingItem: 'Item not in the list? Add it in Items, then come back.',
     sellKhata: 'Udhaar',
@@ -452,7 +449,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataPhone: 'Phone',
     khataArea: 'Area',
     khataAmount: 'Amount (₹)',
-    khataNote: 'Note',
+    khataItems: 'What did they take?',
+    khataItemsPick: 'Pick items',
+    khataItemsClose: 'Close',
+    khataItemsUseTotal: 'use this amount',
     khataSave: 'Save entry',
     khataRemind: 'Remind on WhatsApp',
     khataHistory: 'History',
@@ -574,7 +574,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noticeFinished: 'শেষ হয়ে গেছে — খদ্দের আর দেখতে পাচ্ছে না',
     markConfirmed: 'নিলাম',
     markCompleted: 'হয়ে গেছে',
-    markCancelled: 'বাতিল',
+    markCancelled: 'অর্ডার বাতিল',
+    markCancelledConfirm: 'খদ্দের জিনিস পাবে না, আর অর্ডারটা আর ফেরানো যাবে না।',
     ordersAll: 'সব',
     ordersToday: 'আজ',
     ordersTakings: 'আজকের টাকা',
@@ -645,15 +646,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
 
     networkError: 'নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।',
 
-    sellTitle: 'বিক্রি',
-    sellHint: 'খদ্দের যা নিচ্ছেন তাতে চাপ দিন।',
-    sellSearch: 'খুঁজে যোগ করুন',
-    sellEmpty: 'এখনও কিছু যোগ হয়নি',
     sellTakePayment: 'টাকা নিন',
     sellCash: 'নগদ',
     sellUpi: 'UPI',
     sellScanToPay: 'খদ্দেরকে স্ক্যান করতে বলুন',
-    sellDone: 'হয়ে গেছে',
     sellRecorded: 'বিক্রি লেখা হয়েছে',
     sellMissingItem: 'তালিকায় নেই? “জিনিস”-এ গিয়ে যোগ করুন, তারপর ফিরে আসুন।',
     sellKhata: 'ধার',
@@ -677,7 +673,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataPhone: 'ফোন',
     khataArea: 'পাড়া',
     khataAmount: 'টাকা (₹)',
-    khataNote: 'নোট',
+    khataItems: 'কী কী নিল?',
+    khataItemsPick: 'জিনিস বাছুন',
+    khataItemsClose: 'বন্ধ করুন',
+    khataItemsUseTotal: 'এই টাকাটা বসান',
     khataSave: 'লিখুন',
     khataRemind: 'হোয়াটসঅ্যাপে মনে করান',
     khataHistory: 'হিসাব',
@@ -799,7 +798,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noticeFinished: 'खत्म — ग्राहक अब नहीं देख सकते',
     markConfirmed: 'लिया',
     markCompleted: 'हो गया',
-    markCancelled: 'रद्द',
+    markCancelled: 'ऑर्डर रद्द',
+    markCancelledConfirm: 'ग्राहक को सामान नहीं मिलेगा, और ऑर्डर वापस नहीं आएगा।',
     ordersAll: 'सब',
     ordersToday: 'आज',
     ordersTakings: 'आज की कमाई',
@@ -870,15 +870,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
 
     networkError: 'नेटवर्क की दिक्कत। दोबारा कोशिश कीजिए।',
 
-    sellTitle: 'बिक्री',
-    sellHint: 'ग्राहक जो ले रहा है उस पर दबाइए।',
-    sellSearch: 'खोजकर जोड़ें',
-    sellEmpty: 'अभी कुछ नहीं जोड़ा',
     sellTakePayment: 'पैसा लें',
     sellCash: 'नकद',
     sellUpi: 'UPI',
     sellScanToPay: 'ग्राहक से स्कैन कराइए',
-    sellDone: 'हो गया',
     sellRecorded: 'बिक्री दर्ज हुई',
     sellMissingItem: 'सूची में नहीं है? “सामान” में जाकर जोड़िए, फिर लौटिए।',
     sellKhata: 'उधार',
@@ -902,7 +897,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataPhone: 'फ़ोन',
     khataArea: 'इलाक़ा',
     khataAmount: 'रकम (₹)',
-    khataNote: 'नोट',
+    khataItems: 'क्या-क्या लिया?',
+    khataItemsPick: 'सामान चुनें',
+    khataItemsClose: 'बंद करें',
+    khataItemsUseTotal: 'यही रकम भरें',
     khataSave: 'लिखें',
     khataRemind: 'व्हाट्सएप पर याद दिलाएँ',
     khataHistory: 'हिसाब',
