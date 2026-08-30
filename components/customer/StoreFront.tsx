@@ -396,8 +396,20 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           take a click, so the gaps between them are still the live page — a
           fixed box here once swallowed taps and left a card underneath
           refusing to respond. `main` also carries enough bottom padding that
-          the last card scrolls clear rather than living under the stack. */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-3 px-4">
+          the last card scrolls clear rather than living under the stack.
+
+          WHEN THE BASKET IS OPEN the stack steps aside for it. The basket is a
+          panel down the right-hand edge and the mic sits in that same corner,
+          so it was simply buried — a shopper could not speak an order while
+          looking at what they had already ordered, which is exactly when they
+          would. On a phone the panel takes the screen, so there is nowhere to
+          step aside to and the stack waits instead. */}
+      <div
+        className={clsx(
+          'pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-3 px-4 transition-[padding]',
+          cartOpen && 'hidden lg:flex lg:pr-[29rem]',
+        )}
+      >
           <VoiceOrder items={items} locale={locale} onAdd={addQuantity} />
 
           {!cartOpen && (

@@ -264,22 +264,28 @@ export function SellScreen({
        an owner is usually reaching for. The space appears only while there is
        a button to clear. */
     <div className={clsx('space-y-4', lines.length > 0 && 'pb-20')}>
-      <div className="flex items-baseline justify-between gap-3 rounded-2xl bg-white p-4 shadow-card">
-        <div className="min-w-0">
-          <h2 className="font-semibold text-slate-900">{t.sellTitle}</h2>
-          <p className="text-sm text-slate-500">{t.sellHint}</p>
-          {/* The one sentence that keeps the two records apart. An owner who
-              does not know the difference is the only one who ever creates a
-              duplicate, and nothing on this screen used to say. */}
-          <p className="mt-1 text-xs leading-relaxed text-slate-400">{t.tillOrdersNote}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs uppercase tracking-wide text-slate-400">{t.sellToday}</p>
-          <p className="text-lg font-bold tabular-nums text-slate-900">{formatPaise(todayTotalPaise)}</p>
-          <p className="text-xs text-slate-500">
+      {/* Today's takings, and nothing else.
+          This was a card carrying a heading that repeated the tab the owner
+          had just pressed, a line telling them to tap what the customer is
+          buying, and a paragraph explaining why counter sales and WhatsApp
+          orders are separate records. All true, all read once, and then read
+          again every single morning for the life of the shop — four lines of
+          instruction above the grid the owner actually came to press.
+
+          The takings stay, because that number changes through the day and is
+          the reason to glance up here at all. */}
+      <div className="flex items-baseline justify-between gap-3 rounded-2xl bg-white px-4 py-2.5 shadow-card">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          {t.sellToday}
+        </p>
+        <p className="flex items-baseline gap-2">
+          <span className="text-lg font-bold tabular-nums text-slate-900">
+            {formatPaise(todayTotalPaise)}
+          </span>
+          <span className="text-xs text-slate-500">
             {todayCount} {t.sellTodayCount}
-          </p>
-        </div>
+          </span>
+        </p>
       </div>
 
       {/* What has actually been taken today, with the time of each. The totalPaise
@@ -344,6 +350,151 @@ export function SellScreen({
               </span>
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Above the drawer, not below it.
+          Take payment now sits inside the basket, and the basket is z-50 with
+          a 200ms exit animation — at z-30 this opened behind the panel that
+          launched it and only appeared once that had finished sliding away. */}
+      {paying && (
+        <div
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md rounded-t-2xl bg-white p-5 sm:rounded-2xl">
+            <div className="flex items-baseline justify-between">
+              <h3 className="text-lg font-bold text-slate-900">{t.sellTakePayment}</h3>
+              <p className="text-2xl font-bold tabular-nums text-brand-700">
+                {formatPaise(totalPaise)}
+              </p>
+            </div>
+
+            {/* A generated QR carries the amount, so the customer confirms
+                rather than types — that beats the shop's static printed code,
+                which is kept only as the fallback when there is no UPI ID. */}
+            {upiId ? (
+              <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-slate-50 p-4">
+                <QRCodeCanvas
+                  value={upiPayUrlWithAmount(upiId, shopName, totalPaise)}
+                  size={168}
+                  includeMargin
+                  level="M"
+                />
+                <p className="text-sm text-slate-600">{t.sellScanToPay}</p>
+              </div>
+            ) : upiQrData ? (
+              <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-slate-50 p-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={upiQrData} alt="UPI QR" className="h-42 w-42 max-w-[10.5rem]" />
+                <p className="text-sm text-slate-600">{t.sellScanToPay}</p>
+              </div>
+            ) : null}
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => record('CASH')}
+                className="h-12 rounded-xl border border-slate-300 font-semibold text-slate-800 disabled:opacity-50"
+              >
+                {t.sellCash}
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => record('UPI')}
+                className="h-12 rounded-xl bg-brand-600 font-semibold text-white disabled:opacity-50"
+              >
+                {t.sellUpi}
+              </button>
+              {/* Goods leaving on credit is a payment mode here, because at the
+                  counter that is exactly what it is — the third thing that can
+                  happen when the customer is ready to go. */}
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setKhata(khata ?? { name: '', phone: '', area: '' })}
+                className={clsx(
+                  'h-12 rounded-xl border font-semibold disabled:opacity-50',
+                  khata
+                    ? 'border-amber-500 bg-amber-50 text-amber-800'
+                    : 'border-slate-300 text-slate-800',
+                )}
+              >
+                {t.sellKhata}
+              </button>
+            </div>
+
+            {khata && (
+              <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
+                <p className="text-sm font-semibold text-amber-900">{t.sellWhoseKhata}</p>
+
+                {customers.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {customers.slice(0, 8).map((customer) => (
+                      <button
+                        key={customer.id}
+                        type="button"
+                        onClick={() => setKhata({ name: customer.name, phone: customer.phone, area: customer.area })}
+                        className={clsx(
+                          'rounded-full border px-3 py-1 text-sm font-medium',
+                          khata.phone === customer.phone
+                            ? 'border-amber-600 bg-amber-600 text-white'
+                            : 'border-amber-300 bg-white text-amber-900',
+                        )}
+                      >
+                        {customer.name || customer.phone}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <input
+                    value={khata.area}
+                    onChange={(event) => setKhata({ ...khata, area: event.target.value })}
+                    placeholder={t.khataArea}
+                    aria-label={t.khataArea}
+                    className="col-span-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-base"
+                  />
+                  <input
+                    value={khata.name}
+                    onChange={(event) => setKhata({ ...khata, name: event.target.value })}
+                    placeholder={t.khataCustomer}
+                    aria-label={t.khataCustomer}
+                    className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-base"
+                  />
+                  <input
+                    value={khata.phone}
+                    onChange={(event) => setKhata({ ...khata, phone: event.target.value })}
+                    inputMode="numeric"
+                    placeholder={t.khataPhone}
+                    aria-label={t.khataPhone}
+                    className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-base"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  disabled={saving || khata.phone.replace(/\D/g, '').length < 10}
+                  onClick={() => record('KHATA')}
+                  className="mt-2 h-11 w-full rounded-xl bg-amber-600 font-semibold text-white disabled:opacity-50"
+                >
+                  {t.sellKhata} · {formatPaise(totalPaise)}
+                </button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setPaying(false)}
+              className="mt-3 w-full py-2 text-sm font-medium text-slate-500"
+            >
+              {t.no}
+            </button>
+          </div>
         </div>
       )}
 
