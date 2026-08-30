@@ -91,6 +91,57 @@ type Dictionary = {
   repeatHint: string;
   repeatAdd: string;
   repeatDismiss: string;
+
+  /** How many of a counted item are left. Followed by the number. */
+  onlyLeft: string;
+  /** What the basket adds up, once delivery has a price. */
+  goods: string;
+  deliveryCharge: string;
+  deliveryFree: string;
+  /** "Add ₹40 more for free delivery" — the amount is inserted after this. */
+  addMoreForFree: string;
+  /** "This shop delivers from ₹200" — the amount follows. */
+  minOrder: string;
+  /** "Add ₹55 more, or choose Pickup" — the amount follows. */
+  addMoreToOrder: string;
+
+  /** Being told what happened to this order, without asking. */
+  notifyTitle: string;
+  notifyBody: string;
+  notifyYes: string;
+  notifyLater: string;
+  notifyOn: string;
+  notifyDenied: string;
+
+  /** The page a customer can come back to, and the shop they came from. */
+  trackTitle: string;
+  trackHint: string;
+  trackPlaced: string;
+  /** Where the order has got to, in the customer's own words. */
+  trackStatePreparing: string;
+  trackStateReadyPickup: string;
+  trackStateReadyDelivery: string;
+  trackStateCancelled: string;
+  trackChanged: string;
+  trackChangedHint: string;
+  trackOrderAgain: string;
+  trackNotFound: string;
+  trackNotFoundHint: string;
+
+  /** Keeping the shop, so the QR is scanned once and never again. */
+  saveShopTitle: string;
+  saveShopBody: string;
+  saveShopNow: string;
+  saveShopLater: string;
+  saveShopIos: string;
+  savedShopsTitle: string;
+  savedShopsHint: string;
+  savedShopsForget: string;
+
+  /** When the signal has gone. */
+  offlineTitle: string;
+  offlineBody: string;
+  offlineWhatsApp: string;
 };
 
 export const DICTIONARIES: Record<Locale, Dictionary> = {
@@ -162,6 +213,49 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceDidYouMean: 'Did you mean',
     voiceYes: 'Yes, add',
     voiceNo: 'No',
+
+    onlyLeft: 'Only left:',
+    goods: 'Items',
+    deliveryCharge: 'Delivery',
+    deliveryFree: 'Free',
+    addMoreForFree: 'more for free delivery',
+    minOrder: 'This shop delivers orders from',
+    addMoreToOrder: 'more, or choose Pickup',
+
+    notifyTitle: 'Shall we tell you when it is ready?',
+    notifyBody: 'Your phone will let you know when the shop has it ready. Nothing else, ever.',
+    notifyYes: 'Yes, tell me',
+    notifyLater: 'No thanks',
+    notifyOn: 'We will let you know',
+    notifyDenied: 'Your browser has blocked notifications for this site.',
+
+    trackTitle: 'Your order',
+    trackHint: 'Keep this page. It shows what the shop is doing with your order.',
+    trackPlaced: 'Placed',
+    trackStatePreparing: 'The shop has your order and is getting it ready.',
+    trackStateReadyPickup: 'Ready. Please collect it from the shop.',
+    trackStateReadyDelivery: 'Ready and on its way to you.',
+    trackStateCancelled: 'The shop could not take this order.',
+    trackChanged: 'The shop changed this order',
+    trackChangedHint: 'They did not have everything. This is what is coming, and what it costs.',
+    trackOrderAgain: 'Order again from this shop',
+    trackNotFound: 'Order not found',
+    trackNotFoundHint: 'This link may be old. Old orders are cleared after a while.',
+
+    saveShopTitle: 'Keep this shop on your phone',
+    saveShopBody:
+      'Add it to your home screen and order again with one tap — no scanning the code again, from anywhere.',
+    saveShopNow: 'Add to home screen',
+    saveShopLater: 'Not now',
+    saveShopIos: 'Tap Share, then “Add to Home Screen”.',
+    savedShopsTitle: 'Shops you have ordered from',
+    savedShopsHint: 'Kept on this phone only.',
+    savedShopsForget: 'Remove',
+
+    offlineTitle: 'No internet just now',
+    offlineBody:
+      'Your basket is safe. Try again when the signal is back, or send the order to the shop on WhatsApp.',
+    offlineWhatsApp: 'Send on WhatsApp instead',
   },
   bn: {
     scanToOrder: 'স্ক্যান করে অর্ডার করুন',
@@ -231,6 +325,49 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceDidYouMean: 'আপনি কি বলতে চেয়েছেন',
     voiceYes: 'হ্যাঁ, যোগ করুন',
     voiceNo: 'না',
+
+    onlyLeft: 'আছে মাত্র:',
+    goods: 'জিনিসপত্র',
+    deliveryCharge: 'ডেলিভারি',
+    deliveryFree: 'ফ্রি',
+    addMoreForFree: 'টাকার জিনিস নিলে ডেলিভারি ফ্রি',
+    minOrder: 'এই দোকান ডেলিভারি করে',
+    addMoreToOrder: 'টাকার জিনিস নিন, বা দোকান থেকে নিন',
+
+    notifyTitle: 'তৈরি হলে জানিয়ে দেব?',
+    notifyBody: 'দোকান তৈরি করে দিলেই আপনার ফোনে জানিয়ে দেব। আর কিছু নয়।',
+    notifyYes: 'হ্যাঁ, জানাবেন',
+    notifyLater: 'দরকার নেই',
+    notifyOn: 'জানিয়ে দেব',
+    notifyDenied: 'আপনার ব্রাউজার এই সাইটের নোটিফিকেশন বন্ধ করে রেখেছে।',
+
+    trackTitle: 'আপনার অর্ডার',
+    trackHint: 'পাতাটা রেখে দিন। দোকান আপনার অর্ডার নিয়ে কী করছে এখানে দেখা যাবে।',
+    trackPlaced: 'দেওয়া হয়েছে',
+    trackStatePreparing: 'দোকান অর্ডারটি পেয়েছে, তৈরি করছে।',
+    trackStateReadyPickup: 'তৈরি হয়ে গেছে। দোকান থেকে নিয়ে আসুন।',
+    trackStateReadyDelivery: 'তৈরি — আপনার কাছে রওনা হয়েছে।',
+    trackStateCancelled: 'দোকান এই অর্ডারটি নিতে পারেনি।',
+    trackChanged: 'দোকান অর্ডারটা বদলেছে',
+    trackChangedHint: 'সব জিনিস ছিল না। যা আসছে আর যত টাকা লাগবে, নিচে দেখুন।',
+    trackOrderAgain: 'এই দোকানে আবার অর্ডার করুন',
+    trackNotFound: 'অর্ডার পাওয়া গেল না',
+    trackNotFoundHint: 'লিংকটা পুরনো হতে পারে। পুরনো অর্ডার কিছুদিন পর মুছে যায়।',
+
+    saveShopTitle: 'দোকানটা ফোনে রেখে দিন',
+    saveShopBody:
+      'হোম স্ক্রিনে রেখে দিলে যেখান থেকেই হোক এক চাপেই অর্ডার — আর QR স্ক্যান করতে হবে না।',
+    saveShopNow: 'হোম স্ক্রিনে রাখুন',
+    saveShopLater: 'এখন নয়',
+    saveShopIos: 'Share চেপে “Add to Home Screen” বেছে নিন।',
+    savedShopsTitle: 'যেসব দোকানে অর্ডার করেছেন',
+    savedShopsHint: 'শুধু এই ফোনেই রাখা আছে।',
+    savedShopsForget: 'সরান',
+
+    offlineTitle: 'এখন ইন্টারনেট নেই',
+    offlineBody:
+      'আপনার ঝুড়ি ঠিক আছে। নেট এলে আবার চেষ্টা করুন, বা হোয়াটসঅ্যাপে দোকানে অর্ডারটা পাঠিয়ে দিন।',
+    offlineWhatsApp: 'হোয়াটসঅ্যাপে পাঠান',
   },
   hi: {
     scanToOrder: 'स्कैन करके ऑर्डर करें',
@@ -300,6 +437,49 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceDidYouMean: 'क्या आपका मतलब है',
     voiceYes: 'हाँ, जोड़ें',
     voiceNo: 'नहीं',
+
+    onlyLeft: 'सिर्फ़ बचा:',
+    goods: 'सामान',
+    deliveryCharge: 'डिलीवरी',
+    deliveryFree: 'मुफ़्त',
+    addMoreForFree: 'का सामान और लीजिए, डिलीवरी मुफ़्त',
+    minOrder: 'यह दुकान डिलीवरी करती है',
+    addMoreToOrder: 'का सामान और लीजिए, या दुकान से ले जाइए',
+
+    notifyTitle: 'तैयार होने पर बता दें?',
+    notifyBody: 'दुकान के तैयार करते ही आपके फोन पर बता देंगे। और कुछ नहीं।',
+    notifyYes: 'हाँ, बताइए',
+    notifyLater: 'रहने दीजिए',
+    notifyOn: 'बता देंगे',
+    notifyDenied: 'आपके ब्राउज़र ने इस साइट की सूचनाएँ रोक रखी हैं।',
+
+    trackTitle: 'आपका ऑर्डर',
+    trackHint: 'यह पेज रखिए। दुकान आपके ऑर्डर का क्या कर रही है, यहाँ दिखेगा।',
+    trackPlaced: 'दिया गया',
+    trackStatePreparing: 'दुकान को ऑर्डर मिल गया है, तैयार हो रहा है।',
+    trackStateReadyPickup: 'तैयार है। दुकान से ले जाइए।',
+    trackStateReadyDelivery: 'तैयार — आपकी तरफ़ रवाना हो गया।',
+    trackStateCancelled: 'दुकान यह ऑर्डर नहीं ले सकी।',
+    trackChanged: 'दुकान ने ऑर्डर बदला है',
+    trackChangedHint: 'सब सामान नहीं था। क्या आ रहा है और कितना लगेगा, नीचे देखिए।',
+    trackOrderAgain: 'इसी दुकान से दोबारा ऑर्डर करें',
+    trackNotFound: 'ऑर्डर नहीं मिला',
+    trackNotFoundHint: 'लिंक पुराना हो सकता है। पुराने ऑर्डर कुछ समय बाद हटा दिए जाते हैं।',
+
+    saveShopTitle: 'दुकान को फोन में रख लीजिए',
+    saveShopBody:
+      'होम स्क्रीन पर रख लीजिए और कहीं से भी एक टैप में ऑर्डर कीजिए — दोबारा QR स्कैन नहीं करना पड़ेगा।',
+    saveShopNow: 'होम स्क्रीन पर रखें',
+    saveShopLater: 'अभी नहीं',
+    saveShopIos: 'Share दबाकर “Add to Home Screen” चुनिए।',
+    savedShopsTitle: 'जिन दुकानों से आपने ऑर्डर किया',
+    savedShopsHint: 'सिर्फ़ इसी फोन में रखा है।',
+    savedShopsForget: 'हटाएँ',
+
+    offlineTitle: 'अभी इंटरनेट नहीं है',
+    offlineBody:
+      'आपकी टोकरी सुरक्षित है। नेट आने पर दोबारा कोशिश कीजिए, या व्हाट्सएप पर दुकान को ऑर्डर भेज दीजिए।',
+    offlineWhatsApp: 'व्हाट्सएप पर भेजें',
   },
 };
 

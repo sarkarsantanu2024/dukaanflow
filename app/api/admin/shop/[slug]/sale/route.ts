@@ -37,7 +37,7 @@ export async function POST(request: Request, { params }: Context) {
 
   const rows = await prisma.item.findMany({
     where: { shopId: shop.id, id: { in: items.map((line) => line.itemId) } },
-    select: { id: true, name: true, unit: true, pricePaise: true },
+    select: { id: true, name: true, unit: true, pricePaise: true, stockQty: true },
   });
   const byId = new Map(rows.map((row) => [row.id, row]));
 
@@ -68,6 +68,31 @@ export async function POST(request: Request, { params }: Context) {
     data: { shopId: shop.id, itemsJson: lines, totalAmountPaise, paymentMode },
     select: { id: true, totalAmountPaise: true, createdAt: true },
   });
+
+  /**
+   * The till moves stock too.
+   *
+   * Otherwise the count means nothing: a shop that sells six of its eight
+   * packets across the counter would still be offering eight on its shop page,
+   * and the whole point of counting is that the page stops offering what has
+   * gone.
+   *
+   * Deliberately AFTER the sale is recorded and deliberately not refused. The
+   * customer is standing at the counter with the packet in their hand — this is
+   * a record of something that has already happened, and an app that refuses to
+   * write down a sale because its own count disagreed would be telling a
+   * shopkeeper they did not just sell what they just sold. So the count is
+   * floored at zero and the sale stands either way.
+   */
+  for (const line of items) {
+    const item = byId.get(line.itemId);
+    if (!item || item.stockQty === null) continue;
+    const left = Math.max(0, item.stockQty - line.quantity);
+    await prisma.item.update({
+      where: { id: item.id },
+      data: { stockQty: left, ...(left === 0 ? { inStock: false } : {}) },
+    });
+  }
 
   // One action at the counter, two records: the sale, and what is now owed.
   if (paymentMode === 'KHATA' && customerPhone) {

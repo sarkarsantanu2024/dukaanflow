@@ -40,6 +40,7 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
       unit: true,
       category: true,
       inStock: true,
+      stockQty: true,
     },
   });
 
@@ -58,6 +59,10 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
         noticeText={shop.noticeText}
         noticeFrom={dateInputValue(shop.noticeFrom)}
         noticeTo={dateInputValue(shop.noticeTo)}
+        deliveryEnabled={shop.deliveryEnabled}
+        deliveryFeePaise={shop.deliveryFeePaise}
+        freeDeliveryAbovePaise={shop.freeDeliveryAbovePaise}
+        minOrderPaise={shop.minOrderPaise}
         locale={locale}
         showWelcome={welcome === '1' && items.length === 0}
         itemLimit={plan.itemLimit}

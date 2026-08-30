@@ -183,6 +183,19 @@ column takes a URL unchanged if that ever needs to change.
 `totalAmount` is the reporting column. Totals are **never** recomputed from
 `itemsJson` later — the snapshot records what was quoted, even after prices move.
 
+`Item.stockQty` is nullable and **null is the normal state**. Rice comes out of a
+sack and sugar off a scale; asking a shopkeeper for a number of kilos every
+morning gets a wrong number typed once and never touched again, which is worse
+than no number. A count is for the countable half of the shop — packets,
+bottles, bread — and once set, every sale through either channel decrements it.
+Hitting zero flips `inStock`, which stays the one flag the whole product reads.
+
+`PushSubscription` is one row per device, `OWNER` or `CUSTOMER`. Push is an
+**accelerator, never the system of record** — the phones this market runs on kill
+background processes hard, and nothing in code fixes that. Every screen works
+identically with push switched off, and nothing in the product promises a
+shopkeeper they will be told.
+
 ---
 
 ## Quick start
@@ -302,8 +315,33 @@ ending those is the point. The book is also **not gated on the subscription** �
 locking a shopkeeper out of their own debts over a late payment would be
 indefensible.
 
-**Orders** — what arrived from the QR. Orders still land on WhatsApp; this turns
-that thread into a worklist the owner can mark off.
+**Orders** — what arrived from the QR, as a worklist the owner marks off.
+
+Three things live here that are worth naming:
+
+- **"Get a sound on this phone"** — web push, offered under the first real order
+  and nowhere else. The browser's permission prompt is one-shot: refused once,
+  no code can ever ask again, so the ask has to land at the moment the answer is
+  obviously yes — a shopkeeper looking at an order that arrived while they were
+  serving somebody. The wording promises a sound, never delivery, and says out
+  loud that some phones hold notifications back. See [`lib/push.ts`](lib/push.ts).
+- **"Change amounts"** — the third answer, between doing an order and turning it
+  away, and the one a kirana gives most often. A customer asks for 2 kg of
+  basmati and the sack has 1 kg: the owner cuts the line, the total and the
+  delivery charge are recomputed, the difference goes back on the shelf, and the
+  customer is told by push *and* by a pre-written WhatsApp message that stays on
+  the card until it is sent. Quantities may only go **down** — putting something
+  into somebody's order on their behalf is the shop deciding what a customer
+  buys, and the server refuses it.
+- **Cancelling restores stock**, once, on the way into cancelled.
+
+**Downloading the khata** — a spreadsheet (CSV, with a BOM so Excel on Windows
+reads Bengali names) and a printable statement, whole book or one customer.
+A printable page rather than a generated PDF on purpose: no JavaScript PDF
+library renders Bengali or Devanagari without fonts embedded specially for it,
+and the browser already has both plus "Save as PDF". This is a trust feature
+before it is a convenience — a tool you cannot get your own accounts out of is
+not a tool, it is a dependency.
 
 **Today's menu** sits on the till: tick what is ready, and it writes the message
 with prices and the shop link. It is a composer, not a sender — WhatsApp will
@@ -542,6 +580,39 @@ than it saves.
 
 Name and address are optional; phone is required and normalised — `+91 98765 43210`,
 `098765-43210` and `9876543210` all validate to the same 10 digits.
+
+**Delivery charge and minimum order** — set by the shopkeeper, on their own
+Items screen, not by the operator: both move with the price of petrol and with
+who is free to run the round this week. All three fields default to zero, which
+is free delivery with no minimum — what nearly every kirana does inside its own
+para. The basket shows the charge and any shortfall *before* the checkout form,
+because a customer who agrees to ₹240 and is then billed ₹270 has been surprised
+by their own shop. Pickup is never charged and never blocked. One function,
+[`quoteDelivery`](lib/delivery.ts), is used by the basket, the checkout and the
+order route, so the three can never disagree.
+
+**Being told what happened** — after an order the customer is offered a
+notification, given a `/track/<id>` page, and offered the shop as an icon on
+their home screen. All three exist because of the same fact: the shopkeeper used
+to have to remember to press a WhatsApp button on every single order, and mostly
+nobody did. The tracking page needs no login — the order id is an unguessable
+uuid handed to exactly one person, and nothing else on the site reveals it.
+
+**Scanned once, kept for good** — the counter's QR cannot be the only route back
+to a shop, or a customer at home on Sunday walks in instead. Two answers, no
+account: the shop's own icon on the home screen (per-shop manifest at
+[`/shop.webmanifest`](app/shop.webmanifest/route.ts)), and a "shops you have
+ordered from" list on the landing page, kept in that browser's own storage. An
+account would fix it and cost more orders than it fixes.
+
+**A bad signal is survivable** — the service worker keeps the last version of
+each page and every hashed build asset. Pages are network-first *always*: nobody
+is shown yesterday's page while today's is reachable, `/api` is never cached in
+either direction, and a strip at the top says so whenever the connection is
+gone. If the Place order button cannot reach the server after three tries, the
+basket is kept and the whole order is offered as a WhatsApp message instead —
+the one channel that still works at one bar, and the way shops in this market
+have always taken orders.
 
 ---
 

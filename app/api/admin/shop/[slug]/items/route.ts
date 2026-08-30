@@ -120,6 +120,23 @@ export async function PATCH(request: Request, { params }: Context) {
 
   const { id, ...changes } = parsed.data;
 
+  /**
+   * A count and a stock switch must never disagree.
+   *
+   * `inStock` stays the one flag the storefront, the till and every report
+   * read. So a count arriving here decides it: zero takes the item off the shop
+   * page, anything above zero puts it back on. Without this an owner could type
+   * "0 left" and go on taking orders for it, which is the exact bug the count
+   * was added to fix.
+   *
+   * An explicit `inStock` in the same request still wins — that is an owner
+   * saying something deliberate, such as pulling a counted item off sale
+   * because the packets on the shelf are damaged.
+   */
+  if (changes.stockQty !== undefined && changes.stockQty !== null && changes.inStock === undefined) {
+    changes.inStock = changes.stockQty > 0;
+  }
+
   try {
     // Scoped by shopId so one shop's id can never mutate another shop's item.
     const result = await prisma.item.updateMany({ where: { id, shopId }, data: changes });

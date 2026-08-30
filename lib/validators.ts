@@ -122,6 +122,40 @@ export const shopNoticeSchema = z
   });
 
 /**
+ * What a shop charges to send an order out, and the smallest one it will send.
+ *
+ * The shopkeeper's own, like the notice and unlike the rest of the shop's
+ * settings: a delivery charge changes with the price of petrol and with who is
+ * free to run the round this week, and routed through the operator it would
+ * simply never be changed.
+ *
+ * PAISE throughout, parsed from what was typed by `parsePaise` on the client.
+ * The ceiling is ₹5,000 for the charge and the free-delivery bar, and ₹50,000
+ * for the minimum — high enough for a wholesaler, low enough that a slipped
+ * decimal point is refused rather than quietly charged to somebody.
+ */
+export const deliveryTermsSchema = z
+  .object({
+    deliveryFeePaise: z.number().int().min(0).max(500_000).default(0),
+    freeDeliveryAbovePaise: z.number().int().min(0).max(500_000).default(0),
+    minOrderPaise: z.number().int().min(0).max(5_000_000).default(0),
+  })
+  // A bar set below the minimum can never be reached the hard way: every order
+  // the shop accepts would already be free, which is a free-delivery shop that
+  // thinks it charges. Almost always a typo, so it is refused rather than
+  // silently obeyed.
+  .refine(
+    (value) =>
+      value.freeDeliveryAbovePaise === 0 ||
+      value.minOrderPaise === 0 ||
+      value.freeDeliveryAbovePaise > value.minOrderPaise,
+    {
+      message: 'Free delivery would apply to every order. Raise it above your minimum.',
+      path: ['freeDeliveryAbovePaise'],
+    },
+  );
+
+/**
  * A mobile number that may simply not have been given.
  *
  * `phoneSchema` refuses a blank, which is right for a shop's own WhatsApp — a
@@ -207,6 +241,18 @@ export const itemPatchSchema = z.object({
   // to say so. Without this the only fix was deleting the item and re-adding it.
   unit: z.string().trim().max(24).optional(),
   inStock: z.boolean().optional(),
+  /**
+   * How many are left, or `null` to stop counting this item altogether.
+   *
+   * Three states, and they are all needed: a number, `null` for "sold loose,
+   * nobody counts it", and the field being absent for "this request is about
+   * something else". `.nullable().optional()` is what distinguishes the last
+   * two — without the `optional`, every re-price would silently wipe the count.
+   *
+   * The cap is generous rather than tight. A tea stall counts twelve cups; a
+   * wholesaler counts four thousand bidis. Neither of them counts a million.
+   */
+  stockQty: z.number().int().min(0).max(1_000_000).nullable().optional(),
   category: z.string().trim().max(40).optional(),
   nameBn: altNameSchema.optional(),
   nameHi: altNameSchema.optional(),
@@ -241,6 +287,52 @@ export const orderSchema = z
     message: 'Where should we deliver it?',
     path: ['customerAddress'],
   });
+
+/**
+ * A browser's push subscription, as `PushSubscription.toJSON()` hands it over.
+ *
+ * The endpoint is a URL on the push service — Google's, Mozilla's, Microsoft's
+ * — and is restricted to https so a subscription can never be recorded against
+ * something we would then post a customer's order to in the clear.
+ */
+export const pushSubscribeSchema = z.object({
+  endpoint: z
+    .string()
+    .trim()
+    .url('That is not a push endpoint')
+    .max(600)
+    .refine((value) => value.startsWith('https://'), 'Push endpoints must be https'),
+  keys: z.object({
+    p256dh: z.string().trim().min(1).max(200),
+    auth: z.string().trim().min(1).max(100),
+  }),
+});
+
+export const pushUnsubscribeSchema = z.object({
+  endpoint: z.string().trim().url().max(600),
+});
+
+/**
+ * Cutting an order down to what the shop actually has.
+ *
+ * Quantities only, by item id, and only downwards — the server enforces that.
+ * An owner may reduce two kilos to one, or drop a line to zero; they may not
+ * add to somebody's order on their behalf, which would be the shop deciding
+ * what a customer buys.
+ */
+export const orderReviseSchema = z.object({
+  id: z.string().uuid('Unknown order'),
+  lines: z
+    .array(
+      z.object({
+        itemId: z.string().uuid(),
+        /** Zero removes the line — "we have none of this at all". */
+        quantity: z.number().int().min(0).max(99),
+      }),
+    )
+    .min(1, 'Nothing to change')
+    .max(60),
+});
 
 export const loginSchema = z.object({
   username: z.string().trim().min(1, 'Username is required').max(60),

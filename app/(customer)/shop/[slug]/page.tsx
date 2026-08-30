@@ -32,6 +32,11 @@ async function loadShop(slug: string) {
       noticeFrom: true,
       noticeTo: true,
       deliveryEnabled: true,
+      // The terms a shopper meets in the basket. All zero unless the
+      // shopkeeper has set them, which is free delivery with no minimum.
+      deliveryFeePaise: true,
+      freeDeliveryAbovePaise: true,
+      minOrderPaise: true,
       plan: true,
       subscriptionStatus: true,
       trialEndsAt: true,
@@ -57,6 +62,10 @@ async function loadShop(slug: string) {
           unit: true,
           category: true,
           inStock: true,
+          // Shown as "only 2 left" where somebody is counting, so a shopper
+          // asks for what the shop can actually hand over. Null everywhere
+          // else, which is most of a kirana's list and stays silent.
+          stockQty: true,
         },
       },
     },
@@ -86,6 +95,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${shop.name} — Order on WhatsApp`,
     description,
+    // So the shop can be kept on a customer's home screen and ordered from
+    // again without the QR sticker in front of them. One icon per shop — see
+    // app/shop.webmanifest/route.ts.
+    manifest: `/shop.webmanifest?slug=${encodeURIComponent(slug)}`,
+    appleWebApp: { capable: true, statusBarStyle: 'default', title: shop.name },
     openGraph: { title: shop.name, description, type: 'website' },
     twitter: { card: 'summary_large_image', title: shop.name, description },
   };

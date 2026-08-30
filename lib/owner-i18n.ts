@@ -245,6 +245,62 @@ type OwnerDictionary = {
   menuSendTo: string;
   menuNoCustomers: string;
   menuToday: string;
+
+  /** Counting the countable half of the shop. */
+  stockLeft: string;
+  stockCount: string;
+  stockStop: string;
+  stockHint: string;
+  stockSoldOut: string;
+
+  /** The sound on this phone when an order arrives. */
+  pushTitle: string;
+  pushHint: string;
+  pushOn: string;
+  pushOff: string;
+  pushEnabled: string;
+  pushDisabled: string;
+  pushDenied: string;
+  pushUnsupported: string;
+  pushFailed: string;
+  /** Said out loud, because a promise here is the one that costs trust. */
+  pushNotAPromise: string;
+
+  /** Cutting an order down to what the shop actually has. */
+  reviseOpen: string;
+  reviseTitle: string;
+  reviseHint: string;
+  reviseSave: string;
+  reviseCancel: string;
+  reviseDone: string;
+  reviseNothingLeft: string;
+  reviseTellCustomer: string;
+  reviseWas: string;
+  revisedBadge: string;
+
+  /** What the shop charges to send an order out. */
+  deliveryTitle: string;
+  deliveryOpen: string;
+  deliveryFee: string;
+  deliveryFeeHint: string;
+  deliveryFree: string;
+  deliveryFreeHint: string;
+  deliveryMin: string;
+  deliveryMinHint: string;
+  deliverySaved: string;
+  deliveryOff: string;
+  save: string;
+
+  /** Taking the khata out of DukaanFlow. */
+  khataExport: string;
+  khataExportHint: string;
+  khataExportCsv: string;
+  khataExportPdf: string;
+  khataStatement: string;
+
+  /** Shown when the phone has lost the network. */
+  offline: string;
+  offlineHint: string;
 };
 
 export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
@@ -476,6 +532,59 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     menuSendTo: 'Send to',
     menuNoCustomers: 'No saved customers yet. They are added when you use the khata.',
     menuToday: 'Available today',
+
+    stockLeft: 'Left',
+    stockCount: 'Count this',
+    stockStop: 'Stop counting',
+    stockHint:
+      'For things you can count — packets, bottles, bread. Each sale takes one off, and at zero it comes off your shop page on its own. Leave rice and anything you weigh out uncounted.',
+    stockSoldOut: 'Sold out — taken off your shop page',
+
+    pushTitle: 'Get a sound on this phone',
+    pushHint: 'When an order comes in, this phone will ring even if the app is shut.',
+    pushOn: 'Turn on',
+    pushOff: 'Turn off',
+    pushEnabled: 'Sound on for this phone',
+    pushDisabled: 'Sound off',
+    pushDenied:
+      'Your browser has blocked notifications for this site. Turn them back on in the browser’s site settings, then try again.',
+    pushUnsupported: 'This browser cannot do notifications. The orders page still works as always.',
+    pushFailed: 'Could not turn it on. Please try again.',
+    pushNotAPromise:
+      'Some phones hold notifications back to save battery. Keep checking the Orders page — that is where every order always is.',
+
+    reviseOpen: 'Change amounts',
+    reviseTitle: 'What can you actually give?',
+    reviseHint:
+      'Short of something? Lower the amount here instead of cancelling. The total is worked out again and the customer is told what changed.',
+    reviseSave: 'Save and tell the customer',
+    reviseCancel: 'Leave it',
+    reviseDone: 'Order changed',
+    reviseNothingLeft: 'Nothing would be left. Cancel the order instead, so the customer is told properly.',
+    reviseTellCustomer: 'Send the change on WhatsApp',
+    reviseWas: 'was',
+    revisedBadge: 'Changed',
+
+    deliveryTitle: 'Delivery charge',
+    deliveryOpen: 'Delivery charge and minimum order',
+    deliveryFee: 'Delivery charge (₹)',
+    deliveryFeeHint: 'Leave it at 0 if you deliver free.',
+    deliveryFree: 'Free delivery above (₹)',
+    deliveryFreeHint: 'Big orders go free. Leave it at 0 to always charge.',
+    deliveryMin: 'Smallest order you will deliver (₹)',
+    deliveryMinHint: 'Leave it at 0 to deliver any order. Pickup is never blocked.',
+    deliverySaved: 'Delivery charge saved',
+    deliveryOff: 'This shop is collection only, so none of this applies.',
+    save: 'Save',
+
+    khataExport: 'Download the book',
+    khataExportHint: 'Your khata as a file you keep — a spreadsheet, or a statement to print.',
+    khataExportCsv: 'Spreadsheet (CSV)',
+    khataExportPdf: 'Statement (PDF)',
+    khataStatement: 'Statement',
+
+    offline: 'No internet',
+    offlineHint: 'Showing what was on this phone. It will catch up when the signal comes back.',
   },
 
   bn: {
@@ -702,6 +811,59 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     menuSendTo: 'পাঠান',
     menuNoCustomers: 'এখনও কোনো খদ্দের নেই। খাতা ব্যবহার করলে যোগ হবে।',
     menuToday: 'আজ আছে',
+
+    stockLeft: 'আছে',
+    stockCount: 'গুনে রাখুন',
+    stockStop: 'গোনা বন্ধ',
+    stockHint:
+      'যা গোনা যায় তার জন্য — প্যাকেট, বোতল, পাউরুটি। বিক্রি হলেই একটা কমবে, শূন্য হলে নিজে থেকেই দোকানের পাতা থেকে সরে যাবে। চাল-ডালের মতো মেপে দেওয়া জিনিস গুনবেন না।',
+    stockSoldOut: 'শেষ — দোকানের পাতা থেকে সরে গেছে',
+
+    pushTitle: 'এই ফোনে আওয়াজ পান',
+    pushHint: 'অর্ডার এলে অ্যাপ বন্ধ থাকলেও এই ফোনটা বাজবে।',
+    pushOn: 'চালু করুন',
+    pushOff: 'বন্ধ করুন',
+    pushEnabled: 'এই ফোনে আওয়াজ চালু',
+    pushDisabled: 'আওয়াজ বন্ধ',
+    pushDenied:
+      'আপনার ব্রাউজার এই সাইটের নোটিফিকেশন বন্ধ করে রেখেছে। ব্রাউজারের সাইট সেটিংসে গিয়ে চালু করে আবার চেষ্টা করুন।',
+    pushUnsupported: 'এই ব্রাউজারে নোটিফিকেশন হয় না। অর্ডারের পাতা আগের মতোই চলবে।',
+    pushFailed: 'চালু করা গেল না। আবার চেষ্টা করুন।',
+    pushNotAPromise:
+      'কিছু ফোন ব্যাটারি বাঁচাতে নোটিফিকেশন আটকে রাখে। “অর্ডার” পাতাটা দেখতে থাকুন — সব অর্ডার সবসময় ওখানেই থাকে।',
+
+    reviseOpen: 'পরিমাণ বদলান',
+    reviseTitle: 'আসলে কতটা দিতে পারবেন?',
+    reviseHint:
+      'কিছু কম পড়েছে? বাতিল না করে এখানে পরিমাণটা কমিয়ে দিন। মোট টাকা আবার হিসাব হবে আর খদ্দেরকে জানিয়ে দেওয়া হবে।',
+    reviseSave: 'সেভ করে খদ্দেরকে জানান',
+    reviseCancel: 'থাক',
+    reviseDone: 'অর্ডার বদলেছে',
+    reviseNothingLeft: 'কিছুই থাকবে না। বরং অর্ডারটা বাতিল করুন, তাহলে খদ্দের ঠিকভাবে জানবে।',
+    reviseTellCustomer: 'হোয়াটসঅ্যাপে বদলটা পাঠান',
+    reviseWas: 'ছিল',
+    revisedBadge: 'বদলেছে',
+
+    deliveryTitle: 'ডেলিভারি চার্জ',
+    deliveryOpen: 'ডেলিভারি চার্জ আর সর্বনিম্ন অর্ডার',
+    deliveryFee: 'ডেলিভারি চার্জ (₹)',
+    deliveryFeeHint: 'বিনা পয়সায় পৌঁছে দিলে ০ রাখুন।',
+    deliveryFree: 'এত টাকার উপরে ফ্রি (₹)',
+    deliveryFreeHint: 'বড় অর্ডার ফ্রি যাবে। সবসময় চার্জ নিতে চাইলে ০ রাখুন।',
+    deliveryMin: 'কত টাকার নিচে পাঠাবেন না (₹)',
+    deliveryMinHint: '০ রাখলে যে কোনো অর্ডার যাবে। দোকান থেকে নেওয়া কখনো আটকায় না।',
+    deliverySaved: 'ডেলিভারি চার্জ সেভ হয়েছে',
+    deliveryOff: 'এই দোকান শুধু দোকান থেকে দেয়, তাই এটা লাগবে না।',
+    save: 'সেভ করুন',
+
+    khataExport: 'খাতা নামিয়ে নিন',
+    khataExportHint: 'আপনার খাতা একটা ফাইলে — এক্সেলে খোলার জন্য, বা ছাপার জন্য।',
+    khataExportCsv: 'এক্সেল ফাইল (CSV)',
+    khataExportPdf: 'হিসাবের কাগজ (PDF)',
+    khataStatement: 'হিসাব',
+
+    offline: 'ইন্টারনেট নেই',
+    offlineHint: 'ফোনে যা ছিল তাই দেখানো হচ্ছে। নেট এলে নিজেই ঠিক হয়ে যাবে।',
   },
 
   hi: {
@@ -928,6 +1090,59 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     menuSendTo: 'भेजें',
     menuNoCustomers: 'अभी कोई ग्राहक नहीं। खाता इस्तेमाल करने पर जुड़ेंगे।',
     menuToday: 'आज उपलब्ध',
+
+    stockLeft: 'बचा',
+    stockCount: 'गिनती रखें',
+    stockStop: 'गिनती बंद',
+    stockHint:
+      'जो गिना जा सके उसके लिए — पैकेट, बोतल, ब्रेड। हर बिक्री पर एक कम होगा, और शून्य होते ही दुकान के पेज से अपने आप हट जाएगा। चावल जैसी तौलकर दी जाने वाली चीज़ें मत गिनिए।',
+    stockSoldOut: 'खत्म — दुकान के पेज से हट गया',
+
+    pushTitle: 'इस फोन पर आवाज़ पाइए',
+    pushHint: 'ऑर्डर आते ही यह फोन बजेगा, चाहे ऐप बंद हो।',
+    pushOn: 'चालू करें',
+    pushOff: 'बंद करें',
+    pushEnabled: 'इस फोन पर आवाज़ चालू',
+    pushDisabled: 'आवाज़ बंद',
+    pushDenied:
+      'आपके ब्राउज़र ने इस साइट की सूचनाएँ रोक रखी हैं। ब्राउज़र की साइट सेटिंग में जाकर चालू कीजिए, फिर दोबारा कोशिश कीजिए।',
+    pushUnsupported: 'इस ब्राउज़र में सूचनाएँ नहीं चलतीं। ऑर्डर पेज पहले की तरह चलता रहेगा।',
+    pushFailed: 'चालू नहीं हो सका। दोबारा कोशिश कीजिए।',
+    pushNotAPromise:
+      'कुछ फोन बैटरी बचाने के लिए सूचनाएँ रोक लेते हैं। “ऑर्डर” पेज देखते रहिए — हर ऑर्डर हमेशा वहीं रहता है।',
+
+    reviseOpen: 'मात्रा बदलें',
+    reviseTitle: 'असल में कितना दे सकते हैं?',
+    reviseHint:
+      'कुछ कम पड़ गया? रद्द करने के बजाय यहीं मात्रा घटा दीजिए। कुल रकम दोबारा जुड़ेगी और ग्राहक को बता दिया जाएगा।',
+    reviseSave: 'सेव करके ग्राहक को बताएँ',
+    reviseCancel: 'रहने दें',
+    reviseDone: 'ऑर्डर बदल गया',
+    reviseNothingLeft: 'कुछ भी नहीं बचेगा। बेहतर है ऑर्डर रद्द कीजिए, ताकि ग्राहक को ठीक से पता चले।',
+    reviseTellCustomer: 'बदलाव व्हाट्सएप पर भेजें',
+    reviseWas: 'था',
+    revisedBadge: 'बदला',
+
+    deliveryTitle: 'डिलीवरी चार्ज',
+    deliveryOpen: 'डिलीवरी चार्ज और कम से कम ऑर्डर',
+    deliveryFee: 'डिलीवरी चार्ज (₹)',
+    deliveryFeeHint: 'मुफ़्त पहुँचाते हैं तो 0 रहने दीजिए।',
+    deliveryFree: 'इससे ऊपर मुफ़्त (₹)',
+    deliveryFreeHint: 'बड़े ऑर्डर मुफ़्त जाएँगे। हमेशा चार्ज लेना हो तो 0 रखिए।',
+    deliveryMin: 'कम से कम कितने का ऑर्डर भेजेंगे (₹)',
+    deliveryMinHint: '0 रखने पर हर ऑर्डर जाएगा। दुकान से लेना कभी नहीं रुकता।',
+    deliverySaved: 'डिलीवरी चार्ज सेव हो गया',
+    deliveryOff: 'यह दुकान सिर्फ़ काउंटर से देती है, तो इसकी ज़रूरत नहीं।',
+    save: 'सेव करें',
+
+    khataExport: 'खाता डाउनलोड करें',
+    khataExportHint: 'आपका खाता एक फाइल में — एक्सेल के लिए, या छापने के लिए।',
+    khataExportCsv: 'एक्सेल फाइल (CSV)',
+    khataExportPdf: 'हिसाब का कागज़ (PDF)',
+    khataStatement: 'हिसाब',
+
+    offline: 'इंटरनेट नहीं है',
+    offlineHint: 'फोन में जो था वही दिख रहा है। नेट आते ही अपने आप ठीक हो जाएगा।',
   },
 };
 

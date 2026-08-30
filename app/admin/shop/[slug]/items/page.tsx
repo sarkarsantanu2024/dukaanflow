@@ -35,6 +35,7 @@ export default async function ItemsPage({ params }: PageProps) {
           unit: true,
           category: true,
           inStock: true,
+          stockQty: true,
         },
       },
     },

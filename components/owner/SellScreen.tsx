@@ -49,6 +49,15 @@ export type SellItem = {
   unit: string;
   category: string;
   inStock: boolean;
+  /**
+   * How many are left, or null where nobody is counting.
+   *
+   * The till shows the same "only 2 left" badge the shop page does, because
+   * the owner ringing something up at the counter is the person best placed to
+   * notice the count has drifted from the shelf — and worst served by finding
+   * out from a customer.
+   */
+  stockQty: number | null;
 };
 
 type Cart = Record<string, number>;

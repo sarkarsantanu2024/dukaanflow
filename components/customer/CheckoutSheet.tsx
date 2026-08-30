@@ -10,6 +10,7 @@ import { Input, Textarea } from '@/components/ui/Input';
 import { formatPaise } from '@/lib/money';
 import { phoneSchema } from '@/lib/validators';
 import { dict, type Locale } from '@/lib/i18n';
+import { quoteDelivery, type DeliveryTerms } from '@/lib/delivery';
 
 const checkoutSchema = z.object({
   customerName: z.string().trim().min(1, 'Please give your name').max(60),
@@ -31,6 +32,7 @@ export function CheckoutSheet({
   totalAmountPaise,
   locale,
   deliveryEnabled = true,
+  terms,
   remembered,
 }: {
   open: boolean;
@@ -42,6 +44,15 @@ export function CheckoutSheet({
   locale: Locale;
   /** Collection-only shops never show the choice at all. */
   deliveryEnabled?: boolean;
+  /**
+   * What this shop charges to deliver, and its smallest delivery.
+   *
+   * Re-quoted here on every switch between Delivery and Pickup, because that
+   * switch is exactly what changes the answer — and a customer who moves to
+   * Pickup to escape a minimum has to see the minimum disappear, or they will
+   * not believe it did.
+   */
+  terms: DeliveryTerms;
   /** What this phone gave last time, so nobody types it twice. */
   remembered?: Partial<CheckoutValues> | null;
 }) {
@@ -53,6 +64,13 @@ export function CheckoutSheet({
     deliveryEnabled ? 'DELIVERY' : 'PICKUP',
   );
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Recomputed as the shopper switches between Delivery and Pickup, from the
+  // same function the order route uses. Two implementations of a discount rule
+  // is two chances to charge somebody the wrong amount.
+  const quote = quoteDelivery(terms, totalAmountPaise, orderType);
+  /** Too small to deliver. Pickup is never blocked, so this only ever bites one way. */
+  const belowMinimum = quote.shortfallPaise > 0;
 
   const {
     register,
@@ -131,9 +149,26 @@ export function CheckoutSheet({
         <div className="mb-4 flex items-baseline justify-between">
           <h2 className="text-lg font-bold text-slate-900">{t.yourOrder}</h2>
           <p className="text-sm text-slate-500">
-            {totalItems} {t.items} · <span className="font-bold text-slate-900">{formatPaise(totalAmountPaise)}</span>
+            {totalItems} {t.items} ·{' '}
+            <span className="font-bold text-slate-900">{formatPaise(quote.totalPaise)}</span>
           </p>
         </div>
+
+        {/* What the total is made of, once delivery has a price. Two lines, and
+            only when there is something to explain — a shop that delivers free
+            shows nothing here, as it always did. */}
+        {quote.deliveryFeePaise > 0 && (
+          <dl className="mb-4 space-y-1 rounded-xl bg-slate-50 px-3 py-2 text-sm">
+            <div className="flex justify-between text-slate-600">
+              <dt>{t.goods}</dt>
+              <dd className="tabular-nums">{formatPaise(quote.goodsPaise)}</dd>
+            </div>
+            <div className="flex justify-between text-slate-600">
+              <dt>{t.deliveryCharge}</dt>
+              <dd className="tabular-nums">{formatPaise(quote.deliveryFeePaise)}</dd>
+            </div>
+          </dl>
+        )}
 
         <form onSubmit={handleSubmit((values) => onSubmit({ ...values, orderType }))} className="space-y-4">
           {/* A collection-only shop gets no chooser at all — not a disabled
@@ -206,11 +241,30 @@ export function CheckoutSheet({
             {...register('customerArea')}
           />
 
+          {/* Refused here rather than by the server after the form is filled
+              in. The wording is an amount and a way out — "₹55 more, or choose
+              Pickup" — because a shopper who is only told "too small" has to
+              guess by how much. The shop's own rule is named above it so it
+              does not read as a fault in the app. */}
+          {belowMinimum && (
+            <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+              {t.minOrder} {formatPaise(terms.minOrderPaise)}.{' '}
+              {formatPaise(quote.shortfallPaise)} {t.addMoreToOrder}
+            </p>
+          )}
+
           <div className="flex gap-2 pt-1">
             <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={submitting}>
               {t.back}
             </Button>
-            <Button type="submit" variant="whatsapp" size="lg" fullWidth loading={submitting}>
+            <Button
+              type="submit"
+              variant="whatsapp"
+              size="lg"
+              fullWidth
+              disabled={belowMinimum}
+              loading={submitting}
+            >
               {submitting ? t.sending : t.sendOnWhatsApp}
             </Button>
           </div>

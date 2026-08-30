@@ -54,6 +54,11 @@ function toLines(itemsJson: unknown, known: Translations): OwnerOrder['lines'] {
     const fallback = known.get(String(line.itemId ?? ''));
     return [
       {
+        // Carried through so a line can be named in a revision. Old snapshots
+        // that predate it hand over a blank, and the screen simply cannot
+        // offer to change those — which is right: without an id there is no
+        // way to say which item is being cut.
+        itemId: String(line.itemId ?? ''),
         name: String(line.name ?? ''),
         nameBn: String(line.nameBn ?? fallback?.nameBn ?? ''),
         nameHi: String(line.nameHi ?? fallback?.nameHi ?? ''),
@@ -85,6 +90,8 @@ export default async function OrdersPage({ params }: PageProps) {
       orderType: true,
       status: true,
       totalAmountPaise: true,
+      deliveryFeePaise: true,
+      revisedAt: true,
       createdAt: true,
       itemsJson: true,
     },
@@ -107,6 +114,8 @@ export default async function OrdersPage({ params }: PageProps) {
     orderType: row.orderType,
     status: row.status,
     totalAmountPaise: row.totalAmountPaise,
+    deliveryFeePaise: row.deliveryFeePaise,
+    revised: row.revisedAt !== null,
     createdAt: row.createdAt.toISOString(),
     lines: toLines(row.itemsJson, known),
   }));

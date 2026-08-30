@@ -129,6 +129,29 @@ model Shop {
   /// storefront never shows the option and the order route refuses it.
   deliveryEnabled Boolean @default(true)
 
+  /// What the shop charges to send an order out, in PAISE. Zero means free
+  /// delivery, which is what nearly every kirana does inside its own para and
+  /// therefore the default.
+  ///
+  /// Charged on DELIVERY orders only. A customer collecting from the counter is
+  /// never charged for a journey nobody made.
+  deliveryFeePaise Int @default(0)
+
+  /// Order value at or above which the delivery fee is waived, in PAISE. Zero
+  /// means "never waive it" — not "waive everything", which is the reading that
+  /// would give away every delivery in the shop on the day somebody left the
+  /// box empty.
+  freeDeliveryAbovePaise Int @default(0)
+
+  /// The smallest order the shop will send out, in PAISE. Zero means no
+  /// minimum.
+  ///
+  /// Checked on DELIVERY only, and checked on the goods — the delivery fee is
+  /// not part of what a shop is willing to travel for. Enforced at the server
+  /// as well as in the basket: the storefront saying "₹50 more" is a courtesy,
+  /// refusing the order is the rule.
+  minOrderPaise Int @default(0)
+
   /// A demonstration shop, not a real customer.
   ///
   /// Marked rather than deleted so there is always something to show, test a
@@ -178,14 +201,15 @@ model Shop {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items     Item[]
-  orders    Order[]
-  sales     Sale[]
-  payments  Payment[]
-  customers Customer[]
-  ledger    LedgerEntry[]
-  itemStats ItemPeriodStat[]
-  areaStats AreaPeriodStat[]
+  items         Item[]
+  orders        Order[]
+  sales         Sale[]
+  payments      Payment[]
+  customers     Customer[]
+  ledger        LedgerEntry[]
+  itemStats     ItemPeriodStat[]
+  areaStats     AreaPeriodStat[]
+  subscriptions PushSubscription[]
 
   @@index([active])
   @@index([subscriptionStatus])
@@ -330,6 +354,28 @@ model Item {
   unit       String   @default("")
   category   String   @default("")
   inStock    Boolean  @default(true)
+
+  /**
+   * How many are left, or NULL for "nobody is counting".
+   *
+   * NULL is the default and stays the honest one for most of a kirana's list.
+   * Rice comes out of a sack, sugar off a scale, and a shopkeeper weighing to
+   * order does not have a number of kilos to type in each morning — asking for
+   * one would get a wrong number typed once and never touched again, which is
+   * worse than no number at all. Those items keep `inStock` as their only
+   * answer, exactly as before.
+   *
+   * A number is for the countable half of the shop: packets, bottles, bread,
+   * eggs, gas lighters. Once it is set, selling decrements it — through the
+   * storefront and through the till alike — and it is what stops a customer
+   * ordering the two kilos of basmati that went an hour ago.
+   *
+   * `inStock` remains the switch the whole product reads. Hitting zero turns it
+   * off, and raising the count turns it back on, so nothing downstream has to
+   * learn about a second kind of "available".
+   */
+  stockQty   Int?
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -355,8 +401,28 @@ model Order {
   // moment, in PAISE — see the note on Sale.itemsJson about naming.
   // Reporting reads `totalAmountPaise`; it is never recomputed from this JSON.
   itemsJson        Json
+  /// The grand total the customer owes: goods plus `deliveryFeePaise`.
+  ///
+  /// Unchanged in meaning — every report, rollup and khata posting already
+  /// reads this as "what this order came to", and a delivery charge is money
+  /// the shop took. The fee is broken out below so a bill can show it, not so
+  /// anything has to add it back on.
   totalAmountPaise Int
+  /// What was charged for sending it out, in PAISE, at the moment it was
+  /// ordered. A snapshot for the same reason the prices are: the shop may
+  /// change its delivery charge tomorrow and this bill must not move.
+  deliveryFeePaise Int         @default(0)
   status           OrderStatus @default(NEW)
+
+  /// When the owner last changed what is actually in this order.
+  ///
+  /// A customer asks for two kilos and the sack has one left. The shop does not
+  /// want to cancel — they want to send the one kilo — and until now the only
+  /// way to say so was a phone call, with the app still insisting on a total
+  /// nobody is going to pay. Cutting the line here rewrites the snapshot and
+  /// the total, and stamps this so both sides can see the order was changed
+  /// after it was placed rather than mis-read at the counter.
+  revisedAt        DateTime?
   /// How the money arrived: "CASH", "UPI" or "" while unpaid.
   ///
   /// Without this the till was the only screen that could take a payment, so an
@@ -378,6 +444,59 @@ model Order {
   @@index([shopId, createdAt])
   @@index([status])
   @@index([shopId, customerArea])
+}
+
+/// Who a push subscription belongs to.
+///
+/// OWNER — a phone the shopkeeper signed in on. It is told about new orders.
+/// CUSTOMER — a phone that placed an order. It is told what happened to it.
+enum PushRole {
+  OWNER
+  CUSTOMER
+}
+
+/// One browser, on one phone, that has agreed to be told something.
+///
+/// A row per device, not per person: an owner with a counter tablet and a phone
+/// in their pocket wants the sound on both, and a customer who orders from two
+/// phones has two.
+///
+/// PUSH IS AN ACCELERATOR, NEVER THE SYSTEM OF RECORD. Xiaomi, Oppo, Vivo and
+/// Realme all kill background processes hard, and this market is made of those
+/// phones — a push can arrive late or not at all and nothing in code can fix
+/// it. So the orders screen, the WhatsApp button and the tracking page all keep
+/// working exactly as they do without this table, and nothing in the product
+/// ever promises a shopkeeper they will be told. It is a sound on top.
+model PushSubscription {
+  id     String   @id @default(uuid()) @db.Uuid
+  role   PushRole
+  shopId String   @db.Uuid
+
+  /// The push service's URL for this device. Unique because it IS the device:
+  /// re-subscribing the same browser must update the row, never add a second.
+  endpoint String @unique
+  /// The two keys the payload is encrypted to, base64url as the browser gave
+  /// them. Useless to anyone else — they encrypt to that device and nothing
+  /// else — but they are still the customer's, so they are purged with them.
+  p256dh   String
+  auth     String
+
+  /// Which customer this device is, as their 10-digit mobile. Blank for an
+  /// owner's device.
+  ///
+  /// The phone number rather than a `Customer` id: a customer row can be purged
+  /// and re-made, and the number is what an order carries anyway.
+  customerPhone String @default("")
+
+  /// When this device was last confirmed alive. A subscription the push
+  /// service rejects with 404 or 410 is deleted on the spot instead.
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, role])
+  @@index([shopId, customerPhone])
 }
 
 /// A named occasion. The name, and nothing that changes from year to year.

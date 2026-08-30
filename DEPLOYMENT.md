@@ -42,6 +42,28 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # →
 operating notes. It must be identical in `.env` and in Vercel, or the job stops
 running and nobody is told.
 
+Then the web push key pair, which is what makes a shopkeeper's phone ring when
+an order arrives and tells a customer when theirs is ready:
+
+```bash
+node -e "console.log(JSON.stringify(require('web-push').generateVAPIDKeys()))"
+```
+
+`publicKey` → `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `privateKey` →
+`VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` is a `mailto:` or `https:` URL a push
+service can use to reach you about our traffic (the spec refuses an empty
+string).
+
+> **Generate this pair once and never change it.** The key pair is the identity
+> every subscription was issued against. Replacing it silently stops every phone
+> that has already said yes — no error, no warning, just no more notifications —
+> and the browser permission prompt is one-shot, so some of those people can
+> never be asked again.
+
+Leaving all three blank is a supported state: push is simply off, and every
+screen behaves exactly as it does with it on. Push is an accelerator, never the
+system of record.
+
 > **The single most common setup failure.** A bcrypt hash starts `$2a$12$…`, and
 > Next.js runs variable expansion over `.env` files — so `$2a`, `$12` and the
 > following segment are treated as variable names and silently deleted. The app
@@ -132,6 +154,10 @@ git push -u origin main
    | `COOKIE_SECRET` | 64 hex characters |
    | `NEXT_PUBLIC_BASE_URL` | `https://dukaanflow.vercel.app` (no trailing slash) |
    | `NEXT_PUBLIC_SUPPORT_PHONE` | your WhatsApp number, digits only with country code |
+   | `CRON_SECRET` | 64 hex characters — without it the nightly purge never runs |
+   | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `publicKey` from the pair above |
+   | `VAPID_PRIVATE_KEY` | `privateKey` from the pair above |
+   | `VAPID_SUBJECT` | `mailto:you@example.com` |
    | `ANTHROPIC_API_KEY` | optional — only for "Add by photo" |
 
 3. Deploy.

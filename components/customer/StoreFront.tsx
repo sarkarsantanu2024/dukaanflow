@@ -11,11 +11,17 @@ import { CheckoutSheet, type CheckoutSubmit } from './CheckoutSheet';
 import { VoiceOrder } from './VoiceOrder';
 import { RepeatOrder, rememberOrder } from './RepeatOrder';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
+import { quoteDelivery } from '@/lib/delivery';
+import { rememberShop } from '@/lib/saved-shops';
+import { OrderPlaced } from './OrderPlaced';
+import { watchInstallPrompt } from '@/lib/install-prompt';
+import { buildOfflineOrderMessage, buildWhatsAppUrl } from '@/lib/whatsapp';
 
 const LOCALE_STORAGE_KEY = 'dukaanflow:locale';
 
@@ -83,7 +89,19 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   const [cartOpen, setCartOpen] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
-  const [placed, setPlaced] = useState(false);
+  /** The order that just went through, so it can be tracked and followed. */
+  const [placed, setPlaced] = useState<{ orderId: string } | null>(null);
+  /**
+   * The order that could not be sent, and the WhatsApp message that carries it
+   * instead.
+   *
+   * A separate state from an error toast because it is not an error the shopper
+   * can do anything about by trying harder. On one bar of 4G — which is where
+   * this product lives — the basket they spent five minutes building has to go
+   * somewhere, and WhatsApp is the thing that still works when nothing else
+   * does.
+   */
+  const [offline, setOffline] = useState<{ url: string } | null>(null);
   const [remembered, setRemembered] = useState<RememberedCustomer | null>(null);
   /** Whether the details we prefilled were already on this phone. */
   const [wasRemembered, setWasRemembered] = useState(false);
@@ -94,6 +112,19 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     const saved = readRemembered();
     setRemembered(saved);
     setWasRemembered(Boolean(saved));
+  }, []);
+
+  /**
+   * Register the worker and start listening for the browser's install offer.
+   *
+   * On the shop page rather than in the card that uses it, because
+   * `beforeinstallprompt` fires seconds after load and the card appears
+   * minutes later, after an order. This is also what puts the offline copy of
+   * the shop in place — a shopper on a bad signal needs it before they know
+   * they need it, not after. See lib/install-prompt.ts.
+   */
+  useEffect(() => {
+    watchInstallPrompt();
   }, []);
 
   // Remember the shopper's language across visits to any DukaanFlow shop.
@@ -144,6 +175,21 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
    * matches the menu the shopper just scrolled — a basket that lists things in
    * the order they happened to be tapped is a basket they have to re-read.
    */
+  /**
+   * What delivery would cost this basket.
+   *
+   * Quoted for DELIVERY while the shopper is still choosing, because that is
+   * what they are assumed to be doing until they say otherwise — and because
+   * the charge and the minimum are facts they need BEFORE the checkout form,
+   * not after it. The checkout re-quotes on the actual choice, and the server
+   * quotes again and is the only one that counts.
+   */
+  const quote = useMemo(
+    () =>
+      quoteDelivery(shop, totalAmountPaise, shop.deliveryEnabled ? 'DELIVERY' : 'PICKUP'),
+    [shop, totalAmountPaise],
+  );
+
   const cartLines: CartLine[] = useMemo(
     () =>
       items
@@ -185,13 +231,40 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     });
   }
 
+  /**
+   * Send the order, and try more than once before giving up.
+   *
+   * A single failed fetch on a weak signal is not an answer — it is one packet
+   * lost between a phone and a tower, and trying again a second later usually
+   * works. Only a network failure is retried: a 409 saying an item has sold out
+   * is a real answer and repeating it would only make the shopper wait longer
+   * to hear it.
+   */
+  async function postOrder(body: string): Promise<Response> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await fetch('/api/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+        });
+      } catch (error) {
+        lastError = error;
+        // Half a second, then a second and a half. Long enough to outlast a
+        // handover between towers, short enough that nobody puts the phone
+        // down.
+        await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+      }
+    }
+    throw lastError;
+  }
+
   async function placeOrder(values: CheckoutSubmit) {
     setSubmitting(true);
     try {
-      const response = await fetch('/api/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const response = await postOrder(
+        JSON.stringify({
           shopSlug: shop.slug,
           customerName: values.customerName,
           customerPhone: values.customerPhone,
@@ -202,7 +275,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           // from the database there — the client never quotes a total.
           items: Object.entries(cart).map(([itemId, quantity]) => ({ itemId, quantity })),
         }),
-      });
+      );
 
       const payload = (await response.json()) as { orderId?: string; error?: string };
 
@@ -213,6 +286,11 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
 
       // Remembered before the cart is cleared, so the next visit can offer it.
       rememberOrder(shop.slug, cart);
+
+      // And the shop itself, so the customer can find it again from the front
+      // page of this site without the QR sticker in front of them. See
+      // lib/saved-shops.ts for why this is storage and not an account.
+      rememberShop({ slug: shop.slug, name: shop.name });
 
       // And the person, so the next order needs no typing at all.
       try {
@@ -233,9 +311,42 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
       // The order used to end with a jump into WhatsApp. Now it ends here, so
       // something has to tell the customer it worked — an empty cart and no
       // message reads as a form that silently failed.
-      setPlaced(true);
+      setPlaced({ orderId: payload.orderId });
     } catch {
-      push(t.orderFailed, 'error');
+      /**
+       * Three tries and the network never answered.
+       *
+       * THE BASKET IS NOT THROWN AWAY. It stays exactly as it is, so the
+       * shopper can try again the moment a bar comes back — and beside that,
+       * the whole order as a WhatsApp message, which is the one channel that
+       * still works on a signal this bad and the one every shop in this market
+       * already runs on.
+       *
+       * No Order row exists for that path, and that is honest: the shop has
+       * been told by a person, not by the app, and the shopkeeper will take it
+       * the way they took orders before DukaanFlow. Losing the sale would be
+       * the alternative.
+       */
+      setOffline({
+        url: buildWhatsAppUrl(
+          shop.phone,
+          buildOfflineOrderMessage({
+            shopName: shop.name,
+            orderType: values.orderType,
+            lines: cartLines.map((line) => ({
+              name: line.label,
+              unit: line.unit,
+              pricePaise: line.pricePaise,
+              quantity: line.quantity,
+              amountPaise: line.pricePaise * line.quantity,
+            })),
+            totalAmountPaise: totalAmountPaise,
+            customerName: values.customerName,
+            customerPhone: values.customerPhone,
+            customerAddress: values.customerAddress,
+          }),
+        ),
+      });
     } finally {
       setSubmitting(false);
     }
@@ -258,6 +369,13 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           shopper was reaching for slid out from under their thumb, and the
           whole grid re-laid itself on each open and close. */}
       <main className="mx-auto max-w-6xl px-4 pb-4 pt-3">
+        {/* The prices below may be the copy this phone saw last time. Nothing
+            else on the page would say so, and a shopper deciding on a price
+            deserves to know which one they are looking at. */}
+        <div className="mb-2 empty:hidden">
+          <OfflineBanner label={t.offlineTitle} />
+        </div>
+
         {items.length === 0 ? (
           <EmptyState title={t.emptyShop} hint={t.emptyShopHint} />
         ) : (
@@ -442,6 +560,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         onSetQuantity={setQuantity}
         onClear={() => setCart({})}
         onContinue={() => setCheckoutOpen(true)}
+        quote={quote}
       />
 
       <CheckoutSheet
@@ -453,24 +572,47 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         totalAmountPaise={totalAmountPaise}
         locale={locale}
         deliveryEnabled={shop.deliveryEnabled}
+        terms={shop}
         remembered={remembered}
       />
 
+      {placed && (
+        <OrderPlaced
+          orderId={placed.orderId}
+          shopSlug={shop.slug}
+          locale={locale}
+          wasRemembered={wasRemembered}
+          onClose={() => setPlaced(null)}
+        />
+      )}
+
+      {/* THE SIGNAL WENT, AND THE BASKET DID NOT.
+          Not a toast: this needs a decision, and the decision is worth the
+          screen. The order is already written into a WhatsApp message behind
+          the button — one tap and the shop has it, exactly as shops in this
+          market have always received orders. */}
       <Modal
-        open={placed}
-        title={t.orderPlacedTitle}
-        tone="success"
-        onClose={() => setPlaced(false)}
+        open={offline !== null}
+        title={t.offlineTitle}
+        onClose={() => setOffline(null)}
         footer={
-          <Button onClick={() => setPlaced(false)} data-autofocus>
-            {t.orderPlacedDone}
-          </Button>
+          <>
+            <a
+              href={offline?.url ?? '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOffline(null)}
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white"
+            >
+              {t.offlineWhatsApp}
+            </a>
+            <Button variant="secondary" onClick={() => setOffline(null)} data-autofocus>
+              {t.back}
+            </Button>
+          </>
         }
       >
-        {t.orderPlacedHint}
-        {!wasRemembered && (
-          <span className="mt-2 block text-slate-500">{t.savedForNextTime}</span>
-        )}
+        {t.offlineBody}
       </Modal>
     </div>
   );

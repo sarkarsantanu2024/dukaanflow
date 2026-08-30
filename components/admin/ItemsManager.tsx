@@ -33,6 +33,13 @@ export type AdminItem = {
   unit: string;
   category: string;
   inStock: boolean;
+  /**
+   * How many are left, or null for "nobody is counting this one".
+   *
+   * Null is the normal state and stays right for everything sold loose off a
+   * scale. See the note on `Item.stockQty` in the schema.
+   */
+  stockQty: number | null;
 };
 
 type NewItem = {
@@ -662,6 +669,75 @@ export function ItemsManager({
                     <TrashIcon className="h-[18px] w-[18px]" />
                   </button>
                 </div>
+
+                {/* HOW MANY ARE LEFT — for the half of the shop you can count.
+                    A quiet grey line by default, because most rows will never
+                    use it and a stock box on every one of them would say the
+                    shop is supposed to count its rice. Tapping it starts the
+                    count at what is on the shelf; from then on every sale,
+                    through the shop page or across the counter, takes one off,
+                    and zero takes the item off the shop page by itself.
+
+                    This is the fix for a customer ordering the two kilos of
+                    basmati that went an hour ago: the toggle it sits beside
+                    only ever knew "yes" or "no", and nobody remembers to move
+                    it. */}
+                {item.stockQty === null ? (
+                  <button
+                    type="button"
+                    disabled={busyId === item.id}
+                    onClick={() => patchItem(item.id, { stockQty: 1 })}
+                    title={t.stockHint}
+                    className="mt-2 text-xs font-medium text-slate-400 underline decoration-dotted underline-offset-2 transition hover:text-brand-700 disabled:opacity-50"
+                  >
+                    {t.stockCount}
+                  </button>
+                ) : (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-500">{t.stockLeft}</span>
+                    <span className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+                      <button
+                        type="button"
+                        aria-label={`− ${displayName(item, locale)}`}
+                        disabled={busyId === item.id || item.stockQty <= 0}
+                        onClick={() => patchItem(item.id, { stockQty: item.stockQty! - 1 })}
+                        className="h-8 w-8 rounded text-lg font-bold text-slate-700 disabled:opacity-30"
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center text-sm font-bold tabular-nums text-slate-900">
+                        {item.stockQty}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`+ ${displayName(item, locale)}`}
+                        disabled={busyId === item.id}
+                        onClick={() => patchItem(item.id, { stockQty: item.stockQty! + 1 })}
+                        className="h-8 w-8 rounded text-lg font-bold text-slate-700 disabled:opacity-30"
+                      >
+                        +
+                      </button>
+                    </span>
+
+                    {item.stockQty === 0 && (
+                      <span className="text-xs font-medium text-red-600">{t.stockSoldOut}</span>
+                    )}
+
+                    {/* Going back to uncounted, for the item that turned out
+                        to be sold by weight after all. `null` rather than 0:
+                        "I am not counting this" and "there are none" are
+                        different facts, and only one of them should hide the
+                        item from customers. */}
+                    <button
+                      type="button"
+                      disabled={busyId === item.id}
+                      onClick={() => patchItem(item.id, { stockQty: null, inStock: true })}
+                      className="ml-auto text-xs font-medium text-slate-400 underline decoration-dotted underline-offset-2 transition hover:text-slate-700 disabled:opacity-50"
+                    >
+                      {t.stockStop}
+                    </button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

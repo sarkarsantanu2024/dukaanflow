@@ -58,6 +58,68 @@ export function buildOrderMessage(input: OrderMessageInput): string {
   return parts.join('\n');
 }
 
+/**
+ * The order, sent by the customer, when the order route could not be reached.
+ *
+ * A DELIBERATE EXCEPTION to "prices are resolved on the server". This is not an
+ * order — no row is written and nothing is charged — it is a shopper on one bar
+ * of signal telling a shop what they want, in the way that has always worked in
+ * this market. The prices are the ones the page was showing them, which is what
+ * they would have read out over the phone anyway.
+ *
+ * It exists because the alternative is worse. Without it, a basket built over
+ * five minutes in a shop with a thick wall dies on the Place order button and
+ * the customer walks in instead — which is the whole product failing at the one
+ * moment it is being used.
+ */
+export function buildOfflineOrderMessage(input: OrderMessageInput): string {
+  // Same shape as the order message the owner already knows how to read, with
+  // one line at the top saying why it arrived by hand.
+  return `${buildOrderMessage(input)}\n\n(Sent from ${escapeWhatsAppText(input.shopName)}'s page — no internet at the time.)`;
+}
+
+/**
+ * What the customer is told when the shop cut their order down.
+ *
+ * The whole message is the difference. A customer who ordered 2 kg and is sent
+ * a new total has one question — what changed — and answering it in the message
+ * is the phone call this exists to save. So each changed line says what it was
+ * and what it now is, and anything the shop could not supply at all is named
+ * rather than quietly disappearing from the list.
+ */
+export function buildRevisedMessage(input: {
+  shopName: string;
+  customerName: string;
+  totalAmountPaise: number;
+  /** Lines as they now stand, with `wasQuantity` where it moved. */
+  lines: { name: string; unit: string; quantity: number; wasQuantity: number; amountPaise: number }[];
+  /** Lines the shop could not supply at all. */
+  removed: { name: string; unit: string; quantity: number }[];
+}): string {
+  const hello = input.customerName ? `Namaste ${input.customerName},` : 'Namaste,';
+  const shop = escapeWhatsAppText(input.shopName);
+  const label = (line: { name: string; unit: string }) =>
+    escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
+
+  const kept = input.lines.map((line) =>
+    line.wasQuantity !== line.quantity
+      ? `• ${label(line)} ×${line.quantity} (was ×${line.wasQuantity}) = ${plainPaise(line.amountPaise)}`
+      : `• ${label(line)} ×${line.quantity} = ${plainPaise(line.amountPaise)}`,
+  );
+
+  const gone = input.removed.map((line) => `• ${label(line)} ×${line.quantity} — not available`);
+
+  return [
+    `${hello} we did not have everything you asked for. ${shop}`,
+    '',
+    'This is what we can send:',
+    ...kept,
+    ...(gone.length > 0 ? ['', ...gone] : []),
+    '',
+    `New total: ${plainPaise(input.totalAmountPaise)}`,
+  ].join('\n');
+}
+
 /** wa.me needs the country code and digits only. Shop phones are stored as 10 digits. */
 export function toWhatsAppNumber(phone: string): string {
   const digits = phone.replace(/\D/g, '');
