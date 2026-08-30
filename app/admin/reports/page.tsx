@@ -5,7 +5,7 @@ import { buildPeriod, loadReport, peakOf, type BucketRow, type Report } from '@/
 import { parseReportQuery } from '@/lib/report-query';
 import { prisma } from '@/lib/prisma';
 import { demoFilter, showingDemoShops } from '@/lib/demo';
-import { formatRupees } from '@/lib/money';
+import { formatPaise } from '@/lib/money';
 import { formatDayTime, shopClock } from '@/lib/time';
 
 export const dynamic = 'force-dynamic';
@@ -63,18 +63,18 @@ export default async function ReportsPage({
             note="Ranked by what it took, not by how many left the shelf — a hundred rupees is a hundred rupees whether that was one sack or fifty cups."
           >
             <BarList
-              measure="revenue"
+              measure="revenuePaise"
               rows={report.topProducts.map((product) => ({
                 label: product.label,
                 transactions: product.transactions,
-                revenue: product.revenue,
+                revenuePaise: product.revenuePaise,
               }))}
               empty="Nothing was sold in this period."
             />
             {report.topProducts.length > 0 && (
               <p className="mt-3 text-sm text-slate-500">
                 {report.topProducts[0].label} led with {report.topProducts[0].revenueShare}% of all
-                revenue
+                revenuePaise
                 {report.singleShop
                   ? ''
                   : `, across ${report.topProducts[0].shops} ${report.topProducts[0].shops === 1 ? 'shop' : 'shops'}`}
@@ -103,13 +103,13 @@ export default async function ReportsPage({
                       <h3 className="text-sm font-bold text-slate-900">{occasion.name}</h3>
                       <span className="text-xs tabular-nums text-slate-500">{occasion.when}</span>
                       <span className="ml-auto text-lg font-bold tabular-nums text-slate-900">
-                        {formatRupees(occasion.revenue)}
+                        {formatPaise(occasion.revenuePaise)}
                       </span>
                     </div>
 
                     <p className="mt-0.5 text-xs text-slate-500">
                       {occasion.change === null ? (
-                        occasion.lastYearRevenue === null ? (
+                        occasion.lastYearRevenuePaise === null ? (
                           'First year on record — nothing to compare against yet.'
                         ) : (
                           'Nothing was taken last year, so there is no percentage to give.'
@@ -125,7 +125,7 @@ export default async function ReportsPage({
                           >
                             {occasion.change >= 0 ? '▲' : '▼'} {Math.abs(occasion.change)}%
                           </span>{' '}
-                          against {formatRupees(occasion.lastYearRevenue ?? 0)} last year
+                          against {formatPaise(occasion.lastYearRevenuePaise ?? 0)} last year
                         </>
                       )}
                     </p>
@@ -135,7 +135,7 @@ export default async function ReportsPage({
                         <span className="font-semibold">Moved most:</span>{' '}
                         {occasion.topItems
                           .slice(0, 5)
-                          .map((item) => `${item.label} (${formatRupees(item.revenue)})`)
+                          .map((item) => `${item.label} (${formatPaise(item.revenuePaise)})`)
                           .join(', ')}
                       </p>
                     )}
@@ -166,7 +166,7 @@ export default async function ReportsPage({
                   area.orders,
                   `${area.share}%`,
                   area.customers,
-                  formatRupees(area.revenue),
+                  formatPaise(area.revenuePaise),
                 ])}
               />
             )}
@@ -210,12 +210,12 @@ export default async function ReportsPage({
                   [
                     'WhatsApp orders',
                     report.channels.orders.transactions,
-                    formatRupees(report.channels.orders.revenue),
+                    formatPaise(report.channels.orders.revenuePaise),
                   ],
                   [
                     'Counter sales',
                     report.channels.counter.transactions,
-                    formatRupees(report.channels.counter.revenue),
+                    formatPaise(report.channels.counter.revenuePaise),
                   ],
                 ]}
               />
@@ -228,12 +228,12 @@ export default async function ReportsPage({
                   ...report.paymentModes.map((row) => [
                     prettyLabel(row.label),
                     row.transactions,
-                    formatRupees(row.revenue),
+                    formatPaise(row.revenuePaise),
                   ]),
                   ...report.orderTypes.map((row) => [
                     prettyLabel(row.label),
                     row.transactions,
-                    formatRupees(row.revenue),
+                    formatPaise(row.revenuePaise),
                   ]),
                 ]}
               />
@@ -249,7 +249,7 @@ export default async function ReportsPage({
               rows={report.orderStatuses.map((row) => [
                 prettyLabel(row.label),
                 row.transactions,
-                formatRupees(row.revenue),
+                formatPaise(row.revenuePaise),
               ])}
             />
           </Section>
@@ -259,16 +259,16 @@ export default async function ReportsPage({
           {!report.singleShop && (
             <Section
               title="Shop by shop"
-              note="Sorted by revenue. A shop with items listed and nothing sold is the one to call."
+              note="Sorted by revenuePaise. A shop with items listed and nothing sold is the one to call."
             >
               <Table
                 head={['Shop', 'Type', 'Revenue', 'Sales', 'Avg basket', 'Items', 'Sold nothing']}
                 rows={report.shops.map((shop) => [
                   shop.name,
                   shop.typeLabel,
-                  formatRupees(shop.revenue),
+                  formatPaise(shop.revenuePaise),
                   shop.transactions,
-                  formatRupees(shop.averageBasket),
+                  formatPaise(shop.averageBasketPaise),
                   shop.items,
                   shop.deadItems,
                 ])}
@@ -289,7 +289,7 @@ export default async function ReportsPage({
                   rows={report.outOfStockSellers.map((entry) => [
                     entry.label,
                     entry.shop,
-                    formatRupees(entry.revenue),
+                    formatPaise(entry.revenuePaise),
                   ])}
                 />
               )}
@@ -347,9 +347,9 @@ function Headline({ report }: { report: Report }) {
   const h = report.headline;
   return (
     <dl className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl bg-white px-5 py-4 shadow-card">
-      <Stat label="Revenue" value={formatRupees(h.revenue)} />
+      <Stat label="Revenue" value={formatPaise(h.revenuePaise)} />
       <Stat label="Sales" value={h.transactions} />
-      <Stat label="Avg basket" value={formatRupees(h.averageBasket)} />
+      <Stat label="Avg basket" value={formatPaise(h.averageBasketPaise)} />
       {report.singleShop ? (
         <Stat label="Items listed" value={report.shops[0]?.items ?? 0} />
       ) : (
@@ -419,7 +419,7 @@ function Peak({ rows, noun }: { rows: BucketRow[]; noun: string }) {
     <p className="mt-3 text-sm text-slate-500">
       Busiest {noun}: <span className="font-semibold text-slate-900">{best.label}</span> —{' '}
       {best.transactions} {best.transactions === 1 ? 'sale' : 'sales'},{' '}
-      {formatRupees(best.revenue)}.
+      {formatPaise(best.revenuePaise)}.
     </p>
   );
 }

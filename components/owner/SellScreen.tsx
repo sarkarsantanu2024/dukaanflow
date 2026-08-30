@@ -8,7 +8,7 @@
  * hunts past an "add item" form while a customer waits with a ten-rupee note.
  *
  * Everything here is one-thumb sized. Tap an item to add one, tap again for
- * two. The total is always on screen. Payment is cash or a UPI QR carrying the
+ * two. The totalPaise is always on screen. Payment is cash or a UPI QR carrying the
  * exact amount, so the customer scans and pays without anyone typing figures.
  */
 
@@ -23,7 +23,7 @@ import clsx from 'clsx';
 import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
 import { useToast } from '@/components/ui/Toast';
-import { formatRupees } from '@/lib/money';
+import { formatPaise } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import { translateCategory } from '@/lib/speech';
 import type { Locale } from '@/lib/i18n';
@@ -33,7 +33,7 @@ export type SellItem = {
   name: string;
   nameBn: string;
   nameHi: string;
-  price: number;
+  pricePaise: number;
   unit: string;
   category: string;
   inStock: boolean;
@@ -55,7 +55,7 @@ export function SellScreen({
   upiQrData,
   items,
   locale,
-  todayTotal,
+  todayTotalPaise,
   todayCount,
   sales,
   customers,
@@ -66,12 +66,12 @@ export function SellScreen({
   upiQrData: string;
   items: SellItem[];
   locale: Locale;
-  todayTotal: number;
+  todayTotalPaise: number;
   todayCount: number;
   /** Today's sales, newest first, each with the moment it was rung up. */
   sales: {
     id: string;
-    totalAmount: number;
+    totalAmountPaise: number;
     paymentMode: string;
     createdAt: string;
     count: number;
@@ -109,7 +109,7 @@ export function SellScreen({
     [cart, sellable],
   );
 
-  const total = lines.reduce((sum, line) => sum + line.item.price * line.quantity, 0);
+  const totalPaise = lines.reduce((sum, line) => sum + line.item.pricePaise * line.quantity, 0);
 
   function add(id: string) {
     setCart((current) => ({ ...current, [id]: Math.min((current[id] ?? 0) + 1, 99) }));
@@ -168,7 +168,7 @@ export function SellScreen({
    *
    * It used to sit above the item grid, growing downward as the customer added
    * things and pushing the grid — the thing being tapped — further off the
-   * screen with every line. The total already lives on the payment bar; this is
+   * screen with every line. The totalPaise already lives on the payment bar; this is
    * where the owner goes when they want to see what makes it up, or change a
    * quantity.
    */
@@ -201,8 +201,8 @@ export function SellScreen({
                 {item.unit && <span className="font-normal text-slate-500"> · {item.unit}</span>}
               </p>
               <p className="text-sm tabular-nums text-slate-500">
-                {quantity} × {formatRupees(item.price)} ={' '}
-                <strong className="text-slate-800">{formatRupees(item.price * quantity)}</strong>
+                {quantity} × {formatPaise(item.pricePaise)} ={' '}
+                <strong className="text-slate-800">{formatPaise(item.pricePaise * quantity)}</strong>
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-1 rounded-xl border border-brand-200 bg-brand-50 p-1">
@@ -250,14 +250,14 @@ export function SellScreen({
         </div>
         <div className="text-right">
           <p className="text-xs uppercase tracking-wide text-slate-400">{t.sellToday}</p>
-          <p className="text-lg font-bold tabular-nums text-slate-900">{formatRupees(todayTotal)}</p>
+          <p className="text-lg font-bold tabular-nums text-slate-900">{formatPaise(todayTotalPaise)}</p>
           <p className="text-xs text-slate-500">
             {todayCount} {t.sellTodayCount}
           </p>
         </div>
       </div>
 
-      {/* What has actually been taken today, with the time of each. The total
+      {/* What has actually been taken today, with the time of each. The totalPaise
           on its own can only be agreed with or doubted; this is the list a
           shopkeeper counts the drawer against. */}
       {sales.length > 0 && lines.length === 0 && (
@@ -281,7 +281,7 @@ export function SellScreen({
                       : t.sellKhata}
                 </span>
                 <span className="shrink-0 font-bold tabular-nums text-slate-900">
-                  {formatRupees(sale.totalAmount)}
+                  {formatPaise(sale.totalAmountPaise)}
                 </span>
               </li>
             ))}
@@ -313,7 +313,7 @@ export function SellScreen({
               </span>
               <span className="mt-1 flex items-baseline gap-1">
                 <span className="font-bold tabular-nums text-brand-700">
-                  {formatRupees(item.price)}
+                  {formatPaise(item.pricePaise)}
                 </span>
                 {item.unit && <span className="text-xs text-slate-500">/ {item.unit}</span>}
               </span>
@@ -330,7 +330,7 @@ export function SellScreen({
                 {lines.length} {t.itemsCount}
               </p>
               <p className="text-xl font-bold leading-tight tabular-nums text-slate-900">
-                {formatRupees(total)}
+                {formatPaise(totalPaise)}
               </p>
             </div>
 
@@ -355,7 +355,7 @@ export function SellScreen({
             <div className="flex items-baseline justify-between">
               <h3 className="text-lg font-bold text-slate-900">{t.sellTakePayment}</h3>
               <p className="text-2xl font-bold tabular-nums text-brand-700">
-                {formatRupees(total)}
+                {formatPaise(totalPaise)}
               </p>
             </div>
 
@@ -365,7 +365,7 @@ export function SellScreen({
             {upiId ? (
               <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-slate-50 p-4">
                 <QRCodeCanvas
-                  value={upiPayUrlWithAmount(upiId, shopName, total)}
+                  value={upiPayUrlWithAmount(upiId, shopName, totalPaise)}
                   size={168}
                   includeMargin
                   level="M"
@@ -470,7 +470,7 @@ export function SellScreen({
                   onClick={() => record('KHATA')}
                   className="mt-2 h-11 w-full rounded-xl bg-amber-600 font-semibold text-white disabled:opacity-50"
                 >
-                  {t.sellKhata} · {formatRupees(total)}
+                  {t.sellKhata} · {formatPaise(totalPaise)}
                 </button>
               </div>
             )}

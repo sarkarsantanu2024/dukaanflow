@@ -45,8 +45,8 @@ export function HeaderAction({
         HEADER_ACTION,
         hideOnMobile && 'hidden sm:inline-flex',
         variant === 'primary'
-          ? 'bg-brand-600 text-white hover:bg-brand-700'
-          : 'border border-slate-300 text-slate-700 hover:bg-slate-50',
+          ? 'bg-brand-600 text-white shadow-sm hover:bg-brand-700'
+          : 'border border-brand-200 text-brand-800 hover:bg-brand-50',
       )}
     >
       <Icon className="h-[18px] w-[18px]" />

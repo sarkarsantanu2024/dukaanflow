@@ -1,18 +1,20 @@
-import { plainRupees } from './money';
+import { plainPaise } from './money';
 
 export type OrderLine = {
   name: string;
   unit: string;
-  price: number; // integer rupees, unit price
+  /** PAISE, per unit. */
+  pricePaise: number;
   quantity: number;
-  lineTotal: number; // integer rupees
+  /** PAISE, price × quantity. */
+  amountPaise: number;
 };
 
 export type OrderMessageInput = {
   shopName: string;
   orderType: 'DELIVERY' | 'PICKUP';
   lines: OrderLine[];
-  totalAmount: number;
+  totalAmountPaise: number;
   customerName: string;
   customerPhone: string;
   customerAddress: string;
@@ -31,7 +33,7 @@ export function escapeWhatsAppText(value: string): string {
 export function buildOrderMessage(input: OrderMessageInput): string {
   const lines = input.lines.map((line) => {
     const label = escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
-    return `• ${label} ×${line.quantity} = ${plainRupees(line.lineTotal)}`;
+    return `• ${label} ×${line.quantity} = ${plainPaise(line.amountPaise)}`;
   });
 
   const parts = [
@@ -42,7 +44,7 @@ export function buildOrderMessage(input: OrderMessageInput): string {
     'Items',
     ...lines,
     '',
-    `Total: ${plainRupees(input.totalAmount)}`,
+    `Total: ${plainPaise(input.totalAmountPaise)}`,
     '',
     'Customer',
     `Name: ${escapeWhatsAppText(input.customerName) || '-'}`,
@@ -81,10 +83,10 @@ export function buildStatusMessage(input: {
   shopName: string;
   customerName: string;
   status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NEW';
-  totalAmount: number;
+  totalAmountPaise: number;
   orderType: 'DELIVERY' | 'PICKUP';
   /** What was ordered. A total with nothing behind it cannot be checked. */
-  lines: { name: string; unit: string; quantity: number; amount: number }[];
+  lines: { name: string; unit: string; quantity: number; amountPaise: number }[];
 }): string {
   const hello = input.customerName ? `Namaste ${input.customerName},` : 'Namaste,';
   const shop = escapeWhatsAppText(input.shopName);
@@ -101,7 +103,7 @@ export function buildStatusMessage(input: {
           : `we have received your order. ${shop}`;
 
   // A cancellation is not a bill, so it carries neither items nor a total.
-  if (input.status === 'CANCELLED' || input.totalAmount <= 0) {
+  if (input.status === 'CANCELLED' || input.totalAmountPaise <= 0) {
     return `${hello} ${body}`;
   }
 
@@ -112,10 +114,10 @@ export function buildStatusMessage(input: {
   const items = input.lines
     .map((line) => {
       const label = escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
-      return `• ${label} ×${line.quantity} = ${plainRupees(line.amount)}`;
+      return `• ${label} ×${line.quantity} = ${plainPaise(line.amountPaise)}`;
     })
     .join('\n');
 
   const itemBlock = items ? `\n\n${items}` : '';
-  return `${hello} ${body}${itemBlock}\n\nTotal: ${plainRupees(input.totalAmount)}`;
+  return `${hello} ${body}${itemBlock}\n\nTotal: ${plainPaise(input.totalAmountPaise)}`;
 }

@@ -1,6 +1,6 @@
 import { escapeWhatsAppText } from './whatsapp';
 import { formatDay } from './time';
-import { plainRupees } from './money';
+import { plainPaise } from './money';
 import { prisma } from './prisma';
 
 /**
@@ -21,8 +21,8 @@ export type CustomerBalance = {
   phone: string;
   /** Which para or lane, when the shopkeeper recorded one. */
   area: string;
-  /** Positive: the customer owes the shop. Negative: the shop owes them. */
-  balance: number;
+  /** PAISE. Positive: the customer owes the shop. Negative: the shop owes them. */
+  balancePaise: number;
   lastEntryAt: Date | null;
 };
 
@@ -36,7 +36,7 @@ export async function customerBalances(shopId: string): Promise<CustomerBalance[
     prisma.ledgerEntry.groupBy({
       by: ['customerId', 'kind'],
       where: { shopId },
-      _sum: { amount: true },
+      _sum: { amountPaise: true },
     }),
     prisma.ledgerEntry.groupBy({
       by: ['customerId'],
@@ -47,7 +47,7 @@ export async function customerBalances(shopId: string): Promise<CustomerBalance[
 
   const owed = new Map<string, number>();
   for (const row of sums) {
-    const signed = (row.kind === 'DEBIT' ? 1 : -1) * (row._sum.amount ?? 0);
+    const signed = (row.kind === 'DEBIT' ? 1 : -1) * (row._sum.amountPaise ?? 0);
     owed.set(row.customerId, (owed.get(row.customerId) ?? 0) + signed);
   }
 
@@ -59,15 +59,15 @@ export async function customerBalances(shopId: string): Promise<CustomerBalance[
       name: customer.name,
       area: customer.area,
       phone: customer.phone,
-      balance: owed.get(customer.id) ?? 0,
+      balancePaise: owed.get(customer.id) ?? 0,
       lastEntryAt: lastSeen.get(customer.id) ?? null,
     }))
-    .sort((a, b) => b.balance - a.balance || a.name.localeCompare(b.name));
+    .sort((a, b) => b.balancePaise - a.balancePaise || a.name.localeCompare(b.name));
 }
 
-/** What the shop is owed in total, ignoring anyone in credit. */
+/** What the shop is owed in total, in paise, ignoring anyone in credit. */
 export function totalOutstanding(balances: CustomerBalance[]): number {
-  return balances.reduce((sum, row) => sum + Math.max(0, row.balance), 0);
+  return balances.reduce((sum, row) => sum + Math.max(0, row.balancePaise), 0);
 }
 
 /**
@@ -100,7 +100,7 @@ export async function upsertCustomer(
 export function reminderMessage(
   shopName: string,
   customerName: string,
-  balance: number,
+  balancePaise: number,
   locale: 'en' | 'bn' | 'hi',
   /**
    * The account, newest first. A bare total is a number a customer has no way
@@ -108,7 +108,12 @@ export function reminderMessage(
    * this message is supposed to replace. Dates and amounts turn it into
    * something they can hold against their own memory.
    */
-  entries: { kind: 'DEBIT' | 'CREDIT'; amount: number; note: string; createdAt: Date | string }[] = [],
+  entries: {
+    kind: 'DEBIT' | 'CREDIT';
+    amountPaise: number;
+    note: string;
+    createdAt: Date | string;
+  }[] = [],
 ): string {
   const who = customerName ? `${customerName}, ` : '';
 
@@ -148,7 +153,7 @@ export function reminderMessage(
   const greeting = `${who}${words.hello} ${shopName}`;
 
   if (entries.length === 0) {
-    return `${greeting} — ${plainRupees(balance)} ${words.pending} ${words.please}`;
+    return `${greeting} — ${plainPaise(balancePaise)} ${words.pending} ${words.please}`;
   }
 
   const head = `${greeting} — ${words.account}`;
@@ -160,10 +165,10 @@ export function reminderMessage(
       const sign = entry.kind === 'DEBIT' ? '+' : '−';
       const label = entry.kind === 'DEBIT' ? words.gave : words.got;
       const note = entry.note ? ` (${escapeWhatsAppText(entry.note)})` : '';
-      return `${formatDay(entry.createdAt)} · ${label}${note} ${sign}${plainRupees(entry.amount)}`;
+      return `${formatDay(entry.createdAt)} · ${label}${note} ${sign}${plainPaise(entry.amountPaise)}`;
     })
     .join('\n');
 
-  return `${head}:\n\n${lines}\n\n${words.total}: ${plainRupees(balance)}\n\n${words.please}`;
+  return `${head}:\n\n${lines}\n\n${words.total}: ${plainPaise(balancePaise)}\n\n${words.please}`;
 }
 

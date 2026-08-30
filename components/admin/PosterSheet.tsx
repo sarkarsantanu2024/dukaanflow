@@ -5,7 +5,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { Button } from '@/components/ui/Button';
 import { PrinterIcon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
-import { shopUrl, upiPayUrl } from '@/lib/qr';
+import { shopUrl } from '@/lib/qr';
 
 /**
  * A4 "Scan to Order" poster the admin prints and hands to the shop.
@@ -21,16 +21,11 @@ export function PosterSheet({
   slug,
   phone,
   address,
-  upiId,
-  upiQrData,
 }: {
   shopName: string;
   slug: string;
   phone: string;
   address: string;
-  upiId: string;
-  /** The shop's own UPI QR image, when they uploaded one. */
-  upiQrData: string;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const { push } = useToast();
@@ -71,27 +66,6 @@ export function PosterSheet({
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.text(`WhatsApp: +91 ${phone}`, centre, 172, { align: 'center' });
-
-      // The UPI block is a <canvas> when DukaanFlow generated the code and an
-      // <img> when the shop uploaded their own, so both have to be read.
-      const upiNode = sheetRef.current?.querySelector<HTMLElement>('[data-qr="upi"]');
-      const upiPng =
-        upiNode instanceof HTMLCanvasElement
-          ? upiNode.toDataURL('image/png')
-          : upiNode instanceof HTMLImageElement
-            ? upiNode.src
-            : null;
-
-      if (upiPng) {
-        doc.setFontSize(13);
-        doc.text('Pay via UPI', centre, 188, { align: 'center' });
-        doc.addImage(upiPng, 'PNG', centre - 25, 192, 50, 50);
-        if (upiId) {
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(10);
-          doc.text(upiId, centre, 248, { align: 'center' });
-        }
-      }
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
@@ -156,40 +130,13 @@ export function PosterSheet({
           <p className="text-2xl font-bold text-slate-900">+91 {phone}</p>
         </div>
 
-        {(upiId || upiQrData) && (
-          <div className="mt-6">
-            <p className="text-base font-semibold text-slate-700">
-              Pay via UPI · UPI-তে পেমেন্ট · UPI से भुगतान
-            </p>
-            <div className="mt-2 flex justify-center">
-              <div className="w-full max-w-[9rem] rounded-xl border-2 border-slate-300 p-3">
-                {/* The shop's own QR wins when they have one: a PhonePe or
-                    Paytm code carries merchant details a plain upi:// link
-                    cannot reproduce, and it is the code their customers
-                    already recognise on the counter. */}
-                {upiQrData ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={upiQrData}
-                    alt="UPI QR"
-                    data-qr="upi"
-                    className="block h-auto w-full"
-                  />
-                ) : (
-                  <QRCodeCanvas
-                    value={upiPayUrl(upiId, shopName)}
-                    size={360}
-                    level="M"
-                    marginSize={2}
-                    data-qr="upi"
-                    style={{ width: '100%', height: 'auto', display: 'block' }}
-                  />
-                )}
-              </div>
-            </div>
-            {upiId && <p className="mt-1 font-mono text-xs text-slate-500">{upiId}</p>}
-          </div>
-        )}
+        {/* No payment QR here.
+            This poster has one job: get a stranger at the counter to scan and
+            open the shop's menu. A second QR beside the first asks them to
+            choose which one they want, and the wrong choice — the payment code
+            — opens a payment app asking for an amount before they have ordered
+            anything. The shop's UPI is still on the order and in the khata
+            reminder, where there is something to pay FOR. */}
 
         <p className="mt-8 text-xs text-slate-400">Powered by DukaanFlow</p>
       </div>

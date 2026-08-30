@@ -56,7 +56,7 @@ export async function POST(request: Request, { params }: Context) {
     if (itemId) {
       await prisma.item.update({
         where: { id: itemId },
-        data: line.kind === 'price' ? { price: line.price } : { inStock: line.inStock },
+        data: line.kind === 'price' ? { pricePaise: line.pricePaise } : { inStock: line.inStock },
       });
       updated += 1;
       continue;
@@ -81,8 +81,8 @@ export async function POST(request: Request, { params }: Context) {
 
     const item = await prisma.item.upsert({
       where: { shopId_name_unit: { shopId: shop.id, name, unit } },
-      create: { shopId: shop.id, name, unit, price: line.price },
-      update: { price: line.price },
+      create: { shopId: shop.id, name, unit, pricePaise: line.pricePaise },
+      update: { pricePaise: line.pricePaise },
       select: { id: true },
     });
     byKey.set(matchKey(name, unit), item.id);

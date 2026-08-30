@@ -34,6 +34,9 @@ export function DemoToggle({ showing, count }: { showing: boolean; count: number
   // Nothing to toggle and nothing hidden — the control would be a puzzle.
   if (count === 0 && !showing) return null;
 
+  // shrink-0 and nowrap on the button: it sits at the end of a wrapping stat
+  // strip, and as a shrinkable flex item its label was squeezed under the
+  // track until the switch sat on top of the word it labels.
   return (
     <button
       type="button"
@@ -41,17 +44,17 @@ export function DemoToggle({ showing, count }: { showing: boolean; count: number
       aria-checked={showing}
       onClick={toggle}
       disabled={pending}
-      className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+      className="inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-lg px-2 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
     >
       <span
         className={clsx(
-          'relative h-5 w-9 shrink-0 rounded-full transition-colors',
-          showing ? 'bg-brand-600' : 'bg-slate-300',
+          'relative h-5 w-9 shrink-0 rounded-full ring-1 transition-colors',
+          showing ? 'bg-brand-600 ring-brand-700/20' : 'bg-slate-300 ring-slate-400/20',
         )}
       >
         <span
           className={clsx(
-            'absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform',
+            'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform',
             showing ? 'translate-x-[1.125rem]' : 'translate-x-0.5',
           )}
         />

@@ -49,7 +49,7 @@ export async function POST(request: Request, { params }: Context) {
         nameHi: item.nameHi,
         unit: item.unit,
         category: item.category,
-        price: 1,
+        pricePaise: 100,
         // A placeholder, not a price — the row stays off the shop page until
         // somebody says what it actually costs.
         priced: false,

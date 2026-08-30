@@ -2,10 +2,11 @@ import { notFound, redirect } from 'next/navigation';
 import { prisma } from './prisma';
 import { currentOwnerSlug, requireAdmin } from './guard';
 import { shopEntitlement } from './billing';
-import { PLAN_SPECS } from './plans';
+import { PLAN_SPECS, planFor } from './plans';
 import { baseUrl } from './qr';
 import type { Locale } from './i18n';
 import type { PlanState } from '@/components/owner/PlanBanner';
+import { planPayUrl, type RoadblockState } from '@/components/owner/SubscriptionRoadblock';
 
 /**
  * Everything the three owner screens share: the access check, the shop, and
@@ -51,7 +52,41 @@ export async function loadOwnerShop(slug: string) {
     renewUrl: renewUrl(shop.name, shop.slug),
   };
 
-  return { shop, plan, locale: (shop.locale as Locale) ?? 'en' };
+  return {
+    shop,
+    plan,
+    roadblock: roadblockFor(shop, billing),
+    locale: (shop.locale as Locale) ?? 'en',
+  };
+}
+
+/**
+ * The roadblock to show, or null when the owner may carry on working.
+ *
+ * The plan quoted is the cheapest one that actually fits this shop's catalogue,
+ * not the one they were last on. An owner who listed 180 items during the trial
+ * should be quoted for 180 items; quoting them the entry tier and then refusing
+ * their items after they pay is how a first payment becomes a refund.
+ */
+function roadblockFor(
+  shop: { name: string; slug: string },
+  billing: Awaited<ReturnType<typeof shopEntitlement>>,
+): RoadblockState | null {
+  if (!billing || billing.canEdit) return null;
+
+  const spec = planFor(billing.itemCount);
+  const upiId = process.env.NEXT_PUBLIC_ADMIN_UPI_ID ?? '';
+
+  return {
+    reason: billing.autoPaused ? 'paused' : 'trial-over',
+    planName: spec.name,
+    planPriceRupees: spec.price,
+    planItemLimit: spec.itemLimit,
+    itemCount: billing.itemCount,
+    payUrl: planPayUrl(upiId, spec.name, spec.price),
+    upiId,
+    helpUrl: renewUrl(shop.name, shop.slug),
+  };
 }
 
 /**

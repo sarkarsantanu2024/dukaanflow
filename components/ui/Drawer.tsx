@@ -35,10 +35,26 @@ export function Drawer({
   title,
   action,
   onClose,
+  modal = true,
   children,
 }: {
   open: boolean;
   title: string;
+  /**
+   * Does this drawer take the screen, or sit beside it?
+   *
+   * Modal (the default) is right for the console's tools: a bulk price paste is
+   * one job, done and dismissed, and a backdrop keeps the list underneath still
+   * while you do it.
+   *
+   * Non-modal exists for the shopper's basket, where the opposite is true. The
+   * basket is meant to stay open WHILE they carry on picking things off the
+   * menu, and a backdrop makes that impossible — the tap that was meant to add
+   * an item lands on the backdrop and closes the panel instead. So there is no
+   * backdrop, the page keeps scrolling, and only the close button, Escape or
+   * checkout shuts it.
+   */
+  modal?: boolean;
   /**
    * The panel's own primary action, in the header rather than at the foot of
    * the content. A Save button below a form is reached by scrolling past the
@@ -70,8 +86,10 @@ export function Drawer({
     else setLeaving(true);
   }, [open, mounted]);
 
-  // Escape closes, and the page behind stops scrolling while it is open —
-  // otherwise a flick inside the drawer scrolls the list underneath it.
+  // Escape closes either way. A modal drawer also stops the page behind it
+  // scrolling — otherwise a flick inside the drawer scrolls the list
+  // underneath. A non-modal one must NOT: the page behind it is still the
+  // thing being used.
   useEffect(() => {
     if (!open) return;
 
@@ -80,6 +98,8 @@ export function Drawer({
     };
     document.addEventListener('keydown', onKey);
 
+    if (!modal) return () => document.removeEventListener('keydown', onKey);
+
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
@@ -87,25 +107,35 @@ export function Drawer({
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previous;
     };
-  }, [open, onClose]);
+  }, [open, onClose, modal]);
 
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <button
-        type="button"
-        aria-label="Close"
-        onClick={onClose}
-        className={clsx(
-          'absolute inset-0 bg-slate-900/30 backdrop-blur-[1px]',
-          leaving ? 'animate-fade-out' : 'animate-fade-in',
-        )}
-      />
+    <div
+      className={clsx(
+        'fixed inset-0 z-50 flex justify-end',
+        // Without a backdrop the container still covers the whole screen, so
+        // it has to let clicks through or it becomes an invisible backdrop
+        // that swallows every tap on the page instead of closing on them.
+        !modal && 'pointer-events-none',
+      )}
+    >
+      {modal && (
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={onClose}
+          className={clsx(
+            'absolute inset-0 bg-slate-900/30 backdrop-blur-[1px]',
+            leaving ? 'animate-fade-out' : 'animate-fade-in',
+          )}
+        />
+      )}
 
       <div
         role="dialog"
-        aria-modal="true"
+        aria-modal={modal}
         aria-label={title}
         onAnimationEnd={() => {
           if (leaving) {
@@ -115,6 +145,9 @@ export function Drawer({
         }}
         className={clsx(
           'relative flex h-full w-full max-w-md flex-col bg-slate-100 shadow-sheet',
+          // The panel itself is always interactive, even when its container is
+          // letting clicks through to the page behind.
+          !modal && 'pointer-events-auto',
           leaving ? 'animate-drawer-out' : 'animate-drawer-in',
           // Someone who has asked their system for less movement gets the panel
           // without the travel, not a slower version of it.

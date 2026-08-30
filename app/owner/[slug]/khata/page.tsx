@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function KhataPage({ params }: PageProps) {
   const { slug } = await params;
-  const { shop, plan, locale } = await loadOwnerShop(slug);
+  const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
 
   const [balances, entries] = await Promise.all([
     customerBalances(shop.id),
@@ -29,7 +29,14 @@ export default async function KhataPage({ params }: PageProps) {
       orderBy: { createdAt: 'desc' },
       // Enough history to settle any argument, without loading years of it.
       take: 400,
-      select: { id: true, customerId: true, kind: true, amount: true, note: true, createdAt: true },
+      select: {
+        id: true,
+        customerId: true,
+        kind: true,
+        amountPaise: true,
+        note: true,
+        createdAt: true,
+      },
     }),
   ]);
 
@@ -39,7 +46,7 @@ export default async function KhataPage({ params }: PageProps) {
     list.push({
       id: entry.id,
       kind: entry.kind,
-      amount: entry.amount,
+      amountPaise: entry.amountPaise,
       note: entry.note,
       createdAt: entry.createdAt.toISOString(),
     });
@@ -51,7 +58,7 @@ export default async function KhataPage({ params }: PageProps) {
     name: row.name,
     phone: row.phone,
     area: row.area,
-    balance: row.balance,
+    balancePaise: row.balancePaise,
     entries: byCustomer.get(row.id) ?? [],
   }));
 
@@ -60,6 +67,7 @@ export default async function KhataPage({ params }: PageProps) {
       slug={shop.slug}
       shopName={shop.name}
       ownerImage={shop.ownerImageData}
+      roadblock={roadblock}
       locale={locale}
       plan={plan}
     >
@@ -67,7 +75,7 @@ export default async function KhataPage({ params }: PageProps) {
         slug={shop.slug}
         shopName={shop.name}
         customers={customers}
-        outstanding={totalOutstanding(balances)}
+        outstandingPaise={totalOutstanding(balances)}
         locale={locale}
       />
     </OwnerShell>

@@ -6,6 +6,7 @@ import { DemoToggle } from '@/components/admin/DemoToggle';
 import { demoFilter, showingDemoShops } from '@/lib/demo';
 import { PlusIcon } from '@/components/ui/Icon';
 import { entitlement, type Plan, type SubStatus } from '@/lib/plans';
+import { formatClockRange } from '@/lib/hours';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'DukaanFlow — Shops' };
@@ -53,6 +54,9 @@ export default async function AdminDashboard() {
         slug: true,
         type: true,
         phone: true,
+        address: true,
+        openTime: true,
+        closeTime: true,
         active: true,
         imageData: true,
         isDemo: true,
@@ -91,6 +95,8 @@ export default async function AdminDashboard() {
       slug: shop.slug,
       type: shop.type,
       phone: shop.phone,
+      address: shop.address,
+      hours: formatClockRange(shop.openTime, shop.closeTime),
       active: shop.active,
       imageData: shop.imageData,
       isDemo: shop.isDemo,
@@ -124,7 +130,7 @@ export default async function AdminDashboard() {
       <main className="px-4 py-5 lg:px-6">
         {/* One strip rather than four tall cards. These numbers are context, not
             the point of the page, and they were taking up a third of it. */}
-        <dl className="mb-5 flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl bg-white px-5 py-4 shadow-card">
+        <dl className="mb-5 flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl border border-brand-100 bg-white px-5 py-4 shadow-card">
           <Stat label="Shops" value={rows.length} />
           <Stat label="Live" value={live} />
           <Stat label="Paying" value={paying} />
@@ -133,7 +139,7 @@ export default async function AdminDashboard() {
           {/* Pushed to the end of the strip: it changes what the numbers to its
               left are counting, so it belongs beside them rather than in the
               header where it would read as another way to add a shop. */}
-          <div className="ml-auto">
+          <div className="ml-auto shrink-0">
             <DemoToggle showing={showingDemo} count={demoCount} />
           </div>
         </dl>

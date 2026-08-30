@@ -16,8 +16,18 @@ import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
-import { formatRupees } from '@/lib/money';
-import { PLAN_ORDER, PLAN_SPECS, type Plan, type SubStatus } from '@/lib/plans';
+import { useConfirm } from '@/components/ui/useConfirm';
+import { formatPaise, rupeesToPaise } from '@/lib/money';
+import {
+  LISTING_MINIMUM_ITEMS,
+  LISTING_MINIMUM_PAISE,
+  LISTING_PAISE_PER_ITEM,
+  PLAN_ORDER,
+  PLAN_SPECS,
+  listingChargePaise,
+  type Plan,
+  type SubStatus,
+} from '@/lib/plans';
 
 export type SubscriptionState = {
   plan: Plan;
@@ -26,7 +36,15 @@ export type SubscriptionState = {
   itemLimit: number;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
-  payments: { id: string; amount: number; plan: Plan; periodEnd: string; method: string }[];
+  payments: {
+    id: string;
+    amountPaise: number;
+    plan: Plan;
+    kind: string;
+    itemsListed: number;
+    periodEnd: string;
+    method: string;
+  }[];
 };
 
 const STATUS_TONE: Record<SubStatus, string> = {
@@ -45,13 +63,20 @@ export function SubscriptionPanel({
 }) {
   const router = useRouter();
   const { push } = useToast();
+  const { confirm, dialog } = useConfirm();
   const [plan, setPlan] = useState<Plan>(state.plan);
   const [months, setMonths] = useState('1');
   const [reference, setReference] = useState('');
   const [busy, setBusy] = useState(false);
+  // Pre-filled with what the shop already holds, because that is the job in
+  // almost every case: the operator has just finished listing this catalogue.
+  const [listedItems, setListedItems] = useState(String(state.itemCount || ''));
 
   const spec = PLAN_SPECS[plan];
-  const amount = spec.price * Math.max(1, Number(months) || 1);
+  const amountPaise = rupeesToPaise(spec.price * Math.max(1, Number(months) || 1));
+  const listedCount = Math.max(0, Math.trunc(Number(listedItems) || 0));
+  const listingPaise = listingChargePaise(listedCount);
+  const atListingFloor = listedCount > 0 && listedCount < LISTING_MINIMUM_ITEMS;
   const usage = state.itemLimit > 0 ? Math.min(1, state.itemCount / state.itemLimit) : 0;
 
   async function post(body: Record<string, unknown>, done: string) {
@@ -79,6 +104,7 @@ export function SubscriptionPanel({
 
   return (
     <section className="rounded-2xl bg-white p-4 shadow-card">
+      {dialog}
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="mr-auto font-semibold text-slate-900">Subscription</h2>
         <span
@@ -157,11 +183,11 @@ export function SubscriptionPanel({
           onClick={() =>
             post(
               { plan, months: Math.max(1, Number(months) || 1), reference },
-              `Recorded ${formatRupees(amount)}`,
+              `Recorded ${formatPaise(amountPaise)}`,
             )
           }
         >
-          Record {formatRupees(amount)} payment
+          Record {formatPaise(amountPaise)} payment
         </Button>
 
         <Button
@@ -178,8 +204,17 @@ export function SubscriptionPanel({
           size="sm"
           disabled={busy}
           className="text-red-600 hover:bg-red-50"
-          onClick={() => {
-            if (!window.confirm('Cancel this subscription? The owner can no longer edit items.')) {
+          onClick={async () => {
+            if (
+              !(await confirm({
+                title: 'Cancel this subscription?',
+                message:
+                  'The owner can no longer add or change items. Their shop page and QR keep working, and nothing is deleted.',
+                confirmLabel: 'Cancel subscription',
+                cancelLabel: 'Keep it',
+                danger: true,
+              }))
+            ) {
               return;
             }
             post({ plan, status: 'CANCELLED' }, 'Subscription cancelled');
@@ -190,19 +225,70 @@ export function SubscriptionPanel({
       </div>
 
       <p className="mt-2 text-xs text-slate-500">
-        Paid time is added to whatever is left, so renewing early never costs the shop days. A
-        lapsed shop keeps its QR and its customers — only item editing stops.
+        Paid time is added to whatever is left — unused trial days included — so paying early never
+        costs the shop days. A lapsed shop keeps its QR and its customers; only item editing stops.
       </p>
+
+      {/* Boxed off from the subscription controls above on purpose. This charges
+          for work done and buys the shop no time at all, so it must never be
+          reachable by an operator who thinks they are recording a renewal. */}
+      <div className="mt-4 rounded-xl border border-saffron-200 bg-saffron-50/60 p-3">
+        <h3 className="text-sm font-semibold text-saffron-900">Listing service</h3>
+        <p className="mt-0.5 text-xs text-saffron-800/80">
+          Charged when we catalogue the shop&apos;s items for them. 50 paise per item, minimum{' '}
+          {formatPaise(LISTING_MINIMUM_PAISE)}. Buys no subscription time.
+        </p>
+
+        <div className="mt-2.5 flex flex-wrap items-end gap-2">
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-saffron-900">Items listed</span>
+            <input
+              type="number"
+              min={1}
+              max={5000}
+              value={listedItems}
+              onChange={(event) => setListedItems(event.target.value)}
+              className="w-32 rounded-xl border border-saffron-300 bg-white px-3 py-2 tabular-nums"
+            />
+          </label>
+
+          <Button
+            variant="secondary"
+            disabled={busy || listedCount < 1}
+            onClick={() =>
+              post(
+                { plan, listedItems: listedCount, reference },
+                `Charged ${formatPaise(listingPaise)} for ${listedCount} items`,
+              )
+            }
+          >
+            Charge {formatPaise(listingPaise)}
+          </Button>
+
+          {atListingFloor && (
+            <p className="text-xs text-saffron-800">
+              {listedCount} × 50p is {formatPaise(listedCount * LISTING_PAISE_PER_ITEM)} — the{' '}
+              {formatPaise(LISTING_MINIMUM_PAISE)} minimum applies.
+            </p>
+          )}
+        </div>
+      </div>
 
       {state.payments.length > 0 && (
         <ul className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-sm">
           {state.payments.map((payment) => (
             <li key={payment.id} className="flex justify-between gap-3 text-slate-600">
-              <span>
-                {PLAN_SPECS[payment.plan].name} · {payment.method}
+              <span className="min-w-0 truncate">
+                {payment.kind === 'LISTING'
+                  ? `Listing · ${payment.itemsListed} items`
+                  : PLAN_SPECS[payment.plan].name}{' '}
+                · {payment.method}
               </span>
-              <span className="tabular-nums">
-                {formatRupees(payment.amount)} → {formatDay(payment.periodEnd)}
+              <span className="shrink-0 tabular-nums">
+                {formatPaise(payment.amountPaise)}
+                {/* A one-off bought no period, so an arrow to a date would be
+                    claiming it did. */}
+                {payment.kind !== 'LISTING' && ` → ${formatDay(payment.periodEnd)}`}
               </span>
             </li>
           ))}

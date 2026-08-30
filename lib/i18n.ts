@@ -22,6 +22,15 @@ type Dictionary = {
   items: string;
   total: string;
   continue: string;
+  /** The cart drawer: reviewing and changing what is in the basket. */
+  cartTitle: string;
+  cartEmpty: string;
+  cartClear: string;
+  cartClearConfirm: string;
+  cartRemove: string;
+  cartReview: string;
+  close: string;
+  cancel: string;
   yourOrder: string;
   name: string;
   namePlaceholder: string;
@@ -79,6 +88,14 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     items: 'items',
     total: 'Total',
     continue: 'Continue',
+    cartTitle: 'Your basket',
+    cartEmpty: 'Nothing in your basket yet.',
+    cartClear: 'Empty basket',
+    cartClearConfirm: 'Remove everything from your basket?',
+    cartRemove: 'Remove',
+    cartReview: 'View basket',
+    close: 'Close',
+    cancel: 'Cancel',
     yourOrder: 'Your order',
     name: 'Name',
     namePlaceholder: 'Your name',
@@ -134,6 +151,14 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     items: 'টি জিনিস',
     total: 'মোট',
     continue: 'এগিয়ে যান',
+    cartTitle: 'আপনার ঝুড়ি',
+    cartEmpty: 'ঝুড়িতে এখনো কিছু নেই।',
+    cartClear: 'ঝুড়ি খালি করুন',
+    cartClearConfirm: 'ঝুড়ি থেকে সব সরিয়ে দেব?',
+    cartRemove: 'সরান',
+    cartReview: 'ঝুড়ি দেখুন',
+    close: 'বন্ধ করুন',
+    cancel: 'থাক',
     yourOrder: 'আপনার অর্ডার',
     name: 'নাম',
     namePlaceholder: 'আপনার নাম',
@@ -189,6 +214,14 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     items: 'सामान',
     total: 'कुल',
     continue: 'आगे बढ़ें',
+    cartTitle: 'आपकी टोकरी',
+    cartEmpty: 'टोकरी में अभी कुछ नहीं है।',
+    cartClear: 'टोकरी खाली करें',
+    cartClearConfirm: 'टोकरी से सब हटा दें?',
+    cartRemove: 'हटाएँ',
+    cartReview: 'टोकरी देखें',
+    close: 'बंद करें',
+    cancel: 'रहने दें',
     yourOrder: 'आपका ऑर्डर',
     name: 'नाम',
     namePlaceholder: 'आपका नाम',

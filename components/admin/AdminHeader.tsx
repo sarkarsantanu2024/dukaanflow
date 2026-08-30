@@ -52,15 +52,18 @@ export function AdminHeader({
     }
   }
 
+  // The bar stays light, beside the green rail on purpose: it carries the
+  // page's title and its actions — the two things that must stay readable —
+  // so it gets the surface with the most contrast to spend, not the colour.
   return (
-    <header className="no-print sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="no-print sticky top-0 z-10 border-b border-brand-100 bg-white/85 backdrop-blur">
       <div className="flex items-center gap-1 px-2 py-2 sm:gap-3 sm:px-4 sm:py-3 lg:px-6">
         {backHref && (
           <Link
             href={backHref}
             aria-label="Back"
             title="Back"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 sm:h-9 sm:w-auto sm:gap-1.5 sm:rounded-lg sm:px-2.5 sm:text-sm sm:font-medium"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-brand-700 hover:bg-brand-50 sm:h-9 sm:w-auto sm:gap-1.5 sm:rounded-lg sm:px-2.5 sm:text-sm sm:font-medium"
           >
             <ArrowLeftIcon className="h-5 w-5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Back</span>
@@ -69,7 +72,7 @@ export function AdminHeader({
 
         <div className="mr-auto min-w-0">
           {eyebrow && (
-            <p className="truncate text-[11px] font-medium leading-tight text-slate-500 sm:text-xs">
+            <p className="truncate text-[11px] font-medium leading-tight text-brand-700 sm:text-xs">
               {eyebrow}
             </p>
           )}
@@ -86,7 +89,7 @@ export function AdminHeader({
           disabled={loggingOut}
           aria-label="Sign out"
           title="Sign out"
-          className={clsx(HEADER_ACTION, 'text-slate-600 hover:bg-slate-100 disabled:opacity-50')}
+          className={clsx(HEADER_ACTION, 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50')}
         >
           {loggingOut ? <Spinner /> : <SignOutIcon className="h-[18px] w-[18px]" />}
           <span className="hidden sm:inline">Sign out</span>

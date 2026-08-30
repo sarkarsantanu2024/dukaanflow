@@ -15,7 +15,7 @@
  * open, because a dialog you can scroll the page behind is one people miss.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { Button } from './Button';
 
@@ -134,6 +134,91 @@ export function ConfirmDialog({
       }
     >
       {message}
+    </Modal>
+  );
+}
+
+/**
+ * A confirmation that has to be typed out, for the few actions nothing can undo.
+ *
+ * `window.prompt` was doing this and doing it badly. It is a single unstyled
+ * line with no way to show which name is expected in bold, it cannot disable
+ * its own OK button, so the only feedback for a typo was the action silently
+ * not happening — and on Android it is prefixed with "dukaanflow.vercel.app
+ * says", which reads as a warning from somewhere else rather than a question
+ * from the app in the operator's hand.
+ *
+ * Here the expected word is on screen, the button stays disabled until it
+ * matches, and the match is exact: deleting a shop takes its items, orders and
+ * sales with it, so "close enough" is not a standard this dialog should hold.
+ */
+export function TypeToConfirmDialog({
+  open,
+  title,
+  message,
+  expected,
+  inputLabel,
+  confirmLabel,
+  cancelLabel = 'Cancel',
+  busy = false,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  message?: React.ReactNode;
+  /** What must be typed, character for character. */
+  expected: string;
+  inputLabel: string;
+  confirmLabel: string;
+  cancelLabel?: string;
+  busy?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const [typed, setTyped] = useState('');
+
+  // Reopening must not inherit the last attempt, or a second delete would
+  // already be armed the moment the dialog appeared.
+  useEffect(() => {
+    if (open) setTyped('');
+  }, [open]);
+
+  const matches = typed === expected;
+
+  return (
+    <Modal
+      open={open}
+      title={title}
+      onClose={busy ? () => {} : onCancel}
+      tone="danger"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onCancel} disabled={busy}>
+            {cancelLabel}
+          </Button>
+          <Button variant="danger" onClick={onConfirm} loading={busy} disabled={!matches}>
+            {confirmLabel}
+          </Button>
+        </>
+      }
+    >
+      {message}
+      <label className="mt-3 block">
+        <span className="mb-1 block text-sm font-medium text-slate-700">{inputLabel}</span>
+        <input
+          value={typed}
+          onChange={(event) => setTyped(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && matches && !busy) onConfirm();
+          }}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          aria-label={inputLabel}
+          className="w-full rounded-xl border border-slate-300 px-3 py-2.5 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-red-600"
+        />
+      </label>
     </Modal>
   );
 }

@@ -38,6 +38,36 @@ const WORD_UNITS: Record<string, number> = {
   ek: 1, do: 2, dui: 2, teen: 3, tin: 3, char: 4, paanch: 5, panch: 5,
   chhe: 6, choy: 6, chhoy: 6, saat: 7, aath: 8, aat: 8, nau: 9, noy: 9,
   das: 10, dosh: 10,
+
+  // HOW PEOPLE ACTUALLY COUNT OUT LOUD.
+  //
+  // The formal numerals above are what a textbook lists and not what anybody
+  // says at a counter. A Bengali speaker asks for "দু কেজি চাল", almost never
+  // "দুই কেজি চাল" — so `দুই` alone matched nothing, the quantity fell through
+  // to the default of 1, and two kilos of rice went into the cart as one.
+  //
+  // Counting things rather than measuring them takes a classifier suffix —
+  // -টা, -টি, -টে, -খানা — and each of those is a separate spoken word the
+  // recogniser hands back whole, so each needs its own entry.
+  //
+  // Matching is per whitespace-separated token (see `wordsToDigits`), so these
+  // cannot corrupt a longer word that merely starts the same way: `দু` never
+  // matches inside `দুধ` (milk) or `দুপুর` (afternoon).
+  দু: 2, দুটো: 2, দুটি: 2, দুটা: 2, দুখানা: 2,
+  একটা: 1, একটি: 1, একখানা: 1,
+  তিনটে: 3, তিনটি: 3, তিনটা: 3,
+  চারটে: 4, চারটি: 4, চারটা: 4,
+  পাঁচটা: 5, পাঁচটি: 5, পাঁচটে: 5,
+  ছটা: 6, ছয়টা: 6, সাতটা: 7, আটটা: 8, নয়টা: 9, দশটা: 10,
+  // Hindi counts the same way with -ठो/-ठा in the east, and these are the
+  // spellings the recogniser returns most often.
+  दोनों: 2, एकटा: 1,
+  // Roman, for when the recogniser transliterates rather than scripts it.
+  du: 2, duto: 2, duti: 2, duta: 2, dute: 2,
+  ekta: 1, ekti: 1, ekkhana: 1,
+  tinte: 3, tinti: 3, tinta: 3,
+  charte: 4, charti: 4, charta: 4,
+  panchta: 5, panchti: 5,
 };
 
 const WORD_TENS: Record<string, number> = {
@@ -917,4 +947,57 @@ function bestMatch(phrase: string, items: MatchableItem[]): Match | null {
   }
 
   return winner ? { item: winner, confidence: winningScore } : null;
+}
+
+/**
+ * Does a typed search term match this item?
+ *
+ * Plain substring matching is what the storefront used, and it fails on the
+ * commonest thing a shopper types: "ata" finds nothing on a shop selling
+ * "Atta", because a-t-a is not a run of characters inside a-t-t-a. Indian
+ * item names have no settled roman spelling — atta/ata, chawal/chaval/chal,
+ * daal/dal, cheeni/chini are all the same thing written as somebody heard it —
+ * so exact matching punishes a shopper for spelling a word that has no correct
+ * spelling.
+ *
+ * Three passes, cheapest first:
+ *
+ *  1. Literal substring, which settles Bengali and Hindi typing outright.
+ *  2. The same comparison with doubled letters collapsed and punctuation
+ *     dropped, so "atta" and "ata" become the same string.
+ *  3. The voice vocabulary, so "chawal" finds an item listed only as "Rice" —
+ *     the shopper's language need not be the shopkeeper's.
+ */
+export function matchesSearch(fields: string[], query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+
+  if (fields.some((field) => field.toLowerCase().includes(needle))) return true;
+
+  const loose = loosen(needle);
+  // A single letter after loosening matches nearly everything; below three the
+  // gain in tolerance is outweighed by the noise.
+  if (loose.length < 3) return false;
+  if (fields.some((field) => loosen(field).includes(loose))) return true;
+
+  for (const word of tokens(fields.join(' '))) {
+    for (const variant of SYNONYMS.get(word) ?? []) {
+      const form = loosen(variant);
+      if (form.length >= 3 && (form.includes(loose) || loose.includes(form))) return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Strips everything that varies between two spellings of the same word:
+ * punctuation, spacing, and repeated letters. "Atta" and "ata" both become
+ * "ata"; "Mustard Oil" becomes "mustardoil".
+ */
+function loosen(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\p{M}]+/gu, '')
+    .replace(/(.)\1+/gu, '$1');
 }

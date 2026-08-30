@@ -253,14 +253,17 @@ export function StarterPicker({
         </div>
       )}
 
-      {/* Room left, shown only when it is finite and worth knowing about. */}
-      {Number.isFinite(room) && (
-        <p className={clsx('mt-3 text-xs', full ? 'font-semibold text-amber-700' : 'text-slate-500')}>
-          {full ? t.starterFull : `${room - picked.size} ${t.starterRoomLeft}`}
-        </p>
-      )}
+      {/* Stuck to the bottom of the screen rather than to the end of the list.
+          This catalogue is a hundred items over a dozen groups, so the moment
+          the owner opens a second group the Add button scrolls away — leaving
+          them ticking chips with no visible way to commit them, and no running
+          count of what they have ticked. The bar follows them down instead, and
+          carries the count and the room left, which are the two facts that
+          decide whether to tick one more.
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+          The offset clears the owner app's fixed tab bar; inside a drawer there
+          is no tab bar, and sitting a little above the edge costs nothing. */}
+      <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-10 -mx-4 mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-brand-200 bg-brand-50/95 px-4 pb-1 pt-3 backdrop-blur">
         <Button onClick={add} loading={busy} disabled={picked.size === 0}>
           {t.starterAdd}
           {picked.size > 0 ? ` (${picked.size})` : ''}
@@ -269,6 +272,18 @@ export function StarterPicker({
           <Button variant="ghost" size="sm" onClick={onDismiss}>
             {t.starterSkip}
           </Button>
+        )}
+
+        {/* Room left, shown only when it is finite and worth knowing about. */}
+        {Number.isFinite(room) && (
+          <p
+            className={clsx(
+              'ml-auto text-xs',
+              full ? 'font-semibold text-amber-700' : 'text-slate-500',
+            )}
+          >
+            {full ? t.starterFull : `${room - picked.size} ${t.starterRoomLeft}`}
+          </p>
         )}
       </div>
     </section>

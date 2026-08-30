@@ -141,6 +141,18 @@ type OwnerDictionary = {
   planExpired: string;
   renewOnWhatsApp: string;
 
+  /** The roadblock an owner meets once the trial or a paid period has ended. */
+  blockTitle: string;
+  blockTrialOver: string;
+  blockPausedTitle: string;
+  blockPaused: string;
+  blockPlanFor: string;
+  blockScan: string;
+  blockAfterPaying: string;
+  blockMonth: string;
+  blockHelp: string;
+  blockItems: string;
+
   starterTitle: string;
   starterHint: string;
   starterAdd: string;
@@ -354,6 +366,20 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     planUpgrade: 'Upgrade',
     planExpired: 'Your subscription has ended. Your shop and QR still work — renew to change items.',
     renewOnWhatsApp: 'Renew on WhatsApp',
+
+    blockTitle: 'Your free trial has ended',
+    blockTrialOver:
+      'Your shop page and QR are still working and customers can still order. To add or change items, start your subscription.',
+    blockPausedTitle: 'Your shop is paused',
+    blockPaused:
+      'There has been no payment for three months, so your shop page is no longer taking orders. Pay to bring it back — your items, customers and khata are all still here.',
+    blockPlanFor: 'For your',
+    blockItems: 'items',
+    blockScan: 'Scan and pay',
+    blockAfterPaying:
+      'After paying, send us the payment screenshot on WhatsApp. Your shop opens as soon as we confirm it.',
+    blockMonth: 'per month',
+    blockHelp: 'Talk to us on WhatsApp',
 
     starterTitle: 'Add common items in one tap',
     starterHint: 'Pick what you sell, then say or type the prices.',
@@ -571,6 +597,20 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     planExpired: 'সাবস্ক্রিপশন শেষ। দোকান আর QR চলছে — জিনিস বদলাতে রিনিউ করুন।',
     renewOnWhatsApp: 'হোয়াটসঅ্যাপে রিনিউ',
 
+    blockTitle: 'আপনার ফ্রি ট্রায়াল শেষ',
+    blockTrialOver:
+      'আপনার দোকানের পাতা আর QR এখনো চলছে, খদ্দের অর্ডার দিতে পারছেন। জিনিস যোগ বা বদল করতে সাবস্ক্রিপশন শুরু করুন।',
+    blockPausedTitle: 'আপনার দোকান বন্ধ আছে',
+    blockPaused:
+      'তিন মাস কোনো টাকা আসেনি, তাই দোকানের পাতা আর অর্ডার নিচ্ছে না। টাকা দিলেই আবার চালু — আপনার জিনিস, খদ্দের আর খাতা সব রয়ে গেছে।',
+    blockPlanFor: 'আপনার',
+    blockItems: 'জিনিসের জন্য',
+    blockScan: 'স্ক্যান করে টাকা দিন',
+    blockAfterPaying:
+      'টাকা দেওয়ার পর হোয়াটসঅ্যাপে স্ক্রিনশট পাঠান। আমরা দেখে নিলেই দোকান খুলে যাবে।',
+    blockMonth: 'প্রতি মাস',
+    blockHelp: 'হোয়াটসঅ্যাপে কথা বলুন',
+
     starterTitle: 'এক চাপে সাধারণ জিনিস যোগ করুন',
     starterHint: 'আপনি যা বিক্রি করেন বেছে নিন, তারপর দাম বলুন বা লিখুন।',
     starterAdd: 'বাছাই করা যোগ করুন',
@@ -786,6 +826,20 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     planUpgrade: 'बढ़ाएँ',
     planExpired: 'सदस्यता खत्म। दुकान और QR चालू हैं — सामान बदलने के लिए रिन्यू करें।',
     renewOnWhatsApp: 'व्हाट्सएप पर रिन्यू',
+
+    blockTitle: 'आपका फ्री ट्रायल खत्म हो गया',
+    blockTrialOver:
+      'आपकी दुकान का पेज और QR अभी भी चालू हैं, ग्राहक ऑर्डर दे सकते हैं। सामान जोड़ने या बदलने के लिए सदस्यता शुरू करें।',
+    blockPausedTitle: 'आपकी दुकान बंद है',
+    blockPaused:
+      'तीन महीने से कोई भुगतान नहीं आया, इसलिए दुकान का पेज अब ऑर्डर नहीं ले रहा। भुगतान करते ही वापस चालू — आपका सामान, ग्राहक और खाता सब मौजूद है।',
+    blockPlanFor: 'आपके',
+    blockItems: 'सामान के लिए',
+    blockScan: 'स्कैन करके भुगतान करें',
+    blockAfterPaying:
+      'भुगतान के बाद व्हाट्सएप पर स्क्रीनशॉट भेजें। पुष्टि होते ही दुकान खुल जाएगी।',
+    blockMonth: 'प्रति माह',
+    blockHelp: 'व्हाट्सएप पर बात करें',
 
     starterTitle: 'एक टैप में आम सामान जोड़ें',
     starterHint: 'जो आप बेचते हैं चुनिए, फिर दाम बोलिए या लिखिए।',

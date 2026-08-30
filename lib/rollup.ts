@@ -30,7 +30,7 @@ import { placeable, resolveOccasions } from './occasions';
 import { shopClock, shopMonthStart } from './time';
 
 /** Snapshot line shape, as written by both the order and the sale routes. */
-type Line = { name: string; unit: string; quantity: number; amount: number };
+type Line = { name: string; unit: string; quantity: number; amountPaise: number };
 
 function readLines(json: unknown): Line[] {
   if (!Array.isArray(json)) return [];
@@ -45,8 +45,7 @@ function readLines(json: unknown): Line[] {
       name,
       unit: typeof row.unit === 'string' ? row.unit.trim() : '',
       quantity,
-      // `lineTotal` is what the oldest orders called it.
-      amount: num(row.amount ?? row.lineTotal ?? num(row.price) * quantity),
+      amountPaise: linePaise(row, quantity),
     });
   }
   return lines;
@@ -55,6 +54,27 @@ function readLines(json: unknown): Line[] {
 function num(value: unknown): number {
   const parsed = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/**
+ * What one snapshot line came to, in paise.
+ *
+ * Kept in step with the identical reader in lib/analytics.ts — both decode the
+ * same JSON, and the day they disagree about a key is the day a rollup and the
+ * report built from it show different totals for the same festival.
+ *
+ * `amountPaise`/`pricePaise` are paise. The older `amount`, `lineTotal` and
+ * `price` keys hold RUPEES and are multiplied, not read as-is; reading them as
+ * paise would roll every historical order up at a hundredth of its value, and
+ * rollups are never recomputed once written.
+ */
+function linePaise(row: Record<string, unknown>, quantity: number): number {
+  if (row.amountPaise !== undefined) return num(row.amountPaise);
+  if (row.pricePaise !== undefined) return num(row.pricePaise) * quantity;
+
+  const legacyRupees =
+    row.amount ?? row.lineTotal ?? (row.price === undefined ? undefined : num(row.price) * quantity);
+  return legacyRupees === undefined ? 0 : Math.round(num(legacyRupees) * 100);
 }
 
 export type RollupResult = {
@@ -98,7 +118,7 @@ export async function rollupYear(
         where: { shopId: shop.id, createdAt: { gte: from, lt: to }, status: { not: 'CANCELLED' } },
         select: {
           createdAt: true,
-          totalAmount: true,
+          totalAmountPaise: true,
           customerPhone: true,
           customerArea: true,
           itemsJson: true,
@@ -106,7 +126,7 @@ export async function rollupYear(
       }),
       prisma.sale.findMany({
         where: { shopId: shop.id, createdAt: { gte: from, lt: to } },
-        select: { createdAt: true, totalAmount: true, itemsJson: true },
+        select: { createdAt: true, totalAmountPaise: true, itemsJson: true },
       }),
     ]);
 
@@ -136,7 +156,7 @@ export async function rollupYear(
 
     /* --- items ---------------------------------------------------------- */
 
-    type Tally = { quantity: number; revenue: number; transactions: number };
+    type Tally = { quantity: number; revenuePaise: number; transactions: number };
     // windowKey → "name\funit" → tally
     const items = new Map<string, Map<string, Tally>>();
     for (const window of windows) items.set(window.key, new Map());
@@ -152,9 +172,9 @@ export async function rollupYear(
           // A tab cannot appear in a trimmed name or unit, so it cannot
           // collide the way a space or a hyphen could.
           const key = `${line.name}\t${line.unit}`;
-          const tally = bucket.get(key) ?? { quantity: 0, revenue: 0, transactions: 0 };
+          const tally = bucket.get(key) ?? { quantity: 0, revenuePaise: 0, transactions: 0 };
           tally.quantity += line.quantity;
-          tally.revenue += line.amount;
+          tally.revenuePaise += line.amountPaise;
           if (!seen.has(key)) {
             tally.transactions += 1;
             seen.add(key);
@@ -188,7 +208,7 @@ export async function rollupYear(
             itemName,
             itemUnit,
             quantity: tally.quantity,
-            revenue: tally.revenue,
+            revenuePaise: tally.revenuePaise,
             transactions: tally.transactions,
           },
           // Overwrite, never add: a re-run recomputes the same window from the
@@ -196,7 +216,7 @@ export async function rollupYear(
           update: {
             occasionName: window.name,
             quantity: tally.quantity,
-            revenue: tally.revenue,
+            revenuePaise: tally.revenuePaise,
             transactions: tally.transactions,
           },
         });
@@ -206,18 +226,18 @@ export async function rollupYear(
 
     /* --- localities ------------------------------------------------------ */
 
-    const areas = new Map<string, { orders: number; revenue: number; phones: Set<string> }>();
+    const areas = new Map<string, { orders: number; revenuePaise: number; phones: Set<string> }>();
     for (const order of orders) {
       // No area, no row. An "unknown" bucket would sit at the top of every
       // locality chart for the next year and say nothing.
       if (!order.customerArea) continue;
       const area = areas.get(order.customerArea) ?? {
         orders: 0,
-        revenue: 0,
+        revenuePaise: 0,
         phones: new Set<string>(),
       };
       area.orders += 1;
-      area.revenue += order.totalAmount;
+      area.revenuePaise += order.totalAmountPaise;
       area.phones.add(order.customerPhone);
       areas.set(order.customerArea, area);
     }
@@ -230,12 +250,12 @@ export async function rollupYear(
           year,
           area: label,
           orders: area.orders,
-          revenue: area.revenue,
+          revenuePaise: area.revenuePaise,
           customers: area.phones.size,
         },
         update: {
           orders: area.orders,
-          revenue: area.revenue,
+          revenuePaise: area.revenuePaise,
           customers: area.phones.size,
         },
       });

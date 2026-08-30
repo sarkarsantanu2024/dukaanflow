@@ -7,7 +7,7 @@ import { z } from 'zod';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
-import { formatRupees } from '@/lib/money';
+import { formatPaise } from '@/lib/money';
 import { phoneSchema } from '@/lib/validators';
 import { dict, type Locale } from '@/lib/i18n';
 
@@ -28,7 +28,7 @@ export function CheckoutSheet({
   onSubmit,
   submitting,
   totalItems,
-  totalAmount,
+  totalAmountPaise,
   locale,
   deliveryEnabled = true,
   remembered,
@@ -38,7 +38,7 @@ export function CheckoutSheet({
   onSubmit: (values: CheckoutSubmit) => void;
   submitting: boolean;
   totalItems: number;
-  totalAmount: number;
+  totalAmountPaise: number;
   locale: Locale;
   /** Collection-only shops never show the choice at all. */
   deliveryEnabled?: boolean;
@@ -131,7 +131,7 @@ export function CheckoutSheet({
         <div className="mb-4 flex items-baseline justify-between">
           <h2 className="text-lg font-bold text-slate-900">{t.yourOrder}</h2>
           <p className="text-sm text-slate-500">
-            {totalItems} {t.items} · <span className="font-bold text-slate-900">{formatRupees(totalAmount)}</span>
+            {totalItems} {t.items} · <span className="font-bold text-slate-900">{formatPaise(totalAmountPaise)}</span>
           </p>
         </div>
 

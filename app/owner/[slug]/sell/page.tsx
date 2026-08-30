@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SellPage({ params }: PageProps) {
   const { slug } = await params;
-  const { shop, plan, locale } = await loadOwnerShop(slug);
+  const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
 
   // Midnight in the shop's own day. Server-local midnight is UTC on Vercel,
   // which put the shop's "today" at 5.30am and quietly filed early sales under
@@ -42,7 +42,7 @@ export default async function SellPage({ params }: PageProps) {
         name: true,
         nameBn: true,
         nameHi: true,
-        price: true,
+        pricePaise: true,
           priced: true,
         unit: true,
         category: true,
@@ -51,7 +51,7 @@ export default async function SellPage({ params }: PageProps) {
     }),
     prisma.sale.aggregate({
       where: { shopId: shop.id, createdAt: { gte: since } },
-      _sum: { totalAmount: true },
+      _sum: { totalAmountPaise: true },
       _count: true,
     }),
     // Today's sales themselves, not just their total. A shopkeeper reconciling
@@ -61,7 +61,13 @@ export default async function SellPage({ params }: PageProps) {
       where: { shopId: shop.id, createdAt: { gte: since } },
       orderBy: { createdAt: 'desc' },
       take: 50,
-      select: { id: true, totalAmount: true, paymentMode: true, createdAt: true, itemsJson: true },
+      select: {
+        id: true,
+        totalAmountPaise: true,
+        paymentMode: true,
+        createdAt: true,
+        itemsJson: true,
+      },
     }),
     prisma.customer.findMany({
       where: { shopId: shop.id },
@@ -82,7 +88,7 @@ export default async function SellPage({ params }: PageProps) {
 
   const sales = recent.map((sale) => ({
     id: sale.id,
-    totalAmount: sale.totalAmount,
+    totalAmountPaise: sale.totalAmountPaise,
     paymentMode: sale.paymentMode,
     createdAt: sale.createdAt.toISOString(),
     count: countOf(sale.itemsJson),
@@ -93,6 +99,7 @@ export default async function SellPage({ params }: PageProps) {
       slug={shop.slug}
       shopName={shop.name}
       ownerImage={shop.ownerImageData}
+      roadblock={roadblock}
       locale={locale}
       plan={plan}
     >
@@ -103,7 +110,7 @@ export default async function SellPage({ params }: PageProps) {
         upiQrData={shop.upiQrData}
         items={items}
         locale={locale}
-        todayTotal={today._sum.totalAmount ?? 0}
+        todayTotalPaise={today._sum.totalAmountPaise ?? 0}
         todayCount={today._count}
         sales={sales}
         customers={customers}

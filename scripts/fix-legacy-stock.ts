@@ -22,7 +22,8 @@ const write = process.argv.includes('--write');
 
 async function main() {
   const items = await prisma.item.findMany({
-    where: { inStock: false, price: { lte: 1 } },
+    // 100 paise — the placeholder Re 1 these rows were seeded at.
+    where: { inStock: false, pricePaise: { lte: 100 } },
     select: {
       id: true,
       name: true,

@@ -9,7 +9,7 @@
  * for this, and anything more would be a worse notebook.
  *
  * The one thing paper cannot do is nudge, so each name carries a WhatsApp
- * reminder with the amount already written.
+ * reminder with the amountPaise already written.
  */
 
 import { formatDay } from '@/lib/time';
@@ -22,7 +22,7 @@ import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { handledExpiredSession } from './sessionGuard';
 import { WhatsAppIcon } from '@/components/ui/Icon';
-import { formatRupees } from '@/lib/money';
+import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import { reminderMessage } from '@/lib/khata';
 import type { Locale } from '@/lib/i18n';
@@ -33,11 +33,11 @@ export type KhataCustomer = {
   phone: string;
   /** Which para or lane, when one was recorded. */
   area: string;
-  balance: number;
+  balancePaise: number;
   entries: {
     id: string;
     kind: 'DEBIT' | 'CREDIT';
-    amount: number;
+    amountPaise: number;
     note: string;
     createdAt: string;
   }[];
@@ -47,13 +47,13 @@ export function KhataScreen({
   slug,
   shopName,
   customers,
-  outstanding,
+  outstandingPaise,
   locale,
 }: {
   slug: string;
   shopName: string;
   customers: KhataCustomer[];
-  outstanding: number;
+  outstandingPaise: number;
   locale: Locale;
 }) {
   const router = useRouter();
@@ -63,7 +63,7 @@ export function KhataScreen({
 
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', area: '', amount: '', note: '' });
+  const [form, setForm] = useState({ name: '', phone: '', area: '', amountPaise: '', note: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   async function addEntry(kind: 'DEBIT' | 'CREDIT') {
@@ -78,7 +78,7 @@ export function KhataScreen({
           customerName: form.name,
           customerArea: form.area,
           kind,
-          amount: Number(form.amount),
+          amountPaise: Number(form.amountPaise),
           note: form.note,
         }),
       });
@@ -93,7 +93,7 @@ export function KhataScreen({
         return;
       }
 
-      setForm({ name: '', phone: '', area: '', amount: '', note: '' });
+      setForm({ name: '', phone: '', area: '', amountPaise: '', note: '' });
       router.refresh();
     } catch {
       push(t.networkError, 'error');
@@ -108,15 +108,15 @@ export function KhataScreen({
    *
    * The row used to carry a link that silently prefilled that distant form,
    * with no scroll and no feedback — so it read as a button that did nothing.
-   * Acting where the balance is shown is the whole point.
+   * Acting where the balancePaise is shown is the whole point.
    */
   async function addFor(
     customer: KhataCustomer,
     kind: 'DEBIT' | 'CREDIT',
-    amount: number,
+    amountPaise: number,
     note = '',
   ) {
-    if (!Number.isFinite(amount) || amount < 1) {
+    if (!Number.isFinite(amountPaise) || amountPaise < 1) {
       push(t.khataAmount, 'error');
       return;
     }
@@ -130,7 +130,7 @@ export function KhataScreen({
           customerName: customer.name,
           customerArea: customer.area,
           kind,
-          amount,
+          amountPaise,
           note,
         }),
       });
@@ -182,7 +182,7 @@ export function KhataScreen({
       <div className="rounded-2xl bg-white p-4 shadow-card">
         <p className="text-sm text-slate-500">{t.khataTotal}</p>
         <p className="text-3xl font-bold tabular-nums text-slate-900">
-          {formatRupees(outstanding)}
+          {formatPaise(outstandingPaise)}
         </p>
         <p className="mt-0.5 text-sm text-slate-500">{t.khataTitle}</p>
       </div>
@@ -196,8 +196,8 @@ export function KhataScreen({
         <ul className="space-y-2">
           {customers.map((customer) => {
             const expanded = open === customer.id;
-            const owes = customer.balance > 0;
-            const advance = customer.balance < 0;
+            const owes = customer.balancePaise > 0;
+            const advance = customer.balancePaise < 0;
 
             return (
               <li key={customer.id} className="rounded-2xl bg-white shadow-card">
@@ -235,7 +235,7 @@ export function KhataScreen({
                         owes ? 'text-amber-700' : advance ? 'text-brand-700' : 'text-slate-400',
                       )}
                     >
-                      {formatRupees(Math.abs(customer.balance))}
+                      {formatPaise(Math.abs(customer.balancePaise))}
                     </span>
                     <span className="block text-xs text-slate-500">
                       {owes ? t.khataOwes : advance ? t.khataAdvance : t.khataSettled}
@@ -251,7 +251,7 @@ export function KhataScreen({
                           reminderMessage(
                             shopName,
                             customer.name,
-                            customer.balance,
+                            customer.balancePaise,
                             locale,
                             customer.entries,
                           ),
@@ -289,7 +289,7 @@ export function KhataScreen({
                             )}
                           >
                             {entry.kind === 'DEBIT' ? '+' : '−'}
-                            {formatRupees(entry.amount)}
+                            {formatPaise(entry.amountPaise)}
                           </span>
                           <button
                             type="button"
@@ -307,7 +307,7 @@ export function KhataScreen({
                       customer={customer}
                       t={t}
                       busy={busy}
-                      onSettle={(kind, amount) => addFor(customer, kind, amount)}
+                      onSettle={(kind, amountPaise) => addFor(customer, kind, amountPaise)}
                     />
                   </div>
                 )}
@@ -319,7 +319,7 @@ export function KhataScreen({
 
       <section className="rounded-2xl bg-white p-4 shadow-card">
         {/* This form is for somebody not in the book yet. Anyone already
-            listed above is settled on their own row, where their balance is —
+            listed above is settled on their own row, where their balancePaise is —
             which is what the old "+ Gave goods / Got payment" link was
             fumbling towards by silently prefilling this. */}
         <h2 className="font-semibold text-slate-900">{t.khataNewCustomer}</h2>
@@ -354,9 +354,9 @@ export function KhataScreen({
             type="number"
             inputMode="numeric"
             min={1}
-            value={form.amount}
-            onChange={(event) => setForm({ ...form, amount: event.target.value })}
-            error={errors.amount}
+            value={form.amountPaise}
+            onChange={(event) => setForm({ ...form, amountPaise: event.target.value })}
+            error={errors.amountPaise}
             placeholder="250"
           />
           <Input
@@ -373,7 +373,7 @@ export function KhataScreen({
           <Button
             variant="secondary"
             loading={busy}
-            disabled={!form.phone || !form.amount}
+            disabled={!form.phone || !form.amountPaise}
             onClick={() => addEntry('DEBIT')}
             className="border-amber-300 text-amber-800"
           >
@@ -381,7 +381,7 @@ export function KhataScreen({
           </Button>
           <Button
             loading={busy}
-            disabled={!form.phone || !form.amount}
+            disabled={!form.phone || !form.amountPaise}
             onClick={() => addEntry('CREDIT')}
           >
             {t.khataGot}
@@ -397,10 +397,10 @@ export function KhataScreen({
 /**
  * The one row that settles an account, sitting on the customer it belongs to.
  *
- * The amount starts at whatever they owe, so the common case — "they have paid
+ * The amountPaise starts at whatever they owe, so the common case — "they have paid
  * it all" — is a single tap, and a part payment is the same tap after editing
  * one number. That ordering matters: a shopkeeper handed an empty box has to
- * work out the balance themselves, which is exactly the arithmetic a khata is
+ * work out the balancePaise themselves, which is exactly the arithmetic a khata is
  * meant to take off them.
  */
 function SettleRow({
@@ -412,18 +412,18 @@ function SettleRow({
   customer: KhataCustomer;
   t: ReturnType<typeof ownerDict>;
   busy: boolean;
-  onSettle: (kind: 'DEBIT' | 'CREDIT', amount: number) => void;
+  onSettle: (kind: 'DEBIT' | 'CREDIT', amountPaise: number) => void;
 }) {
-  const owed = Math.max(0, customer.balance);
-  const [amount, setAmount] = useState(owed > 0 ? String(owed) : '');
+  const owed = Math.max(0, customer.balancePaise);
+  const [amountPaise, setAmount] = useState(owed > 0 ? String(owed) : '');
 
-  // The balance moves when an entry is added, so the box has to follow it —
+  // The balancePaise moves when an entry is added, so the box has to follow it —
   // otherwise the next tap pays off a figure that is no longer true.
   useEffect(() => {
     setAmount(owed > 0 ? String(owed) : '');
   }, [owed]);
 
-  const value = Number(amount);
+  const value = Number(amountPaise);
   const valid = Number.isFinite(value) && value >= 1;
   const settlesInFull = valid && value === owed && owed > 0;
 
@@ -436,7 +436,7 @@ function SettleRow({
             type="number"
             min={1}
             inputMode="numeric"
-            value={amount}
+            value={amountPaise}
             onChange={(event) => setAmount(event.target.value)}
             aria-label={t.khataAmount}
             className="h-10 w-28 rounded-lg border border-slate-300 pl-6 pr-2 text-base tabular-nums"

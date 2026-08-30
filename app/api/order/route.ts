@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       nameBn: true,
       nameHi: true,
       unit: true,
-      price: true,
+      pricePaise: true,
       priced: true,
       inStock: true,
     },
@@ -91,13 +91,13 @@ export async function POST(request: Request) {
     return {
       name: item.name,
       unit: item.unit,
-      price: item.price,
+      pricePaise: item.pricePaise,
       quantity,
-      lineTotal: item.price * quantity,
+      amountPaise: item.pricePaise * quantity,
     };
   });
 
-  const totalAmount = lines.reduce((sum, line) => sum + line.lineTotal, 0);
+  const totalAmountPaise = lines.reduce((sum, line) => sum + line.amountPaise, 0);
 
   const order = await prisma.order.create({
     data: {
@@ -109,9 +109,11 @@ export async function POST(request: Request) {
       orderType,
       // Snapshot: prices here are what was quoted, regardless of later edits.
       //
-      // `amount` is the name a Sale's snapshot already uses. This one called it
-      // `lineTotal`, and the screen reading it looked for `amount` — so every
-      // line showed ₹0 under a correct total. One name for one thing.
+      // The keys say `Paise` because nothing else can. This JSON is read back
+      // by reports and rollups with no compiler between them and it, and the
+      // older rows in this same column hold rupees under bare names — so the
+      // suffix is what tells a reader which hundred it is looking at.
+      //
       // Accepted on arrival.
       //
       // There used to be an Accept button, and it asked a question the owner
@@ -130,11 +132,11 @@ export async function POST(request: Request) {
         nameBn: item.nameBn,
         nameHi: item.nameHi,
         unit: item.unit,
-        price: item.price,
+        pricePaise: item.pricePaise,
         quantity: requested.get(item.id)!,
-        amount: item.price * requested.get(item.id)!,
+        amountPaise: item.pricePaise * requested.get(item.id)!,
       })),
-      totalAmount,
+      totalAmountPaise,
     },
     select: { id: true },
   });
@@ -156,5 +158,5 @@ export async function POST(request: Request) {
   // family. The orders now live in the owner's own app, where the header bell
   // counts them from every screen and can chime, and where each one can
   // actually be worked rather than only read.
-  return ok({ orderId: order.id, totalAmount });
+  return ok({ orderId: order.id, totalAmountPaise });
 }

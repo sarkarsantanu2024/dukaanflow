@@ -17,6 +17,7 @@ import type { Locale } from '@/lib/i18n';
 import { OwnerHeader } from './OwnerHeader';
 import { PlanBanner, type PlanState } from './PlanBanner';
 import { OpenInChromeNotice } from './OpenInChromeNotice';
+import { SubscriptionRoadblock, type RoadblockState } from './SubscriptionRoadblock';
 
 export type OwnerTab = 'sell' | 'inventory' | 'khata' | 'orders';
 
@@ -70,6 +71,7 @@ export function OwnerShell({
   ownerImage,
   locale,
   plan,
+  roadblock,
   children,
 }: {
   slug: string;
@@ -78,6 +80,8 @@ export function OwnerShell({
   ownerImage?: string;
   locale: Locale;
   plan: PlanState;
+  /** Set when the subscription has lapsed; null while the owner may work. */
+  roadblock?: RoadblockState | null;
   children: React.ReactNode;
 }) {
   const t = ownerDict(locale);
@@ -93,7 +97,7 @@ export function OwnerShell({
   ];
 
   return (
-    <div className="min-h-dvh bg-slate-100 pb-24">
+    <div className="min-h-dvh pb-24">
       <OwnerHeader slug={slug} shopName={shopName} ownerImage={ownerImage} locale={locale} />
 
       <main className="mx-auto max-w-3xl space-y-4 px-4 py-4">
@@ -104,7 +108,7 @@ export function OwnerShell({
 
       <nav
         aria-label="Sections"
-        className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur"
+        className="fixed inset-x-0 bottom-0 z-20 bg-chrome pb-[env(safe-area-inset-bottom)] shadow-chrome"
       >
         <div className="mx-auto flex max-w-3xl">
           {tabs.map((tab) => {
@@ -116,7 +120,7 @@ export function OwnerShell({
                 aria-current={active ? 'page' : undefined}
                 className={clsx(
                   'flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-semibold transition',
-                  active ? 'text-brand-700' : 'text-slate-500 hover:text-slate-800',
+                  active ? 'text-white' : 'text-brand-200/70 hover:text-white',
                 )}
               >
                 <TabIcon tab={tab.id} />
@@ -126,6 +130,11 @@ export function OwnerShell({
           })}
         </div>
       </nav>
+
+      {/* Last in the tree and fixed over everything, so it covers the tab bar
+          too. A roadblock the owner can navigate out of with one thumb is a
+          banner with extra steps. */}
+      {roadblock && <SubscriptionRoadblock locale={locale} state={roadblock} />}
     </div>
   );
 }

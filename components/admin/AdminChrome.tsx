@@ -19,16 +19,35 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { BrandMark } from '@/components/ui/BrandMark';
-import { BoxIcon, CalendarIcon, ChartIcon, PhoneIcon, PlusIcon, UsersIcon } from '@/components/ui/Icon';
+import {
+  BoxIcon,
+  CalendarIcon,
+  ChartIcon,
+  PhoneIcon,
+  PlusIcon,
+  RupeeIcon,
+  UsersIcon,
+} from '@/components/ui/Icon';
 
 const NAV = [
-  { href: '/admin', label: 'Shops', icon: BoxIcon, exact: true },
-  { href: '/admin/owners', label: 'Owners', icon: PhoneIcon, exact: false },
-  { href: '/admin/customers', label: 'Customers', icon: UsersIcon, exact: false },
-  { href: '/admin/shops/new', label: 'Add shop', icon: PlusIcon, exact: true },
-  { href: '/admin/reports', label: 'Reports', icon: ChartIcon, exact: false },
-  { href: '/admin/occasions', label: 'Occasions', icon: CalendarIcon, exact: false },
+  // First, because it is the only screen that answers "how is the business
+  // doing" — everything below it is one shop at a time.
+  { href: '/admin/dashboard', label: 'Dashboard', icon: RupeeIcon, exact: true, onPhone: true },
+  { href: '/admin', label: 'Shops', icon: BoxIcon, exact: true, onPhone: true },
+  { href: '/admin/owners', label: 'Owners', icon: PhoneIcon, exact: false, onPhone: false },
+  { href: '/admin/customers', label: 'Customers', icon: UsersIcon, exact: false, onPhone: false },
+  { href: '/admin/shops/new', label: 'Add shop', icon: PlusIcon, exact: true, onPhone: true },
+  { href: '/admin/reports', label: 'Reports', icon: ChartIcon, exact: false, onPhone: true },
+  { href: '/admin/occasions', label: 'Occasions', icon: CalendarIcon, exact: false, onPhone: false },
 ];
+
+/**
+ * The rail can hold every destination; a 375px tab bar cannot. Seven tabs come
+ * out at about 50px each — under the tap target both platforms ask for, with
+ * labels that truncate to nothing. The four that survive are the ones an
+ * operator opens away from a desk; the rest are desk work.
+ */
+const PHONE_NAV = NAV.filter((item) => item.onPhone);
 
 export function AdminChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -37,11 +56,16 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
   if (pathname === '/admin/login') return <>{children}</>;
 
   return (
-    <div className="flex min-h-dvh bg-slate-100">
-      <aside className="no-print sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
-        <BrandMark href="/admin" className="px-5 py-4" />
+    <div className="flex min-h-dvh">
+      {/* The rail carries the brand colour full-height, so the console is
+          green down one edge on every screen rather than only wherever a
+          button happens to sit. It is the ONLY large field of colour here:
+          the bar beside it stays light, because two greens meeting at a
+          corner is what makes an interface look painted rather than designed. */}
+      <aside className="no-print sticky top-0 hidden h-dvh w-56 shrink-0 flex-col bg-chrome text-white lg:flex">
+        <BrandMark href="/admin" tone="dark" className="border-b border-white/10 px-5 py-4" />
 
-        <nav className="flex flex-col gap-0.5 px-3 py-2">
+        <nav className="flex flex-col gap-0.5 px-3 py-3">
           {NAV.map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             const Icon = item.icon;
@@ -51,20 +75,25 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={clsx(
-                  'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition',
+                  'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition',
+                  // Solid white for the current page, not a tint of the rail.
+                  // A 12%-white panel is visible on a mockup and invisible on a
+                  // real monitor at an angle — and "which page am I on" is the
+                  // one question navigation exists to answer, so it gets the
+                  // strongest contrast available rather than the subtlest.
                   active
-                    ? 'bg-brand-50 text-brand-800'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                    ? 'bg-white text-brand-800 shadow-sm'
+                    : 'text-brand-50/85 hover:bg-white/15 hover:text-white',
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className={clsx('h-4 w-4 shrink-0', !active && 'opacity-80')} />
                 {item.label}
               </Link>
             );
           })}
         </nav>
 
-        <p className="mt-auto px-5 py-4 text-xs leading-relaxed text-slate-400">
+        <p className="mt-auto border-t border-white/10 px-5 py-4 text-xs leading-relaxed text-brand-100/70">
           Super Admin · one account for every shop.
         </p>
       </aside>
@@ -75,10 +104,10 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
 
       <nav
         aria-label="Console"
-        className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+        className="no-print fixed inset-x-0 bottom-0 z-20 bg-chrome pb-[env(safe-area-inset-bottom)] shadow-chrome lg:hidden"
       >
         <div className="flex">
-          {NAV.map((item) => {
+          {PHONE_NAV.map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             const Icon = item.icon;
             return (
@@ -88,9 +117,19 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
                 aria-current={active ? 'page' : undefined}
                 className={clsx(
                   'flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-semibold transition',
-                  active ? 'text-brand-700' : 'text-slate-500 hover:text-slate-800',
+                  // White against 85%-white is not a difference anybody can see
+                  // on a phone in daylight, so the current tab gets a mark of
+                  // its own above it rather than relying on brightness alone.
+                  active ? 'text-white' : 'text-brand-50/70 hover:text-white',
                 )}
               >
+                <span
+                  aria-hidden
+                  className={clsx(
+                    'h-0.5 w-8 rounded-full transition',
+                    active ? 'bg-white' : 'bg-transparent',
+                  )}
+                />
                 <Icon className="h-6 w-6" />
                 <span className="max-w-full truncate px-1">{item.label}</span>
               </Link>
