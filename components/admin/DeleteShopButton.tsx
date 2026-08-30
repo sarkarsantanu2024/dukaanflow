@@ -12,9 +12,11 @@ export function DeleteShopButton({ slug, shopName }: { slug: string; shopName: s
   const [deleting, setDeleting] = useState(false);
   const [asking, setAsking] = useState(false);
 
-  // Typing the name is deliberate friction — deleting a shop also deletes
-  // every item and every stored order for it. The dialog holds that check now,
-  // so by the time this runs the name already matches.
+  /**
+   * Typing the name is deliberate friction, and it is not decoration: this
+   * deletes far more than the row on the card. The dialog holds that check, so
+   * by the time this runs the name already matches.
+   */
   async function remove() {
     setDeleting(true);
     try {
@@ -43,10 +45,19 @@ export function DeleteShopButton({ slug, shopName }: { slug: string; shopName: s
       <TypeToConfirmDialog
         open={asking}
         title="Delete this shop?"
+        /* Everything named, because "its items and orders" was true and
+           incomplete — and the two things it left out are the two somebody
+           would most want warning about. A shop's khata is a record of real
+           money owed by real people, and its rollups are the only surviving
+           trace of years whose orders have already been purged. Both go, and
+           neither can be got back. */
         message={
           <>
-            This removes <strong>{shopName}</strong>, its items, orders and sales
-            permanently. Its QR stops working and nothing can be restored.
+            This permanently removes <strong>{shopName}</strong> and everything
+            attached to it: items, orders, counter sales, customers, the whole
+            udhaar khata, recorded payments, the yearly and occasion rollups,
+            and any phones subscribed to its notifications. Its QR stops
+            working. Nothing can be restored.
           </>
         }
         expected={shopName}

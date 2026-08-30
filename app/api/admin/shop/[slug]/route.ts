@@ -42,7 +42,25 @@ export async function PATCH(request: Request, { params }: Context) {
   }
 }
 
-/** DELETE /api/admin/shop/[slug] — removes the shop, its items and its orders. */
+/**
+ * DELETE /api/admin/shop/[slug] — removes the shop and everything attached.
+ *
+ * One statement, because the database does the rest: every table that points at
+ * a shop declares `onDelete: Cascade`, so this single delete takes Item, Order,
+ * Sale, Payment, Customer, LedgerEntry, ItemPeriodStat, AreaPeriodStat and
+ * PushSubscription with it — and LedgerEntry cascades a second time from
+ * Customer, so no ledger line can outlive the person it belongs to.
+ *
+ * DOING IT IN THE DATABASE RATHER THAN IN CODE IS THE POINT. A hand-written
+ * chain of `deleteMany` calls is a list somebody has to remember to add to, and
+ * the failure mode is silent: a new table added a year from now would simply
+ * keep its rows, leaving one deleted shop's customers and khata sitting in a
+ * database nothing can reach them from. The constraint cannot be forgotten.
+ *
+ * `ItemPeriodStat` and `AreaPeriodStat` go too, and that is deliberate rather
+ * than an oversight — they exist to outlive the retention purge, not to outlive
+ * the shop itself.
+ */
 export async function DELETE(request: Request, { params }: Context) {
   if (!sameOrigin(request)) return fail('Bad request', 403);
   if (!(await requireAdmin())) return fail('Not authenticated', 401);
