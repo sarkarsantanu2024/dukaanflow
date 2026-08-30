@@ -14,7 +14,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { MicButton } from '@/components/voice/MicButton';
 import { CloseIcon } from '@/components/ui/Icon';
-import { speak, useVoice } from '@/components/voice/useVoice';
+import { speak, useVoice, type VoiceErrorCode } from '@/components/voice/useVoice';
 import { parseSpokenOrder, spokenYesNo, type VoiceLang } from '@/lib/speech';
 import { dict, type Locale } from '@/lib/i18n';
 import { itemName, type CustomerItem } from './ItemCard';
@@ -27,6 +27,23 @@ const RECOGNITION_LANG: Record<Locale, VoiceLang> = {
 };
 
 type Suggestion = { id: string; quantity: number; label: string };
+
+/**
+ * Why the mic did not start, in the shopper's language.
+ *
+ * Only `not-allowed` is theirs to fix on the spot, but the others still have to
+ * be told apart: an http:// LAN address, a managed browser profile refusing the
+ * speech service and a dead connection all used to read as "this browser cannot
+ * do voice", which sends everybody looking in the wrong place.
+ */
+function reason(code: VoiceErrorCode, t: ReturnType<typeof dict>): string {
+  if (code === 'not-allowed') return t.voiceDenied;
+  if (code === 'insecure-context') return t.voiceInsecure;
+  if (code === 'service-not-allowed') return t.voiceServiceBlocked;
+  if (code === 'no-microphone') return t.voiceNoMic;
+  if (code === 'network') return t.voiceNoNetwork;
+  return t.voiceUnavailable;
+}
 
 export function VoiceOrder({
   items,
@@ -184,14 +201,12 @@ export function VoiceOrder({
             </button>
           </div>
           <p className="mt-0.5 text-sm text-slate-500">{line || t.voiceHint}</p>
-          {/* A shopper can act on a permission prompt; the rest — work-profile
-              policy, no HTTPS, no network — they cannot, so those all point back
-              to the Add buttons rather than asking for a fix they cannot make. */}
-          {errorCode && (
-            <p className="mt-1 text-sm text-red-600">
-              {errorCode === 'not-allowed' ? t.voiceDenied : t.voiceUnavailable}
-            </p>
-          )}
+          {/* Each cause named, rather than one sentence for all of them.
+              "Voice is not available on this browser" was shown to somebody
+              who had just granted the microphone in a browser that supports
+              voice perfectly well — the mic only renders when the browser has
+              the API — which reads as the app being broken. */}
+          {errorCode && <p className="mt-1 text-sm text-red-600">{reason(errorCode, t)}</p>}
 
           {suggestions.length > 0 && (
             <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">

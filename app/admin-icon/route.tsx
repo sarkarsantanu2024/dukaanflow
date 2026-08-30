@@ -6,10 +6,9 @@
  */
 
 import { ImageResponse } from 'next/og';
+import { BRAND_GREEN, LOGO_SHAPES } from '@/lib/brand';
 
 export const runtime = 'nodejs';
-
-const BRAND = '#0b9057';
 
 export function GET(request: Request) {
   const params = new URL(request.url).searchParams;
@@ -29,14 +28,18 @@ export function GET(request: Request) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: BRAND,
-          color: 'white',
-          fontSize: glyph,
-          fontWeight: 700,
-          letterSpacing: -glyph * 0.04,
+          background: '#ffffff',
         }}
       >
-        DF
+        {/* The mark in its own green on white, not white inside a green tile.
+            The logo is the logo wherever it appears; a launcher icon is not a
+            place to invert it. An opaque ground rather than transparency,
+            because iOS composites a transparent icon onto black. */}
+        <svg width={glyph} height={glyph} viewBox="0 0 24 24" fill={BRAND_GREEN}>
+          {LOGO_SHAPES.map((shape) => (
+            <path key={shape.d} d={shape.d} fillRule={shape.evenOdd ? 'evenodd' : undefined} />
+          ))}
+        </svg>
       </div>
     ),
     {

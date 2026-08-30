@@ -1,48 +1,34 @@
 'use client';
 
 /**
- * The owner app's top bar.
+ * The owner app's top bar — the same bar the shop page has.
  *
- * Everything here competed for a phone's width: the shop name, three language
- * buttons spelled out, and "Sign out" as a word — on a Bengali screen that last
- * one reads "সাইন আউট" and takes a third of the row on its own. Words became
- * icons, the three language buttons became one dropdown, and what the space
- * bought is the thing that should have been there all along: the owner's own
- * face beside their shop's name, so the app looks like theirs.
+ * It used to be a green chrome strip carrying the owner's photo and their
+ * shop's name. Both were decoration by the second visit: an owner knows whose
+ * shop they are in, and the name was already on every screen they had just come
+ * from. What they actually reach for up here is the language switch, the
+ * install button and the way out, and those were being squeezed by a name.
+ *
+ * So it is now the product's bar: white, sticky, hairline under it, the mark on
+ * the left and the controls on the right — identical to what a customer sees on
+ * the shop page. One product, one header.
  */
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useToast } from '@/components/ui/Toast';
 import { SignOutIcon } from '@/components/ui/Icon';
+import { BrandMark } from '@/components/ui/BrandMark';
 import { Spinner } from '@/components/ui/Spinner';
 import { OwnerInstallButton } from './OwnerInstallButton';
 import { ownerDict } from '@/lib/owner-i18n';
-import { WhatsAppIcon } from '@/components/ui/Icon';
 import { LOCALE_LABELS, LOCALES, type Locale } from '@/lib/i18n';
 
-export function OwnerHeader({
-  slug,
-  shopName,
-  ownerImage,
-  locale,
-}: {
-  slug: string;
-  shopName: string;
-  /** The owner's photo, when the operator has set one. */
-  ownerImage?: string;
-  locale: Locale;
-}) {
+export function OwnerHeader({ slug, locale }: { slug: string; locale: Locale }) {
   const router = useRouter();
   const { push } = useToast();
   const t = ownerDict(locale);
   const [busy, setBusy] = useState(false);
-
-  const support = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '';
-  const helpUrl = `https://wa.me/${support}?text=${encodeURIComponent(
-    `DukaanFlow — ${shopName} (${slug}). `,
-  )}`;
 
   async function signOut() {
     setBusy(true);
@@ -74,29 +60,11 @@ export function OwnerHeader({
   }
 
   return (
-    <header className="sticky top-0 z-10 bg-chrome text-white shadow-chrome">
-      <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2 sm:px-4">
-        <Link
-          href={`/owner/${slug}/inventory`}
-          className="mr-auto flex min-w-0 items-center gap-2.5"
-        >
-          {ownerImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={ownerImage}
-              alt=""
-              className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white/50"
-            />
-          ) : (
-            <span
-              aria-hidden
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white ring-1 ring-white/30"
-            >
-              {shopName.trim().charAt(0).toUpperCase()}
-            </span>
-          )}
-          <h1 className="truncate font-bold text-white">{shopName}</h1>
-        </Link>
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex max-w-3xl items-center gap-1.5 px-3 py-2 sm:px-4">
+        {/* The mark leads back to the item list, which is where an owner starts
+            their day. */}
+        <BrandMark href={`/owner/${slug}/inventory`} className="mr-auto text-sm" />
 
         {/* One control instead of three buttons. A native select is also the
             one thing on this bar that a shopkeeper's phone already knows how
@@ -108,10 +76,7 @@ export function OwnerHeader({
           id="owner-language"
           value={locale}
           onChange={(event) => changeLocale(event.target.value as Locale)}
-          // Kept a solid white control rather than a translucent one: a native
-          // select paints its own dropdown list, and a light-on-glass trigger
-          // would open a white menu of white text on some Android browsers.
-          className="h-9 shrink-0 rounded-lg border border-transparent bg-white px-2 text-sm font-semibold text-brand-800 shadow-sm"
+          className="h-9 shrink-0 rounded-lg border border-slate-300 bg-white px-2 text-sm font-semibold text-slate-700"
         >
           {LOCALES.map((option) => (
             <option key={option} value={option}>
@@ -119,25 +84,6 @@ export function OwnerHeader({
             </option>
           ))}
         </select>
-
-        {/* Always here, on every screen, not only when something is wrong.
-            An owner who cannot find an item, or whose price will not save, has
-            one question and no way to ask it — and the shop they are standing
-            in is open while they look for one. The message arrives already
-            saying which shop it is about, so the operator does not have to
-            start by asking. */}
-        {support && (
-          <a
-            href={helpUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={t.blockHelp}
-            title={t.blockHelp}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/80 transition hover:bg-white/15 hover:text-white"
-          >
-            <WhatsAppIcon className="h-5 w-5" />
-          </a>
-        )}
 
         <OwnerInstallButton slug={slug} label={t.installNow} />
 
@@ -147,7 +93,7 @@ export function OwnerHeader({
           disabled={busy}
           aria-label={t.signOut}
           title={t.signOut}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/80 transition hover:bg-white/15 hover:text-white disabled:opacity-50"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
         >
           {busy ? <Spinner className="h-4 w-4" /> : <SignOutIcon className="h-5 w-5" />}
         </button>

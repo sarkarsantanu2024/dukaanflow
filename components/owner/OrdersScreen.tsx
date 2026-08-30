@@ -26,9 +26,9 @@ import { useRouter } from 'next/navigation';
 import { handledExpiredSession } from './sessionGuard';
 import clsx from 'clsx';
 import { useToast } from '@/components/ui/Toast';
-import { PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { CheckIcon, PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { formatPaise } from '@/lib/money';
-import { buildStatusMessage } from '@/lib/whatsapp';
+import { buildRoundMessage, buildStatusMessage } from '@/lib/whatsapp';
 import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -140,6 +140,18 @@ export function OrdersScreen({
 
   const waiting = counts.NEW + counts.CONFIRMED;
 
+  /**
+   * What is still to go out, oldest first — the round, in the order it should
+   * be walked. Finished and cancelled orders are not somebody's afternoon.
+   */
+  const pending = useMemo(
+    () =>
+      orders
+        .filter((order) => order.status === 'NEW' || order.status === 'CONFIRMED')
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    [orders],
+  );
+
   const visible = useMemo(() => {
     // One list, so it has to carry both jobs at once. Work still to be done
     // sits on top, oldest first — whoever ordered first is served first, the
@@ -237,6 +249,31 @@ export function OrdersScreen({
           </dd>
         </div>
       </dl>
+
+      {/* THE ROUND, IN ONE MESSAGE.
+          Whoever runs the deliveries has a phone and WhatsApp and nothing
+          else — no login, and there never will be one. Until now the owner
+          read the orders off this screen and dictated them, or forwarded four
+          separate customer messages, and the address is the part that gets
+          lost doing that at six in the evening.
+
+          No number is stored for him: the link opens WhatsApp's own contact
+          picker, so the owner sends it to whoever is working today — which is
+          also how it reaches a second boy, or the owner's own son. */}
+      {pending.length > 0 && (
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(
+            buildRoundMessage({ shopName, orders: pending }),
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-4 py-3 font-semibold text-white transition hover:brightness-95"
+        >
+          <WhatsAppIcon className="h-5 w-5" />
+          {t.ordersSendRound}
+          <span className="tabular-nums opacity-90">({pending.length})</span>
+        </a>
+      )}
 
       {/* The status filter strip lived here. Five chips, four of them usually
           reading zero, above a list short enough to read whole — it cost a row
@@ -410,13 +447,19 @@ export function OrdersScreen({
                       </span>
                     </span>
                   ) : (
+                    // An icon, the size of the call and message buttons beside
+                    // it: three actions on one row, one shape, no wrapping.
+                    // The word is still there for a screen reader and on a
+                    // long press.
                     <button
                       type="button"
                       disabled={busyId === order.id}
                       onClick={() => setSettling(order.id)}
-                      className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
+                      aria-label={t.markCompleted}
+                      title={t.markCompleted}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600 text-white disabled:opacity-50"
                     >
-                      {t.markCompleted}
+                      <CheckIcon className="h-5 w-5" />
                     </button>
                   ))}
                 {(order.status === 'NEW' || order.status === 'CONFIRMED') && (

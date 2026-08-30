@@ -4,6 +4,7 @@ import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { InventoryScreen } from '@/components/owner/InventoryScreen';
 import { starterCatalogue } from '@/lib/starter-catalogue';
+import { dateInputValue } from '@/lib/notice';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,8 +46,6 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
   return (
     <OwnerShell
       slug={shop.slug}
-      shopName={shop.name}
-      ownerImage={shop.ownerImageData}
       roadblock={roadblock}
       locale={locale}
       plan={plan}
@@ -56,10 +55,9 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
         items={items}
         catalogue={starterCatalogue(shop.type)}
         shopType={shop.type}
-        openTime={shop.openTime}
-        closeTime={shop.closeTime}
-        active={shop.active}
-        closedNote={shop.closedNote}
+        noticeText={shop.noticeText}
+        noticeFrom={dateInputValue(shop.noticeFrom)}
+        noticeTo={dateInputValue(shop.noticeTo)}
         locale={locale}
         showWelcome={welcome === '1' && items.length === 0}
         itemLimit={plan.itemLimit}

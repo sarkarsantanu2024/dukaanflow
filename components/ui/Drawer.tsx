@@ -34,6 +34,7 @@ export function Drawer({
   open,
   title,
   action,
+  footer,
   onClose,
   modal = true,
   children,
@@ -61,6 +62,18 @@ export function Drawer({
    * form; in the header it is in the same place every time the drawer opens.
    */
   action?: React.ReactNode;
+  /**
+   * A bar pinned to the foot of the panel — a total and the button that acts
+   * on it, typically.
+   *
+   * A REGION OF THE PANEL, NOT A STICKY CHILD OF THE SCROLL AREA. Sticking a
+   * block to the bottom of a padded scroll container needs negative margins to
+   * span that padding, and those same margins push the stuck position below
+   * the scrollport, so rows appear underneath it and the panel ends in a strip
+   * of half-visible list. As a sibling of the scroll area it simply is the
+   * bottom of the panel, and the list scrolls in what is left.
+   */
+  footer?: React.ReactNode;
   onClose: () => void;
   children: React.ReactNode;
 }) {
@@ -173,6 +186,14 @@ export function Drawer({
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           <DrawerCloseContext.Provider value={onClose}>{children}</DrawerCloseContext.Provider>
         </div>
+
+        {footer && (
+          // The phone's home indicator sits over the last few millimetres of
+          // the screen, and this is where the primary button lives.
+          <div className="shrink-0 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

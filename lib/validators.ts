@@ -83,23 +83,42 @@ export const clockTimeSchema = z
   )
   .default('');
 
+/** "YYYY-MM-DD", or blank for "not said". What `<input type="date">` speaks. */
+export const calendarDateSchema = z
+  .string()
+  .trim()
+  .refine(
+    (value) => value === '' || /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(value),
+    'Use a date like 2026-08-30',
+  )
+  .default('');
+
 /**
- * What the shopkeeper themselves controls about their shop being open.
+ * The notice a shopkeeper writes for their own customers, and the days it runs.
  *
- * Deliberately separate from `shopUpdateSchema`, which is the operator's:
- * hours, whether the shutter is up today and why not are the shopkeeper's own
- * business and change with a festival or a family illness.
+ * Deliberately separate from `shopUpdateSchema`, which is the operator's. When
+ * a shop opens and closes is set once by the operator and rarely changes; what
+ * the shop wants to *tell* its customers this week changes constantly, and is
+ * nobody's business but the shopkeeper's.
+ *
+ * Both dates blank is allowed and means "until I clear it". One date on its own
+ * is allowed too — "from Friday" and "until the 14th" are both real notices.
  */
-export const shopHoursSchema = z
+export const shopNoticeSchema = z
   .object({
-    openTime: clockTimeSchema,
-    closeTime: clockTimeSchema,
-    active: z.boolean().optional(),
-    closedNote: z.string().trim().max(120).default(''),
+    noticeText: z.string().trim().max(200, 'Keep the notice short').default(''),
+    noticeFrom: calendarDateSchema,
+    noticeTo: calendarDateSchema,
   })
-  .refine((value) => (value.openTime === '') === (value.closeTime === ''), {
-    message: 'Give both times, or neither',
-    path: ['closeTime'],
+  .refine(
+    (value) => !value.noticeFrom || !value.noticeTo || value.noticeFrom <= value.noticeTo,
+    { message: 'The last day cannot be before the first', path: ['noticeTo'] },
+  )
+  // Dates without words say nothing to a customer. Clearing the text is how a
+  // notice is taken down, so the dates go with it rather than lingering.
+  .refine((value) => value.noticeText !== '' || (!value.noticeFrom && !value.noticeTo), {
+    message: 'Write the notice, or clear the dates',
+    path: ['noticeText'],
   });
 
 export const shopCreateSchema = z.object({

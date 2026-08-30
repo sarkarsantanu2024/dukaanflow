@@ -21,7 +21,7 @@ import { SHOP_TYPES } from './validators';
 export type ShopTypeId = (typeof SHOP_TYPES)[number];
 /** `'ALL'` reports every shop together; a type id narrows to that trade. */
 export type TypeFilter = ShopTypeId | 'ALL';
-export type Granularity = 'month' | 'year';
+export type Granularity = 'day' | 'month' | 'year';
 
 export type ReportQuery = {
   /**
@@ -35,8 +35,10 @@ export type ReportQuery = {
   typeFilter: TypeFilter;
   granularity: Granularity;
   year: number;
-  /** 1–12 for a monthly report, null for a yearly one. */
+  /** 1–12 for a daily or monthly report, null for a yearly one. */
   month: number | null;
+  /** 1–31 for a daily report, null otherwise. */
+  day: number | null;
 };
 
 /** Nothing was recorded before DukaanFlow existed; no report can reach past it. */
@@ -59,7 +61,7 @@ export function parseReportQuery(source: Source, now: Date = new Date()): Report
   // says on its own face that the period is unfinished, which costs a line and
   // buys a first screen that is about now.
   const today = shopClock(now);
-  const fallback = { year: today.year, month: today.month };
+  const fallback = { year: today.year, month: today.month, day: today.day };
   // The current year is reportable while it is still running — the report says
   // so in its caveats rather than refusing to show a period in progress.
   const latestYear = today.year;
@@ -74,13 +76,19 @@ export function parseReportQuery(source: Source, now: Date = new Date()): Report
     ? (type as TypeFilter)
     : 'ALL';
 
-  const granularity: Granularity = read(source, 'granularity') === 'year' ? 'year' : 'month';
+  const asked = read(source, 'granularity');
+  const granularity: Granularity =
+    asked === 'year' ? 'year' : asked === 'day' ? 'day' : 'month';
 
   const year = clamp(Number(read(source, 'year')), FIRST_YEAR, latestYear, fallback.year);
   const month =
     granularity === 'year' ? null : clamp(Number(read(source, 'month')), 1, 12, fallback.month);
+  // Clamped to 31 rather than to the length of the month: a 31st asked of
+  // February simply reports an empty day, which is honest, where silently
+  // moving it to the 28th would report a different day than the one requested.
+  const day = granularity === 'day' ? clamp(Number(read(source, 'day')), 1, 31, fallback.day) : null;
 
-  return { shopSlug, typeFilter, granularity, year, month };
+  return { shopSlug, typeFilter, granularity, year, month, day };
 }
 
 function clamp(value: number, min: number, max: number, fallback: number): number {
@@ -96,6 +104,7 @@ export function reportSearch(query: ReportQuery): string {
     year: String(query.year),
   });
   if (query.shopSlug) params.set('shop', query.shopSlug);
-  if (query.granularity === 'month' && query.month) params.set('month', String(query.month));
+  if (query.granularity !== 'year' && query.month) params.set('month', String(query.month));
+  if (query.granularity === 'day' && query.day) params.set('day', String(query.day));
   return params.toString();
 }

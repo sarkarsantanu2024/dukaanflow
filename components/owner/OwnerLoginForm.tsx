@@ -8,16 +8,20 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
+import { BrandMark } from '@/components/ui/BrandMark';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
 
 export function OwnerLoginForm({
   slug,
   shopName,
+  ownerImage,
   locale,
 }: {
   slug: string;
   shopName: string;
+  /** The owner's own photo as a data URL, or blank. */
+  ownerImage: string;
   locale: Locale;
 }) {
   const router = useRouter();
@@ -56,9 +60,35 @@ export function OwnerLoginForm({
 
   return (
     <form onSubmit={submit} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-card">
-      <p className="text-xs font-bold uppercase tracking-wide text-brand-700">DukaanFlow</p>
-      <h1 className="mt-1 text-2xl font-bold text-slate-900">{shopName}</h1>
-      <p className="mt-1 text-sm text-slate-500">{t.pinHint}</p>
+      {/* The product's own mark, not a word in small caps. This is the first
+          screen an owner ever opens, usually from a WhatsApp link, and it has
+          to look like the thing they were shown at their counter. */}
+      <BrandMark className="text-sm" />
+
+      {/* Their own face beside their own shop's name. An owner arriving here
+          from a link needs to know in one glance that this is THEIR shop and
+          not another one on the same product — and the photograph says that
+          faster than the name they share with two shops in the same lane. */}
+      <div className="mt-4 flex items-center gap-3">
+        {ownerImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={ownerImage}
+            alt=""
+            className="h-14 w-14 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200"
+          />
+        ) : (
+          <span
+            aria-hidden
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-xl font-bold text-brand-800"
+          >
+            {shopName.trim().charAt(0).toUpperCase()}
+          </span>
+        )}
+        <h1 className="min-w-0 text-2xl font-bold leading-tight text-slate-900">{shopName}</h1>
+      </div>
+
+      <p className="mt-2 text-sm text-slate-500">{t.pinHint}</p>
 
       <label className="mt-4 block text-sm font-semibold text-slate-700" htmlFor="owner-pin">
         {t.pinLabel}

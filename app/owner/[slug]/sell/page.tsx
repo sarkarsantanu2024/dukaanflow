@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { startOfBusinessDay } from '@/lib/time';
 import { prisma } from '@/lib/prisma';
 import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
@@ -28,12 +27,10 @@ export default async function SellPage({ params }: PageProps) {
   const { slug } = await params;
   const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
 
-  // Midnight in the shop's own day. Server-local midnight is UTC on Vercel,
-  // which put the shop's "today" at 5.30am and quietly filed early sales under
-  // yesterday.
-  const since = startOfBusinessDay();
-
-  const [items, today, recent, customers] = await Promise.all([
+  // The day's takings and the list of sales rung up today used to load here and
+  // sit above the till. They are gone from the screen — an owner selling with a
+  // customer waiting reads neither — so they are no longer queried either.
+  const [items, customers] = await Promise.all([
     prisma.item.findMany({
       where: { shopId: shop.id },
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
@@ -49,26 +46,6 @@ export default async function SellPage({ params }: PageProps) {
         inStock: true,
       },
     }),
-    prisma.sale.aggregate({
-      where: { shopId: shop.id, createdAt: { gte: since } },
-      _sum: { totalAmountPaise: true },
-      _count: true,
-    }),
-    // Today's sales themselves, not just their total. A shopkeeper reconciling
-    // the drawer at closing needs to see the individual takings and when each
-    // one happened — a single number can only be agreed with or doubted.
-    prisma.sale.findMany({
-      where: { shopId: shop.id, createdAt: { gte: since } },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-      select: {
-        id: true,
-        totalAmountPaise: true,
-        paymentMode: true,
-        createdAt: true,
-        itemsJson: true,
-      },
-    }),
     prisma.customer.findMany({
       where: { shopId: shop.id },
       orderBy: { updatedAt: 'desc' },
@@ -77,28 +54,9 @@ export default async function SellPage({ params }: PageProps) {
     }),
   ]);
 
-  /** How many things were in a sale, read defensively out of its JSON snapshot. */
-  function countOf(itemsJson: unknown): number {
-    if (!Array.isArray(itemsJson)) return 0;
-    return itemsJson.reduce((sum: number, row) => {
-      const line = row as { quantity?: unknown };
-      return sum + (Number(line?.quantity) || 0);
-    }, 0);
-  }
-
-  const sales = recent.map((sale) => ({
-    id: sale.id,
-    totalAmountPaise: sale.totalAmountPaise,
-    paymentMode: sale.paymentMode,
-    createdAt: sale.createdAt.toISOString(),
-    count: countOf(sale.itemsJson),
-  }));
-
   return (
     <OwnerShell
       slug={shop.slug}
-      shopName={shop.name}
-      ownerImage={shop.ownerImageData}
       roadblock={roadblock}
       locale={locale}
       plan={plan}
@@ -110,9 +68,6 @@ export default async function SellPage({ params }: PageProps) {
         upiQrData={shop.upiQrData}
         items={items}
         locale={locale}
-        todayTotalPaise={today._sum.totalAmountPaise ?? 0}
-        todayCount={today._count}
-        sales={sales}
         customers={customers}
       />
 

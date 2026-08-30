@@ -68,6 +68,21 @@ type Dictionary = {
   voiceNotHeard: string;
   voiceNotInShop: string;
   voiceDenied: string;
+  /**
+   * WHY the mic did not start, one message per cause.
+   *
+   * These were a single sentence — "voice is not available on this browser" —
+   * shown for five different failures, so somebody who had just granted the
+   * microphone was told the browser could not do it at all, with nothing to
+   * act on. Only some of these are the user's to fix, but even the ones that
+   * are not are worth naming: "needs https" and "your work profile blocks it"
+   * send a shopkeeper to two completely different places.
+   */
+  voiceInsecure: string;
+  voiceServiceBlocked: string;
+  voiceNoMic: string;
+  voiceNoNetwork: string;
+  /** The last resort, when the browser gave no usable reason. */
   voiceUnavailable: string;
   voiceDidYouMean: string;
   voiceYes: string;
@@ -133,6 +148,12 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceNotHeard: 'Could not find that item. Please say it again.',
     voiceNotInShop: 'This shop does not have that item.',
     voiceDenied: 'Microphone blocked. Allow mic access for this site.',
+    voiceInsecure:
+      'Voice needs a secure (https) address. It works on localhost, but not on an http:// address like 192.168.1.5.',
+    voiceServiceBlocked:
+      'The browser allowed the mic but refused speech recognition — usually a work or managed profile. Try a personal Chrome profile, or Edge.',
+    voiceNoMic: 'No microphone found on this device.',
+    voiceNoNetwork: 'Voice needs an internet connection — the browser sends the audio away to read it.',
     voiceUnavailable: 'Voice is not available on this browser. Please tap Add instead.',
     repeatTitle: 'Same as last time?',
     repeatHint: 'Your last order from this shop',
@@ -196,6 +217,12 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceNotHeard: 'জিনিসটি খুঁজে পাইনি। আবার বলুন।',
     voiceNotInShop: 'এই দোকানে সেই জিনিসটি নেই।',
     voiceDenied: 'মাইক্রোফোন বন্ধ। এই সাইটে মাইক ব্যবহারের অনুমতি দিন।',
+    voiceInsecure:
+      'ভয়েসের জন্য https ঠিকানা লাগে। localhost-এ চলে, কিন্তু 192.168.1.5-এর মতো http:// ঠিকানায় চলে না।',
+    voiceServiceBlocked:
+      'ব্রাউজার মাইক দিয়েছে কিন্তু ভয়েস চিনতে দেয়নি — সাধারণত অফিসের প্রোফাইলে হয়। নিজের Chrome প্রোফাইল বা Edge দিয়ে দেখুন।',
+    voiceNoMic: 'এই ডিভাইসে কোনো মাইক্রোফোন পাওয়া যায়নি।',
+    voiceNoNetwork: 'ভয়েসের জন্য ইন্টারনেট লাগে — ব্রাউজার কথা পড়তে বাইরে পাঠায়।',
     voiceUnavailable: 'এই ব্রাউজারে ভয়েস কাজ করছে না। “যোগ করুন” চাপুন।',
     repeatTitle: 'আগের বারের মতোই?',
     repeatHint: 'এই দোকানে আপনার শেষ অর্ডার',
@@ -259,6 +286,12 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceNotHeard: 'यह सामान नहीं मिला। दोबारा बोलिए।',
     voiceNotInShop: 'इस दुकान में यह सामान नहीं है।',
     voiceDenied: 'माइक्रोफ़ोन बंद है। इस साइट को माइक की अनुमति दें।',
+    voiceInsecure:
+      'आवाज़ के लिए https पता चाहिए। localhost पर चलती है, 192.168.1.5 जैसे http:// पते पर नहीं।',
+    voiceServiceBlocked:
+      'ब्राउज़र ने माइक तो दिया पर आवाज़ पहचानने से मना कर दिया — अक्सर ऑफिस प्रोफ़ाइल में होता है। अपनी Chrome प्रोफ़ाइल या Edge आज़माइए।',
+    voiceNoMic: 'इस डिवाइस में कोई माइक्रोफ़ोन नहीं मिला।',
+    voiceNoNetwork: 'आवाज़ के लिए इंटरनेट चाहिए — ब्राउज़र बोली को पढ़ने के लिए बाहर भेजता है।',
     voiceUnavailable: 'इस ब्राउज़र में आवाज़ काम नहीं कर रही। “जोड़ें” दबाइए।',
     repeatTitle: 'पिछली बार जैसा ही?',
     repeatHint: 'इस दुकान से आपका पिछला ऑर्डर',

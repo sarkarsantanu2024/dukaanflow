@@ -43,6 +43,7 @@ export function CartDrawer({
   onSetQuantity,
   onClear,
   onContinue,
+  continueLabel,
 }: {
   open: boolean;
   lines: CartLine[];
@@ -52,6 +53,14 @@ export function CartDrawer({
   onSetQuantity: (itemId: string, next: number) => void;
   onClear: () => void;
   onContinue: () => void;
+  /**
+   * What the button at the foot says. Defaults to the shopper's "Continue".
+   *
+   * The owner's till uses this same basket — same panel, same stepper, same
+   * confirm on emptying it — and only the last step differs: a shopper is going
+   * to a checkout form, an owner is taking money at the counter.
+   */
+  continueLabel?: string;
 }) {
   const t = dict(locale);
   const { confirm, dialog } = useConfirm();
@@ -93,6 +102,33 @@ export function CartDrawer({
           >
             <TrashIcon className="h-6 w-6" />
           </button>
+        ) : undefined
+      }
+      /* The total and the button that acts on it are the foot of the panel,
+         not the end of the list. They used to travel with the lines, which is
+         fine for a basket of three and wrong for a basket of twelve: the
+         number being agreed to, and the button that agrees, were below the
+         fold behind everything already decided. */
+      footer={
+        lines.length > 0 ? (
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-slate-500">{t.total}</p>
+              <p className="text-xl font-bold tabular-nums text-slate-900">
+                {formatPaise(totalPaise)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onContinue();
+              }}
+              className="h-12 shrink-0 rounded-xl bg-brand-600 px-5 text-base font-semibold text-white transition hover:bg-brand-700"
+            >
+              {continueLabel ?? `${t.continue} →`}
+            </button>
+          </div>
         ) : undefined
       }
     >
@@ -160,28 +196,6 @@ export function CartDrawer({
               </li>
             ))}
           </ul>
-
-          {/* The total and Continue travel with the list rather than pinning to
-              the foot of the panel: a basket of three items would otherwise
-              leave a bar floating below a screen of empty grey. */}
-          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3 shadow-card">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-slate-500">{t.total}</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900">
-                {formatPaise(totalPaise)}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onContinue();
-              }}
-              className="h-12 shrink-0 rounded-xl bg-brand-600 px-5 text-base font-semibold text-white transition hover:bg-brand-700"
-            >
-              {t.continue} →
-            </button>
-          </div>
         </>
       )}
       </Drawer>

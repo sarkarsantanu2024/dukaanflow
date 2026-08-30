@@ -7,6 +7,7 @@ import { demoFilter, showingDemoShops } from '@/lib/demo';
 import { PlusIcon } from '@/components/ui/Icon';
 import { entitlement, type Plan, type SubStatus } from '@/lib/plans';
 import { formatClockRange } from '@/lib/hours';
+import { formatDay } from '@/lib/time';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'DukaanFlow — Shops' };
@@ -66,6 +67,9 @@ export default async function AdminDashboard() {
         currentPeriodEnd: true,
         activatedAt: true,
         createdAt: true,
+        // The hash itself never leaves the server — only whether there is one.
+        ownerPinHash: true,
+        ownerPinSetAt: true,
         _count: { select: { items: true, orders: true } },
       },
     }),
@@ -109,6 +113,8 @@ export default async function AdminDashboard() {
       itemCount: shop._count.items,
       itemLimit: state.itemLimit,
       orderCount: shop._count.orders,
+      hasPin: Boolean(shop.ownerPinHash),
+      pinSetAt: shop.ownerPinSetAt ? formatDay(shop.ownerPinSetAt) : null,
     };
   });
 
