@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/Icon';
 import { SHOP_TYPE_LABELS, SHOP_TYPES } from '@/lib/validators';
 import { ShopRowActions } from './ShopRowActions';
+import { ShopReportMenu } from './ShopReportMenu';
+import { ShopPinBadge } from './ShopPinBadge';
 
 export type ShopRow = {
   id: string;
@@ -47,6 +49,10 @@ export type ShopRow = {
   itemCount: number;
   itemLimit: number;
   orderCount: number;
+  /** Whether the owner can sign in at all. The PIN itself is a hash — see ShopPinBadge. */
+  hasPin: boolean;
+  /** When it was issued, already formatted, or null. */
+  pinSetAt: string | null;
 };
 
 const PLAN_TONE: Record<ShopRow['planState'], string> = {
@@ -249,13 +255,30 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                 <span className="truncate font-mono text-slate-400">/{shop.slug}</span>
               </div>
 
+              {/* Owner access, on the card. "What is their PIN?" is the most
+                  common question this list gets asked, and the honest answer —
+                  nobody can read it back, here is a new one — belongs where the
+                  question is asked rather than two clicks inside the shop. */}
+              <div className="flex flex-wrap items-center gap-x-2 px-4 pb-3">
+                <ShopPinBadge
+                  slug={shop.slug}
+                  shopName={shop.name}
+                  hasPin={shop.hasPin}
+                  pinSetAt={shop.pinSetAt}
+                />
+              </div>
+
               {shop.attention && (
                 <p className="mx-4 mb-3 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-800">
                   {shop.attention}
                 </p>
               )}
 
-              <div className="mt-auto flex items-center gap-2 border-t border-brand-100/70 bg-brand-50/40 px-4 py-2.5">
+              {/* Wraps rather than squeezes: the row now carries two links and
+                  a download as well as the two buttons, and a card at the
+                  narrow end of the grid would otherwise clip whichever came
+                  last — which is the destructive one. */}
+              <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-brand-100/70 bg-brand-50/40 px-4 py-2.5">
                 <Link
                   href={`/admin/shop/${shop.slug}/items`}
                   className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700"
@@ -268,16 +291,39 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                 >
                   Edit
                 </Link>
+                {/* BOTH SIDES OF THE SHOP, from the operator's own list.
+                    The customer page is what a shopper sees; the owner app is
+                    what the shopkeeper sees, and it is where every support call
+                    is actually answered — "my items are not showing", "where do
+                    I take payment". Reaching it used to mean typing the URL by
+                    hand from memory.
+
+                    Relative links, so each opens on whatever host this console
+                    is being used on: localhost while developing, the live
+                    domain in production. */}
                 <a
                   href={`/shop/${shop.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`Open ${shop.name}`}
-                  title="Open shop page"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50"
+                  aria-label={`Open the customer page for ${shop.name}`}
+                  title="Customer shop page"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-300 px-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                 >
                   <ExternalIcon className="h-4 w-4" />
+                  Shop
                 </a>
+                <a
+                  href={`/owner/${shop.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Open the owner app for ${shop.name}`}
+                  title="Owner app"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-300 px-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  <ExternalIcon className="h-4 w-4" />
+                  Owner
+                </a>
+                <ShopReportMenu slug={shop.slug} shopName={shop.name} />
 
                 {/* Secondary and destructive actions sit apart and lighter, so
                     the row reads as a hierarchy rather than five equal buttons

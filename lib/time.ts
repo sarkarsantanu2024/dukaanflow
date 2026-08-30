@@ -106,6 +106,18 @@ export function shopMonthStart(year: number, month: number): Date {
   return new Date(utcMidnight - OFFSET_MINUTES * 60_000);
 }
 
+/**
+ * Midnight in the shop's timezone on one calendar day, as a real instant.
+ *
+ * `month` and `day` may both overflow — day 32 of August is the 1st of
+ * September — which is how a single day's exclusive end is written without a
+ * calendar lookup.
+ */
+export function shopDayStart(year: number, month: number, day: number): Date {
+  const utcMidnight = Date.UTC(year, month - 1, day, 0, 0, 0, 0);
+  return new Date(utcMidnight - OFFSET_MINUTES * 60_000);
+}
+
 export const WEEKDAY_NAMES = [
   'Monday',
   'Tuesday',

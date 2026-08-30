@@ -36,6 +36,9 @@ export async function loadOwnerShop(slug: string) {
       openTime: true,
       closeTime: true,
       closedNote: true,
+      noticeText: true,
+      noticeFrom: true,
+      noticeTo: true,
     },
   });
   if (!shop) notFound();

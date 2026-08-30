@@ -114,8 +114,6 @@ export default async function OrdersPage({ params }: PageProps) {
   return (
     <OwnerShell
       slug={shop.slug}
-      shopName={shop.name}
-      ownerImage={shop.ownerImageData}
       roadblock={roadblock}
       locale={locale}
       plan={plan}

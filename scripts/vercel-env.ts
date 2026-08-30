@@ -20,6 +20,9 @@ const KEYS = [
   'COOKIE_SECRET',
   'NEXT_PUBLIC_BASE_URL',
   'NEXT_PUBLIC_SUPPORT_PHONE',
+  // Whose name sits in the page footer beside the support number. Optional —
+  // it falls back to the default in `lib/support.ts`.
+  'NEXT_PUBLIC_SUPPORT_NAME',
   // Signs the daily retention purge. Without it the cron refuses to run and
   // the order and sale tables grow forever.
   'CRON_SECRET',

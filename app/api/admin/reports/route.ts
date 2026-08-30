@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/admin/reports?type=…&granularity=…&year=…&month=…
+ * GET /api/admin/reports?type=…&granularity=…&year=…&month=…&day=…
  *
  * The same report the console renders, as a CSV attachment. Super Admin only:
  * this is every shop's takings in one file, which no shop owner should be able
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   const query = parseReportQuery(new URL(request.url).searchParams);
   const report = await loadReport(
     query,
-    buildPeriod(query.granularity, query.year, query.month),
+    buildPeriod(query.granularity, query.year, query.month, query.day),
   );
   const csv = reportToCsv(report);
 

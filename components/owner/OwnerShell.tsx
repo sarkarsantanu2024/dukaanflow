@@ -67,17 +67,18 @@ function TabIcon({ tab }: { tab: OwnerTab }) {
 
 export function OwnerShell({
   slug,
-  shopName,
-  ownerImage,
   locale,
   plan,
   roadblock,
   children,
 }: {
   slug: string;
-  shopName: string;
-  /** The owner's photo, shown beside the shop name. */
-  ownerImage?: string;
+  /**
+   * The shop's name and the owner's photo used to be passed through to the
+   * header. They are gone from it: an owner knows whose shop they are in, and
+   * the two of them were taking the width the language switch and the way out
+   * actually needed.
+   */
   locale: Locale;
   plan: PlanState;
   /** Set when the subscription has lapsed; null while the owner may work. */
@@ -98,7 +99,7 @@ export function OwnerShell({
 
   return (
     <div className="min-h-dvh pb-24">
-      <OwnerHeader slug={slug} shopName={shopName} ownerImage={ownerImage} locale={locale} />
+      <OwnerHeader slug={slug} locale={locale} />
 
       <main className="mx-auto max-w-3xl space-y-4 px-4 py-4">
         <OpenInChromeNotice locale={locale} />

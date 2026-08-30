@@ -63,7 +63,7 @@ export function OwnerInstallButton({ slug, label }: { slug: string; label: strin
         // Single-use, whatever the owner chose.
         setPrompt(null);
       }}
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/80 transition hover:bg-white/15 hover:text-white"
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
     >
       <InstallIcon className="h-5 w-5" />
     </button>

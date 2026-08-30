@@ -71,6 +71,57 @@ export function buildWhatsAppUrl(shopPhone: string, message: string): string {
 }
 
 /**
+ * The round, as one message an owner forwards to whoever is doing the running.
+ *
+ * A delivery boy is not given a login and never will be — he has a phone with
+ * WhatsApp on it and that is the whole of it. Until now the owner read the
+ * orders off their own screen and dictated them, or forwarded four separate
+ * customer messages, and the address is the part that gets lost when you do
+ * that at six in the evening.
+ *
+ * So: every order still to go out, numbered, each with the name, the phone, the
+ * address and what to hand over. Addresses and phones are the point — the items
+ * are there so nothing is left in the shop, and the total so money can be
+ * collected at the door.
+ */
+export function buildRoundMessage(input: {
+  shopName: string;
+  orders: {
+    customerName: string;
+    customerPhone: string;
+    customerAddress: string;
+    orderType: 'DELIVERY' | 'PICKUP';
+    totalAmountPaise: number;
+    lines: { name: string; unit: string; quantity: number }[];
+  }[];
+}): string {
+  const parts: string[] = [`${escapeWhatsAppText(input.shopName)} — orders to deliver`, ''];
+
+  input.orders.forEach((order, index) => {
+    const items = order.lines
+      .map((line) => {
+        const label = escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
+        return `   • ${label} ×${line.quantity}`;
+      })
+      .join('\n');
+
+    parts.push(
+      `${index + 1}. ${escapeWhatsAppText(order.customerName) || 'Customer'} — ${order.customerPhone}`,
+      // Pickup orders are in the list but marked, so nobody carries a bag to an
+      // address the customer is coming to collect from.
+      order.orderType === 'PICKUP'
+        ? '   PICKUP — customer will collect'
+        : `   ${escapeWhatsAppText(order.customerAddress) || 'No address given — call first'}`,
+      items,
+      `   ${plainPaise(order.totalAmountPaise)}`,
+      '',
+    );
+  });
+
+  return parts.join('\n').trimEnd();
+}
+
+/**
  * What the owner sends the customer once an order is worked.
  *
  * The button used to be a bare `wa.me/<number>` — it opened an empty chat and

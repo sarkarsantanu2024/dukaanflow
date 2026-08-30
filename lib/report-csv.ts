@@ -145,9 +145,15 @@ export function reportToCsv(report: Report): string {
     report.byWeekday.map((slot) => [slot.label, slot.transactions, rupees(slot.revenuePaise)]),
   );
 
+  const [timelineTitle, timelineColumn] =
+    report.period.granularity === 'year'
+      ? ['Month by month', 'Month']
+      : report.period.granularity === 'day'
+        ? ['Hour by hour', 'Hour']
+        : ['Day by day', 'Day'];
   section(
-    report.period.granularity === 'year' ? 'Month by month' : 'Day by day',
-    [report.period.granularity === 'year' ? 'Month' : 'Day', 'Transactions', 'Revenue (₹)'],
+    timelineTitle,
+    [timelineColumn, 'Transactions', 'Revenue (₹)'],
     report.overTime.map((slot) => [slot.label, slot.transactions, rupees(slot.revenuePaise)]),
   );
 
@@ -197,6 +203,46 @@ export function reportToCsv(report: Report): string {
       rupees(shop.averageBasketPaise),
       shop.items,
       shop.deadItems,
+    ]),
+  );
+
+  // The khata sits with the money sections rather than at the end: for a kirana
+  // it IS the money — what is on the shelf tomorrow depends on it coming back.
+  section(
+    'Khata (udhaar) — owed today',
+    ['Measure', 'Value'],
+    [
+      ['Outstanding now (₹)', rupees(report.khata.outstandingPaise)],
+      ['Goods given on credit this period (₹)', rupees(report.khata.periodDebitPaise)],
+      ['Repaid this period (₹)', rupees(report.khata.periodCreditPaise)],
+      ['Names with an account', report.khata.customers.length],
+    ],
+  );
+
+  section(
+    'Khata by customer',
+    [
+      ...(report.singleShop ? [] : ['Shop']),
+      'Customer',
+      'Phone',
+      'Area',
+      'Owed now (₹)',
+      'On credit this period (₹)',
+      'Repaid this period (₹)',
+      'Last entry',
+    ],
+    report.khata.customers.map((row) => [
+      ...(report.singleShop ? [] : [row.shop]),
+      row.name,
+      // Leading quote via `cell`'s formula guard would be wrong here, so the
+      // number is left plain — a 10-digit Indian mobile has no leading + and is
+      // not read as a formula.
+      row.phone,
+      row.area,
+      rupees(row.balancePaise),
+      rupees(row.periodDebitPaise),
+      rupees(row.periodCreditPaise),
+      row.lastEntryAt ? formatDayTime(row.lastEntryAt) : '',
     ]),
   );
 

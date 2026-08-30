@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import clsx from 'clsx';
 import { SearchIcon } from '@/components/ui/Icon';
 import { ShopHeader, type ShopSummary } from './ShopHeader';
@@ -243,7 +242,12 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   }
 
   return (
-    <div className="min-h-dvh bg-slate-100 pb-28">
+    // No bottom padding of its own. It used to reserve 7rem for the floating
+    // buttons, `main` reserved another 7rem, and the footer then added its own
+    // — three separate guesses at the same clearance, stacked into a screen of
+    // empty grey. The footer is the last thing on the page now, so it is the
+    // one place that has to clear the mic.
+    <div className="min-h-dvh bg-slate-100">
       <ShopHeader shop={shop} locale={locale} onLocaleChange={changeLocale} payLabel={t.payViaUpi} />
 
       {/* One column of controls above one grid of items, at every width — the
@@ -253,7 +257,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           for it moved every card sideways the moment it opened — the item the
           shopper was reaching for slid out from under their thumb, and the
           whole grid re-laid itself on each open and close. */}
-      <main className="mx-auto max-w-6xl px-4 pb-28 pt-4 lg:pt-6">
+      <main className="mx-auto max-w-6xl px-4 pb-4 pt-3">
         {items.length === 0 ? (
           <EmptyState title={t.emptyShop} hint={t.emptyShopHint} />
         ) : (
@@ -376,14 +380,10 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           />
         )}
 
-        <p className="mt-8 text-center text-xs text-slate-400">
-          Powered by{' '}
-          <Link href="/" className="font-medium text-slate-500 underline hover:text-brand-700">
-            DukaanFlow
-          </Link>{' '}
-          · Scan → Select → Order
-        </p>
       </main>
+      {/* "Powered by DukaanFlow" used to sit here, inside `main`, above the
+          repeat-order panel — a footer in the middle of the page. It has moved
+          to the real one, at the very bottom, beside the support details. */}
 
       {/* Everything a shopper reaches for, in the one corner their thumb
           already rests in.
@@ -398,16 +398,27 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           refusing to respond. `main` also carries enough bottom padding that
           the last card scrolls clear rather than living under the stack.
 
-          WHEN THE BASKET IS OPEN the stack steps aside for it. The basket is a
-          panel down the right-hand edge and the mic sits in that same corner,
-          so it was simply buried — a shopper could not speak an order while
-          looking at what they had already ordered, which is exactly when they
-          would. On a phone the panel takes the screen, so there is nowhere to
-          step aside to and the stack waits instead. */}
+          WHEN THE BASKET IS OPEN THE MIC RISES OVER IT rather than moving.
+          The basket is a panel down the right-hand edge and the mic sits in
+          that same corner, so it was buried — a shopper could not speak an
+          order while looking at what they had already ordered, which is
+          exactly when they would. It was then made to step aside on a wide
+          screen and hide on a narrow one, which was worse: the one control a
+          shopper reaches for by muscle memory left its corner and crossed the
+          page, or vanished. It stays put and floats above the panel instead —
+          one fixed corner, whatever else is open. */}
       <div
         className={clsx(
-          'pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-3 px-4 transition-[padding]',
-          cartOpen && 'hidden lg:flex lg:pr-[29rem]',
+          'pointer-events-none fixed inset-x-0 flex flex-col items-end gap-3 px-4 transition-[bottom]',
+          // Above the drawer's own z-50 while it is open, and back below it
+          // afterwards so nothing here sits over an ordinary page.
+          //
+          // It also RISES ABOVE THE TOTAL BAR rather than landing on top of
+          // it: floating over the list is what the mic is for, floating over
+          // the button that places the order is a mis-tap waiting to happen.
+          cartOpen
+            ? 'z-[60] bottom-[calc(5.25rem+env(safe-area-inset-bottom))]'
+            : 'z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))]',
         )}
       >
           <VoiceOrder items={items} locale={locale} onAdd={addQuantity} />

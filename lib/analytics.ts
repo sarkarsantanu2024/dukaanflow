@@ -39,14 +39,17 @@ import {
   WEEKDAY_NAMES,
   formatHourBucket,
   shopClock,
+  shopDayStart,
   shopMonthStart,
 } from './time';
 
 export type ReportPeriod = {
   granularity: Granularity;
   year: number;
-  /** 1–12 for a monthly report, null for a yearly one. */
+  /** 1–12 for a daily or monthly report, null for a yearly one. */
   month: number | null;
+  /** 1–31 for a daily report, null otherwise. */
+  day: number | null;
   label: string;
   from: Date;
   /** Exclusive. */
@@ -59,12 +62,14 @@ export function buildPeriod(
   granularity: Granularity,
   year: number,
   month: number | null,
+  day: number | null = null,
 ): ReportPeriod {
   if (granularity === 'year') {
     return {
       granularity,
       year,
       month: null,
+      day: null,
       label: String(year),
       from: shopMonthStart(year, 1),
       to: shopMonthStart(year + 1, 1),
@@ -72,10 +77,27 @@ export function buildPeriod(
   }
 
   const safeMonth = Math.min(12, Math.max(1, month ?? 1));
+
+  if (granularity === 'day') {
+    const safeDay = Math.min(31, Math.max(1, day ?? 1));
+    return {
+      granularity,
+      year,
+      month: safeMonth,
+      day: safeDay,
+      label: `${safeDay} ${MONTH_NAMES[safeMonth - 1]} ${year}`,
+      from: shopDayStart(year, safeMonth, safeDay),
+      // Day 32 is the 1st of the next month — `shopDayStart` takes the
+      // overflow, so the end of a month needs no special case.
+      to: shopDayStart(year, safeMonth, safeDay + 1),
+    };
+  }
+
   return {
     granularity,
     year,
     month: safeMonth,
+    day: null,
     label: `${MONTH_NAMES[safeMonth - 1]} ${year}`,
     from: shopMonthStart(year, safeMonth),
     // Month 13 is January of the next year — `shopMonthStart` takes the
@@ -284,8 +306,40 @@ export type Report = {
 
   shops: ShopRow[];
 
+  /**
+   * ⑤ The credit book — udhaar — for the shops in scope.
+   *
+   * BALANCES ARE AS OF NOW, NOT AS OF THE END OF THE PERIOD. A khata is a
+   * running account, and what a shopkeeper needs from a report is who owes them
+   * money today; reconstructing last March's balances would answer a question
+   * nobody asks and read as today's debts to anyone skimming. The period-scoped
+   * columns beside each name are what moved inside the window, and those are
+   * period figures.
+   */
+  khata: KhataReport;
+
   /** Anything the numbers alone would mislead about. Rendered with the report. */
   caveats: string[];
+};
+
+export type KhataReport = {
+  /** Owed to the shops right now, in paise, ignoring anyone in credit. */
+  outstandingPaise: number;
+  /** Goods that left on credit during the period. */
+  periodDebitPaise: number;
+  /** Repayments taken during the period. */
+  periodCreditPaise: number;
+  customers: {
+    shop: string;
+    name: string;
+    phone: string;
+    area: string;
+    /** Positive: they owe the shop. Negative: the shop owes them. */
+    balancePaise: number;
+    periodDebitPaise: number;
+    periodCreditPaise: number;
+    lastEntryAt: Date | null;
+  }[];
 };
 
 /* ------------------------------------------------------------ the gathering */
@@ -407,6 +461,7 @@ export async function loadReport(
     period,
   );
   const localities = await loadLocalities(shopIds, period, orders);
+  const khata = await loadKhata(new Map(shops.map((shop) => [shop.id, shop.name])), period);
 
   return assemble({
     shops,
@@ -415,6 +470,7 @@ export async function loadReport(
     firstSeen,
     occasions,
     localities,
+    khata,
     shopSlug,
     typeFilter,
     period,
@@ -532,6 +588,99 @@ async function loadOccasions(
     .map(({ order, ...occasion }) => occasion);
 }
 
+/* ----------------------------------------------------------------- ⑤ khata */
+
+/**
+ * The credit book for the shops in scope.
+ *
+ * Balances are summed from the ledger, never read from a stored total — the
+ * same rule `lib/khata.ts` follows, and for the same reason: a running total
+ * that can drift from its own history is how a paper khata starts an argument.
+ *
+ * Two different windows on purpose. The balance is all-time and current,
+ * because "who owes me money" is a question about today. The debit and credit
+ * columns are the period's, because "how much went out on credit in August" is
+ * a question about the period. Mixing them into one number would answer
+ * neither.
+ */
+async function loadKhata(
+  shopNames: Map<string, string>,
+  period: ReportPeriod,
+): Promise<KhataReport> {
+  const shopIds = [...shopNames.keys()];
+  const empty: KhataReport = {
+    outstandingPaise: 0,
+    periodDebitPaise: 0,
+    periodCreditPaise: 0,
+    customers: [],
+  };
+  if (shopIds.length === 0) return empty;
+
+  const [allTime, inPeriod, latest, customers] = await Promise.all([
+    prisma.ledgerEntry.groupBy({
+      by: ['customerId', 'kind'],
+      where: { shopId: { in: shopIds } },
+      _sum: { amountPaise: true },
+    }),
+    prisma.ledgerEntry.groupBy({
+      by: ['customerId', 'kind'],
+      where: { shopId: { in: shopIds }, createdAt: { gte: period.from, lt: period.to } },
+      _sum: { amountPaise: true },
+    }),
+    prisma.ledgerEntry.groupBy({
+      by: ['customerId'],
+      where: { shopId: { in: shopIds } },
+      _max: { createdAt: true },
+    }),
+    prisma.customer.findMany({
+      where: { shopId: { in: shopIds } },
+      select: { id: true, shopId: true, name: true, phone: true, area: true },
+    }),
+  ]);
+
+  const balances = new Map<string, number>();
+  for (const row of allTime) {
+    const signed = (row.kind === 'DEBIT' ? 1 : -1) * (row._sum.amountPaise ?? 0);
+    balances.set(row.customerId, (balances.get(row.customerId) ?? 0) + signed);
+  }
+
+  const debits = new Map<string, number>();
+  const credits = new Map<string, number>();
+  for (const row of inPeriod) {
+    const target = row.kind === 'DEBIT' ? debits : credits;
+    target.set(row.customerId, (target.get(row.customerId) ?? 0) + (row._sum.amountPaise ?? 0));
+  }
+
+  const lastSeen = new Map(latest.map((row) => [row.customerId, row._max.createdAt]));
+
+  const rows = customers
+    .map((customer) => ({
+      shop: shopNames.get(customer.shopId) ?? '',
+      name: customer.name,
+      phone: customer.phone,
+      area: customer.area,
+      balancePaise: balances.get(customer.id) ?? 0,
+      periodDebitPaise: debits.get(customer.id) ?? 0,
+      periodCreditPaise: credits.get(customer.id) ?? 0,
+      lastEntryAt: lastSeen.get(customer.id) ?? null,
+    }))
+    // A regular with no ledger at all is a name in the phone book, not a khata
+    // entry, and a page of zeroes buries the handful of names that owe money.
+    .filter(
+      (row) => row.balancePaise !== 0 || row.periodDebitPaise > 0 || row.periodCreditPaise > 0,
+    )
+    .sort((a, b) => b.balancePaise - a.balancePaise || a.name.localeCompare(b.name));
+
+  return {
+    // Anyone in credit is left out of the total rather than netted off: money
+    // the shop holds for a customer does not reduce what other customers owe.
+    outstandingPaise: rows.reduce((sum, row) => sum + Math.max(0, row.balancePaise), 0),
+    periodDebitPaise: rows.reduce((sum, row) => sum + row.periodDebitPaise, 0),
+    periodCreditPaise: rows.reduce((sum, row) => sum + row.periodCreditPaise, 0),
+    customers: rows,
+  };
+}
+
 /* ------------------------------------------------------------ ③ localities */
 
 /**
@@ -631,6 +780,7 @@ type Ingredients = {
   firstSeen: { customerPhone: string; _min: { createdAt: Date | null } }[];
   occasions: Report['occasions'];
   localities: { rows: Report['localities']; missing: number };
+  khata: KhataReport;
   shopSlug: string;
   typeFilter: TypeFilter;
   period: ReportPeriod;
@@ -638,8 +788,19 @@ type Ingredients = {
 };
 
 function assemble(input: Ingredients): Report {
-  const { shops, orders, sales, firstSeen, occasions, localities, shopSlug, typeFilter, period, now } =
-    input;
+  const {
+    shops,
+    orders,
+    sales,
+    firstSeen,
+    occasions,
+    localities,
+    khata,
+    shopSlug,
+    typeFilter,
+    period,
+    now,
+  } = input;
 
   // Asked for one shop and got none back: the slug names nothing. Everything
   // below still runs and produces an honest empty report.
@@ -701,8 +862,15 @@ function assemble(input: Ingredients): Report {
     weekly[clock.weekday].transactions += 1;
     weekly[clock.weekday].revenuePaise += amount;
 
-    // A yearly report walks months; a monthly one walks days of the month.
-    const order = period.granularity === 'year' ? clock.month : clock.day;
+    // A yearly report walks months, a monthly one the days of the month, and a
+    // single day walks its own hours — which for one day is the only timeline
+    // there is.
+    const order =
+      period.granularity === 'year'
+        ? clock.month
+        : period.granularity === 'day'
+          ? clock.hour
+          : clock.day;
     const slot = timeline.get(String(order)) ?? { order, transactions: 0, revenuePaise: 0 };
     slot.transactions += 1;
     slot.revenuePaise += amount;
@@ -851,6 +1019,11 @@ function assemble(input: Ingredients): Report {
   if (period.to.getTime() > now.getTime()) {
     caveats.push('This period has not finished — the numbers are partial and will grow.');
   }
+  if (khata.customers.length > 0) {
+    caveats.push(
+      'Khata balances are what is owed TODAY, not at the end of the period. The "goods on credit" and "repaid" columns beside each name are the period\'s.',
+    );
+  }
   // Silence here would be the dangerous kind: a purged period reads as a period
   // with no trade, and the two look identical in every number on the page.
   //
@@ -958,7 +1131,12 @@ function assemble(input: Ingredients): Report {
     byWeekday: weekly.map((slot, day) => ({ label: WEEKDAY_NAMES[day], ...slot })),
     overTime: [...timeline.entries()]
       .map(([label, slot]) => ({
-        label: period.granularity === 'year' ? MONTH_NAMES[slot.order - 1] : label,
+        label:
+          period.granularity === 'year'
+            ? MONTH_NAMES[slot.order - 1]
+            : period.granularity === 'day'
+              ? formatHourBucket(slot.order)
+              : label,
         order: slot.order,
         transactions: slot.transactions,
         revenuePaise: slot.revenuePaise,
@@ -985,6 +1163,7 @@ function assemble(input: Ingredients): Report {
       : 0,
 
     shops: shopRows,
+    khata,
     caveats,
   };
 }

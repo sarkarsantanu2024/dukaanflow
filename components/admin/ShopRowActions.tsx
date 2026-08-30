@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
 import { TypeToConfirmDialog } from '@/components/ui/Modal';
+import { PauseIcon, PlayIcon, TrashIcon } from '@/components/ui/Icon';
 
 export function ShopRowActions({
   slug,
@@ -74,23 +75,31 @@ export function ShopRowActions({
     }
   }
 
+  // Icons, sized as proper targets and titled — the card's action row carries
+  // five controls now, and two of them spelled out in words were taking the
+  // width that the shop links needed. The colour still ranks them: pausing is
+  // slate and reversible, deleting turns red under the cursor.
   return (
     <>
       <button
         type="button"
         onClick={toggleActive}
         disabled={busy}
-        className="rounded-md px-2 py-1 font-semibold text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline disabled:opacity-50"
+        aria-label={active ? `Pause ${shopName}` : `Activate ${shopName}`}
+        title={active ? 'Pause — stops taking orders' : 'Activate — takes orders again'}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
       >
-        {active ? 'Pause' : 'Activate'}
+        {active ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
       </button>
       <button
         type="button"
         onClick={() => setAsking(true)}
         disabled={busy}
-        className="rounded-md px-2 py-1 font-semibold text-slate-400 underline-offset-2 hover:text-red-600 hover:underline disabled:opacity-50"
+        aria-label={`Delete ${shopName}`}
+        title="Delete this shop"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
       >
-        Delete
+        <TrashIcon className="h-4 w-4" />
       </button>
 
       <TypeToConfirmDialog

@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { StoreFront } from '@/components/customer/StoreFront';
 import { formatClockRange } from '@/lib/hours';
+import { liveNotice } from '@/lib/notice';
+import { SiteFooter } from '@/components/ui/SiteFooter';
 import { entitlement, type Plan, type SubStatus } from '@/lib/plans';
 
 // The menu changes whenever the admin edits an item, so this page is always
@@ -25,6 +27,9 @@ async function loadShop(slug: string) {
       openTime: true,
       closeTime: true,
       closedNote: true,
+      noticeText: true,
+      noticeFrom: true,
+      noticeTo: true,
       deliveryEnabled: true,
       plan: true,
       subscriptionStatus: true,
@@ -72,6 +77,10 @@ export default async function ShopPage({ params }: PageProps) {
   if (!shop) notFound();
 
   const hours = formatClockRange(shop.openTime, shop.closeTime);
+  // Checked here, not in the browser: a notice whose run has ended must not
+  // reach the page at all, and a client-side date is the shopper's clock rather
+  // than the shop's.
+  const notice = liveNotice(shop);
 
   // Three months unpaid takes the storefront offline. Derived on read rather
   // than stored, so it lifts the instant a payment is recorded — an owner who
@@ -85,7 +94,11 @@ export default async function ShopPage({ params }: PageProps) {
 
   if (!shop.active || billing.autoPaused) {
     return (
-      <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-6 text-center">
+      <>
+      {/* `flex-1` rather than `min-h-dvh`: the page is now a column with a
+          footer under it, and a main that is a full screen tall on its own
+          would push that footer off the bottom of every closed shop. */}
+      <main className="mx-auto flex min-h-[80dvh] max-w-md flex-1 flex-col items-center justify-center px-6 text-center">
         <p className="text-5xl">🔒</p>
         <h1 className="mt-4 text-2xl font-bold text-slate-900">{shop.name}</h1>
         <p className="mt-2 text-slate-600">
@@ -93,16 +106,23 @@ export default async function ShopPage({ params }: PageProps) {
           ऑर्डर नहीं ले रही है।
         </p>
 
-        {/* The shopkeeper's own words about why. The difference between a
-            customer trying again tomorrow and deciding the shop has gone. */}
-        {shop.closedNote && (
+        {/* The shopkeeper's own words. The difference between a customer
+            trying again tomorrow and deciding the shop has gone.
+
+            Their running notice serves when there is no closure note, because a
+            shop that is shut with something to say has usually said it there —
+            "back from the village on the 5th" answers this page's question
+            exactly. */}
+        {(shop.closedNote || notice) && (
           <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-base font-medium text-amber-900">
-            {shop.closedNote}
+            {shop.closedNote || notice}
           </p>
         )}
 
         {hours && <p className="mt-3 text-sm text-slate-500">{hours}</p>}
       </main>
+      <SiteFooter />
+      </>
     );
   }
 
@@ -110,11 +130,24 @@ export default async function ShopPage({ params }: PageProps) {
     items,
     active: _active,
     closedNote: _note,
+    noticeText: _noticeText,
+    noticeFrom: _noticeFrom,
+    noticeTo: _noticeTo,
     plan: _plan,
     subscriptionStatus: _status,
     trialEndsAt: _trialEnds,
     currentPeriodEnd: _periodEnd,
     ...summary
   } = shop;
-  return <StoreFront shop={summary} items={items} />;
+  // `notice` rather than the three stored columns: the page has already decided
+  // whether it is running, and handing the browser the dates would invite a
+  // second, different answer.
+  return (
+    <>
+      <StoreFront shop={{ ...summary, notice }} items={items} />
+      {/* Outside the storefront, so it is the last thing on the page rather
+          than another block inside the menu. */}
+      <SiteFooter />
+    </>
+  );
 }

@@ -87,12 +87,13 @@ export function ReportControls({
               go({ granularity: event.target.value as ReportQuery['granularity'] })
             }
           >
+            <option value="day">Daily</option>
             <option value="month">Monthly</option>
             <option value="year">Yearly</option>
           </Select>
         </div>
 
-        {query.granularity === 'month' && (
+        {query.granularity !== 'year' && (
           <div className="w-full sm:w-40">
             <Select
               label="Month"
@@ -102,6 +103,25 @@ export function ReportControls({
               {MONTH_NAMES.map((name, index) => (
                 <option key={name} value={index + 1}>
                   {name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
+
+        {query.granularity === 'day' && (
+          <div className="w-full sm:w-24">
+            <Select
+              label="Day"
+              value={String(query.day ?? 1)}
+              onChange={(event) => go({ day: Number(event.target.value) })}
+            >
+              {/* All 31, whatever the month. A short month simply reports an
+                  empty day, which is honest — silently clamping the 31st to the
+                  28th would show a different day than the one asked for. */}
+              {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
+                <option key={day} value={day}>
+                  {day}
                 </option>
               ))}
             </Select>

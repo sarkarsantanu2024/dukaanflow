@@ -200,6 +200,42 @@ export function InstallIcon(props: IconProps) {
   );
 }
 
+/** Two bars — the shutter coming down on a shop that keeps its listing. */
+export function PauseIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 5v14" />
+      <path d="M15 5v14" />
+    </Svg>
+  );
+}
+
+/** The counterpart: trade starts again. */
+export function PlayIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M7 4.5v15l12-7.5-12-7.5Z" />
+    </Svg>
+  );
+}
+
+/** A keypad key — owner access, which is a PIN and nothing else. */
+export function KeyIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="8.5" cy="12" r="3.5" />
+      <path d="M12 12h9" />
+      <path d="M18 12v3" />
+    </Svg>
+  );
+}
+
+/**
+ * The same glyph `InstallIcon` draws — an arrow into a tray — under the other
+ * name it means. A download button labelled "install" reads as a mistake.
+ */
+export const DownloadIcon = InstallIcon;
+
 export function PencilIcon(props: IconProps) {
   return (
     <Svg {...props}>

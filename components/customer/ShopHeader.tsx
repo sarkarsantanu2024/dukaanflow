@@ -51,6 +51,11 @@ export type ShopSummary = {
   /** "HH:MM" each, or blank when the shop has not said. */
   openTime: string;
   closeTime: string;
+  /**
+   * The shopkeeper's own notice, already checked against today's date by the
+   * server — blank means there is nothing running, not that nothing is stored.
+   */
+  notice: string;
 };
 
 export function ShopHeader({
@@ -74,117 +79,119 @@ export function ShopHeader({
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
           <BrandMark className="text-sm" />
-          <span className="ml-auto hidden text-xs text-slate-400 sm:inline">
-            Scan → Select → Order
-          </span>
-          <LangToggle value={locale} onChange={onLocaleChange} />
+          <span className="hidden text-xs text-slate-400 sm:inline">Scan → Select → Order</span>
+          {/* The push lives on the toggle itself, not on the tagline. The
+              tagline is hidden below `sm`, and with `ml-auto` on it the toggle
+              simply sat against the logo on every phone — which is where this
+              page is actually read. */}
+          <div className="ml-auto">
+            <LangToggle value={locale} onChange={onLocaleChange} />
+          </div>
         </div>
       </header>
 
-      {/* The shopfront photo IS the card, not a thumbnail beside it.
-          It was a 112×176 tile at the end of a row of text — the one thing on
-          this page that tells a shopper standing at a counter that they scanned
-          the right code, printed smaller than the phone number. Behind the
-          name, at the width of the page, it does that job at a glance.
+      {/* ONE COMPACT CARD, BECAUSE THIS IS A PHONE.
+          This was a 160px shopfront banner, a 96px avatar hanging over the
+          seam, the name, the type, a full-width phone pill and then a row of
+          address and hours — the better part of a screen before the shopper
+          saw a single price. Everything on it was true and none of it was what
+          they came for.
 
-          A dark scrim, not a lighter photo: shop fronts are photographed on
-          phones in every possible light, and white text over an unmodified one
-          is legible on some and invisible on others. */}
-      <div className="mx-auto max-w-6xl px-4 pt-4">
-        <div className="overflow-hidden rounded-2xl bg-white shadow-card">
-          {/* The shop front, unobstructed. No scrim, no text on it. */}
-          {shop.imageData ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={shop.imageData}
-              alt={shop.name}
-              className="h-40 w-full object-cover sm:h-56"
-            />
-          ) : (
-            // A shop with no photo still needs the band, or the avatar below
-            // has nothing to overlap and the card starts with a bald margin.
-            <div aria-hidden className="h-24 bg-chrome sm:h-28" />
-          )}
+          It is all still here, in a third of the height: the photo as a tile,
+          the name and trade beside it, and where-and-when on one small line
+          underneath. Contact is two round buttons, because a shopper taps
+          WhatsApp — they do not read the number off the screen. */}
+      <div className="mx-auto max-w-6xl px-4 pt-3">
+        <div className="rounded-2xl bg-white p-3 shadow-card">
+          <div className="flex items-center gap-3">
+            {/* The shopfront if there is one, the owner's face otherwise: the
+                point of the picture is telling somebody at the counter that
+                they scanned the right code, and either does that. */}
+            {shop.imageData || shop.ownerImageData ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={shop.imageData || shop.ownerImageData}
+                alt=""
+                className="h-16 w-16 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+              />
+            ) : (
+              <span
+                aria-hidden
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-2xl font-bold text-brand-800"
+              >
+                {shop.name.trim().charAt(0).toUpperCase()}
+              </span>
+            )}
 
-          <div className="px-4 pb-4 sm:px-5 sm:pb-5">
-            {/* The actions used to share this row. On a phone that left the
-                shop's own name squeezed to "M." beside a full-width phone
-                number — the one line that must never truncate, truncated by
-                the one that could have wrapped. They sit below now, and only
-                rejoin the row where there is width for both. */}
-            <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-              {/* Pulled up over the seam, and large. A shopper deciding whether
-                  to hand money to a stranger looks at the face; at 56px it was
-                  smaller than the phone number underneath it. */}
-              {shop.ownerImageData ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={shop.ownerImageData}
-                  alt={shop.ownerName || shop.name}
-                  className="-mt-10 h-24 w-24 shrink-0 rounded-2xl object-cover ring-4 ring-white sm:-mt-12 sm:h-28 sm:w-28"
-                />
-              ) : (
-                <span
-                  aria-hidden
-                  className="-mt-10 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-3xl font-bold text-brand-800 ring-4 ring-white sm:-mt-12 sm:h-28 sm:w-28"
-                >
-                  {shop.name.trim().charAt(0).toUpperCase()}
-                </span>
-              )}
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-lg font-bold leading-tight text-slate-900">
+                {shop.name}
+              </h1>
+              <p className="truncate text-xs text-slate-500">
+                {SHOP_TYPE_LABELS[shop.type]}
+                {shop.ownerName && ` · ${shop.ownerName}`}
+              </p>
 
-              <div className="min-w-0 flex-1 pt-1">
-                <h1 className="truncate text-xl font-bold leading-tight text-slate-900 sm:text-2xl">
-                  {shop.name}
-                </h1>
-                <p className="mt-0.5 truncate text-sm text-slate-500">
-                  {SHOP_TYPE_LABELS[shop.type]}
-                  {shop.ownerName && ` · ${shop.ownerName}`}
+              {/* Where and when, tucked under the name rather than given a
+                  band of their own. */}
+              {(shop.address || hours) && (
+                <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                  {shop.address && (
+                    <span className="flex min-w-0 items-center gap-1">
+                      <PinIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <span className="truncate">{shop.address}</span>
+                    </span>
+                  )}
+                  {hours && (
+                    <span className="flex items-center gap-1">
+                      <ClockIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <span className="tabular-nums">{hours}</span>
+                    </span>
+                  )}
                 </p>
-              </div>
-
-              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-                <a
-                  href={`https://wa.me/91${shop.phone}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#25D366] px-4 text-sm font-semibold text-white transition hover:brightness-95"
-                >
-                  <WhatsAppIcon className="h-4 w-4" />
-                  +91 {shop.phone}
-                </a>
-                {shop.upiId && (
-                  <a
-                    href={upiPayUrl(shop.upiId, shop.name)}
-                    className="inline-flex h-10 items-center gap-1.5 rounded-full bg-slate-100 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-                  >
-                    <RupeeIcon className="h-4 w-4" />
-                    {payLabel}
-                  </a>
-                )}
-              </div>
+              )}
             </div>
 
-            {/* Where and when, on one line under the identity — the two things
-                a shopper checks before setting out, and neither is worth its
-                own row. */}
-            {(shop.address || hours) && (
-              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-slate-100 pt-3 text-sm text-slate-600">
-                {shop.address && (
-                  <p className="flex min-w-0 items-start gap-1.5">
-                    <PinIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-                    <span className="min-w-0">{shop.address}</span>
-                  </p>
-                )}
-                {hours && (
-                  <p className="flex items-center gap-1.5">
-                    <ClockIcon className="h-4 w-4 shrink-0 text-slate-400" />
-                    <span className="tabular-nums">{hours}</span>
-                  </p>
-                )}
-              </div>
-            )}
+            {/* Round, thumb-sized, and labelled for a screen reader. The number
+                was printed in full across a pill the width of the card; nobody
+                dials it by reading it off a page that can dial it. */}
+            <div className="flex shrink-0 flex-col gap-1.5">
+              <a
+                href={`https://wa.me/91${shop.phone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`WhatsApp +91 ${shop.phone}`}
+                title={`+91 ${shop.phone}`}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white transition hover:brightness-95"
+              >
+                <WhatsAppIcon className="h-5 w-5" />
+              </a>
+              {shop.upiId && (
+                <a
+                  href={upiPayUrl(shop.upiId, shop.name)}
+                  aria-label={payLabel}
+                  title={payLabel}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                >
+                  <RupeeIcon className="h-5 w-5" />
+                </a>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* The shopkeeper's own words to their customers — "no delivery this
+            week", "puja orders close Friday".
+
+            Below the shop's card rather than above it: a shopper who has just
+            scanned a code needs to see whose shop this is first, and a strip of
+            amber above the name would read as an error banner. Below, and in
+            the shop's own voice, it reads as a note on the door. */}
+        {shop.notice && (
+          <p className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-base font-medium text-amber-900">
+            {shop.notice}
+          </p>
+        )}
       </div>
     </>
   );

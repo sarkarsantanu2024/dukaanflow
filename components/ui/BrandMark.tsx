@@ -10,6 +10,7 @@
 
 import Link from 'next/link';
 import clsx from 'clsx';
+import { BrandLogo } from './BrandLogo';
 
 export function BrandMark({
   href = '/',
@@ -28,22 +29,24 @@ export function BrandMark({
       aria-label="DukaanFlow — home"
       className={clsx('inline-flex items-center gap-2.5', className)}
     >
+      {/* The mark stands on its own — no tile behind it.
+          It was a green rounded square with the letters "DF" in it, which is
+          what an app icon looks like, not what a logo looks like. A logo sits
+          on the page in its own colour beside its own name. */}
+      <BrandLogo
+        className={clsx('h-7 w-7 shrink-0', tone === 'dark' ? 'text-white' : 'text-brand-600')}
+      />
+      {/* Two tones, one word. "DukaanFlow" set in a single weight was a label;
+          the colour break is what makes the compound read as a name, and it
+          ties the wordmark to the mark beside it. */}
       <span
-        aria-hidden
         className={clsx(
-          'flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold',
-          tone === 'dark' ? 'bg-white/20 text-white backdrop-blur' : 'bg-brand-600 text-white',
-        )}
-      >
-        DF
-      </span>
-      <span
-        className={clsx(
-          'font-bold leading-tight',
+          '-tracking-[0.01em] font-bold leading-tight',
           tone === 'dark' ? 'text-white' : 'text-slate-900',
         )}
       >
-        DukaanFlow
+        Dukaan
+        <span className={tone === 'dark' ? 'text-brand-200' : 'text-brand-600'}>Flow</span>
       </span>
     </Link>
   );

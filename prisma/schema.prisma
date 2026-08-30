@@ -105,6 +105,22 @@ model Shop {
   /// shop has gone.
   closedNote String @default("")
 
+  /// A notice the shopkeeper writes for their own customers, and the days it
+  /// runs — "no delivery this week", "puja special orders from Friday".
+  ///
+  /// Separate from `closedNote`, which only ever appears on a shop that is
+  /// shut. A notice belongs on a shop that is open and trading, which is when
+  /// there is anybody there to read it.
+  ///
+  /// The dates are the point. A notice with no end is a notice nobody takes
+  /// down, and a stale one is worse than none — so the storefront shows this
+  /// only inside the range. Both blank means "show it until I clear it", which
+  /// is the honest reading of an owner who gave no dates.
+  noticeText String    @default("")
+  /// Calendar days in shop time, inclusive at both ends.
+  noticeFrom DateTime? @db.Date
+  noticeTo   DateTime? @db.Date
+
   /// Does this shop deliver, or is it collection only?
   ///
   /// A kirana that has nobody to send out should not be offered as a delivery

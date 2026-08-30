@@ -103,24 +103,24 @@ type OwnerDictionary = {
   sessionEnded: string;
   /** Says which screen settles a WhatsApp order, so nobody rings one up twice. */
   tillOrdersNote: string;
-  hoursTitle: string;
-  hoursNotSet: string;
-  hoursSet: string;
-  hoursChange: string;
-  hoursOpen: string;
-  hoursClose: string;
-  hoursHint: string;
-  hoursClear: string;
-  hoursSaved: string;
-  shopIsOpen: string;
-  shopIsClosed: string;
-  shopCloseNow: string;
-  shopOpenAgain: string;
-  shopOpenNow: string;
-  shopClosedNow: string;
-  closedNoteLabel: string;
-  closedNotePlaceholder: string;
-  closedNoteHint: string;
+  /** The notice a shopkeeper writes for their own customers. */
+  noticeTitle: string;
+  noticeNone: string;
+  noticeWrite: string;
+  noticeChange: string;
+  noticeLabel: string;
+  noticePlaceholder: string;
+  noticeHint: string;
+  noticeFrom: string;
+  noticeTo: string;
+  noticeDatesHint: string;
+  noticeSaved: string;
+  noticeRemove: string;
+  noticeRemoved: string;
+  /** Whether customers can see it yet, said plainly on the card. */
+  noticeLive: string;
+  noticeScheduled: string;
+  noticeFinished: string;
   markConfirmed: string;
   markCompleted: string;
   markCancelled: string;
@@ -128,6 +128,8 @@ type OwnerDictionary = {
   ordersToday: string;
   ordersTakings: string;
   ordersWaiting: string;
+  /** Forwards the whole round to whoever is running the deliveries. */
+  ordersSendRound: string;
   noOrdersHere: string;
   delivery: string;
   pickup: string;
@@ -192,16 +194,12 @@ type OwnerDictionary = {
   sellHint: string;
   sellSearch: string;
   sellEmpty: string;
-  sellTotal: string;
-  sellClear: string;
   sellTakePayment: string;
   sellCash: string;
   sellUpi: string;
   sellScanToPay: string;
   sellDone: string;
   sellRecorded: string;
-  sellToday: string;
-  sellTodayCount: string;
   sellMissingItem: string;
   sellKhata: string;
   sellWhoseKhata: string;
@@ -329,24 +327,22 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     newOrderAlert: 'New order',
     sessionEnded: 'Your session has ended. Please sign in with your PIN again.',
     tillOrdersNote: 'This is for customers at the counter. WhatsApp orders are paid for on the Orders page — ringing one up here would count it twice.',
-    hoursTitle: 'Shop hours',
-    hoursNotSet: 'Not set',
-    hoursSet: 'Set',
-    hoursChange: 'Change',
-    hoursOpen: 'Opens',
-    hoursClose: 'Closes',
-    hoursHint: 'Customers see this on your shop page. It does not stop orders — use “Accepting orders” for that.',
-    hoursClear: 'Clear',
-    hoursSaved: 'Shop hours saved',
-    shopIsOpen: 'Shop is open',
-    shopIsClosed: 'Shop is closed',
-    shopCloseNow: 'Close the shop',
-    shopOpenAgain: 'Open the shop',
-    shopOpenNow: 'Shop is open again',
-    shopClosedNow: 'Shop closed — customers will see why',
-    closedNoteLabel: 'Why the shop is closed',
-    closedNotePlaceholder: 'Back at 5 · family function',
-    closedNoteHint: 'Customers see this on your shop page. Leave it blank if you would rather not say.',
+    noticeTitle: 'Notice for customers',
+    noticeNone: 'No notice',
+    noticeWrite: 'Write',
+    noticeChange: 'Change',
+    noticeLabel: 'What you want to tell customers',
+    noticePlaceholder: 'No delivery this week · puja orders close Friday',
+    noticeHint: 'Customers see this at the top of your shop page.',
+    noticeFrom: 'From',
+    noticeTo: 'Until',
+    noticeDatesHint: 'Leave the dates blank to show it until you remove it.',
+    noticeSaved: 'Notice saved',
+    noticeRemove: 'Remove',
+    noticeRemoved: 'Notice removed',
+    noticeLive: 'Customers can see this now',
+    noticeScheduled: 'Starts later — customers cannot see it yet',
+    noticeFinished: 'Finished — customers can no longer see it',
     markConfirmed: 'Accept',
     markCompleted: 'Mark done',
     markCancelled: 'Cancel',
@@ -354,6 +350,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     ordersToday: 'Today',
     ordersTakings: 'Takings',
     ordersWaiting: 'Waiting',
+    ordersSendRound: 'Send list on WhatsApp',
     noOrdersHere: 'Nothing here right now',
     delivery: 'Delivery',
     pickup: 'Pickup',
@@ -387,7 +384,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterSkip: 'Not now',
     starterAdded: 'added — now set their prices',
     pinLabel: 'PIN',
-    pinHint: 'Enter the 6-digit PIN from your DukaanFlow contact to manage your prices.',
+    // What signing in is FOR, not what the box below already says.
+    // "Enter the 6-digit PIN" sat above a labelled, six-character PIN box and
+    // told an owner nothing they could not see — and nothing about why they
+    // should bother.
+    pinHint: 'Run your shop from your phone — prices, stock, orders and khata. Sign in with your 6-digit PIN.',
     pinSignIn: 'Sign in',
     pinWrong: 'Incorrect PIN',
     pinNotSetUp: 'Owner access has not been set up for this shop yet. Ask your DukaanFlow contact to issue a PIN.',
@@ -423,16 +424,12 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellHint: 'Tap what the customer is buying.',
     sellSearch: 'Search to add',
     sellEmpty: 'Nothing added yet',
-    sellTotal: 'Total',
-    sellClear: 'Clear',
     sellTakePayment: 'Take payment',
     sellCash: 'Cash',
     sellUpi: 'UPI',
     sellScanToPay: 'Ask the customer to scan',
     sellDone: 'Done',
     sellRecorded: 'Sale recorded',
-    sellToday: 'Today',
-    sellTodayCount: 'sales',
     sellMissingItem: 'Item not in the list? Add it in Items, then come back.',
     sellKhata: 'Udhaar',
     sellWhoseKhata: 'Whose khata?',
@@ -559,24 +556,22 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     newOrderAlert: 'নতুন অর্ডার',
     sessionEnded: 'আপনার সময় শেষ। আবার PIN দিয়ে ঢুকুন।',
     tillOrdersNote: 'এটা দোকানে আসা খদ্দেরের জন্য। অনলাইন অর্ডারের টাকা “অর্ডার” পাতায় নিন — এখানে তুললে দুবার হিসাব হবে।',
-    hoursTitle: 'দোকানের সময়',
-    hoursNotSet: 'দেওয়া হয়নি',
-    hoursSet: 'দিন',
-    hoursChange: 'বদলান',
-    hoursOpen: 'খোলে',
-    hoursClose: 'বন্ধ হয়',
-    hoursHint: 'খদ্দের এটা আপনার দোকানের পাতায় দেখবে। এতে অর্ডার বন্ধ হয় না — তার জন্য “অর্ডার নিচ্ছি” বন্ধ করুন।',
-    hoursClear: 'মুছুন',
-    hoursSaved: 'দোকানের সময় সেভ হয়েছে',
-    shopIsOpen: 'দোকান খোলা',
-    shopIsClosed: 'দোকান বন্ধ',
-    shopCloseNow: 'দোকান বন্ধ করুন',
-    shopOpenAgain: 'দোকান খুলুন',
-    shopOpenNow: 'দোকান আবার খুলল',
-    shopClosedNow: 'দোকান বন্ধ — খদ্দের কারণ দেখতে পাবে',
-    closedNoteLabel: 'কেন বন্ধ',
-    closedNotePlaceholder: '৫টায় ফিরব · বাড়িতে অনুষ্ঠান',
-    closedNoteHint: 'খদ্দের এটা আপনার দোকানের পাতায় দেখবে। না লিখলেও চলবে।',
+    noticeTitle: 'খদ্দেরদের জন্য নোটিশ',
+    noticeNone: 'কোনো নোটিশ নেই',
+    noticeWrite: 'লিখুন',
+    noticeChange: 'বদলান',
+    noticeLabel: 'খদ্দেরদের যা জানাতে চান',
+    noticePlaceholder: 'এ সপ্তাহে ডেলিভারি নেই · পুজোর অর্ডার শুক্রবার পর্যন্ত',
+    noticeHint: 'খদ্দের এটা আপনার দোকানের পাতার উপরে দেখবে।',
+    noticeFrom: 'থেকে',
+    noticeTo: 'পর্যন্ত',
+    noticeDatesHint: 'তারিখ না দিলে যতক্ষণ না মুছছেন ততক্ষণ দেখা যাবে।',
+    noticeSaved: 'নোটিশ সেভ হয়েছে',
+    noticeRemove: 'মুছুন',
+    noticeRemoved: 'নোটিশ মুছে গেছে',
+    noticeLive: 'খদ্দের এখন এটা দেখতে পাচ্ছে',
+    noticeScheduled: 'পরে শুরু হবে — খদ্দের এখনো দেখতে পাচ্ছে না',
+    noticeFinished: 'শেষ হয়ে গেছে — খদ্দের আর দেখতে পাচ্ছে না',
     markConfirmed: 'নিলাম',
     markCompleted: 'হয়ে গেছে',
     markCancelled: 'বাতিল',
@@ -584,6 +579,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     ordersToday: 'আজ',
     ordersTakings: 'আজকের টাকা',
     ordersWaiting: 'বাকি আছে',
+    ordersSendRound: 'তালিকা WhatsApp-এ পাঠান',
     noOrdersHere: 'এখানে এখন কিছু নেই',
     delivery: 'ডেলিভারি',
     pickup: 'দোকান থেকে',
@@ -617,7 +613,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterSkip: 'এখন নয়',
     starterAdded: 'যোগ হয়েছে — এবার দাম দিন',
     pinLabel: 'পিন',
-    pinHint: 'দাম সামলাতে DukaanFlow-এর দেওয়া ৬ অঙ্কের পিন দিন।',
+    pinHint: 'ফোন থেকেই দোকান চালান — দাম, স্টক, অর্ডার আর খাতা। ৬ অঙ্কের পিন দিয়ে ঢুকুন।',
     pinSignIn: 'সাইন ইন',
     pinWrong: 'পিন ভুল',
     pinNotSetUp: 'এই দোকানের জন্য এখনও মালিকের অ্যাক্সেস চালু হয়নি। DukaanFlow-এর সঙ্গে যোগাযোগ করে পিন নিন।',
@@ -653,16 +649,12 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellHint: 'খদ্দের যা নিচ্ছেন তাতে চাপ দিন।',
     sellSearch: 'খুঁজে যোগ করুন',
     sellEmpty: 'এখনও কিছু যোগ হয়নি',
-    sellTotal: 'মোট',
-    sellClear: 'মুছুন',
     sellTakePayment: 'টাকা নিন',
     sellCash: 'নগদ',
     sellUpi: 'UPI',
     sellScanToPay: 'খদ্দেরকে স্ক্যান করতে বলুন',
     sellDone: 'হয়ে গেছে',
     sellRecorded: 'বিক্রি লেখা হয়েছে',
-    sellToday: 'আজ',
-    sellTodayCount: 'বিক্রি',
     sellMissingItem: 'তালিকায় নেই? “জিনিস”-এ গিয়ে যোগ করুন, তারপর ফিরে আসুন।',
     sellKhata: 'ধার',
     sellWhoseKhata: 'কার খাতায়?',
@@ -789,24 +781,22 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     newOrderAlert: 'नया ऑर्डर',
     sessionEnded: 'आपका सत्र समाप्त हो गया। दोबारा PIN से आएँ।',
     tillOrdersNote: 'यह दुकान पर आए ग्राहक के लिए है। व्हाट्सएप ऑर्डर का पैसा “ऑर्डर” पेज पर लें — यहाँ जोड़ने से दो बार गिना जाएगा।',
-    hoursTitle: 'दुकान का समय',
-    hoursNotSet: 'नहीं दिया',
-    hoursSet: 'डालें',
-    hoursChange: 'बदलें',
-    hoursOpen: 'खुलती है',
-    hoursClose: 'बंद होती है',
-    hoursHint: 'ग्राहक इसे आपके दुकान पेज पर देखेंगे। इससे ऑर्डर बंद नहीं होते — उसके लिए “ऑर्डर ले रहे हैं” बंद करें।',
-    hoursClear: 'हटाएँ',
-    hoursSaved: 'दुकान का समय सेव हो गया',
-    shopIsOpen: 'दुकान खुली है',
-    shopIsClosed: 'दुकान बंद है',
-    shopCloseNow: 'दुकान बंद करें',
-    shopOpenAgain: 'दुकान खोलें',
-    shopOpenNow: 'दुकान फिर खुल गई',
-    shopClosedNow: 'दुकान बंद — ग्राहक कारण देखेंगे',
-    closedNoteLabel: 'क्यों बंद है',
-    closedNotePlaceholder: '5 बजे लौटेंगे · घर में कार्यक्रम',
-    closedNoteHint: 'ग्राहक इसे आपके दुकान पेज पर देखेंगे। न लिखें तो भी चलेगा।',
+    noticeTitle: 'ग्राहकों के लिए सूचना',
+    noticeNone: 'कोई सूचना नहीं',
+    noticeWrite: 'लिखें',
+    noticeChange: 'बदलें',
+    noticeLabel: 'ग्राहकों को क्या बताना है',
+    noticePlaceholder: 'इस हफ्ते डिलीवरी नहीं · पूजा के ऑर्डर शुक्रवार तक',
+    noticeHint: 'ग्राहक इसे आपके दुकान पेज के ऊपर देखेंगे।',
+    noticeFrom: 'से',
+    noticeTo: 'तक',
+    noticeDatesHint: 'तारीख न दें तो जब तक हटाएँ नहीं, दिखती रहेगी।',
+    noticeSaved: 'सूचना सेव हो गई',
+    noticeRemove: 'हटाएँ',
+    noticeRemoved: 'सूचना हटा दी गई',
+    noticeLive: 'ग्राहक इसे अभी देख सकते हैं',
+    noticeScheduled: 'बाद में शुरू होगी — ग्राहक अभी नहीं देख सकते',
+    noticeFinished: 'खत्म — ग्राहक अब नहीं देख सकते',
     markConfirmed: 'लिया',
     markCompleted: 'हो गया',
     markCancelled: 'रद्द',
@@ -814,6 +804,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     ordersToday: 'आज',
     ordersTakings: 'आज की कमाई',
     ordersWaiting: 'बाकी है',
+    ordersSendRound: 'सूची WhatsApp पर भेजें',
     noOrdersHere: 'यहाँ अभी कुछ नहीं',
     delivery: 'डिलीवरी',
     pickup: 'दुकान से',
@@ -847,7 +838,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterSkip: 'अभी नहीं',
     starterAdded: 'जुड़ गए — अब दाम डालिए',
     pinLabel: 'पिन',
-    pinHint: 'दाम संभालने के लिए DukaanFlow से मिला 6 अंकों का पिन डालिए।',
+    pinHint: 'फोन से ही दुकान चलाइए — दाम, स्टॉक, ऑर्डर और खाता। 6 अंकों के पिन से साइन इन कीजिए।',
     pinSignIn: 'साइन इन',
     pinWrong: 'पिन गलत है',
     pinNotSetUp: 'इस दुकान के लिए मालिक का एक्सेस अभी चालू नहीं हुआ है। पिन के लिए DukaanFlow से संपर्क कीजिए।',
@@ -883,16 +874,12 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellHint: 'ग्राहक जो ले रहा है उस पर दबाइए।',
     sellSearch: 'खोजकर जोड़ें',
     sellEmpty: 'अभी कुछ नहीं जोड़ा',
-    sellTotal: 'कुल',
-    sellClear: 'मिटाएँ',
     sellTakePayment: 'पैसा लें',
     sellCash: 'नकद',
     sellUpi: 'UPI',
     sellScanToPay: 'ग्राहक से स्कैन कराइए',
     sellDone: 'हो गया',
     sellRecorded: 'बिक्री दर्ज हुई',
-    sellToday: 'आज',
-    sellTodayCount: 'बिक्री',
     sellMissingItem: 'सूची में नहीं है? “सामान” में जाकर जोड़िए, फिर लौटिए।',
     sellKhata: 'उधार',
     sellWhoseKhata: 'किसके खाते में?',

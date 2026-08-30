@@ -35,7 +35,7 @@ export default async function ReportsPage({
   const includeDemo = await showingDemoShops();
 
   const [report, pickable] = await Promise.all([
-    loadReport({ ...query, includeDemo }, buildPeriod(query.granularity, query.year, query.month)),
+    loadReport({ ...query, includeDemo }, buildPeriod(query.granularity, query.year, query.month, query.day)),
     prisma.shop.findMany({
       where: demoFilter(includeDemo),
       select: { name: true, slug: true, isDemo: true },
@@ -192,12 +192,18 @@ export default async function ReportsPage({
           </div>
 
           <Section
-            title={report.period.granularity === 'year' ? 'Month by month' : 'Day by day'}
+            title={
+              report.period.granularity === 'year'
+                ? 'Month by month'
+                : report.period.granularity === 'day'
+                  ? 'Hour by hour'
+                  : 'Day by day'
+            }
             note="The shape of the period. A single tall bar is usually a festival or a market day — worth naming before next year."
           >
             <ColumnChart
               rows={report.overTime}
-              labelEvery={report.period.granularity === 'year' ? 1 : 3}
+              labelEvery={report.period.granularity === 'month' ? 3 : 1}
               empty="Nothing was recorded in this period."
             />
           </Section>
@@ -275,6 +281,43 @@ export default async function ReportsPage({
               />
             </Section>
           )}
+
+          {/* The credit book, beside the takings rather than on a page of its
+              own: for a kirana the udhaar IS working capital, and a month that
+              looks strong on revenue while ₹40,000 sits unpaid is not a strong
+              month. Balances are current, not as at the period's end — the
+              caveats say so, because the two read identically otherwise. */}
+          <Section
+            title="Khata — owed today"
+            note={`${formatPaise(report.khata.outstandingPaise)} outstanding now · ${formatPaise(
+              report.khata.periodDebitPaise,
+            )} went out on credit this period · ${formatPaise(
+              report.khata.periodCreditPaise,
+            )} came back.`}
+          >
+            {report.khata.customers.length === 0 ? (
+              <Nothing>Nothing is on the khata.</Nothing>
+            ) : (
+              <Table
+                head={[
+                  ...(report.singleShop ? [] : ['Shop']),
+                  'Customer',
+                  'Area',
+                  'Owed now',
+                  'On credit',
+                  'Repaid',
+                ]}
+                rows={report.khata.customers.slice(0, 25).map((row) => [
+                  ...(report.singleShop ? [] : [row.shop]),
+                  row.name || row.phone,
+                  row.area,
+                  formatPaise(row.balancePaise),
+                  formatPaise(row.periodDebitPaise),
+                  formatPaise(row.periodCreditPaise),
+                ])}
+              />
+            )}
+          </Section>
 
           <div className="grid gap-5 lg:grid-cols-2">
             <Section

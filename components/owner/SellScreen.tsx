@@ -7,15 +7,24 @@
  * different jobs done at different moments, and mixing them means the owner
  * hunts past an "add item" form while a customer waits with a ten-rupee note.
  *
- * Everything here is one-thumb sized. Tap an item to add one, tap again for
- * two. The totalPaise is always on screen. Payment is cash or a UPI QR carrying the
- * exact amount, so the customer scans and pays without anyone typing figures.
+ * IT IS THE CUSTOMER'S SHOP PAGE, with the checkout replaced by a cash drawer.
+ * The item cards, the search box, the category chips, the floating basket and
+ * the basket panel are the customer's own components, not copies of them — an
+ * owner who has walked a shopper through their shop page should not then have
+ * to learn a second, similar screen to use their own till, and two lookalike
+ * implementations drift apart the first time either is touched.
+ *
+ * What is genuinely different stays different: only stock the shop actually has
+ * is offered, and the last step takes money — cash, a UPI QR carrying the exact
+ * amount, or the khata.
  */
 
-import { Drawer } from '@/components/ui/Drawer';
-import { formatClock } from '@/lib/time';
-import { CartIcon } from '@/components/ui/Icon';
-import { SwipeToRemove } from '@/components/ui/SwipeToRemove';
+import { SearchIcon } from '@/components/ui/Icon';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ItemCard, itemName } from '@/components/customer/ItemCard';
+import { VoiceOrder } from '@/components/customer/VoiceOrder';
+import { CartBar } from '@/components/customer/CartBar';
+import { CartDrawer, type CartLine } from '@/components/customer/CartDrawer';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { handledExpiredSession } from './sessionGuard';
@@ -25,7 +34,8 @@ import { upiPayUrlWithAmount } from '@/lib/qr';
 import { useToast } from '@/components/ui/Toast';
 import { formatPaise } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
-import { translateCategory } from '@/lib/speech';
+import { dict } from '@/lib/i18n';
+import { matchesSearch, translateCategory } from '@/lib/speech';
 import type { Locale } from '@/lib/i18n';
 
 export type SellItem = {
@@ -41,11 +51,12 @@ export type SellItem = {
 
 type Cart = Record<string, number>;
 
-function label(item: SellItem, locale: Locale): string {
-  if (locale === 'bn') return item.nameBn || item.name;
-  if (locale === 'hi') return item.nameHi || item.name;
-  return item.name;
-}
+/**
+ * How many items before a search box earns its place — the same threshold the
+ * shop page uses, and for the same reason: under it, scrolling is faster than
+ * typing and a box over the grid asks the owner to work out why it is there.
+ */
+const SEARCH_FROM = 15;
 
 
 export function SellScreen({
@@ -55,9 +66,6 @@ export function SellScreen({
   upiQrData,
   items,
   locale,
-  todayTotalPaise,
-  todayCount,
-  sales,
   customers,
 }: {
   slug: string;
@@ -66,27 +74,22 @@ export function SellScreen({
   upiQrData: string;
   items: SellItem[];
   locale: Locale;
-  todayTotalPaise: number;
-  todayCount: number;
-  /** Today's sales, newest first, each with the moment it was rung up. */
-  sales: {
-    id: string;
-    totalAmountPaise: number;
-    paymentMode: string;
-    createdAt: string;
-    count: number;
-  }[];
   /** Regulars already in the khata, so udhaar is a tap not a typing job. */
   customers: { id: string; name: string; phone: string; area: string }[];
 }) {
   const router = useRouter();
   const { push } = useToast();
   const t = ownerDict(locale);
+  // The shopper's dictionary as well, because the item cards and the basket
+  // panel are the shopper's components and speak it.
+  const c = dict(locale);
 
   const [cart, setCart] = useState<Cart>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [paying, setPaying] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('');
   const [khata, setKhata] = useState<{ name: string; phone: string; area: string } | null>(null);
 
   // Only what the shop actually has. A till is for ringing up what is on the
@@ -94,9 +97,21 @@ export function SellScreen({
   // read past them every time.
   const sellable = useMemo(() => items.filter((item) => item.inStock), [items]);
 
-  // No search: the grid is everything the shop has in stock, straight from the
-  // items list, so there is nothing here that typing could reveal.
-  const visible = sellable;
+  const categories = useMemo(
+    () => Array.from(new Set(sellable.map((item) => item.category).filter(Boolean))).sort(),
+    [sellable],
+  );
+
+  // The shop page's own search: all three names, and spelling-tolerant, so
+  // "ata" finds "Atta" while a customer is waiting.
+  const visible = useMemo(
+    () =>
+      sellable.filter((item) => {
+        if (category && item.category !== category) return false;
+        return matchesSearch([item.name, item.nameBn, item.nameHi, item.unit, item.category], query);
+      }),
+    [sellable, query, category],
+  );
 
   const lines = useMemo(
     () =>
@@ -109,10 +124,31 @@ export function SellScreen({
     [cart, sellable],
   );
 
+  /**
+   * The basket, in the shape the shopper's basket panel takes.
+   *
+   * Built from `sellable` rather than from the cart's own keys, so the lines
+   * come back in the order of the grid the owner just tapped through.
+   */
+  const cartLines: CartLine[] = useMemo(
+    () =>
+      sellable
+        .filter((item) => (cart[item.id] ?? 0) > 0)
+        .map((item) => ({
+          id: item.id,
+          label: itemName(item, locale),
+          unit: item.unit,
+          quantity: cart[item.id]!,
+          pricePaise: item.pricePaise,
+        })),
+    [sellable, cart, locale],
+  );
+
   const totalPaise = lines.reduce((sum, line) => sum + line.item.pricePaise * line.quantity, 0);
 
-  function add(id: string) {
-    setCart((current) => ({ ...current, [id]: Math.min((current[id] ?? 0) + 1, 99) }));
+  /** Voice adds are relative — saying "rice" twice means two of them. */
+  function addQuantity(id: string, more: number) {
+    setCart((current) => ({ ...current, [id]: Math.min((current[id] ?? 0) + more, 99) }));
   }
 
   function setQuantity(id: string, next: number) {
@@ -164,193 +200,117 @@ export function SellScreen({
   }
 
   /**
-   * The cart, in a drawer.
+   * The basket — the shopper's own panel, with the last button changed.
    *
-   * It used to sit above the item grid, growing downward as the customer added
-   * things and pushing the grid — the thing being tapped — further off the
-   * screen with every line. The totalPaise already lives on the payment bar; this is
-   * where the owner goes when they want to see what makes it up, or change a
-   * quantity.
+   * It used to be a hand-built list beside the customer's: same job, same
+   * gestures, subtly different everywhere. This is that component, so a
+   * quantity is changed the same way on both sides of the counter and emptying
+   * the basket asks the same question in the owner's own language.
    */
   const cartDrawer = (
-    <Drawer
+    <CartDrawer
       open={cartOpen && lines.length > 0}
-      title={t.sellTotal}
-      action={
-        <button
-          type="button"
-          onClick={() => setCart({})}
-          className="shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-        >
-          {t.sellClear}
-        </button>
-      }
+      lines={cartLines}
+      totalPaise={totalPaise}
+      locale={locale}
       onClose={() => setCartOpen(false)}
-    >
-        <ul className="divide-y divide-slate-100 rounded-2xl bg-white shadow-card">
-        {lines.map(({ item, quantity }) => (
-          <li key={item.id}>
-            <SwipeToRemove
-              onRemove={() => setQuantity(item.id, 0)}
-              label={`${t.delete} — ${label(item, locale)}`}
-            >
-              <div className="flex items-center gap-3 py-3 pl-3 pr-12">
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-slate-900">
-                {label(item, locale)}
-                {item.unit && <span className="font-normal text-slate-500"> · {item.unit}</span>}
-              </p>
-              <p className="text-sm tabular-nums text-slate-500">
-                {quantity} × {formatPaise(item.pricePaise)} ={' '}
-                <strong className="text-slate-800">{formatPaise(item.pricePaise * quantity)}</strong>
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-1 rounded-xl border border-brand-200 bg-brand-50 p-1">
-              <button
-                type="button"
-                aria-label={`−1 ${label(item, locale)}`}
-                onClick={() => setQuantity(item.id, quantity - 1)}
-                className="h-9 w-9 rounded-lg text-lg font-bold text-brand-700 hover:bg-white"
-              >
-                −
-              </button>
-              <span className="w-7 text-center font-bold tabular-nums">{quantity}</span>
-              <button
-                type="button"
-                aria-label={`+1 ${label(item, locale)}`}
-                onClick={() => setQuantity(item.id, quantity + 1)}
-                className="h-9 w-9 rounded-lg text-lg font-bold text-brand-700 hover:bg-white"
-              >
-                +
-              </button>
-            </div>
-              </div>
-            </SwipeToRemove>
-          </li>
-        ))}
-      </ul>
-
-      {/* The total and the payment button live with the basket they describe.
-          They used to be a bar fixed across the screen as well, so the owner
-          had the same two numbers in two places and two ways to reach the same
-          till — and the bar cost a strip of every screen to say what the
-          basket badge already said. */}
-      <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3 shadow-card">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs leading-tight text-slate-500">
-            {lines.length} {t.itemsCount}
-          </p>
-          <p className="text-xl font-bold leading-tight tabular-nums text-slate-900">
-            {formatPaise(totalPaise)}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setCartOpen(false);
-            setPaying(true);
-          }}
-          className="h-12 shrink-0 rounded-xl bg-brand-600 px-5 font-semibold text-white hover:bg-brand-700"
-        >
-          {t.sellTakePayment}
-        </button>
-      </div>
-    </Drawer>
+      onSetQuantity={setQuantity}
+      onClear={() => setCart({})}
+      onContinue={() => setPaying(true)}
+      continueLabel={t.sellTakePayment}
+    />
   );
 
   return (
-    /* The basket button floats over the bottom of this list, so the last row
-       of items needs room to scroll clear of it — and the last row is the one
-       an owner is usually reaching for. The space appears only while there is
-       a button to clear. */
-    <div className={clsx('space-y-4', lines.length > 0 && 'pb-20')}>
-      {/* Today's takings, and nothing else.
-          This was a card carrying a heading that repeated the tab the owner
-          had just pressed, a line telling them to tap what the customer is
-          buying, and a paragraph explaining why counter sales and WhatsApp
-          orders are separate records. All true, all read once, and then read
-          again every single morning for the life of the shop — four lines of
-          instruction above the grid the owner actually came to press.
+    /* The mic and the basket float over the bottom of this list, so the last
+       row of items needs room to scroll clear of them — and the last row is
+       the one an owner is usually reaching for.
 
-          The takings stay, because that number changes through the day and is
-          the reason to glance up here at all. */}
-      <div className="flex items-baseline justify-between gap-3 rounded-2xl bg-white px-4 py-2.5 shadow-card">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          {t.sellToday}
-        </p>
-        <p className="flex items-baseline gap-2">
-          <span className="text-lg font-bold tabular-nums text-slate-900">
-            {formatPaise(todayTotalPaise)}
-          </span>
-          <span className="text-xs text-slate-500">
-            {todayCount} {t.sellTodayCount}
-          </span>
-        </p>
-      </div>
-
-      {/* What has actually been taken today, with the time of each. The totalPaise
-          on its own can only be agreed with or doubted; this is the list a
-          shopkeeper counts the drawer against. */}
-      {sales.length > 0 && lines.length === 0 && (
-        <section>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            {t.sellToday}
-          </h2>
-          <ul className="divide-y divide-slate-100 rounded-2xl bg-white shadow-card">
-            {sales.map((sale) => (
-              <li key={sale.id} className="flex items-center gap-3 px-4 py-2.5">
-                <span className="w-20 shrink-0 text-sm tabular-nums text-slate-500">
-                  {formatClock(sale.createdAt)}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-sm text-slate-600">
-                  {sale.count} {t.itemsCount}
-                  {' · '}
-                  {sale.paymentMode === 'CASH'
-                    ? t.sellCash
-                    : sale.paymentMode === 'UPI'
-                      ? t.sellUpi
-                      : t.sellKhata}
-                </span>
-                <span className="shrink-0 font-bold tabular-nums text-slate-900">
-                  {formatPaise(sale.totalAmountPaise)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-
-      {visible.length === 0 ? (
+       NOTHING SITS ABOVE THE GRID BUT THE FILTERS. This screen used to open
+       with the day's takings and then a list of every sale rung up today —
+       two blocks of yesterday's news between an owner and the buttons they
+       came to press, on the one screen used with a customer waiting. Takings
+       are read at closing, on Orders; the till is for selling. */
+    <div className="space-y-4 pb-24">
+      {sellable.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-center text-sm text-slate-500">
           {t.sellMissingItem}
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {visible.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => add(item.id)}
-              className={clsx(
-                'flex min-h-[76px] flex-col justify-between rounded-xl border bg-white p-3 text-left transition',
-                cart[item.id]
-                  ? 'border-brand-500 ring-2 ring-brand-200'
-                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50',
+        <>
+          {/* FILTERS LIVE WITH THE LIST; ACTIONS FLOAT — the shop page's rule,
+              kept here so both screens behave the same way. The basket floats
+              because it does something; search and categories narrow what is
+              below them, so they sit above it.
+
+              Sticky, so both are still reachable ten items down a rush. */}
+          {(sellable.length >= SEARCH_FROM || categories.length > 1) && (
+            <div className="sticky top-[3.25rem] z-10 -mx-4 bg-slate-100/95 px-4 pb-2 pt-3 backdrop-blur">
+              {sellable.length >= SEARCH_FROM && (
+                <div className="relative">
+                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={t.searchItems}
+                    aria-label={t.searchItems}
+                    className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-base placeholder:text-slate-400 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
+                  />
+                </div>
               )}
-            >
-              <span className="line-clamp-2 text-sm font-semibold text-slate-900">
-                {label(item, locale)}
-              </span>
-              <span className="mt-1 flex items-baseline gap-1">
-                <span className="font-bold tabular-nums text-brand-700">
-                  {formatPaise(item.pricePaise)}
-                </span>
-                {item.unit && <span className="text-xs text-slate-500">/ {item.unit}</span>}
-              </span>
-            </button>
-          ))}
-        </div>
+
+              {/* Two chips are needed before there is a choice to make: with a
+                  single category, "All" and that category list the same items,
+                  so the row reads as broken rather than as absent. */}
+              {categories.length > 1 && (
+                <div className="mt-2 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+                  {[
+                    { value: '', label: t.allCategories },
+                    ...categories.map((name) => ({
+                      value: name,
+                      label: translateCategory(name, locale),
+                    })),
+                  ].map((option) => (
+                    <button
+                      key={option.value || 'all'}
+                      type="button"
+                      onClick={() => setCategory(option.value)}
+                      aria-pressed={category === option.value}
+                      className={clsx(
+                        'shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition',
+                        category === option.value
+                          ? 'bg-brand-600 text-white'
+                          : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100',
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {visible.length === 0 ? (
+            <EmptyState title={c.noResults} />
+          ) : (
+            /* The shopper's own card, stepper and all. Tapping the row adds
+               one; the stepper beside it changes a quantity without hunting
+               the item down again in the basket. */
+            <ul className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {visible.map((item) => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  quantity={cart[item.id] ?? 0}
+                  onChange={(next) => setQuantity(item.id, next)}
+                  locale={locale}
+                />
+              ))}
+            </ul>
+          )}
+        </>
       )}
 
       {/* Above the drawer, not below it.
@@ -503,21 +463,42 @@ export function SellScreen({
           An owner who has walked a customer through the shop page should not
           have to learn a second basket to use their own. Sits above the tab
           bar rather than over it. */}
-      {lines.length > 0 && !cartOpen && (
-        <div className="no-print fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-3xl justify-end px-4">
-          <button
-            type="button"
-            onClick={() => setCartOpen(true)}
-            aria-label={`${lines.length} ${t.itemsCount} · ${formatPaise(totalPaise)}`}
-            className="relative inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-700 text-white shadow-lg shadow-brand-900/30 ring-4 ring-slate-100/70 transition hover:bg-brand-800 active:scale-95"
-          >
-            <CartIcon className="h-6 w-6" />
-            <span className="absolute -right-1 -top-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-white px-1 text-xs font-bold tabular-nums text-brand-800 ring-2 ring-brand-700">
-              {lines.length}
-            </span>
-          </button>
-        </div>
-      )}
+      {/* The shopper's own corner, on the shopkeeper's own screen: speak an
+          order, and open the basket. Both DO something; search and categories
+          only narrow the list, so they stay above it.
+
+          The wrapper takes no clicks and only the buttons do, so the gaps
+          between them are still the live page. It rides above the tab bar
+          rather than over it, and when the basket opens the mic FLOATS OVER
+          the panel rather than moving out of its way — an owner reaches for
+          that corner without looking, and a control that slides across the
+          screen when a panel opens has to be hunted for at exactly the moment
+          somebody is waiting to pay. */}
+      <div
+        className={clsx(
+          'no-print pointer-events-none fixed inset-x-0 mx-auto flex max-w-3xl flex-col items-end gap-3 px-4 transition-[bottom]',
+          // Above the drawer's own z-50 while it is open, and back below it
+          // afterwards so nothing here sits over an ordinary screen.
+          //
+          // The offset changes with it: at rest the mic clears the tab bar,
+          // and with the basket open it clears the total-and-pay bar at the
+          // foot of the panel — which covers the tab bar anyway.
+          cartOpen
+            ? 'z-[60] bottom-[calc(5.25rem+env(safe-area-inset-bottom))]'
+            : 'z-30 bottom-[calc(5.5rem+env(safe-area-inset-bottom))]',
+        )}
+      >
+        <VoiceOrder items={sellable} locale={locale} onAdd={addQuantity} />
+
+        {!cartOpen && (
+          <CartBar
+            totalItems={lines.reduce((count, line) => count + line.quantity, 0)}
+            totalAmountPaise={totalPaise}
+            onReview={() => setCartOpen(true)}
+            locale={locale}
+          />
+        )}
+      </div>
 
       {cartDrawer}
     </div>
