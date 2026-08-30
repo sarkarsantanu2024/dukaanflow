@@ -50,9 +50,17 @@ node -e "console.log(JSON.stringify(require('web-push').generateVAPIDKeys()))"
 ```
 
 `publicKey` → `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `privateKey` →
-`VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` is a `mailto:` or `https:` URL a push
-service can use to reach you about our traffic (the spec refuses an empty
-string).
+`VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` is who a push service contacts if it
+has a problem with our traffic. It takes a `mailto:` or an `https:` URL and
+refuses an empty string; **use the site's own URL** —
+`https://dukaanflow.vercel.app`. It is already public, it keeps a personal or
+work mailbox out of a header sent to Google and Mozilla on every notification,
+and it does not go stale when somebody changes job.
+
+In Vercel, `VAPID_PRIVATE_KEY` is the only one of the three that is a secret —
+mark it **Sensitive**. `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is compiled into the
+JavaScript every customer downloads, so marking it sensitive protects nothing
+and only stops you reading it back; `VAPID_SUBJECT` is a public URL.
 
 > **Generate this pair once and never change it.** The key pair is the identity
 > every subscription was issued against. Replacing it silently stops every phone
