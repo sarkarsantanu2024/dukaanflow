@@ -66,6 +66,7 @@ export default async function KhataPage({ params }: PageProps) {
     phone: row.phone,
     area: row.area,
     balancePaise: row.balancePaise,
+    owingSince: row.owingSince ? row.owingSince.toISOString() : null,
     entries: byCustomer.get(row.id) ?? [],
   }));
 

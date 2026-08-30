@@ -35,6 +35,8 @@ export type KhataCustomer = {
   /** Which para or lane, when one was recorded. */
   area: string;
   balancePaise: number;
+  /** ISO date the CURRENT debt began, or null when they owe nothing. */
+  owingSince: string | null;
   entries: {
     id: string;
     kind: 'DEBIT' | 'CREDIT';
@@ -43,6 +45,29 @@ export type KhataCustomer = {
     createdAt: string;
   }[];
 };
+
+/**
+ * How long this debt has run, in the words a shopkeeper would use.
+ *
+ * Days up to two months, then months — "owing 94 days" is a number nobody
+ * converts in their head, and "owing 3 months" is the sentence they would say
+ * out loud. Today's debt gets no line at all: everything is a day old at some
+ * point, and a badge on every fresh entry would mean nothing.
+ */
+function owingFor(
+  since: string | null,
+  t: ReturnType<typeof ownerDict>,
+): { label: string; months: number } | null {
+  if (!since) return null;
+
+  const days = Math.floor((Date.now() - new Date(since).getTime()) / 86_400_000);
+  if (days < 1) return null;
+
+  const months = Math.floor(days / 30);
+  return months >= 2
+    ? { label: t.khataOwingMonths.replace('{n}', String(months)), months }
+    : { label: t.khataOwingDays.replace('{n}', String(days)), months };
+}
 
 export function KhataScreen({
   slug,
@@ -217,6 +242,7 @@ export function KhataScreen({
             const expanded = open === customer.id;
             const owes = customer.balancePaise > 0;
             const advance = customer.balancePaise < 0;
+            const ageing = owes ? owingFor(customer.owingSince, t) : null;
 
             return (
               <li key={customer.id} className="rounded-2xl bg-white shadow-card">
@@ -230,7 +256,11 @@ export function KhataScreen({
                     aria-hidden
                     className={clsx(
                       'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold',
-                      owes ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-500',
+                      owes
+                        ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                        : advance
+                          ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200'
+                          : 'bg-slate-100 text-slate-500',
                     )}
                   >
                     {(customer.name || customer.phone).slice(0, 2).toUpperCase()}
@@ -245,18 +275,56 @@ export function KhataScreen({
                         .filter(Boolean)
                         .join(' · ')}
                     </span>
+
+                    {/* HOW LONG, not just how much.
+                        "Who owes me" was on this row already; "who has owed me
+                        since Puja" was not, and that is the one a shopkeeper
+                        acts on — a fortnight is a reminder, four months is a
+                        visit. It deepens with age, so the oldest debts are the
+                        ones the eye lands on. */}
+                    {ageing && (
+                      <span
+                        className={clsx(
+                          'mt-0.5 block truncate text-xs font-semibold',
+                          ageing.months >= 3
+                            ? 'text-red-600'
+                            : ageing.months >= 1
+                              ? 'text-amber-700'
+                              : 'text-slate-500',
+                        )}
+                      >
+                        {ageing.label}
+                      </span>
+                    )}
                   </span>
 
-                  <span className="shrink-0 text-right">
+                  {/* Owed, advance and settled are three different facts and
+                      now look like it. They used to differ only in a word
+                      under the number, so a customer holding ₹250 of credit
+                      read at a glance exactly like one owing ₹250 — and on a
+                      list of forty names, a glance is all anybody gives it. */}
+                  <span
+                    className={clsx(
+                      'shrink-0 rounded-xl px-2.5 py-1 text-right',
+                      owes && 'bg-amber-50 ring-1 ring-amber-200',
+                      advance && 'bg-brand-50 ring-1 ring-brand-200',
+                    )}
+                  >
                     <span
                       className={clsx(
                         'block font-bold tabular-nums',
+                        owes ? 'text-amber-800' : advance ? 'text-brand-800' : 'text-slate-400',
+                      )}
+                    >
+                      {advance && '+'}
+                      {formatPaise(Math.abs(customer.balancePaise))}
+                    </span>
+                    <span
+                      className={clsx(
+                        'block text-xs font-medium',
                         owes ? 'text-amber-700' : advance ? 'text-brand-700' : 'text-slate-400',
                       )}
                     >
-                      {formatPaise(Math.abs(customer.balancePaise))}
-                    </span>
-                    <span className="block text-xs text-slate-500">
                       {owes ? t.khataOwes : advance ? t.khataAdvance : t.khataSettled}
                     </span>
                   </span>

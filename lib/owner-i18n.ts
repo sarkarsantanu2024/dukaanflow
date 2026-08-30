@@ -208,6 +208,14 @@ type OwnerDictionary = {
   khataNobodyHint: string;
   khataOwes: string;
   khataAdvance: string;
+  /**
+   * How long the current debt has run. `{n}` is the number.
+   *
+   * "Who owes me" was answered; "who has owed me since June" was not, and that
+   * is the one a shopkeeper acts on.
+   */
+  khataOwingDays: string;
+  khataOwingMonths: string;
   khataSettled: string;
   khataGave: string;
   khataGot: string;
@@ -438,6 +446,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataNobodyHint: 'Add an entry below, or sell on udhaar from the Sell screen.',
     khataOwes: 'owes',
     khataAdvance: 'in advance',
+    khataOwingDays: 'owing {n} days',
+    khataOwingMonths: 'owing {n} months',
     khataSettled: 'settled',
     khataGave: 'Gave goods',
     khataSettle: 'Mark fully paid',
@@ -662,6 +672,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataNobodyHint: 'নিচে লিখুন, বা “বিক্রি” থেকে ধারে দিন।',
     khataOwes: 'বাকি',
     khataAdvance: 'অগ্রিম',
+    khataOwingDays: '{n} দিন ধরে বাকি',
+    khataOwingMonths: '{n} মাস ধরে বাকি',
     khataSettled: 'শোধ',
     khataGave: 'জিনিস দিলাম',
     khataSettle: 'সব শোধ হয়েছে',
@@ -886,6 +898,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataNobodyHint: 'नीचे लिखिए, या “बिक्री” से उधार पर दीजिए।',
     khataOwes: 'बाकी',
     khataAdvance: 'अग्रिम',
+    khataOwingDays: '{n} दिन से बाकी',
+    khataOwingMonths: '{n} महीने से बाकी',
     khataSettled: 'चुकता',
     khataGave: 'सामान दिया',
     khataSettle: 'पूरा भुगतान हो गया',
