@@ -26,6 +26,21 @@ const KEYS = [
   // Signs the daily retention purge. Without it the cron refuses to run and
   // the order and sale tables grow forever.
   'CRON_SECRET',
+  /**
+   * Web push: the sound a shopkeeper's phone makes when an order arrives, and
+   * the message a customer gets when theirs is ready.
+   *
+   * SET THESE ONCE AND NEVER CHANGE THEM. The key pair is the identity every
+   * subscription was issued against — replacing it silently stops every phone
+   * that has already said yes, and the browser permission prompt is one-shot,
+   * so some of those people can never be asked again.
+   *
+   * All three blank is a supported state: push is simply off and every screen
+   * behaves exactly as it does with it on.
+   */
+  'NEXT_PUBLIC_VAPID_PUBLIC_KEY',
+  'VAPID_PRIVATE_KEY',
+  'VAPID_SUBJECT',
 ] as const;
 
 console.log('\nPaste each value into Vercel → Settings → Environment Variables.');

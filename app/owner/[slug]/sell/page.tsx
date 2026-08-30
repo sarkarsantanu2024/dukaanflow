@@ -44,6 +44,7 @@ export default async function SellPage({ params }: PageProps) {
         unit: true,
         category: true,
         inStock: true,
+        stockQty: true,
       },
     }),
     prisma.customer.findMany({

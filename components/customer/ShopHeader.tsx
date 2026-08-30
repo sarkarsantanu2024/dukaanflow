@@ -48,6 +48,14 @@ export type ShopSummary = {
   ownerImageData: string;
   /** Off means collection only — the checkout never offers delivery. */
   deliveryEnabled: boolean;
+  /**
+   * What delivery costs and the smallest order the shop will send, in PAISE.
+   * All zero means free delivery with no minimum, which is what a shop that has
+   * never opened the settings card goes on doing.
+   */
+  deliveryFeePaise: number;
+  freeDeliveryAbovePaise: number;
+  minOrderPaise: number;
   /** "HH:MM" each, or blank when the shop has not said. */
   openTime: string;
   closeTime: string;

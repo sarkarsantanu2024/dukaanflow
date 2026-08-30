@@ -18,6 +18,7 @@ import { OwnerHeader } from './OwnerHeader';
 import { PlanBanner, type PlanState } from './PlanBanner';
 import { OpenInChromeNotice } from './OpenInChromeNotice';
 import { SubscriptionRoadblock, type RoadblockState } from './SubscriptionRoadblock';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 
 export type OwnerTab = 'sell' | 'inventory' | 'khata' | 'orders';
 
@@ -102,6 +103,9 @@ export function OwnerShell({
       <OwnerHeader slug={slug} locale={locale} />
 
       <main className="mx-auto max-w-3xl space-y-4 px-4 py-4">
+        {/* First thing under the header, because everything below it may be a
+            cached copy and nothing else on the page would say so. */}
+        <OfflineBanner label={t.offline} hint={t.offlineHint} />
         <OpenInChromeNotice locale={locale} />
         <PlanBanner slug={slug} locale={locale} plan={plan} />
         {children}

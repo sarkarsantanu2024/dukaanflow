@@ -25,6 +25,7 @@ import { dict, type Locale } from '@/lib/i18n';
 import { Drawer } from '@/components/ui/Drawer';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { TrashIcon } from '@/components/ui/Icon';
+import type { DeliveryQuote } from '@/lib/delivery';
 
 export type CartLine = {
   id: string;
@@ -44,11 +45,22 @@ export function CartDrawer({
   onClear,
   onContinue,
   continueLabel,
+  quote,
 }: {
   open: boolean;
   lines: CartLine[];
   totalPaise: number;
   locale: Locale;
+  /**
+   * What delivery would cost this basket, or null when there is nothing to say
+   * — a shop that delivers free with no minimum, or the owner's own till,
+   * which uses this same panel and delivers nothing.
+   *
+   * Quoted for DELIVERY, because that is what a shopper is assumed to be doing
+   * until they say otherwise at checkout. Choosing Pickup there drops the
+   * charge, and the checkout says so.
+   */
+  quote?: DeliveryQuote | null;
   onClose: () => void;
   onSetQuantity: (itemId: string, next: number) => void;
   onClear: () => void;
@@ -111,23 +123,65 @@ export function CartDrawer({
          fold behind everything already decided. */
       footer={
         lines.length > 0 ? (
-          <div className="flex items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-slate-500">{t.total}</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900">
-                {formatPaise(totalPaise)}
+          <div className="space-y-2">
+            {/* THE DELIVERY CHARGE IS SHOWN BEFORE THE FORM, NOT AFTER IT.
+                A shopper who agrees to ₹240 and is then billed ₹270 has been
+                surprised by their own shop, and the surprise arrives at the one
+                moment they have already committed. Broken out into goods and
+                delivery so the number can be checked against the bag. */}
+            {quote && (quote.deliveryFeePaise > 0 || quote.toFreeDeliveryPaise > 0) && (
+              <dl className="space-y-1 border-b border-slate-200 pb-2 text-sm">
+                <div className="flex justify-between text-slate-600">
+                  <dt>{t.goods}</dt>
+                  <dd className="tabular-nums">{formatPaise(quote.goodsPaise)}</dd>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <dt>{t.deliveryCharge}</dt>
+                  <dd className="tabular-nums">
+                    {quote.deliveryFeePaise > 0 ? formatPaise(quote.deliveryFeePaise) : t.deliveryFree}
+                  </dd>
+                </div>
+              </dl>
+            )}
+
+            {/* "₹40 more and delivery is free." The one nudge here that is
+                worth making, because it is the shop's own offer and acting on
+                it costs the shopper nothing they did not want. */}
+            {quote && quote.toFreeDeliveryPaise > 0 && (
+              <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm font-medium text-brand-800">
+                {formatPaise(quote.toFreeDeliveryPaise)} {t.addMoreForFree}
               </p>
+            )}
+
+            {/* Below the shop's minimum. Said here rather than only at the
+                server, and said as an amount rather than a refusal — "₹55
+                more, or choose Pickup" is something a shopper can act on. The
+                button stays live: Pickup is never blocked, and finding that out
+                is what the checkout is for. */}
+            {quote && quote.shortfallPaise > 0 && (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+                {formatPaise(quote.shortfallPaise)} {t.addMoreToOrder}
+              </p>
+            )}
+
+            <div className="flex items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-slate-500">{t.total}</p>
+                <p className="text-xl font-bold tabular-nums text-slate-900">
+                  {formatPaise(quote ? quote.totalPaise : totalPaise)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onContinue();
+                }}
+                className="h-12 shrink-0 rounded-xl bg-brand-600 px-5 text-base font-semibold text-white transition hover:bg-brand-700"
+              >
+                {continueLabel ?? `${t.continue} →`}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onContinue();
-              }}
-              className="h-12 shrink-0 rounded-xl bg-brand-600 px-5 text-base font-semibold text-white transition hover:bg-brand-700"
-            >
-              {continueLabel ?? `${t.continue} →`}
-            </button>
           </div>
         ) : undefined
       }

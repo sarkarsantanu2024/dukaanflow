@@ -40,6 +40,11 @@ export async function loadOwnerShop(slug: string) {
       noticeText: true,
       noticeFrom: true,
       noticeTo: true,
+      // The terms the shop trades on, which the shopkeeper sets themselves.
+      deliveryEnabled: true,
+      deliveryFeePaise: true,
+      freeDeliveryAbovePaise: true,
+      minOrderPaise: true,
     },
   });
   if (!shop) notFound();

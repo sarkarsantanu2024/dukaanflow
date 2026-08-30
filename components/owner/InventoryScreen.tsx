@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ItemsManager, type AdminItem } from '@/components/admin/ItemsManager';
 import { NoticeCard } from './NoticeCard';
+import { DeliveryCard } from './DeliveryCard';
 import type { ShopType } from '@prisma/client';
 import { StarterPicker } from './StarterPicker';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -31,6 +32,10 @@ export function InventoryScreen({
   noticeText,
   noticeFrom,
   noticeTo,
+  deliveryEnabled,
+  deliveryFeePaise,
+  freeDeliveryAbovePaise,
+  minOrderPaise,
 }: {
   slug: string;
   items: AdminItem[];
@@ -41,6 +46,11 @@ export function InventoryScreen({
   /** "YYYY-MM-DD" each, or blank. */
   noticeFrom: string;
   noticeTo: string;
+  /** The terms this shop delivers on. All PAISE; all zero by default. */
+  deliveryEnabled: boolean;
+  deliveryFeePaise: number;
+  freeDeliveryAbovePaise: number;
+  minOrderPaise: number;
   showWelcome: boolean;
   itemLimit: number;
   /** Drives which units this shop is offered. */
@@ -103,6 +113,18 @@ export function InventoryScreen({
         noticeText={noticeText}
         noticeFrom={noticeFrom}
         noticeTo={noticeTo}
+      />
+
+      {/* Beside the notice, folded shut, for the same reason it is: three
+          fields most shops set once and never open again should not cost a tab
+          or a screenful. */}
+      <DeliveryCard
+        slug={slug}
+        locale={locale}
+        deliveryEnabled={deliveryEnabled}
+        deliveryFeePaise={deliveryFeePaise}
+        freeDeliveryAbovePaise={freeDeliveryAbovePaise}
+        minOrderPaise={minOrderPaise}
       />
 
       {starter && catalogue.length > 0 && (

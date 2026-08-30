@@ -16,7 +16,22 @@ export type CustomerItem = {
   unit: string;
   category: string;
   inStock: boolean;
+  /**
+   * How many the shop has left, or null where nobody is counting — which is
+   * most of a kirana's list and shows nothing at all.
+   */
+  stockQty: number | null;
 };
+
+/**
+ * When to say how many are left.
+ *
+ * Only when the number is small enough to change what somebody does. "Only 2
+ * left" on the last packets is useful and true; "47 left" is inventory data
+ * pasted onto a shop page, and printing it beside every counted item would
+ * turn a menu into a warehouse report.
+ */
+const SHOW_COUNT_AT_OR_BELOW = 5;
 
 /**
  * The item's name in the shopper's language, falling back to the primary name.
@@ -53,9 +68,19 @@ export function ItemCard({
   locale: Locale;
 }) {
   const t = dict(locale);
-  const disabled = !item.inStock;
   const label = itemName(item, locale);
   const inBasket = quantity > 0;
+  const disabled = !item.inStock;
+  /**
+   * What this shop can actually hand over. 99 where nobody is counting.
+   *
+   * Kept apart from `disabled`, which greys the whole card and prints "out of
+   * stock": a basket already holding the last two packets is not an item the
+   * shop has none of, and saying so would send the shopper away from something
+   * they have already got.
+   */
+  const most = Math.min(99, item.stockQty ?? 99);
+  const atMost = quantity >= most;
 
   return (
     <li
@@ -72,7 +97,7 @@ export function ItemCard({
           name, not for a control at the far edge of the row. */}
       <button
         type="button"
-        disabled={disabled}
+        disabled={disabled || atMost}
         onClick={() => onChange(quantity + 1)}
         aria-label={inBasket ? `${t.add} — ${label} (${quantity})` : `${t.add} — ${label}`}
         className={clsx(
@@ -85,9 +110,20 @@ export function ItemCard({
         <span className="mt-1 flex flex-wrap items-center gap-2">
           <span className="text-base font-bold text-brand-700">{formatPaise(item.pricePaise)}</span>
           {item.unit && <span className="text-sm text-slate-500">/ {item.unit}</span>}
-          <Badge tone={item.inStock ? 'green' : 'red'}>
-            {item.inStock ? t.inStock : t.outOfStock}
-          </Badge>
+          {/* "Only 2 left" replaces the plain "In stock" when the shop is
+              nearly out. It is the more useful of the two facts and takes the
+              same room: a shopper reaching for three of something the shop has
+              two of finds out here, rather than at checkout — or, worse, when
+              the delivery arrives one short. */}
+          {item.inStock && item.stockQty !== null && item.stockQty <= SHOW_COUNT_AT_OR_BELOW ? (
+            <Badge tone="amber">
+              {t.onlyLeft} {item.stockQty}
+            </Badge>
+          ) : (
+            <Badge tone={item.inStock ? 'green' : 'red'}>
+              {item.inStock ? t.inStock : t.outOfStock}
+            </Badge>
+          )}
         </span>
       </button>
 
@@ -110,10 +146,15 @@ export function ItemCard({
           <span aria-live="polite" className="w-7 text-center font-bold tabular-nums text-slate-900">
             {quantity}
           </span>
+          {/* The stepper stops at what the shop has.
+              A counted item cannot be asked for beyond its count — the order
+              route refuses it anyway, and finding that out at checkout, after
+              filling in a name, a number and an address, is the worst possible
+              moment to be told. Uncounted items keep the old cap of 99. */}
           <button
             type="button"
             aria-label={`+ ${label}`}
-            disabled={quantity >= 99}
+            disabled={atMost}
             onClick={() => onChange(quantity + 1)}
             className="h-9 w-9 rounded-lg text-lg font-bold text-brand-800 transition hover:bg-brand-50 disabled:opacity-40"
           >

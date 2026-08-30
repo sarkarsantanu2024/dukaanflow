@@ -29,11 +29,17 @@ import { useToast } from '@/components/ui/Toast';
 import { CheckIcon, CloseIcon, PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { formatPaise } from '@/lib/money';
-import { buildRoundMessage, buildStatusMessage, toWhatsAppNumber } from '@/lib/whatsapp';
+import {
+  buildRevisedMessage,
+  buildRoundMessage,
+  buildStatusMessage,
+  toWhatsAppNumber,
+} from '@/lib/whatsapp';
 import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
+import { PushToggle } from './PushToggle';
 
 /**
  * An ordered line in the owner's language, falling back to the primary name.
@@ -57,9 +63,16 @@ export type OwnerOrder = {
   customerAddress: string;
   orderType: 'DELIVERY' | 'PICKUP';
   status: OrderStatus;
+  /** Goods plus delivery — what the customer owes. */
   totalAmountPaise: number;
+  /** What was charged for sending it out, already inside the total above. */
+  deliveryFeePaise: number;
+  /** Has the owner already cut this order down to what they had? */
+  revised: boolean;
   createdAt: string;
   lines: {
+    /** Blank on orders taken before the snapshot carried it. */
+    itemId: string;
     name: string;
     nameBn?: string;
     nameHi?: string;
@@ -120,6 +133,26 @@ export function OrdersScreen({
   /** The order whose payment question is currently open, if any. */
   const [settling, setSettling] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab | null>(null);
+
+  /**
+   * The order being cut down to what the shop actually has, and the amounts
+   * the owner is proposing — item id to quantity.
+   *
+   * A draft rather than a save on every tap: an owner going from 2 kg to 1 kg
+   * passes through nothing meaningful, and the customer must be told once, at
+   * the end, rather than twice on the way.
+   */
+  const [revising, setRevising] = useState<string | null>(null);
+  const [revision, setRevision] = useState<Record<string, number>>({});
+  /**
+   * The message waiting to be sent about an order that has just been changed.
+   *
+   * Kept until the owner sends it or leaves the screen. Push has already gone
+   * to whoever allowed it, but push is not the system of record — the WhatsApp
+   * message is what actually reaches everybody, and this is the one moment the
+   * shopkeeper genuinely must not skip it.
+   */
+  const [pendingShare, setPendingShare] = useState<{ orderId: string; url: string } | null>(null);
 
   const counts = useMemo(() => {
     const tally: Record<Tab, number> = {
@@ -215,6 +248,83 @@ export function OrdersScreen({
     }
   }
 
+  /**
+   * Save what the shop can actually give, and put the message in the owner's
+   * hand.
+   *
+   * The server is the authority on the new total — it re-reads the delivery
+   * terms, which a shorter order may now fail to qualify for — so the message
+   * is built from what it sends back rather than from what this screen guessed.
+   */
+  async function saveRevision(order: OwnerOrder) {
+    setBusyId(order.id);
+    try {
+      const response = await fetch(`/api/admin/shop/${slug}/order`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: order.id,
+          lines: order.lines
+            .filter((line) => line.itemId)
+            .map((line) => ({
+              itemId: line.itemId,
+              quantity: revision[line.itemId] ?? line.quantity,
+            })),
+        }),
+      });
+      if (handledExpiredSession({ response, slug, t, push })) return;
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        changed?: boolean;
+        totalAmountPaise?: number;
+        lines?: { itemId: string; name: string; unit: string; quantity: number; amountPaise: number }[];
+        removed?: { name: string; unit: string; quantity: number }[];
+      };
+
+      if (!response.ok) {
+        push(payload.error ?? t.networkError, 'error');
+        return;
+      }
+
+      setRevising(null);
+      setRevision({});
+
+      if (payload.changed === false) {
+        router.refresh();
+        return;
+      }
+
+      // Each line's old quantity, so the message can say what it was rather
+      // than only what it now is — which is the question the customer has.
+      const before = new Map(order.lines.map((line) => [line.itemId, line.quantity]));
+      const message = buildRevisedMessage({
+        shopName,
+        customerName: order.customerName,
+        totalAmountPaise: payload.totalAmountPaise ?? order.totalAmountPaise,
+        lines: (payload.lines ?? []).map((line) => ({
+          name: line.name,
+          unit: line.unit,
+          quantity: line.quantity,
+          wasQuantity: before.get(line.itemId) ?? line.quantity,
+          amountPaise: line.amountPaise,
+        })),
+        removed: payload.removed ?? [],
+      });
+
+      setPendingShare({
+        orderId: order.id,
+        url: `https://wa.me/91${order.customerPhone}?text=${encodeURIComponent(message)}`,
+      });
+      push(t.reviseDone, 'success');
+      router.refresh();
+    } catch {
+      push(t.networkError, 'error');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   if (orders.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
@@ -260,6 +370,15 @@ export function OrdersScreen({
           </dd>
         </div>
       </dl>
+
+      {/* THE ASK LANDS HERE, AND ONLY HERE.
+          This screen returns early when there are no orders at all, so an
+          owner never meets this before they have seen the product do
+          something. That is the whole placement argument: the browser's
+          permission prompt cannot be shown twice, and a shopkeeper looking at
+          an order that arrived while they were serving somebody is the one
+          moment the answer is obviously yes. */}
+      <PushToggle slug={slug} locale={locale} />
 
       {/* THE ROUND, IN ONE MESSAGE.
           Whoever runs the deliveries has a phone and WhatsApp and nothing
@@ -330,6 +449,15 @@ export function OrdersScreen({
                       ` · ${formatDay(order.createdAt)}`}
                   </p>
                 </div>
+                {/* Said on the card, not only in the message that went out.
+                    An owner scrolling back through the day has to be able to
+                    see which orders they cut, because that is the one the
+                    customer will ring about. */}
+                {order.revised && (
+                  <span className="shrink-0 rounded-full bg-purple-50 px-2.5 py-1 text-xs font-semibold text-purple-700">
+                    {t.revisedBadge}
+                  </span>
+                )}
                 <span
                   className={clsx(
                     'shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold',
@@ -343,20 +471,155 @@ export function OrdersScreen({
                 </span>
               </div>
 
-              <ul className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-sm">
-                {order.lines.map((line, index) => (
-                  <li
-                    key={`${order.id}-${index}`}
-                    className="flex justify-between gap-3 text-slate-600"
-                  >
-                    <span className="min-w-0 truncate">
-                      {lineName(line, locale)}
-                      {line.unit ? ` · ${line.unit}` : ''} × {line.quantity}
-                    </span>
-                    <span className="shrink-0 tabular-nums">{formatPaise(line.amountPaise)}</span>
-                  </li>
-                ))}
-              </ul>
+              {revising === order.id ? (
+                /* WHAT THE SHOP CAN ACTUALLY GIVE.
+                   A customer asks for two kilos of basmati and the sack has
+                   one. Cancelling is wrong — the shop wants to send the kilo
+                   and the customer wants it — and a phone call leaves the app
+                   still insisting on a total nobody is going to pay, which is
+                   then what the khata would post if the order were completed
+                   unpaid.
+
+                   So: one stepper per line, capped at what was ordered. The
+                   amounts only ever come down. Putting something INTO
+                   somebody's order on their behalf is the shop deciding what a
+                   customer buys, and the server refuses it too. */
+                <div className="mt-3 space-y-2 rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+                  <p className="text-sm font-semibold text-slate-800">{t.reviseTitle}</p>
+                  <p className="text-xs text-slate-600">{t.reviseHint}</p>
+
+                  <ul className="space-y-1.5">
+                    {order.lines.map((line, index) => {
+                      const next = revision[line.itemId] ?? line.quantity;
+                      return (
+                        <li
+                          key={`${order.id}-revise-${index}`}
+                          className="flex items-center gap-2 rounded-lg bg-white px-2.5 py-2"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-sm text-slate-700">
+                            {lineName(line, locale)}
+                            {line.unit ? ` · ${line.unit}` : ''}
+                            {next !== line.quantity && (
+                              <span className="text-slate-400">
+                                {' '}
+                                · {t.reviseWas} {line.quantity}
+                              </span>
+                            )}
+                          </span>
+
+                          {/* A line with no item id cannot be named to the
+                              server, so it is shown and left alone rather than
+                              offered as something changeable that would then
+                              silently do nothing. */}
+                          {line.itemId ? (
+                            <span className="flex shrink-0 items-center gap-1 rounded-lg bg-slate-100 p-1">
+                              <button
+                                type="button"
+                                aria-label="−"
+                                onClick={() =>
+                                  setRevision((current) => ({
+                                    ...current,
+                                    [line.itemId]: Math.max(0, next - 1),
+                                  }))
+                                }
+                                className="h-8 w-8 rounded text-lg font-bold text-slate-700"
+                              >
+                                −
+                              </button>
+                              <span className="w-6 text-center font-bold tabular-nums">{next}</span>
+                              <button
+                                type="button"
+                                aria-label="+"
+                                disabled={next >= line.quantity}
+                                onClick={() =>
+                                  setRevision((current) => ({
+                                    ...current,
+                                    [line.itemId]: Math.min(line.quantity, next + 1),
+                                  }))
+                                }
+                                className="h-8 w-8 rounded text-lg font-bold text-slate-700 disabled:opacity-30"
+                              >
+                                +
+                              </button>
+                            </span>
+                          ) : (
+                            <span className="shrink-0 text-sm tabular-nums text-slate-500">
+                              × {line.quantity}
+                            </span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRevising(null);
+                        setRevision({});
+                      }}
+                      className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700"
+                    >
+                      {t.reviseCancel}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busyId === order.id}
+                      onClick={() => saveRevision(order)}
+                      className="h-10 flex-1 rounded-lg bg-brand-600 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      {t.reviseSave}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <ul className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-sm">
+                  {order.lines.map((line, index) => (
+                    <li
+                      key={`${order.id}-${index}`}
+                      className="flex justify-between gap-3 text-slate-600"
+                    >
+                      <span className="min-w-0 truncate">
+                        {lineName(line, locale)}
+                        {line.unit ? ` · ${line.unit}` : ''} × {line.quantity}
+                      </span>
+                      <span className="shrink-0 tabular-nums">{formatPaise(line.amountPaise)}</span>
+                    </li>
+                  ))}
+
+                  {/* Broken out, because a total that silently includes a
+                      journey is a total the owner cannot check against the
+                      goods in the bag. */}
+                  {order.deliveryFeePaise > 0 && (
+                    <li className="flex justify-between gap-3 text-slate-500">
+                      <span>{t.delivery}</span>
+                      <span className="shrink-0 tabular-nums">
+                        {formatPaise(order.deliveryFeePaise)}
+                      </span>
+                    </li>
+                  )}
+                </ul>
+              )}
+
+              {/* THE MESSAGE THAT MUST NOT BE SKIPPED.
+                  A push has already gone to whoever allowed one, and push is
+                  never the system of record — on half the phones in this
+                  market it will not arrive. So after an order is cut, the
+                  WhatsApp message stays on the card until the owner sends it,
+                  pre-written, one tap. */}
+              {pendingShare?.orderId === order.id && (
+                <a
+                  href={pendingShare.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setPendingShare(null)}
+                  className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white"
+                >
+                  <WhatsAppIcon className="h-5 w-5" />
+                  {t.reviseTellCustomer}
+                </a>
+              )}
 
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
                 <p className="mr-auto font-bold tabular-nums text-slate-900">
@@ -390,6 +653,27 @@ export function OrdersScreen({
                 >
                   <WhatsAppIcon className="h-[18px] w-[18px]" />
                 </a>
+
+                {/* "We only have one." The third answer, between doing the
+                    order and turning it away — and the one a kirana actually
+                    gives most often. Hidden while the panel is open, and on
+                    orders whose snapshot is too old to name its items. */}
+                {(order.status === 'NEW' || order.status === 'CONFIRMED') &&
+                  revising !== order.id &&
+                  order.lines.some((line) => line.itemId) && (
+                    <button
+                      type="button"
+                      disabled={busyId === order.id}
+                      onClick={() => {
+                        setRevising(order.id);
+                        setRevision({});
+                        setSettling(null);
+                      }}
+                      className="h-10 shrink-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      {t.reviseOpen}
+                    </button>
+                  )}
 
                 {/* One forward action per state, so the common tap is never a
                     choice: a new order is accepted, an accepted one is done. */}

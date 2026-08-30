@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { BrandMark } from '@/components/ui/BrandMark';
+import { SavedShops } from '@/components/customer/SavedShops';
 
 export default function LandingPage() {
   return (
@@ -16,6 +17,11 @@ export default function LandingPage() {
       >
         Admin sign in
       </Link>
+
+      {/* The way back for somebody who scanned a QR once and is now at home.
+          Renders nothing on a phone that has never ordered, which is every
+          visitor to this page except the customers it is for. */}
+      <SavedShops />
     </main>
   );
 }

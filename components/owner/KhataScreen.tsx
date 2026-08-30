@@ -229,6 +229,36 @@ export function KhataScreen({
           {formatPaise(outstandingPaise)}
         </p>
         <p className="mt-0.5 text-sm text-slate-500">{t.khataTitle}</p>
+
+        {/* THE BOOK COMES OUT OF THE APP.
+            This is the shopkeeper's own money, and until now the only copy of
+            it was in our database. A tool you cannot get your accounts out of
+            is not a tool, it is a dependency — and "what happens to my khata if
+            you disappear" is a question about trust that gets asked long before
+            any question about features.
+
+            Two shapes, because they are two different jobs: a spreadsheet for
+            anything that has to be added up, and a printable statement for the
+            customer who wants it on paper. Plain links, not fetch-and-blob:
+            a download link is the one thing every Android WebView handles the
+            same way. */}
+        {customers.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+            <a
+              href={`/api/owner/${slug}/khata/export`}
+              className="h-9 rounded-lg border border-slate-300 px-3 text-sm font-semibold leading-9 text-slate-700 transition hover:bg-slate-50"
+            >
+              {t.khataExportCsv}
+            </a>
+            <a
+              href={`/owner/${slug}/khata/statement`}
+              className="h-9 rounded-lg border border-slate-300 px-3 text-sm font-semibold leading-9 text-slate-700 transition hover:bg-slate-50"
+            >
+              {t.khataExportPdf}
+            </a>
+            <span className="w-full text-xs text-slate-500">{t.khataExportHint}</span>
+          </div>
+        )}
       </div>
 
       {customers.length === 0 ? (
@@ -352,8 +382,18 @@ export function KhataScreen({
                       </a>
                     )}
 
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    <p className="mb-1.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
                       {t.khataHistory}
+                      {/* One person's account, on paper. This is the version
+                          that settles an argument at the counter: the customer
+                          who says they paid last Tuesday can be handed their
+                          own statement rather than shown a phone. */}
+                      <a
+                        href={`/owner/${slug}/khata/statement?customerId=${customer.id}`}
+                        className="ml-auto font-semibold normal-case tracking-normal text-brand-700 underline"
+                      >
+                        {t.khataStatement}
+                      </a>
                     </p>
                     <ul className="divide-y divide-slate-100">
                       {customer.entries.map((entry) => (
