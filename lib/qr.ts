@@ -24,7 +24,7 @@ export function upiPayUrl(upiId: string, shopName: string): string {
 
 /** Filesystem-safe download name. */
 export function qrFileName(slug: string, kind: 'shop' | 'upi'): string {
-  return `dukaanflow-${slug}-${kind}-qr.png`;
+  return `halkhata-${slug}-${kind}-qr.png`;
 }
 
 /**

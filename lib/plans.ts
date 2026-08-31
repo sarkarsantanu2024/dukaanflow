@@ -1,7 +1,7 @@
 /**
  * Subscription plans.
  *
- * DukaanFlow charges by catalogue size, because catalogue size is what the
+ * Halkhata charges by catalogue size, because catalogue size is what the
  * product is actually worth to a shop: a tea stall with nine items and a kirana
  * with four hundred get very different value from the same software, and item
  * count is the one number both of them already understand. Nothing else is
@@ -29,6 +29,53 @@ export type PlanSpec = {
   tagline: string;
   features: string[];
 };
+
+/**
+ * HOW MANY MONTHS A YEAR COSTS.
+ *
+ * Ten, not twelve: paying for the year is two months cheaper than paying for it
+ * a month at a time.
+ *
+ * This is not a discount for its own sake, it is the churn fix. Every product a
+ * kirana already pays for — Vyapar, myBillBook, Vanij — bills once a year, and
+ * we billed twelve times. That is twelve occasions a year for a shopkeeper
+ * having a bad month to decide they will restart it later, against one. The
+ * discount buys back eleven of those decisions, and two months of revenue is a
+ * cheap price for a year of certainty.
+ *
+ * Priced against the market rather than plucked: Pro at ₹249 × 10 is ₹2,490 a
+ * year, which sits under Vanij's ₹2,999 and well under Vyapar's ₹3,399 while
+ * leaving the monthly rate untouched.
+ */
+export const MONTHS_PER_YEAR_PAID = 10;
+
+/** Whole rupees for a year of a plan, paid up front. */
+export function yearPrice(plan: Plan): number {
+  return PLAN_SPECS[plan].price * MONTHS_PER_YEAR_PAID;
+}
+
+/** What paying yearly saves against twelve monthly payments, in whole rupees. */
+export function yearSaving(plan: Plan): number {
+  return PLAN_SPECS[plan].price * (12 - MONTHS_PER_YEAR_PAID);
+}
+
+/**
+ * What a given number of months costs, in whole rupees.
+ *
+ * Twelve months and up are charged at the yearly rate — a shop buying two years
+ * gets the same two-months-free deal twice, and nobody has to remember to apply
+ * it. Anything under a year is simply the monthly rate, so no partial discount
+ * has to be reasoned about.
+ *
+ * The remainder past whole years is charged monthly, which is the arithmetic
+ * that makes 18 months land between one year and two rather than jumping.
+ */
+export function priceForMonths(plan: Plan, months: number): number {
+  const monthly = PLAN_SPECS[plan].price;
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  return years * monthly * MONTHS_PER_YEAR_PAID + rest * monthly;
+}
 
 export const PLAN_SPECS: Record<Plan, PlanSpec> = {
   // The enum value stays FREE because it is written into every existing row and
@@ -95,7 +142,7 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
 export const PLAN_ORDER: Plan[] = ['FREE', 'STARTER', 'PRO', 'EX'];
 
 /**
- * What DukaanFlow charges to catalogue a shop's items for them.
+ * What Halkhata charges to catalogue a shop's items for them.
  *
  * This sells against the onboarding failure the console already flags: a shop
  * onboarded, QR printed, and nothing ever listed. The operator does the

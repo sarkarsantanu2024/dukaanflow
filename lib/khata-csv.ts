@@ -3,7 +3,7 @@
  *
  * WHY THIS IS NOT A FEATURE. The khata is the shopkeeper's own money — who owes
  * them what, going back months — and until now the only copy of it was in
- * DukaanFlow's database. A shopkeeper who cannot get their own ledger out of a
+ * Halkhata's database. A shopkeeper who cannot get their own ledger out of a
  * tool has not been given a tool, they have been given a dependency, and they
  * are right to be wary of one. This is the answer to "what happens to my
  * accounts if you disappear", which is a question about trust and gets asked

@@ -23,7 +23,7 @@ import { OrderPlaced } from './OrderPlaced';
 import { watchInstallPrompt } from '@/lib/install-prompt';
 import { buildOfflineOrderMessage, buildWhatsAppUrl } from '@/lib/whatsapp';
 
-const LOCALE_STORAGE_KEY = 'dukaanflow:locale';
+const LOCALE_STORAGE_KEY = 'halkhata:locale';
 
 /**
  * What this phone told a shop last time.
@@ -39,7 +39,7 @@ const LOCALE_STORAGE_KEY = 'dukaanflow:locale';
  * So the form stays where it was always needed, at checkout, and simply
  * arrives filled in.
  */
-const CUSTOMER_STORAGE_KEY = 'dukaanflow:customer';
+const CUSTOMER_STORAGE_KEY = 'halkhata:customer';
 
 type RememberedCustomer = {
   customerName: string;
@@ -130,7 +130,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     watchInstallPrompt();
   }, []);
 
-  // Remember the shopper's language across visits to any DukaanFlow shop.
+  // Remember the shopper's language across visits to any Halkhata shop.
   useEffect(() => {
     const saved = window.localStorage.getItem(LOCALE_STORAGE_KEY);
     if (saved && (LOCALES as readonly string[]).includes(saved)) setLocale(saved as Locale);
@@ -327,7 +327,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
        *
        * No Order row exists for that path, and that is honest: the shop has
        * been told by a person, not by the app, and the shopkeeper will take it
-       * the way they took orders before DukaanFlow. Losing the sale would be
+       * the way they took orders before Halkhata. Losing the sale would be
        * the alternative.
        */
       setOffline({
@@ -502,7 +502,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         )}
 
       </main>
-      {/* "Powered by DukaanFlow" used to sit here, inside `main`, above the
+      {/* "Powered by Halkhata" used to sit here, inside `main`, above the
           repeat-order panel — a footer in the middle of the page. It has moved
           to the real one, at the very bottom, beside the support details. */}
 

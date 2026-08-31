@@ -1,10 +1,10 @@
 /**
- * What DukaanFlow itself earns.
+ * What Halkhata itself earns.
  *
  * Every other report in this codebase answers "how is a shop doing". This one
  * answers "how is the business doing", and the two must not be confused: a
- * shop's revenue is what its customers pay it, and DukaanFlow's revenue is what
- * the shops pay DukaanFlow. Nothing here reads an order or a sale.
+ * shop's revenue is what its customers pay it, and Halkhata's revenue is what
+ * the shops pay Halkhata. Nothing here reads an order or a sale.
  *
  * All figures are PAISE (see lib/money.ts). Subscription and service income are
  * kept apart the whole way down, because a month that looks flat on

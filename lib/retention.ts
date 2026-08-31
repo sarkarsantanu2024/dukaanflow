@@ -1,5 +1,5 @@
 /**
- * How long DukaanFlow keeps a shop's transactions, and what it never deletes.
+ * How long Halkhata keeps a shop's transactions, and what it never deletes.
  *
  * Orders and counter sales are the two tables that grow without limit — a busy
  * kirana writes a few hundred rows a month, forever, and every one of them is
@@ -26,7 +26,7 @@
  *   money on a shopkeeper's word; it is the last thing in this database that
  *   may be quietly dropped. (A `LedgerEntry.saleId` may point at a purged sale.
  *   It is a plain column, not a foreign key, precisely so this can happen.)
- * - `Payment` — what a shop paid DukaanFlow. A billing record, and the anchor
+ * - `Payment` — what a shop paid Halkhata. A billing record, and the anchor
  *   this whole policy is computed from: purging it would move the window.
  * - `Customer`, `Shop`, `Item` — not transactions. They do not grow with trade.
  *

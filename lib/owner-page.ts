@@ -2,11 +2,12 @@ import { notFound, redirect } from 'next/navigation';
 import { prisma } from './prisma';
 import { currentOwnerSlug, requireAdmin } from './guard';
 import { shopEntitlement } from './billing';
-import { PLAN_SPECS, planFor } from './plans';
+import { PLAN_SPECS, planFor, yearPrice, yearSaving } from './plans';
 import { baseUrl } from './qr';
 import type { Locale } from './i18n';
 import type { PlanState } from '@/components/owner/PlanBanner';
 import { planPayUrl, type RoadblockState } from '@/components/owner/SubscriptionRoadblock';
+import { BRAND_NAME } from './brand';
 
 /**
  * Everything the three owner screens share: the access check, the shop, and
@@ -90,22 +91,28 @@ function roadblockFor(
     reason: billing.autoPaused ? 'paused' : 'trial-over',
     planName: spec.name,
     planPriceRupees: spec.price,
+    planYearRupees: yearPrice(spec.id),
+    planYearSavingRupees: yearSaving(spec.id),
     planItemLimit: spec.itemLimit,
     itemCount: billing.itemCount,
+    // Two intents, built here rather than in the component: the amount is
+    // inside the QR, so it must come from the same price list the server
+    // charges from and never from arithmetic done in the browser.
     payUrl: planPayUrl(upiId, spec.name, spec.price),
+    payUrlYear: planPayUrl(upiId, `${spec.name} 1yr`, yearPrice(spec.id)),
     upiId,
     helpUrl: renewUrl(shop.name, shop.slug),
   };
 }
 
 /**
- * Upgrading is a WhatsApp conversation with the DukaanFlow operator, not a
+ * Upgrading is a WhatsApp conversation with the Halkhata operator, not a
  * checkout page. That is deliberate for this market: shopkeepers pay by UPI to
  * a person they have spoken to, and a card form would lose most of them.
  */
 function renewUrl(shopName: string, slug: string): string {
   const support = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '';
-  const message = `DukaanFlow — ${shopName} (${slug}). I want to upgrade my plan.`;
+  const message = `${BRAND_NAME} — ${shopName} (${slug}). I want to upgrade my plan.`;
   const text = encodeURIComponent(message);
   return support
     ? `https://wa.me/${support}?text=${text}`

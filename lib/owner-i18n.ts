@@ -2,7 +2,7 @@
  * The shop owner's app, in the owner's own language.
  *
  * The customer page was translated from the start; the owner's side was not,
- * which meant DukaanFlow spoke to a shopkeeper in Bengali and then handed them
+ * which meant Halkhata spoke to a shopkeeper in Bengali and then handed them
  * an English screen. Every word an owner reads while running their shop lives
  * here.
  *
@@ -11,6 +11,7 @@
  */
 
 import type { Locale } from './i18n';
+import { BRAND_NAME } from './brand';
 
 type OwnerDictionary = {
   tabSell: string;
@@ -172,6 +173,10 @@ type OwnerDictionary = {
   blockScan: string;
   blockAfterPaying: string;
   blockMonth: string;
+  /** The period a price is for, and the two buttons that choose it. */
+  blockYear: string;
+  blockPerMonth: string;
+  blockPerYear: string;
   blockHelp: string;
   blockItems: string;
 
@@ -312,7 +317,7 @@ type OwnerDictionary = {
   deliveryOff: string;
   save: string;
 
-  /** Taking the khata out of DukaanFlow. */
+  /** Taking the khata out of Halkhata. */
   khataExport: string;
   khataExportHint: string;
   khataExportCsv: string;
@@ -474,6 +479,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     blockAfterPaying:
       'After paying, send us the payment screenshot on WhatsApp. Your shop opens as soon as we confirm it.',
     blockMonth: 'per month',
+    blockYear: 'per year',
+    blockPerMonth: 'Monthly',
+    blockPerYear: 'Yearly',
     blockHelp: 'Talk to us on WhatsApp',
 
     starterTitle: 'Add common items in one tap',
@@ -489,7 +497,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     pinHint: 'Run your shop from your phone — prices, stock, orders and khata. Sign in with your 6-digit PIN.',
     pinSignIn: 'Sign in',
     pinWrong: 'Incorrect PIN',
-    pinNotSetUp: 'Owner access has not been set up for this shop yet. Ask your DukaanFlow contact to issue a PIN.',
+    pinNotSetUp: `Owner access has not been set up for this shop yet. Ask your ${BRAND_NAME} contact to issue a PIN.`,
     starterSearch: 'Search the list',
     starterSelectAll: 'All',
     starterClear: 'Clear',
@@ -770,6 +778,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     blockAfterPaying:
       'টাকা দেওয়ার পর হোয়াটসঅ্যাপে স্ক্রিনশট পাঠান। আমরা দেখে নিলেই দোকান খুলে যাবে।',
     blockMonth: 'প্রতি মাস',
+    blockYear: 'প্রতি বছর',
+    blockPerMonth: 'মাসে',
+    blockPerYear: 'বছরে',
     blockHelp: 'হোয়াটসঅ্যাপে কথা বলুন',
 
     starterTitle: 'এক চাপে সাধারণ জিনিস যোগ করুন',
@@ -781,7 +792,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     pinHint: 'ফোন থেকেই দোকান চালান — দাম, স্টক, অর্ডার আর খাতা। ৬ অঙ্কের পিন দিয়ে ঢুকুন।',
     pinSignIn: 'সাইন ইন',
     pinWrong: 'পিন ভুল',
-    pinNotSetUp: 'এই দোকানের জন্য এখনও মালিকের অ্যাক্সেস চালু হয়নি। DukaanFlow-এর সঙ্গে যোগাযোগ করে পিন নিন।',
+    pinNotSetUp: `এই দোকানের জন্য এখনও মালিকের অ্যাক্সেস চালু হয়নি। ${BRAND_NAME}-এর সঙ্গে যোগাযোগ করে পিন নিন।`,
     starterSearch: 'তালিকায় খুঁজুন',
     starterSelectAll: 'সব',
     starterClear: 'বাদ দিন',
@@ -1062,6 +1073,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     blockAfterPaying:
       'भुगतान के बाद व्हाट्सएप पर स्क्रीनशॉट भेजें। पुष्टि होते ही दुकान खुल जाएगी।',
     blockMonth: 'प्रति माह',
+    blockYear: 'प्रति साल',
+    blockPerMonth: 'माहवारी',
+    blockPerYear: 'सालाना',
     blockHelp: 'व्हाट्सएप पर बात करें',
 
     starterTitle: 'एक टैप में आम सामान जोड़ें',
@@ -1073,7 +1087,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     pinHint: 'फोन से ही दुकान चलाइए — दाम, स्टॉक, ऑर्डर और खाता। 6 अंकों के पिन से साइन इन कीजिए।',
     pinSignIn: 'साइन इन',
     pinWrong: 'पिन गलत है',
-    pinNotSetUp: 'इस दुकान के लिए मालिक का एक्सेस अभी चालू नहीं हुआ है। पिन के लिए DukaanFlow से संपर्क कीजिए।',
+    pinNotSetUp: `इस दुकान के लिए मालिक का एक्सेस अभी चालू नहीं हुआ है। पिन के लिए ${BRAND_NAME} से संपर्क कीजिए।`,
     starterSearch: 'सूची में खोजें',
     starterSelectAll: 'सभी',
     starterClear: 'हटाएं',

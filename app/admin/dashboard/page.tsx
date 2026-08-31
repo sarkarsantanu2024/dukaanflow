@@ -13,15 +13,16 @@ import {
   PLAN_SPECS,
   TRIAL_DAYS,
 } from '@/lib/plans';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'DukaanFlow — Dashboard' };
+export const metadata = { title: `${BRAND_NAME} — Dashboard` };
 
 /**
  * The business, on one page.
  *
  * Distinct from Reports, which answers "how is a shop doing" for one shop at a
- * time. This answers "how is DukaanFlow doing" — what it earned, from how many
+ * time. This answers "how is Halkhata doing" — what it earned, from how many
  * shops, on which plans — and carries the product reference the operator needs
  * when they are on the phone to a shopkeeper who has asked what they get for
  * ₹249.

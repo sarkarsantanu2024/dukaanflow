@@ -3,7 +3,7 @@
 /**
  * What this shop is paying, and how to record that it paid.
  *
- * DukaanFlow collects over UPI from shopkeepers who have spoken to a person,
+ * Halkhata collects over UPI from shopkeepers who have spoken to a person,
  * so the Super Admin records the payment here rather than a gateway posting a
  * webhook. The route behind this is shaped so a gateway can take over without
  * anything above it changing.
@@ -25,6 +25,8 @@ import {
   PLAN_ORDER,
   PLAN_SPECS,
   listingChargePaise,
+  priceForMonths,
+  yearSaving,
   type Plan,
   type SubStatus,
 } from '@/lib/plans';
@@ -73,7 +75,11 @@ export function SubscriptionPanel({
   const [listedItems, setListedItems] = useState(String(state.itemCount || ''));
 
   const spec = PLAN_SPECS[plan];
-  const amountPaise = rupeesToPaise(spec.price * Math.max(1, Number(months) || 1));
+  const monthCount = Math.max(1, Number(months) || 1);
+  // Priced through the same function the server charges from, so the figure the
+  // operator reads out to a shopkeeper on the phone is the figure that gets
+  // recorded. Twelve months and up carry the two-months-free yearly rate.
+  const amountPaise = rupeesToPaise(priceForMonths(plan, monthCount));
   const listedCount = Math.max(0, Math.trunc(Number(listedItems) || 0));
   const listingPaise = listingChargePaise(listedCount);
   const atListingFloor = listedCount > 0 && listedCount < LISTING_MINIMUM_ITEMS;
@@ -160,14 +166,32 @@ export function SubscriptionPanel({
           </select>
         </label>
 
-        <Input
-          label="Months"
-          type="number"
-          min={1}
-          max={24}
-          value={months}
-          onChange={(event) => setMonths(event.target.value)}
-        />
+        <div>
+          <Input
+            label="Months"
+            type="number"
+            min={1}
+            max={24}
+            value={months}
+            onChange={(event) => setMonths(event.target.value)}
+          />
+          {/* The yearly rate is the one an operator has to remember to offer,
+              so the panel offers it instead — one tap, and the saving named
+              so it can be said out loud on the call. */}
+          {monthCount !== 12 ? (
+            <button
+              type="button"
+              onClick={() => setMonths('12')}
+              className="mt-1 text-xs font-semibold text-brand-700 underline"
+            >
+              Make it a year — saves ₹{yearSaving(plan).toLocaleString('en-IN')}
+            </button>
+          ) : (
+            <p className="mt-1 text-xs font-semibold text-brand-700">
+              Yearly rate — two months free
+            </p>
+          )}
+        </div>
 
         <Input
           label="UPI reference"
@@ -182,7 +206,7 @@ export function SubscriptionPanel({
           loading={busy}
           onClick={() =>
             post(
-              { plan, months: Math.max(1, Number(months) || 1), reference },
+              { plan, months: monthCount, reference },
               `Recorded ${formatPaise(amountPaise)}`,
             )
           }

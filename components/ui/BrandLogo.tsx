@@ -1,5 +1,5 @@
 /**
- * The DukaanFlow glyph — a D cut through on the diagonal.
+ * The Halkhata glyph — a D cut through on the diagonal.
  *
  * Takes the colour of whatever it sits in, and its holes show whatever is
  * behind. The paths live in `lib/brand.ts`, so the launcher icon and the

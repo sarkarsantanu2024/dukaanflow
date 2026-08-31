@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { subscriptionSchema } from '@/lib/validators';
-import { PLAN_SPECS, listingChargePaise } from '@/lib/plans';
+import { listingChargePaise, priceForMonths } from '@/lib/plans';
 import { rupeesToPaise } from '@/lib/money';
 
 export const runtime = 'nodejs';
@@ -12,7 +12,7 @@ type Context = { params: Promise<{ slug: string }> };
 /**
  * Super Admin only: move a shop between plans and record what it paid.
  *
- * DukaanFlow collects over UPI, and this is where that lands — the Super Admin
+ * Halkhata collects over UPI, and this is where that lands — the Super Admin
  * records the payment and the period it bought. The shape is deliberately the
  * shape a gateway webhook would write, so plugging in Razorpay later means
  * calling this logic from a webhook rather than rebuilding it.
@@ -32,7 +32,6 @@ export async function POST(request: Request, { params }: Context) {
   if (!parsed.success) return invalid(parsed.error);
 
   const { plan, months, status, listedItems, method, reference, note } = parsed.data;
-  const spec = PLAN_SPECS[plan];
 
   if (status) {
     await prisma.shop.update({ where: { id: shop.id }, data: { plan, subscriptionStatus: status } });
@@ -81,7 +80,10 @@ export async function POST(request: Request, { params }: Context) {
   const periodEnd = new Date(from);
   periodEnd.setMonth(periodEnd.getMonth() + months);
 
-  const amountPaise = rupeesToPaise(spec.price * months);
+  // Twelve months and up are charged at the yearly rate — two months free —
+  // and the rule lives in lib/plans.ts so the console, the pricing page and
+  // this route can never quote three different numbers for the same year.
+  const amountPaise = rupeesToPaise(priceForMonths(plan, months));
 
   await prisma.$transaction([
     prisma.shop.update({

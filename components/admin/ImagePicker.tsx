@@ -4,7 +4,7 @@
  * Pick a photo, resized in the browser.
  *
  * A phone camera produces a 4 MB JPEG; a shop page needs about 90 KB. Doing
- * that here means DukaanFlow needs no image service, no signed uploads and no
+ * that here means Halkhata needs no image service, no signed uploads and no
  * second bill — the resized data URL goes into the same database as everything
  * else, and the column takes a real URL unchanged if that ever has to change.
  */

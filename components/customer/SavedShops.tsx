@@ -6,13 +6,13 @@
  *
  * THE PROBLEM. The counter's QR is scanned once. Everything after that — the
  * order from home on Sunday, the order from the bus — needs a route back that
- * is not the sticker in the shop. Without one, a customer who used DukaanFlow
+ * is not the sticker in the shop. Without one, a customer who used Halkhata
  * on Monday walks to the shop on Sunday, and the product has changed nothing.
  *
  * WHY NOT AN ACCOUNT. Because asking somebody to register before a kirana can
  * sell them a kilo of rice loses more orders than re-scanning ever did. The
  * list is in the phone's own storage, where a list of "shops I use" belongs: no
- * sign-up, no server, nothing DukaanFlow can see or lose. See
+ * sign-up, no server, nothing Halkhata can see or lose. See
  * `lib/saved-shops.ts`.
  *
  * It is the second of two answers, not the only one. The stronger one is the
@@ -29,7 +29,7 @@ import Link from 'next/link';
 import { forgetShop, readSavedShops, type SavedShop } from '@/lib/saved-shops';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 
-const LOCALE_STORAGE_KEY = 'dukaanflow:locale';
+const LOCALE_STORAGE_KEY = 'halkhata:locale';
 
 export function SavedShops() {
   const [shops, setShops] = useState<SavedShop[]>([]);

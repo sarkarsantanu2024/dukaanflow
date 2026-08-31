@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { SiteFooter } from '@/components/ui/SiteFooter';
 import { TrackScreen, type TrackedOrder } from '@/components/customer/TrackScreen';
+import { BRAND_NAME } from '@/lib/brand';
 
 /**
  * One order, as its customer sees it.
@@ -21,7 +22,7 @@ export const dynamic = 'force-dynamic';
 type PageProps = { params: Promise<{ id: string }> };
 
 export const metadata: Metadata = {
-  title: 'Your order — DukaanFlow',
+  title: `Your order — ${BRAND_NAME}`,
   robots: { index: false, follow: false },
 };
 

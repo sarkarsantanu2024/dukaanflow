@@ -5,12 +5,13 @@ import { OwnerLoginForm } from '@/components/owner/OwnerLoginForm';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
 type PageProps = { params: Promise<{ slug: string }> };
 
-export const metadata: Metadata = { title: 'DukaanFlow — Shop sign in' };
+export const metadata: Metadata = { title: `${BRAND_NAME} — Shop sign in` };
 
 export default async function OwnerLoginPage({ params }: PageProps) {
   const { slug } = await params;

@@ -4,7 +4,7 @@
  * The orders queue.
  *
  * Orders already arrive on the shop's WhatsApp — that is not going away, and it
- * is what makes DukaanFlow work on a phone with no app. But a WhatsApp thread
+ * is what makes Halkhata work on a phone with no app. But a WhatsApp thread
  * is a conversation, not a worklist: once an owner has the app open, they need
  * to see what is still waiting, and mark off what they have taken.
  *

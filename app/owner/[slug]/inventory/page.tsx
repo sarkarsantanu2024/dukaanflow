@@ -5,6 +5,7 @@ import { OwnerShell } from '@/components/owner/OwnerShell';
 import { InventoryScreen } from '@/components/owner/InventoryScreen';
 import { starterCatalogue } from '@/lib/starter-catalogue';
 import { dateInputValue } from '@/lib/notice';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,7 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   return {
-    title: 'DukaanFlow — Items',
+    title: `${BRAND_NAME} — Items`,
     manifest: `/owner.webmanifest?slug=${encodeURIComponent(slug)}`,
     appleWebApp: { capable: true, statusBarStyle: 'default' },
   };

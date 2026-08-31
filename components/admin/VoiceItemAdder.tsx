@@ -37,7 +37,7 @@ import type { AdminItem } from './ItemsManager';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
 
-const LANG_STORAGE_KEY = 'dukaanflow:voice-lang';
+const LANG_STORAGE_KEY = 'halkhata:voice-lang';
 
 /** How to put back whatever a spoken command just did. */
 type Undo =

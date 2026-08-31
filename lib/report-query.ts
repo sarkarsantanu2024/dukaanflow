@@ -41,7 +41,7 @@ export type ReportQuery = {
   day: number | null;
 };
 
-/** Nothing was recorded before DukaanFlow existed; no report can reach past it. */
+/** Nothing was recorded before Halkhata existed; no report can reach past it. */
 export const FIRST_YEAR = 2026;
 
 type Source = URLSearchParams | Record<string, string | string[] | undefined>;

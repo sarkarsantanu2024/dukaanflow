@@ -4,6 +4,7 @@ import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { KhataScreen, type KhataCustomer } from '@/components/owner/KhataScreen';
 import { customerBalances, totalOutstanding } from '@/lib/khata';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ type PageProps = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   return {
-    title: 'DukaanFlow — Khata',
+    title: `${BRAND_NAME} — Khata`,
     manifest: `/owner.webmanifest?slug=${encodeURIComponent(slug)}`,
     appleWebApp: { capable: true, statusBarStyle: 'default' },
   };

@@ -806,7 +806,7 @@ const VOCAB: Vocab[] = [
   { en: 'Detergent', hi: 'सर्फ', bn: 'সাবান গুঁড়ো', roman: ['surf', 'detergent powder'] },
   { en: 'Matchbox', hi: 'माचिस', bn: 'দেশলাই', roman: ['machis', 'deshlai'] },
   { en: 'Candle', hi: 'मोमबत्ती', bn: 'মোমবাতি', roman: ['mombatti', 'mombati'] },
-  // Street-food menus — the other half of DukaanFlow's shops.
+  // Street-food menus — the other half of Halkhata's shops.
   { en: 'Roll', hi: 'रोल', bn: 'রোল' },
   { en: 'Momo', hi: 'मोमो', bn: 'মোমো' },
   { en: 'Chowmein', hi: 'चाउमिन', bn: 'চাউমিন', roman: ['chow', 'chowmin', 'noodles'] },

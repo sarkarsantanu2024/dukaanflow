@@ -33,7 +33,7 @@ type SnapshotLine = {
  *
  * COMPLETING WITHOUT PAYMENT POSTS TO THE KHATA. Goods that left the shop
  * unpaid are a debt whether or not anybody wrote it down, and not writing it
- * down is the exact thing DukaanFlow exists to end. So an order marked done
+ * down is the exact thing Halkhata exists to end. So an order marked done
  * with `paymentReceived: false` creates a DEBIT against that customer in the
  * same breath, the way a counter sale rung up on credit already does.
  *

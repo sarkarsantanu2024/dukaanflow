@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
+import { BRAND_NAME } from '@/lib/brand';
 
 export function OwnerAccessPanel({
   slug,
@@ -172,7 +173,7 @@ export function OwnerAccessPanel({
               variant="whatsapp"
               onClick={() =>
                 copy(
-                  `Your DukaanFlow shop link: ${link}\nPIN: ${pin}\nOpen the link on your phone and enter the PIN to update your prices.`,
+                  `Your ${BRAND_NAME} shop link: ${link}\nPIN: ${pin}\nOpen the link on your phone and enter the PIN to update your prices.`,
                   'Message',
                 )
               }
