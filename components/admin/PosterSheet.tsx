@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { PrinterIcon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { shopUrl } from '@/lib/qr';
-import { BRAND_GREEN } from '@/lib/brand';
+import { BRAND_GREEN, BRAND_NAME } from '@/lib/brand';
 import { supportDetails } from '@/lib/support';
 
 /**
@@ -53,6 +53,26 @@ export function PosterSheet({
   const creditLine = support.phone
     ? `Powered by ${support.name} · For support ${support.phone}`
     : `Powered by ${support.name}`;
+
+  /**
+   * THE ONLY LINE ON THIS POSTER AIMED AT A SHOPKEEPER.
+   *
+   * Everything above it talks to a customer standing at the counter, and
+   * rightly so — "scan to order" is what that reader needs and voice listing is
+   * a feature they cannot use. But this sheet hangs on a wall in a market, and
+   * the person who reads it hardest is the shop next door.
+   *
+   * That makes this the cheapest acquisition channel the product has, and it
+   * was spending it on a vendor credit nobody has ever acted on. The model says
+   * cost-per-shop decides whether this business works at all; a poster already
+   * printed and already hanging costs nothing more to recruit with.
+   *
+   * So it asks a question and answers it with the one claim competitors cannot
+   * copy — in Bangla, because the reader is a Bengali shopkeeper.
+   */
+  const pitchLine = support.phone
+    ? `আপনার দোকানও? বলুন — “চাল ১ কেজি ১০০” · ${BRAND_NAME} · ${support.phone}`
+    : `আপনার দোকানও? বলুন — “চাল ১ কেজি ১০০” · ${BRAND_NAME}`;
 
   async function downloadPdf() {
     setExporting(true);
@@ -113,7 +133,8 @@ export function PosterSheet({
       line('Order on WhatsApp · হোয়াটসঅ্যাপে অর্ডার · व्हाट्सएप पर ऑर्डर', 1412, 24, '#475569');
       line(`+91 ${phone}`, 1470, 48, '#0f172a', '800');
 
-      line(creditLine, 1660, 22, '#94a3b8');
+      line(pitchLine, 1640, 26, BRAND_GREEN, '600');
+      line(creditLine, 1686, 20, '#94a3b8');
 
       const { jsPDF } = await import('jspdf');
       const doc = new jsPDF({ unit: 'mm', format: 'a4' });
@@ -200,7 +221,8 @@ export function PosterSheet({
             anything. The shop's UPI is still on the order and in the khata
             reminder, where there is something to pay FOR. */}
 
-        <p className="mt-8 text-xs text-slate-400">{creditLine}</p>
+        <p className="mt-8 text-sm font-semibold text-brand-700">{pitchLine}</p>
+        <p className="mt-1 text-xs text-slate-400">{creditLine}</p>
       </div>
     </div>
   );
