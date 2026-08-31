@@ -4,6 +4,7 @@ import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { itemDeleteSchema, itemPatchSchema, itemUpsertSchema } from '@/lib/validators';
 import { checkEditAllowance, checkItemAllowance, markActivated } from '@/lib/billing';
 import { normaliseItemName, normaliseUnit } from '@/lib/units';
+import { suggestNames } from '@/lib/speech';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +30,7 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = itemUpsertSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { nameBn, nameHi, pricePaise, category, inStock, priced } = parsed.data;
+  const { pricePaise, category, inStock, priced } = parsed.data;
 
   // Canonical spelling before anything else touches these.
   //
@@ -39,6 +40,26 @@ export async function POST(request: Request, { params }: Context) {
   // key mean what it looks like it means.
   const name = normaliseItemName(parsed.data.name);
   const unit = normaliseUnit(parsed.data.unit);
+
+  /**
+   * THE OTHER TWO LANGUAGES, FILLED HERE RATHER THAN HOPED FOR.
+   *
+   * An item's name shows in the reader's own language and falls back to the
+   * primary one, so a row saved with `nameBn` blank reads in roman letters to a
+   * Bengali owner and a Bengali customer — which is what "Basmoti Rice" sitting
+   * in a Bengali shop actually was. Every client had its own half of this logic
+   * and each of them could skip it: the typed form filled the fields, voice
+   * filled them only for names it recognised, the photo scanner filled them
+   * only on a catalogue hit, and the bulk paste never filled them at all.
+   *
+   * One place, on the way in, covers all four. Only blanks are filled — a
+   * translation the client sent is the owner's and always wins — and only exact
+   * vocabulary hits are used, because a guessed translation is one the owner
+   * cannot read back to check.
+   */
+  const known = suggestNames(name);
+  const nameBn = parsed.data.nameBn || known?.bn || '';
+  const nameHi = parsed.data.nameHi || known?.hi || '';
 
   // Re-pricing something the shop already has is an edit, not a new item, so
   // it stays allowed right up to the catalogue limit rather than being refused
@@ -120,6 +141,12 @@ export async function PATCH(request: Request, { params }: Context) {
 
   const { id, ...changes } = parsed.data;
 
+  // Same canonical spelling a create gets. The unique key is (shop, name, unit)
+  // on the exact strings, so a rename that skipped this could slip "Rice " in
+  // beside "Rice" — two rows to Postgres, one shelf to a shopkeeper.
+  if (changes.name !== undefined) changes.name = normaliseItemName(changes.name);
+  if (changes.unit !== undefined) changes.unit = normaliseUnit(changes.unit);
+
   /**
    * A count and a stock switch must never disagree.
    *
@@ -142,9 +169,10 @@ export async function PATCH(request: Request, { params }: Context) {
     const result = await prisma.item.updateMany({ where: { id, shopId }, data: changes });
     if (result.count === 0) return fail('Item not found', 404);
   } catch (error) {
-    // (shopId, name, unit) is unique, so re-pricing a unit onto one the shop
-    // already lists collides. Said plainly rather than as a database error:
-    // the owner meant to have one of these, not to be told about a constraint.
+    // (shopId, name, unit) is unique, so editing a name or a unit onto one the
+    // shop already lists collides. Said plainly rather than as a database
+    // error: the owner meant to have one of these, not to be told about a
+    // constraint.
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
       return fail('You already have this item in that unit. Edit that one instead.', 409);
     }
@@ -154,7 +182,13 @@ export async function PATCH(request: Request, { params }: Context) {
   return ok({ success: true });
 }
 
-/** DELETE — remove one item from this shop. */
+/**
+ * DELETE — remove one item, a chosen handful, or every item this shop has.
+ *
+ * Every branch is scoped by `shopId`, so an id belonging to another shop
+ * silently matches nothing rather than deleting somebody else's stock, and
+ * `all` can only ever mean "all of this shop's".
+ */
 export async function DELETE(request: Request, { params }: Context) {
   if (!sameOrigin(request)) return fail('Bad request', 403);
   const { slug } = await params;
@@ -165,9 +199,21 @@ export async function DELETE(request: Request, { params }: Context) {
 
   const parsed = itemDeleteSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
+  const target = parsed.data;
 
-  const result = await prisma.item.deleteMany({ where: { id: parsed.data.id, shopId } });
-  if (result.count === 0) return fail('Item not found', 404);
+  const where =
+    'all' in target
+      ? { shopId }
+      : 'ids' in target
+        ? { shopId, id: { in: target.ids } }
+        : { shopId, id: target.id };
 
-  return ok({ success: true });
+  const result = await prisma.item.deleteMany({ where });
+
+  // Nothing matched only means "not found" when something specific was named.
+  // Emptying a shop that is already empty is not an error; it is a no-op the
+  // caller asked for, and answering 404 would make the button look broken.
+  if (result.count === 0 && !('all' in target)) return fail('Item not found', 404);
+
+  return ok({ success: true, deleted: result.count });
 }

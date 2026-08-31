@@ -137,12 +137,26 @@ export function wordsToDigits(text: string): string {
 const LEAD_FILLER =
   /^(?:ok(?:ay)?|hey|please|add|new|item|list|likho|likh do|jodo|jod do|daal do|dalo|ente?r|register|साथ|जोड़ो|जोड़ दो|लिखो|নতুন|যোগ করো|লেখো)\s+/i;
 
+/**
+ * The same words, said at the END of the sentence.
+ *
+ * "Mustard oil add" and "সরিষার তেল যোগ করো" put the verb last, which is the
+ * natural order in Hindi and Bengali and common enough in Indian English. Only
+ * the leading form was stripped, so the verb stayed in the name and the shop
+ * ended up listing a product called "Mustard Oil Add".
+ *
+ * Removal and stock verbs are not here — those are commands with their own
+ * handling, and they are matched anywhere in the sentence already.
+ */
+const TRAIL_FILLER =
+  /\s+(?:add|save|please|kar do|kardo|karo|likho|likh do|jodo|jod do|daal do|dalo|जोड़ो|जोड़ दो|जोड़ दीजिए|लिखो|डालो|कर दो|ऐड|যোগ করো|যোগ কর|যোগ|লেখো|লিখুন|দাও)$/i;
+
 const CURRENCY_BEFORE = /(?:₹|rs\.?|rupees?|rupaye|rupaiya|rupya|taka|टाका|रुपये|रुपए|টাকা)\s*(\d+(?:\.\d+)?)/i;
 const CURRENCY_AFTER = /(\d+(?:\.\d+)?)\s*(?:₹|rs\.?|rupees?|rupaye|rupaiya|rupya|taka|टाका|रुपये|रुपए|টাকা|\/-)/i;
 
 /** Unit words — a number followed by one of these is a size, never a price. */
 const UNIT_WORD =
-  /^(?:kg|kgs|kilo|kilos|kilogram|kilograms|g|gm|gms|gram|grams|l|ltr|litre|liter|litres|liters|ml|pc|pcs|piece|pieces|packet|packets|pack|packs|plate|plates|cup|cups|dozen|box|boxes|bottle|bottles|किलो|ग्राम|लीटर|पैकेट|কেজি|গ্রাম|লিটার|প্যাকেট)$/i;
+  /^(?:kg|kgs|kilo|kilos|kilogram|kilograms|g|gm|gms|gram|grams|l|ltr|litre|liter|litres|liters|ml|pc|pcs|piece|pieces|packet|packets|pack|packs|plate|plates|cup|cups|dozen|box|boxes|bottle|bottles|किलो|ग्राम|लीटर|पैकेट|কেজি|গ্রাম|লিটার|প্যাকেট|কিলো|কিলোগ্রাম|পিস|বোতল|কাপ|প্লেট|किलोग्राम|टुकड़ा|कप|बोतल|प्लेट)$/i;
 
 /** Spoken unit words normalised to what the item list already uses. */
 const UNIT_ALIASES: Record<string, string> = {
@@ -153,6 +167,13 @@ const UNIT_ALIASES: Record<string, string> = {
   लीटर: 'l', লিটার: 'l',
   pcs: 'pc', piece: 'pc', pieces: 'pc',
   packets: 'packet', packs: 'pack', पैकेट: 'packet', প্যাকেট: 'packet',
+  // What people actually say. "কিলো" is far commoner at a counter than the
+  // formal "কেজি", and without it a spoken pack size matched nothing and ended
+  // up glued onto the product's name.
+  কিলো: 'kg', কিলোগ্রাম: 'kg', किलोग्राम: 'kg',
+  পিস: 'pc', टुकड़ा: 'pc',
+  বোতল: 'bottle', মোতল: 'bottle', बोतल: 'bottle',
+  কাপ: 'cup', कप: 'cup', প্লেট: 'plate', प्लेट: 'plate',
 };
 
 function canonicaliseUnit(unit: string): string {
@@ -163,17 +184,39 @@ function canonicaliseUnit(unit: string): string {
     .trim();
 }
 
-export type SpokenItem = { name: string; unit: string; price: number; category: string };
+export type SpokenListing = {
+  name: string;
+  unit: string;
+  /** PAISE, or null when the speaker did not say a price. */
+  pricePaise: number | null;
+  category: string;
+};
 
 /**
- * Parses one shopkeeper utterance into an item.
+ * Everything one spoken sentence says about an item.
  *
- * Returns null when no price could be found — an item without a price is not
- * something we should guess at, so the caller asks the speaker to repeat.
+ * THIS REPLACES A PARSER THAT DELIBERATELY THREW TWO THIRDS OF IT AWAY.
+ *
+ * Listing by voice used to keep the name and discard the rest, on the reasoning
+ * that a price saved unseen is a price nobody checked. The reasoning was sound
+ * and the conclusion was not: the sentence a shopkeeper actually says is
+ * "বাসমতি চাল ১০০ টাকা কিলো", and answering it with the word "চাল" in a box and
+ * two empty fields throws away work they already did out loud, then asks them
+ * to do it again by hand. Nothing is saved unseen either way — the form is the
+ * confirmation, and it is better filled in than blank.
+ *
+ * A missing price is now `null` rather than a reason to reject the sentence, so
+ * "চাল" alone still lists rice and simply leaves the price for the owner.
  */
-export function parseSpokenItem(transcript: string): SpokenItem | null {
-  let text = wordsToDigits(transcript.trim().replace(/\s+/g, ' '));
+export function parseSpokenListing(transcript: string): SpokenListing | null {
+  let text = wordsToDigits(transcript.trim().replace(/[।॥]+/g, ' ').replace(/\s+/g, ' '));
+  // Both ends, and repeatedly: "add rice add" is one sentence a person says.
   text = text.replace(LEAD_FILLER, '').trim();
+  let trimmed = text.replace(TRAIL_FILLER, '').trim();
+  while (trimmed !== text && trimmed) {
+    text = trimmed;
+    trimmed = text.replace(TRAIL_FILLER, '').trim();
+  }
   if (!text) return null;
 
   // "rice 1 kg 68 in staples" — an explicit category tail.
@@ -186,11 +229,11 @@ export function parseSpokenItem(transcript: string): SpokenItem | null {
     text = text.slice(0, categoryMatch.index).trim();
   }
 
-  let price: number | null = null;
+  let rupees: number | null = null;
 
   const explicit = text.match(CURRENCY_BEFORE) ?? text.match(CURRENCY_AFTER);
   if (explicit) {
-    price = Number(explicit[1]);
+    rupees = Number(explicit[1]);
     text = (text.slice(0, explicit.index) + ' ' + text.slice(explicit.index! + explicit[0].length)).trim();
   } else {
     // No currency word: the price is the last number that is not a size, i.e.
@@ -200,17 +243,23 @@ export function parseSpokenItem(transcript: string): SpokenItem | null {
       const match = numbers[i]!;
       const after = text.slice(match.index! + match[0].length).trim().split(/\s+/)[0] ?? '';
       if (UNIT_WORD.test(after)) continue;
-      price = Number(match[0]);
+      rupees = Number(match[0]);
       text = (text.slice(0, match.index) + ' ' + text.slice(match.index! + match[0].length)).trim();
       break;
     }
   }
 
-  if (price === null || !Number.isFinite(price)) return null;
-  price = Math.round(price);
-  if (price < 1 || price > 100000) return null;
+  // Out of range is not a price. Better to hand the owner an empty box than a
+  // number the recogniser invented out of a mishearing.
+  let pricePaise: number | null = null;
+  if (rupees !== null && Number.isFinite(rupees) && rupees >= 0.5 && rupees <= 100000) {
+    pricePaise = Math.round(rupees * 100);
+  }
 
   const label = text
+    // "…per kilo", "…প্রতি কেজি", "…किलो के हिसाब से" — the words that join a
+    // price to a pack size, left behind once the price itself is lifted out.
+    .replace(/\s+(?:per|each|prati|প্রতি|प्रति|ke hisab se|के हिसाब से)\s+/gi, ' ')
     .replace(/\s+(?:at|for|ka|ki|ke|का|की|के|দাম|price)\s*$/i, '')
     .replace(/[.,]+$/, '')
     .replace(/\s+/g, ' ')
@@ -220,10 +269,33 @@ export function parseSpokenItem(transcript: string): SpokenItem | null {
   // splitNameAndUnit only recognises canonical unit spellings, so normalise
   // "one kilo" → "1 kg" before handing the label over.
   const canonical = canonicaliseUnit(label);
-  const { name, unit } = splitNameAndUnit(canonical);
+  let { name, unit } = splitNameAndUnit(canonical);
+
+  /**
+   * A pack size said without a number.
+   *
+   * "১০০ টাকা কিলো" is a price per kilo, and once the price is lifted out what
+   * remains is "চাল kg" — a unit with nothing in front of it, which
+   * `splitNameAndUnit` does not recognise because it expects "1 kg". Saying
+   * "kilo" and meaning "one kilo" is how everyone talks, so a bare trailing
+   * unit becomes a quantity of one rather than part of the product's name.
+   */
+  if (!unit) {
+    const bare = name.match(/\s+([\p{L}]+)$/u);
+    if (bare && UNIT_WORD.test(bare[1]!)) {
+      unit = canonicaliseUnit(`1 ${bare[1]!}`);
+      name = name.slice(0, bare.index).trim();
+    }
+  }
+
   if (!name) return null;
 
-  return { name: titleCase(name), unit, price, category: category ? titleCase(category) : '' };
+  // "1kg" and "1 kg" are one pack size. `normaliseUnit` does this on the way
+  // into the database; the draft has to agree or the form offers a unit that
+  // will not resolve onto the row the owner meant.
+  unit = unit.replace(/(\d)\s*([a-z])/gi, '$1 $2').replace(/\s+/g, ' ').trim();
+
+  return { name: titleCase(name), unit, pricePaise, category: category ? titleCase(category) : '' };
 }
 
 function titleCase(text: string): string {
@@ -263,72 +335,15 @@ export function spokenYesNo(alternatives: string[]): 'yes' | 'no' | null {
   return null;
 }
 
-/**
- * The item name out of a spoken sentence, and nothing else.
- *
- * Listing by voice asks for the name alone — the shopkeeper says "চাল" and
- * fills in the pack size and the price afterwards, looking at the list. Saying
- * a price out loud and having it saved unseen is how a shop ends up quoting a
- * number nobody checked; typing it into the row is a moment's work and the
- * owner can see what they are agreeing to.
- *
- * Quantities and prices are stripped rather than rejected, so an owner who
- * still says the whole sentence out of habit gets "চাল" listed instead of an
- * item literally named "চাল এক কেজি ৬৮ টাকা".
- */
-export function parseSpokenName(transcript: string): { name: string; category: string } | null {
-  let text = normaliseDigits(transcript.trim())
-    .replace(/[।॥.,!?;:]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  text = text.replace(LEAD_FILLER, '').trim();
-  if (!text) return null;
-
-  // "rice in staples" — an explicit category tail, kept because it costs the
-  // speaker nothing and saves a field.
-  let category = '';
-  const categoryMatch = text.match(
-    /\s+(?:in|under|category|categories|श्रेणी|विभाग|ক্যাটাগরি)\s+(.+)$/i,
-  );
-  if (categoryMatch) {
-    category = categoryMatch[1]!.trim();
-    text = text.slice(0, categoryMatch.index).trim();
-  }
-
-  // Everything from the first quantity or price onwards is noise now. Number
-  // *words* are converted first, or "চিনি এক কেজি ৬৮ টাকা" would keep "এক কেজি"
-  // — এক is one, but spelled out, so a digit search walks straight past it.
-  const noise = /(?:\d|₹|\brs\b|rupees?|rupaye|taka|টাকা|रुपये|रुपए)/i;
-  const digitised = wordsToDigits(text);
-  const tail = digitised.search(noise);
-
-  if (tail > 0) {
-    const trimmed = digitised.slice(0, tail).trim();
-    if (trimmed) {
-      text = trimmed;
-    } else {
-      // A name that *is* a number word — "Seven Up" — would be cut to nothing.
-      // Fall back to trimming only what was literally said.
-      const plain = text.search(noise);
-      text = plain > 0 ? text.slice(0, plain).trim() : text;
-    }
-  }
-
-  const name = text
-    .replace(/\s+(?:at|for|ka|ki|ke|का|की|के|দাম|price)\s*$/i, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (!name) return null;
-  return { name: titleCase(name), category: category ? titleCase(category) : '' };
-}
-
 export type SpokenItemDraft = {
   name: string;
   nameHi: string;
   nameBn: string;
   category: string;
+  /** The pack size the speaker said, or '' when they did not say one. */
+  unit: string;
+  /** The price the speaker said, in PAISE, or null when they did not say one. */
+  pricePaise: number | null;
   /** An item already on the list that this almost certainly refers to. */
   matched: MatchableItem | null;
   /** 1 when nothing similar exists; otherwise how sure the `matched` link is. */
@@ -357,7 +372,7 @@ export function resolveSpokenItem(
   let best: SpokenItemDraft | null = null;
 
   for (const transcript of alternatives) {
-    const parsed = parseSpokenName(transcript);
+    const parsed = parseSpokenListing(transcript);
     if (!parsed) continue;
 
     const match = bestMatch(parsed.name, existing);
@@ -366,6 +381,8 @@ export function resolveSpokenItem(
     const draft: SpokenItemDraft = {
       ...namesFor(parsed.name, lang),
       category: parsed.category,
+      unit: parsed.unit,
+      pricePaise: parsed.pricePaise,
       matched: confidence >= UNSURE_MATCH ? match!.item : null,
       confidence: confidence >= UNSURE_MATCH ? confidence : 1,
     };
@@ -429,13 +446,24 @@ const IN_STOCK_WORDS = [
 export type VoiceCommand =
   | { kind: 'upsert'; draft: SpokenItemDraft; needsConfirm: boolean; label: string }
   /**
-   * Named something already on the list. Reported rather than saved: listing
-   * by voice no longer carries a price, so re-saving would quietly reset one
-   * the owner had already set.
+   * Named something already on the list, and said nothing else about it.
+   *
+   * Reported rather than saved: a bare name is not an instruction to change
+   * anything, and re-saving would reset a price the owner had already chosen.
+   * Saying a price along with the name is a different sentence and re-prices
+   * the row — see the `upsert` branch below.
    */
   | { kind: 'exists'; item: MatchableItem; needsConfirm: false; label: string }
   | { kind: 'delete'; item: MatchableItem; needsConfirm: true; label: string }
-  | { kind: 'stock'; item: MatchableItem; inStock: boolean; needsConfirm: boolean; label: string };
+  | { kind: 'stock'; item: MatchableItem; inStock: boolean; needsConfirm: boolean; label: string }
+  /**
+   * A clear instruction about an item this shop does not have — "remove rice"
+   * in a shop with no rice, "চিনি শেষ" where the sugar is spelled some other
+   * way. Reported as its own outcome rather than as a failure to understand,
+   * because the two need opposite fixes from the speaker: one is "say it again
+   * more clearly", the other is "that is not on your list".
+   */
+  | { kind: 'missing'; needsConfirm: false; label: string };
 
 /** Longest phrase first, so "out of stock" wins over the bare "out". */
 function matchVerb(text: string, words: string[]): { rest: string } | null {
@@ -467,6 +495,8 @@ export function resolveSpokenCommand(
   // match once created an item *named* "মুছে দাও", priced at whatever number
   // was nearby. A command that misses is a command that failed, not a product.
   let commandMissed = false;
+  /** What the speaker seemed to be naming, for the "not on your list" reply. */
+  let missedLabel = '';
 
   for (const transcript of alternatives) {
     // Two things have to happen before a verb can be recognised, and the order
@@ -494,6 +524,7 @@ export function resolveSpokenCommand(
         return { kind: 'delete', item: match.item, needsConfirm: true, label: labelFor(match.item) };
       }
       commandMissed = true;
+      missedLabel ||= removal.rest;
       continue;
     }
 
@@ -506,7 +537,10 @@ export function resolveSpokenCommand(
       const stock = matchVerb(text, words);
       if (!stock) continue;
       const match = bestMatch(stock.rest, existing);
-      if (!match || match.confidence < UNSURE_MATCH) commandMissed = true;
+      if (!match || match.confidence < UNSURE_MATCH) {
+        commandMissed = true;
+        missedLabel ||= stock.rest;
+      }
       if (match && match.confidence >= UNSURE_MATCH) {
         return {
           kind: 'stock',
@@ -521,21 +555,46 @@ export function resolveSpokenCommand(
 
   // Said "remove X" or "X is finished" about something not on the list. Adding
   // X would be the opposite of what was asked for.
-  if (commandMissed) return null;
+  if (commandMissed) {
+    return { kind: 'missing', needsConfirm: false, label: titleCase(missedLabel.trim()) };
+  }
 
   const draft = resolveSpokenItem(alternatives, lang, existing);
   if (!draft) return null;
 
-  // Already stocked: say so and change nothing. The price and pack size on that
-  // row are the owner's, and a bare name is not a reason to touch either.
-  if (draft.matched && draft.confidence >= CONFIDENT_MATCH) {
+  /**
+   * Already stocked, and the speaker said nothing but its name: say so and
+   * change nothing. The price and pack size on that row are the owner's.
+   *
+   * A price in the sentence flips that. "Rice 1 kg 100" about rice the shop
+   * already lists is the commonest thing a shopkeeper says to this — it is how
+   * they re-price — and answering "already on your list" makes the mic look
+   * broken to the one person using it correctly. With a price it falls through
+   * to the upsert below, which the API resolves onto the existing row.
+   */
+  if (draft.matched && draft.confidence >= CONFIDENT_MATCH && draft.pricePaise === null) {
     return { kind: 'exists', item: draft.matched, needsConfirm: false, label: labelFor(draft.matched) };
   }
 
+  /**
+   * Every new item is read back before it is written, not only the ones that
+   * looked like a near-miss for something already listed.
+   *
+   * This used to confirm only when the sentence half-matched an existing item,
+   * which meant the one case with no safety net at all was the one that creates
+   * something: a shop floor's worth of background talk, a customer's question,
+   * a radio — any of it could land in the list as a product, and the owner
+   * found out later by scrolling. A recogniser that is right nine times in ten
+   * still writes rubbish once in ten if nothing asks first, and an owner who
+   * has seen it do that once stops trusting the mic entirely.
+   *
+   * The cost is one spoken "yes" per item. That is cheap next to a catalogue
+   * the owner cannot trust.
+   */
   return {
     kind: 'upsert',
     draft,
-    needsConfirm: Boolean(draft.matched) && draft.confidence < CONFIDENT_MATCH,
+    needsConfirm: true,
     label: labelFor(draft.matched ?? draft),
   };
 }
@@ -682,7 +741,7 @@ const VOCAB: Vocab[] = [
   { en: 'Salt', hi: 'नमक', bn: 'নুন', roman: ['namak', 'nun', 'lobon', 'লবণ'] },
   { en: 'Sugar', hi: 'चीनी', bn: 'চিনি', roman: ['cheeni', 'chini'] },
   { en: 'Oil', hi: 'तेल', bn: 'তেল', roman: ['tel'] },
-  { en: 'Mustard', hi: 'सरसों', bn: 'সরিষা', roman: ['sarso', 'sorisha', 'সরিষার'] },
+  { en: 'Mustard', hi: 'सरसों', bn: 'সরিষা', roman: ['sarso', 'sorisha', 'sorisar', 'সরিষার'] },
   { en: 'Milk', hi: 'दूध', bn: 'দুধ', roman: ['doodh', 'dudh'] },
   { en: 'Curd', hi: 'दही', bn: 'দই', roman: ['dahi', 'doi', 'yogurt'] },
   { en: 'Ghee', hi: 'घी', bn: 'ঘি' },
@@ -698,7 +757,7 @@ const VOCAB: Vocab[] = [
   { en: 'Dal', hi: 'दाल', bn: 'ডাল', roman: ['daal', 'lentil', 'pulses'] },
   { en: 'Flour', hi: 'आटा', bn: 'আটা', roman: ['atta', 'ata'] },
   { en: 'Maida', hi: 'मैदा', bn: 'ময়দা' },
-  { en: 'Suji', hi: 'सूजी', bn: 'সুজি', roman: ['sooji', 'rava'] },
+  { en: 'Suji', hi: 'सूजी', bn: 'সুজি', roman: ['sooji', 'rava', 'semolina'] },
   { en: 'Wheat', hi: 'गेहूं', bn: 'গম', roman: ['gehu', 'gom'] },
   { en: 'Tea', hi: 'चाय', bn: 'চা', roman: ['chai', 'cha'] },
   { en: 'Biscuit', hi: 'बिस्कुट', bn: 'বিস্কুট', roman: ['biscuits'] },
@@ -716,6 +775,37 @@ const VOCAB: Vocab[] = [
   { en: 'Mustard oil', hi: 'सरसों का तेल', bn: 'সরিষার তেল' },
   { en: 'Banana', hi: 'केला', bn: 'কলা', roman: ['kela', 'kola'] },
   { en: 'Lemon', hi: 'नींबू', bn: 'লেবু', roman: ['nimbu', 'lebu'] },
+
+  // THE WORDS THAT SIT NEXT TO THE ONES ABOVE.
+  //
+  // A kirana does not sell "dal", it sells musur dal and motor dal and chholar
+  // dal; it does not sell "rice", it sells basmati and miniket and gobindobhog.
+  // Those qualifiers were the whole missing half: "Musurir Dal" matched nothing
+  // because only the second word was known, so the compound rule — every word
+  // or nothing — left the entire name untranslated and a Bengali customer read
+  // it in roman letters.
+  { en: 'Basmati', hi: 'बासमती', bn: 'বাসমতী', roman: ['basmoti', 'basmati'] },
+  { en: 'Miniket', hi: 'मिनिकेट', bn: 'মিনিকেট' },
+  { en: 'Gobindobhog', hi: 'गोबिंदभोग', bn: 'গোবিন্দভোগ', roman: ['gobindo bhog'] },
+  { en: 'Masoor', hi: 'मसूर', bn: 'মুসুর', roman: ['musur', 'musuri', 'musurir', 'mosur', 'masur'] },
+  { en: 'Matar', hi: 'मटर', bn: 'মটর', roman: ['motor', 'moter', 'matar', 'motorer'] },
+  { en: 'Chana', hi: 'चना', bn: 'ছোলা', roman: ['chola', 'chhola', 'cholar', 'chholar'] },
+  { en: 'Moong', hi: 'मूंग', bn: 'মুগ', roman: ['mug', 'mung', 'muger'] },
+  { en: 'Arhar', hi: 'अरहर', bn: 'অড়হর', roman: ['toor', 'tur'] },
+  { en: 'Urad', hi: 'उड़द', bn: 'বিউলি', roman: ['biuli', 'urid'] },
+  { en: 'Soyabean', hi: 'सोयाबीन', bn: 'সয়াবিন', roman: ['soya', 'soyabin'] },
+  { en: 'Refined', hi: 'रिफाइंड', bn: 'রিফাইন্ড', roman: ['refine'] },
+  { en: 'Puffed rice', hi: 'मुरमुरा', bn: 'মুড়ি', roman: ['muri', 'murmura'] },
+  { en: 'Jaggery', hi: 'गुड़', bn: 'গুড়', roman: ['gur', 'gud'] },
+  { en: 'Cardamom', hi: 'इलायची', bn: 'এলাচ', roman: ['elach', 'elaichi'] },
+  { en: 'Clove', hi: 'लौंग', bn: 'লবঙ্গ', roman: ['laung', 'lobongo'] },
+  { en: 'Cinnamon', hi: 'दालचीनी', bn: 'দারচিনি', roman: ['darchini', 'dalchini'] },
+  { en: 'Bay leaf', hi: 'तेजपत्ता', bn: 'তেজপাতা', roman: ['tejpata', 'tejpatta'] },
+  { en: 'Peanut', hi: 'मूंगफली', bn: 'চিনাবাদাম', roman: ['badam', 'mungfali', 'chinabadam'] },
+  { en: 'Coconut', hi: 'नारियल', bn: 'নারকেল', roman: ['nariyal', 'narkel'] },
+  { en: 'Detergent', hi: 'सर्फ', bn: 'সাবান গুঁড়ো', roman: ['surf', 'detergent powder'] },
+  { en: 'Matchbox', hi: 'माचिस', bn: 'দেশলাই', roman: ['machis', 'deshlai'] },
+  { en: 'Candle', hi: 'मोमबत्ती', bn: 'মোমবাতি', roman: ['mombatti', 'mombati'] },
   // Street-food menus — the other half of DukaanFlow's shops.
   { en: 'Roll', hi: 'रोल', bn: 'রোল' },
   { en: 'Momo', hi: 'मोमो', bn: 'মোমো' },
@@ -803,6 +893,54 @@ for (const entry of VOCAB) {
 }
 
 /**
+ * The same index, keyed on the spelling with everything that varies between
+ * two roman spellings of one word stripped out — see `loosen`.
+ *
+ * Roman Bengali and Hindi have no correct spelling. An owner types "Basmoti"
+ * where the list says "basmati", "Cheeni" where it says "chini", "Chhola" for
+ * "chola" — and an exact lookup answers "unknown" to every one of them, so the
+ * name goes onto the shop page in roman letters and the Bengali customer reads
+ * a word their language does not use. Loosening both sides costs one extra map
+ * and settles the whole class.
+ */
+const VOCAB_BY_LOOSE = new Map<string, Vocab>();
+for (const entry of VOCAB) {
+  for (const form of formsOf(entry)) {
+    const key = loosen(form);
+    if (key.length >= 3 && !VOCAB_BY_LOOSE.has(key)) VOCAB_BY_LOOSE.set(key, entry);
+  }
+}
+
+/**
+ * Bengali and Hindi glue a possessive onto the qualifier — "musur dal" is said
+ * and written "musurir dal", "chholar dal", "sorisar tel". The suffix belongs
+ * to the grammar, not to the product, so it is peeled off before the lookup.
+ *
+ * Only tried after the word has failed on its own, and only on words long
+ * enough that the stem is still a word: "paneer" must never become "pane".
+ */
+const POSSESSIVE_TAIL = /(?:ir|er|ar|r|ki|ka|ke)$/;
+
+/** One word of a name, matched against the vocabulary however it is spelled. */
+function lookupWord(word: string): Vocab | undefined {
+  const exact = VOCAB_BY_FORM.get(word);
+  if (exact) return exact;
+
+  const loose = loosen(word);
+  if (loose.length >= 3) {
+    const near = VOCAB_BY_LOOSE.get(loose);
+    if (near) return near;
+
+    if (loose.length >= 6) {
+      const stem = loose.replace(POSSESSIVE_TAIL, '');
+      if (stem.length >= 3 && stem !== loose) return VOCAB_BY_LOOSE.get(stem);
+    }
+  }
+
+  return undefined;
+}
+
+/**
  * The other two languages for a name the shopkeeper just typed or spoke.
  *
  * Only fires on an exact whole-name hit against the vocabulary. A partial or
@@ -813,16 +951,17 @@ export function suggestNames(name: string): { en: string; hi: string; bn: string
   const cleaned = name.trim().toLowerCase().replace(/\s+/g, ' ');
   if (!cleaned) return null;
 
-  const exact = VOCAB_BY_FORM.get(cleaned);
-  if (exact) return { en: exact.en, hi: exact.hi, bn: exact.bn };
+  const whole = lookupWord(cleaned);
+  if (whole) return { en: whole.en, hi: whole.hi, bn: whole.bn };
 
   // A compound name translates only when every word is known: "Biscuit Pack"
-  // becomes "বিস্কুট প্যাকেট", while "Basmati Rice" is left alone rather than
-  // half-translated into something no shopper would recognise.
+  // becomes "বিস্কুট প্যাকেট", while a name with one word we do not have is
+  // left alone rather than half-translated into something no shopper would
+  // recognise.
   const words = cleaned.split(' ');
   if (words.length < 2) return null;
 
-  const entries = words.map((word) => VOCAB_BY_FORM.get(word));
+  const entries = words.map((word) => lookupWord(word));
   if (entries.some((entry) => !entry)) return null;
 
   return {

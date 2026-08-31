@@ -3,6 +3,7 @@ import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { bulkSchema } from '@/lib/validators';
 import { matchKey, parseBulk, splitNameAndUnit } from '@/lib/bulk';
+import { suggestNames } from '@/lib/speech';
 import { checkEditAllowance, markActivated, shopEntitlement } from '@/lib/billing';
 
 export const runtime = 'nodejs';
@@ -56,7 +57,15 @@ export async function POST(request: Request, { params }: Context) {
     if (itemId) {
       await prisma.item.update({
         where: { id: itemId },
-        data: line.kind === 'price' ? { pricePaise: line.pricePaise } : { inStock: line.inStock },
+        data:
+          line.kind === 'price'
+            ? // `priced` is what the storefront reads, not the number. A paste
+              // that set the number and left the flag alone is why an owner
+              // could see "₹50" on a row and "No price set" beside it, and the
+              // customer saw no row at all. Typing a price into the row set the
+              // flag; pasting the same price did not.
+              { pricePaise: line.pricePaise, priced: true }
+            : { inStock: line.inStock },
       });
       updated += 1;
       continue;
@@ -79,10 +88,26 @@ export async function POST(request: Request, { params }: Context) {
     }
     room -= 1;
 
+    // A pasted list is typed in one language and read in three. Without this
+    // a Bengali shop that pastes "Rice 1 kg = 55" lists a row its own owner
+    // reads in roman letters.
+    const known = suggestNames(name);
+
     const item = await prisma.item.upsert({
       where: { shopId_name_unit: { shopId: shop.id, name, unit } },
-      create: { shopId: shop.id, name, unit, pricePaise: line.pricePaise },
-      update: { pricePaise: line.pricePaise },
+      // A pasted price list is somebody stating prices, so every row it
+      // creates goes on sale — otherwise a shop pastes its whole catalogue and
+      // the shop page stays empty with no explanation.
+      create: {
+        shopId: shop.id,
+        name,
+        unit,
+        nameBn: known?.bn ?? '',
+        nameHi: known?.hi ?? '',
+        pricePaise: line.pricePaise,
+        priced: true,
+      },
+      update: { pricePaise: line.pricePaise, priced: true },
       select: { id: true },
     });
     byKey.set(matchKey(name, unit), item.id);

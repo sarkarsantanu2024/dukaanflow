@@ -32,6 +32,12 @@ export type Identified = {
   nameBn: string;
   nameHi: string;
   unit: string;
+  /**
+   * The catalogue's suggested price in PAISE, or 0 where the packet matched
+   * nothing and there is nothing to suggest. Either way the row lands unpriced
+   * and stays off the shop page until the owner confirms the number.
+   */
+  pricePaise: number;
   category: string;
 };
 
@@ -127,6 +133,11 @@ export function PhotoItemAdder({
             // What the packet says beats what the catalogue assumes: the
             // catalogue's unit is a sensible default, the printed one is a fact.
             unit: unit || match.unit,
+            // Carried through only when the packet matched the catalogue at its
+            // own pack size. A printed unit that differs from the catalogue's
+            // makes the suggestion a different quantity's price, so it is
+            // dropped rather than shown against the wrong size.
+            pricePaise: !unit || unit === match.unit ? match.pricePaise : 0,
             category: match.category,
           });
           continue;
@@ -136,7 +147,9 @@ export function PhotoItemAdder({
         // packet — usually the product name — and leave the translations empty
         // rather than inventing them.
         const guess = pickLikelyName(lines);
-        if (guess) found.push({ name: guess, nameBn: '', nameHi: '', unit, category: '' });
+        if (guess) {
+          found.push({ name: guess, nameBn: '', nameHi: '', unit, pricePaise: 0, category: '' });
+        }
         else unreadable += 1;
       }
 
@@ -182,9 +195,22 @@ export function PhotoItemAdder({
       ref={input}
       type="file"
       accept="image/*"
-      // Several at once, so an owner can work through a shelf rather than
-      // returning to the same button for every packet.
-      multiple
+      /**
+       * Straight to the back camera, not to the gallery.
+       *
+       * The button says "photograph the packet" and was opening a file picker
+       * onto the phone's photo roll — an owner standing at the shelf with the
+       * packet in their hand had to find the camera themselves, take the
+       * picture, come back and hunt for it. `capture` tells the browser the
+       * source is the camera, and `environment` picks the one facing the
+       * shelf rather than the one facing the owner.
+       *
+       * It also costs the multi-select: a capture input takes one photo at a
+       * time. That is the honest trade — the batch only ever worked for
+       * pictures already on the phone, which is not what this button is for,
+       * and the scanner still handles whatever arrives as a list.
+       */
+      capture="environment"
       className="hidden"
       disabled={busy}
       onChange={(event) => {

@@ -11,26 +11,33 @@
  * A shopkeeper does not need to be told what a microphone is twice. The
  * explanation belongs on the first run; afterwards it is two buttons under a
  * thumb, in the corner every app puts them, above the tab bar rather than
- * behind it. Tapping the mic opens the full voice panel, examples and all, for
- * whoever still wants it.
+ * behind it.
+ *
+ * The main button carries a plus, not a microphone. A mic icon promises that
+ * tapping it starts listening; what it actually does is open a sheet holding
+ * the mic, the language picker and the typed form — so the icon was making a
+ * promise the button did not keep, and an owner who wanted to type had no way
+ * of guessing that typing was behind a microphone. A plus says "add an item"
+ * and lets the sheet offer both ways of doing it.
  */
 
-import { CameraIcon, MicIcon } from '@/components/ui/Icon';
+import { CameraIcon, PlusIcon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 
 export function FloatingTools({
   onVoice,
   onPhoto,
-  voiceLabel,
+  addLabel,
   photoLabel,
   photoBusy = false,
   /** Lifted clear of the owner app's tab bar; the console has none. */
   aboveTabBar = false,
 }: {
+  /** Opens the add sheet — mic, language picker and typed form together. */
   onVoice: () => void;
   /** Omit to drop the camera entirely — the console has no packet to photograph. */
   onPhoto?: () => void;
-  voiceLabel: string;
+  addLabel: string;
   photoLabel: string;
   photoBusy?: boolean;
   aboveTabBar?: boolean;
@@ -64,11 +71,11 @@ export function FloatingTools({
         <button
           type="button"
           onClick={onVoice}
-          aria-label={voiceLabel}
-          title={voiceLabel}
+          aria-label={addLabel}
+          title={addLabel}
           className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-xl transition hover:bg-brand-700"
         >
-          <MicIcon className="h-7 w-7" />
+          <PlusIcon className="h-7 w-7" />
         </button>
       </div>
     </div>

@@ -84,6 +84,8 @@ const PHRASES: Record<
     confirm: (what: string) => string;
     cancelled: string;
     noPrice: string;
+    /** Understood the instruction, but the item it named is not on the list. */
+    notListed: (name: string) => string;
     failed: string;
   }
 > = {
@@ -94,7 +96,8 @@ const PHRASES: Record<
     markedIn: (name) => `${name} marked in stock`,
     confirm: (what) => `${what}? Say yes or no.`,
     cancelled: 'Cancelled. Please say it again.',
-    noPrice: 'I did not catch the price. Please say the item and the price again.',
+    noPrice: 'I did not catch that. Please say the name of one item.',
+    notListed: (name) => `${name} is not on your list.`,
     failed: 'Could not do that. Please try again.',
   },
   'hi-IN': {
@@ -104,7 +107,8 @@ const PHRASES: Record<
     markedIn: (name) => `${name} उपलब्ध कर दिया`,
     confirm: (what) => `${what}? हाँ या नहीं बोलिए।`,
     cancelled: 'रद्द कर दिया। फिर से बोलिए।',
-    noPrice: 'दाम समझ नहीं आया। सामान और दाम फिर से बोलिए।',
+    noPrice: 'समझ नहीं आया। एक सामान का नाम बोलिए।',
+    notListed: (name) => `${name} आपकी सूची में नहीं है।`,
     failed: 'यह नहीं हो सका। दोबारा कोशिश कीजिए।',
   },
   'bn-IN': {
@@ -114,7 +118,8 @@ const PHRASES: Record<
     markedIn: (name) => `${name} আবার আছে বলে দেওয়া হয়েছে`,
     confirm: (what) => `${what}? হ্যাঁ বা না বলুন।`,
     cancelled: 'বাতিল করা হয়েছে। আবার বলুন।',
-    noPrice: 'দাম বুঝতে পারিনি। জিনিস আর দাম আবার বলুন।',
+    noPrice: 'বুঝতে পারিনি। একটা জিনিসের নাম বলুন।',
+    notListed: (name) => `${name} আপনার তালিকায় নেই।`,
     failed: 'করা যায়নি। আবার চেষ্টা করুন।',
   },
 };
@@ -144,19 +149,25 @@ export function VoiceItemAdder({
   slug,
   items,
   locale = 'en',
-  onName,
+  onDraft,
 }: {
   slug: string;
   items: AdminItem[];
   locale?: Locale;
   /**
-   * Where the mic sits above a form, a new name fills that form instead of
-   * saving on its own — the owner sees the word that was heard, next to the
-   * price box they were going to fill in anyway, and one Save covers both.
+   * Where the mic sits above a form, a new item fills that form instead of
+   * saving on its own — the owner reads back what was heard, in the boxes they
+   * were going to fill anyway, and one Save covers all of it.
+   *
+   * The whole sentence comes through, not just the name. An owner who says
+   * "বাসমতি চাল ১০০ টাকা কিলো" has already given the price and the pack
+   * size; handing back the name and two empty boxes throws away work they did
+   * out loud and asks them to do it again by hand.
+   *
    * Removals and stock changes still act immediately; those name something
    * already on the list, so there is nothing to review.
    */
-  onName?: (name: string) => void;
+  onDraft?: (draft: { name: string; unit: string; pricePaise: number | null }) => void;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -183,6 +194,13 @@ export function VoiceItemAdder({
   itemsRef.current = items;
   const pendingRef = useRef(pending);
   pendingRef.current = pending;
+  // `run` and `handlePhrase` are memoised for the life of the component, so
+  // anything from props they reach for has to come through a ref — captured in
+  // the closure it would still be whatever it was on first render.
+  const onDraftRef = useRef(onDraft);
+  onDraftRef.current = onDraft;
+  const tRef = useRef(t);
+  tRef.current = t;
   // Sentences can arrive faster than the API answers; a promise chain keeps
   // work in the order it was spoken and stops two writes from racing.
   const queueRef = useRef<Promise<void>>(Promise.resolve());
@@ -224,6 +242,7 @@ export function VoiceItemAdder({
   const run = useCallback(
     async (command: VoiceCommand, heard: string) => {
       const phrases = PHRASES[langRef.current];
+      const t = tRef.current;
       setBusy(true);
 
       try {
@@ -266,6 +285,15 @@ export function VoiceItemAdder({
           return;
         }
 
+        // Named something the shop does not have. Nothing to do, and saying
+        // so is the whole point — inventing the item would be the opposite of
+        // what was asked for.
+        if (command.kind === 'missing') {
+          addEntry({ heard, status: 'rejected', detail: `${command.label} — ${t.voiceNotListed}` });
+          announce(phrases.notListed(command.label));
+          return;
+        }
+
         // Already stocked. Saying its name is not an instruction to change
         // anything, and the price on that row is the owner's.
         if (command.kind === 'exists') {
@@ -279,8 +307,9 @@ export function VoiceItemAdder({
         // Handed to the form rather than saved, when there is a form to hand it
         // to. The word appears in the Name box where the owner can see whether
         // it was heard correctly before anything is written.
-        if (onName) {
-          onName(draft.name);
+        const onDraft = onDraftRef.current;
+        if (onDraft) {
+          onDraft({ name: draft.name, unit: draft.unit, pricePaise: draft.pricePaise });
           addEntry({ heard, status: 'done', detail: draftLabel(draft) });
           announce(draftLabel(draft));
           return;
@@ -336,6 +365,7 @@ export function VoiceItemAdder({
     (alternatives: string[]) => {
       queueRef.current = queueRef.current.then(async () => {
         const phrases = PHRASES[langRef.current];
+        const t = tRef.current;
         const heard = alternatives[0] ?? '';
 
         // A confirmation is outstanding: this sentence is the answer to it.
@@ -364,7 +394,11 @@ export function VoiceItemAdder({
           return;
         }
 
-        if (command.needsConfirm) {
+        // A spoken yes/no, except where the word is only going into a form.
+        // There the owner reads it in the Name box with their thumb over Save,
+        // which is a better check than a yes/no they answer without looking —
+        // and asking twice for one item is how a tool starts feeling slow.
+        if (command.needsConfirm && !(command.kind === 'upsert' && onDraftRef.current)) {
           setPending({ command, heard });
           announce(phrases.confirm(describe(command, t)));
           return;

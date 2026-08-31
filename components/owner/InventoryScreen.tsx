@@ -17,7 +17,6 @@ import type { ShopType } from '@prisma/client';
 import { StarterPicker } from './StarterPicker';
 import { ownerDict } from '@/lib/owner-i18n';
 import { VoiceArt } from '@/components/ui/ShopArt';
-import { formatPaise } from '@/lib/money';
 import type { StarterItem } from '@/lib/starter-catalogue';
 import type { Locale } from '@/lib/i18n';
 
@@ -62,7 +61,6 @@ export function InventoryScreen({
   const [starter, setStarter] = useState(items.length < 5);
 
   const outOfStock = items.filter((item) => !item.inStock).length;
-  const unpriced = items.filter((item) => !item.priced).length;
 
   if (welcome) {
     return (
@@ -84,6 +82,63 @@ export function InventoryScreen({
 
   return (
     <div className="space-y-4">
+      {/* THE LIST FIRST, AND NOTHING ABOVE IT.
+          The notice, the delivery terms, the common-items picker and this
+          shop's own item count were all stacked over the list, so an owner
+          opening the Items tab to look at their items scrolled past four cards
+          to reach them — every time, for the life of the shop, in exchange for
+          a number and three settings most shops touch once. The list is what
+          the tab is named after. It starts at the top of the screen and
+          everything about it follows underneath. */}
+      <ItemsManager
+        slug={slug}
+        items={items}
+        locale={locale}
+        shopType={shopType}
+        catalogue={catalogue}
+      />
+
+      {starter && catalogue.length > 0 && (
+        <StarterPicker
+          slug={slug}
+          catalogue={catalogue}
+          locale={locale}
+          remaining={Math.max(0, itemLimit - items.length)}
+          onDismiss={() => setStarter(false)}
+        />
+      )}
+
+      {/* On this screen rather than behind a settings tab: a fifth tab for one
+          field would cost every owner a slice of a small screen so a few of
+          them could use it. Folded away until tapped, it costs one line. */}
+      <NoticeCard
+        slug={slug}
+        locale={locale}
+        noticeText={noticeText}
+        noticeFrom={noticeFrom}
+        noticeTo={noticeTo}
+      />
+
+      {/* Only for shops that actually deliver.
+          Turning delivery on is a Super Admin setting, not one of these three
+          fields, so a collection-only shop met a card it could read and could
+          not act on — a line of screen spent telling the owner that something
+          they never asked about does not apply to them. */}
+      {deliveryEnabled && (
+        <DeliveryCard
+          slug={slug}
+          locale={locale}
+          deliveryEnabled={deliveryEnabled}
+          deliveryFeePaise={deliveryFeePaise}
+          freeDeliveryAbovePaise={freeDeliveryAbovePaise}
+          minOrderPaise={minOrderPaise}
+        />
+      )}
+
+      {/* How many items the shop has, and how many the plan allows. A summary
+          of the list belongs after it, the way a total belongs at the foot of
+          a column — and an owner who wants the number can read it without it
+          having cost them the top of the screen every other time. */}
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-2xl bg-white px-4 py-3 shadow-card">
         <p className="font-semibold tabular-nums text-slate-900">
           {items.length} <span className="font-normal text-slate-500">{t.itemsCount}</span>
@@ -97,53 +152,7 @@ export function InventoryScreen({
             {outOfStock} {t.outOfStockCount}
           </p>
         )}
-        {unpriced > 0 && (
-          <p className="text-sm tabular-nums text-slate-500">
-            {unpriced} × {formatPaise(100)}
-          </p>
-        )}
       </div>
-
-      {/* On this screen rather than behind a settings tab: a fifth tab for one
-          field would cost every owner a slice of a small screen so a few of
-          them could use it. Folded away until tapped, it costs one line. */}
-      <NoticeCard
-        slug={slug}
-        locale={locale}
-        noticeText={noticeText}
-        noticeFrom={noticeFrom}
-        noticeTo={noticeTo}
-      />
-
-      {/* Beside the notice, folded shut, for the same reason it is: three
-          fields most shops set once and never open again should not cost a tab
-          or a screenful. */}
-      <DeliveryCard
-        slug={slug}
-        locale={locale}
-        deliveryEnabled={deliveryEnabled}
-        deliveryFeePaise={deliveryFeePaise}
-        freeDeliveryAbovePaise={freeDeliveryAbovePaise}
-        minOrderPaise={minOrderPaise}
-      />
-
-      {starter && catalogue.length > 0 && (
-        <StarterPicker
-          slug={slug}
-          catalogue={catalogue}
-          locale={locale}
-          remaining={Math.max(0, itemLimit - items.length)}
-          onDismiss={() => setStarter(false)}
-        />
-      )}
-
-      <ItemsManager
-        slug={slug}
-        items={items}
-        locale={locale}
-        shopType={shopType}
-        catalogue={catalogue}
-      />
     </div>
   );
 }
