@@ -20,7 +20,7 @@ import { dict, type Locale } from '@/lib/i18n';
 import type { CustomerItem } from './ItemCard';
 import { itemName } from './ItemCard';
 
-const KEY = 'dukaanflow:last-order';
+const KEY = 'halkhata:last-order';
 
 type StoredOrder = { slug: string; at: number; lines: { id: string; quantity: number }[] };
 

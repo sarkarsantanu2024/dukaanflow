@@ -7,9 +7,10 @@ import { prisma } from '@/lib/prisma';
 import { demoFilter, showingDemoShops } from '@/lib/demo';
 import { formatPaise } from '@/lib/money';
 import { formatDayTime, shopClock } from '@/lib/time';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'DukaanFlow — Reports' };
+export const metadata = { title: `${BRAND_NAME} — Reports` };
 
 /**
  * The Super Admin's business report, for one business type and one period.
@@ -373,7 +374,7 @@ function ReportTitle({ report }: { report: Report }) {
   return (
     <header className="rounded-2xl bg-white px-5 py-4 shadow-card">
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-        DukaanFlow business report
+        {BRAND_NAME} business report
       </p>
       <h1 className="mt-0.5 text-xl font-bold text-slate-900">
         {report.scopeLabel} · {report.period.label}

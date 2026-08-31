@@ -6,6 +6,7 @@ import { formatPaise } from '@/lib/money';
 import { formatDayTime } from '@/lib/time';
 import { ownerDict } from '@/lib/owner-i18n';
 import { PrintButton } from '@/components/owner/PrintButton';
+import { BRAND_NAME } from '@/lib/brand';
 
 /**
  * The khata as a piece of paper.
@@ -33,7 +34,7 @@ type PageProps = {
 };
 
 export const metadata: Metadata = {
-  title: 'DukaanFlow — Khata statement',
+  title: `${BRAND_NAME} — Khata statement`,
   robots: { index: false, follow: false },
 };
 

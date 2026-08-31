@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { ToastProvider } from '@/components/ui/Toast';
 import './globals.css';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const metadata: Metadata = {
-  title: 'DukaanFlow — Scan → Select → Order',
+  title: `${BRAND_NAME} — Scan → Select → Order`,
   description:
     'QR-to-WhatsApp ordering for local grocery shops and restaurants. No app, no login for shop owners.',
   robots: { index: false, follow: false },

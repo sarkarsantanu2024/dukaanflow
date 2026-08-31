@@ -1,3 +1,4 @@
+import { BRAND_NAME } from '@/lib/brand';
 /**
  * Web app manifest for the shopkeeper's installed admin app.
  *
@@ -14,8 +15,8 @@ export const runtime = 'nodejs';
 
 const MANIFEST = {
   id: '/admin',
-  name: 'DukaanFlow Admin',
-  short_name: 'DukaanFlow',
+  name: `${BRAND_NAME} Admin`,
+  short_name: BRAND_NAME,
   description: 'Manage shops, items and QR codes. Add items by voice.',
   start_url: '/admin',
   scope: '/admin',

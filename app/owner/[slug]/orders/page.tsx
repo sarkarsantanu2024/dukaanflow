@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { OrdersScreen, type OwnerOrder } from '@/components/owner/OrdersScreen';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ type PageProps = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   return {
-    title: 'DukaanFlow — Orders',
+    title: `${BRAND_NAME} — Orders`,
     manifest: `/owner.webmanifest?slug=${encodeURIComponent(slug)}`,
     appleWebApp: { capable: true, statusBarStyle: 'default' },
   };

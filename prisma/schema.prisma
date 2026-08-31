@@ -1,4 +1,4 @@
-// DukaanFlow — Prisma schema
+// Halkhata — Prisma schema
 //
 // MONEY IS STORED AS INTEGER PAISE EVERYWHERE. Never floats, never rupees.
 //
@@ -178,12 +178,12 @@ model Shop {
 
   ownerName      String @default("")
   /// Storefront and owner photos, held as resized data URLs. Not a blob store:
-  /// one ~100 KB image per shop keeps DukaanFlow deployable with nothing but a
+  /// one ~100 KB image per shop keeps Halkhata deployable with nothing but a
   /// database, and the column takes a URL unchanged if that ever changes.
   imageData      String @default("")
   ownerImageData String @default("")
   /// The shop's own printed UPI QR, photographed or exported from their
-  /// payment app. Preferred over the one DukaanFlow generates from `upiId`,
+  /// payment app. Preferred over the one Halkhata generates from `upiId`,
   /// because a PhonePe or Paytm QR carries merchant details a plain
   /// `upi://pay` link cannot reproduce.
   upiQrData      String @default("")
@@ -217,13 +217,13 @@ model Shop {
   @@index([isDemo])
 }
 
-/// A recorded payment. DukaanFlow collects over UPI and the Super Admin records
+/// A recorded payment. Halkhata collects over UPI and the Super Admin records
 /// it here; the shape is deliberately gateway-shaped so a Razorpay or Stripe
 /// webhook can write the same rows without a migration.
 model Payment {
   id          String   @id @default(uuid()) @db.Uuid
   shopId      String   @db.Uuid
-  /// What the shop paid DukaanFlow. The listing service is priced at 50 paise
+  /// What the shop paid Halkhata. The listing service is priced at 50 paise
   /// an item, so this needs the finer unit even when every plan price is whole.
   amountPaise Int
   plan        Plan
@@ -279,7 +279,7 @@ model Sale {
 /// Exists for udhaar — the credit book every kirana already keeps on paper —
 /// and, later, for telling those regulars what is cooking today. Scoped to a
 /// single shop on purpose: one shopkeeper's customer list is not another's, and
-/// DukaanFlow is not in the business of pooling them.
+/// Halkhata is not in the business of pooling them.
 model Customer {
   id        String   @id @default(uuid()) @db.Uuid
   shopId    String   @db.Uuid
@@ -434,7 +434,7 @@ model Order {
   ///
   /// Completing an order without this posts the total to the customer's khata,
   /// because goods that left the shop unpaid are a debt whether or not anybody
-  /// writes it down — and not writing it down is the thing DukaanFlow exists
+  /// writes it down — and not writing it down is the thing Halkhata exists
   /// to end.
   paymentReceived  Boolean     @default(false)
   createdAt        DateTime    @default(now())

@@ -1,3 +1,4 @@
+import { BRAND_NAME } from './brand';
 /**
  * The product, in the order it happens to a shopkeeper.
  *
@@ -33,7 +34,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'We set the shop up',
     point: 'The shopkeeper does no setup at all.',
     detail:
-      'Name, phone, type, address and hours go in from our side. The shop gets a web address of its own — dukaanflow.app/shop/their-name — and a 6-digit PIN for the owner. Nothing to install, no form for them to fill in.',
+      'Name, phone, type, address and hours go in from our side. The shop gets a web address of its own — halkhata.app/shop/their-name — and a 6-digit PIN for the owner. Nothing to install, no form for them to fill in.',
     screenshot: '01-add-shop.png',
   },
   {
@@ -126,6 +127,6 @@ export const TOUR_ANSWERS: { question: string; answer: string }[] = [
   {
     question: 'Where does the money from an order go?',
     answer:
-      'Straight to you, exactly as it does today — cash at the counter or your own UPI. DukaanFlow never touches your customers’ money.',
+      `Straight to you, exactly as it does today — cash at the counter or your own UPI. ${BRAND_NAME} never touches your customers’ money.`,
   },
 ];

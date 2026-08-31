@@ -512,7 +512,7 @@ export const subscriptionSchema = z.object({
 
 /**
  * A resized photo as a data URL. Held in the database rather than a blob store
- * so DukaanFlow needs no second service; the client resizes before upload and
+ * so Halkhata needs no second service; the client resizes before upload and
  * this is the backstop.
  */
 const imageDataSchema = z

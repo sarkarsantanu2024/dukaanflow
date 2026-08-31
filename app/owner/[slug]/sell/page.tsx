@@ -6,6 +6,7 @@ import { SellScreen } from '@/components/owner/SellScreen';
 import { MenuBroadcast } from '@/components/owner/MenuBroadcast';
 import type { ShopType } from '@prisma/client';
 import { baseUrl } from '@/lib/qr';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ type PageProps = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   return {
-    title: 'DukaanFlow — Sell',
+    title: `${BRAND_NAME} — Sell`,
     manifest: `/owner.webmanifest?slug=${encodeURIComponent(slug)}`,
     appleWebApp: { capable: true, statusBarStyle: 'default' },
   };

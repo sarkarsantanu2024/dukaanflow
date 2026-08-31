@@ -6,7 +6,7 @@
  * THE PROBLEM THIS SOLVES. A customer scans the code on the counter once. Two
  * days later they are at home and want the same shop — and the only route back
  * is the QR sticker, which is in the shop. So they walk, or they ring, and the
- * one thing DukaanFlow was supposed to change has not changed.
+ * one thing Halkhata was supposed to change has not changed.
  *
  * A login would fix it and cost far more than it fixes: asking somebody to
  * register before a kirana can sell them a kilo of rice loses more orders than
@@ -21,10 +21,10 @@
  * said "not now".
  *
  * Nothing here ever reaches the server. It cannot: it is a browser's local
- * storage, and DukaanFlow has no idea which phone is which.
+ * storage, and Halkhata has no idea which phone is which.
  */
 
-const KEY = 'dukaanflow:shops';
+const KEY = 'halkhata:shops';
 
 /** How many to keep. Long enough for a household's regulars, short enough to read. */
 const LIMIT = 12;

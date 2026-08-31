@@ -1,5 +1,5 @@
 /**
- * The DukaanFlow mark.
+ * The Halkhata mark.
  *
  * The console had one of these hand-rolled in its sidebar and the customer's
  * shop page had none at all, which left the storefront looking like a page from
@@ -11,6 +11,7 @@
 import Link from 'next/link';
 import clsx from 'clsx';
 import { BrandLogo } from './BrandLogo';
+import { BRAND_NAME, BRAND_WORDMARK } from '@/lib/brand';
 
 export function BrandMark({
   href = '/',
@@ -26,7 +27,7 @@ export function BrandMark({
   return (
     <Link
       href={href}
-      aria-label="DukaanFlow — home"
+      aria-label={`${BRAND_NAME} — home`}
       className={clsx('inline-flex items-center gap-2.5', className)}
     >
       {/* The mark stands on its own — no tile behind it.
@@ -36,7 +37,7 @@ export function BrandMark({
       <BrandLogo
         className={clsx('h-7 w-7 shrink-0', tone === 'dark' ? 'text-white' : 'text-brand-600')}
       />
-      {/* Two tones, one word. "DukaanFlow" set in a single weight was a label;
+      {/* Two tones, one word. "Halkhata" set in a single weight was a label;
           the colour break is what makes the compound read as a name, and it
           ties the wordmark to the mark beside it. */}
       <span
@@ -45,8 +46,12 @@ export function BrandMark({
           tone === 'dark' ? 'text-white' : 'text-slate-900',
         )}
       >
-        Dukaan
-        <span className={tone === 'dark' ? 'text-brand-200' : 'text-brand-600'}>Flow</span>
+        {BRAND_WORDMARK.head}
+        {BRAND_WORDMARK.tail && (
+          <span className={tone === 'dark' ? 'text-brand-200' : 'text-brand-600'}>
+            {BRAND_WORDMARK.tail}
+          </span>
+        )}
       </span>
     </Link>
   );

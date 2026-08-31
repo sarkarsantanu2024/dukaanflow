@@ -45,7 +45,7 @@ export function PosterSheet({
 
   /**
    * The same credit line the shop's own page carries at its foot. It used to
-   * read "Powered by DukaanFlow" here and something else on the web, so the
+   * read "Powered by Halkhata" here and something else on the web, so the
    * poster on the wall and the page behind the QR named two different
    * companies.
    */
@@ -118,7 +118,7 @@ export function PosterSheet({
       const { jsPDF } = await import('jspdf');
       const doc = new jsPDF({ unit: 'mm', format: 'a4' });
       doc.addImage(sheet.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
-      doc.save(`dukaanflow-${slug}-poster.pdf`);
+      doc.save(`halkhata-${slug}-poster.pdf`);
     } catch {
       push('Could not build the PDF. Use Print instead.', 'error');
     } finally {

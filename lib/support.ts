@@ -1,5 +1,5 @@
 /**
- * Who to call when DukaanFlow itself goes wrong.
+ * Who to call when Halkhata itself goes wrong.
  *
  * The shop's own phone number is on its page already — that is for orders. This
  * is the other number: the people who built and run the product, for a

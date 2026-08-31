@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * The product tour: what DukaanFlow is, in the order it happens to a shop.
+ * The product tour: what Halkhata is, in the order it happens to a shop.
  *
  * Two jobs in one component, deliberately. On screen it is the reference an
  * operator reads while a shopkeeper is asking questions on the phone. Printed
@@ -18,6 +18,7 @@ import { useState } from 'react';
 import clsx from 'clsx';
 import { TOUR_ANSWERS, TOUR_STEPS, type TourStep } from '@/lib/product-tour';
 import { PrinterIcon } from '@/components/ui/Icon';
+import { BRAND_NAME } from '@/lib/brand';
 
 const ACTOR_LABEL: Record<TourStep['actor'], string> = {
   operator: 'We do this',
@@ -38,7 +39,7 @@ export function ProductGuide() {
     <section className="rounded-2xl border border-brand-100 bg-white p-5 shadow-card print-sheet">
       <div className="flex flex-wrap items-center gap-3">
         <div className="mr-auto min-w-0">
-          <h2 className="font-semibold text-slate-900">How DukaanFlow works</h2>
+          <h2 className="font-semibold text-slate-900">How {BRAND_NAME} works</h2>
           <p className="mt-0.5 text-sm text-slate-500">
             The tour, in the order a shopkeeper meets it. Print this as the leave-behind.
           </p>

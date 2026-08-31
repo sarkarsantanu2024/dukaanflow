@@ -22,10 +22,12 @@
  */
 
 import { QRCodeCanvas } from 'qrcode.react';
+import { useState } from 'react';
 import { ownerDict } from '@/lib/owner-i18n';
 import { WhatsAppIcon } from '@/components/ui/Icon';
 import { formatPaise, paiseToUpiAmount, rupeesToPaise } from '@/lib/money';
 import type { Locale } from '@/lib/i18n';
+import { BRAND_NAME } from '@/lib/brand';
 
 export type RoadblockState = {
   /** Why the owner is here. Paused means the storefront is off too. */
@@ -34,8 +36,14 @@ export type RoadblockState = {
   planPriceRupees: number;
   planItemLimit: number;
   itemCount: number;
-  /** `upi://pay?...` with the plan's price filled in, or "" when unconfigured. */
+  /** Whole rupees for a year of this plan, paid up front (two months free). */
+  planYearRupees: number;
+  /** What paying yearly saves against twelve monthly payments. */
+  planYearSavingRupees: number;
+  /** `upi://pay?...` with the plan's monthly price filled in, or "" when unconfigured. */
   payUrl: string;
+  /** The same, for a year. Empty when no UPI id is configured. */
+  payUrlYear: string;
   /** The UPI id itself, printed under the code so it can be typed by hand. */
   upiId: string;
   /** wa.me link to the operator, carrying the shop's name and slug. */
@@ -51,7 +59,22 @@ export function SubscriptionRoadblock({
 }) {
   const t = ownerDict(locale);
   const paused = state.reason === 'paused';
-  const pricePaise = rupeesToPaise(state.planPriceRupees);
+
+  /**
+   * WHICH PERIOD THIS SCREEN OPENS ON.
+   *
+   * Monthly, deliberately, even though the year is the better deal for both
+   * sides. An owner reaching this screen is locked out of their own shop and
+   * anxious; opening on ₹2,490 when they were braced for ₹249 risks losing the
+   * payment altogether, and a shop that pays nothing churns harder than one
+   * that pays monthly. The yearly option sits beside it with its saving in
+   * plain sight, and the pricing page — read calmly, before any of this —
+   * leads with the year instead.
+   */
+  const [yearly, setYearly] = useState(false);
+
+  const pricePaise = rupeesToPaise(yearly ? state.planYearRupees : state.planPriceRupees);
+  const payUrl = yearly ? state.payUrlYear : state.payUrl;
 
   return (
     <div
@@ -90,10 +113,44 @@ export function SubscriptionRoadblock({
               <span className="text-2xl font-bold tabular-nums text-brand-700">
                 {formatPaise(pricePaise)}
               </span>
-              <span className="text-sm text-slate-500">{t.blockMonth}</span>
+              <span className="text-sm text-slate-500">
+                {yearly ? t.blockYear : t.blockMonth}
+              </span>
             </p>
 
-            {state.payUrl ? (
+            {/* Month or year, as two buttons rather than a switch: a switch
+                has an on-state to work out, and these are two prices to
+                compare. The saving is on the control itself, because it is the
+                reason to press it. */}
+            <div className="mt-3 inline-flex rounded-xl bg-slate-100 p-1" role="group">
+              <button
+                type="button"
+                aria-pressed={!yearly}
+                onClick={() => setYearly(false)}
+                className={
+                  'rounded-lg px-3 py-1.5 text-sm font-semibold transition ' +
+                  (yearly ? 'text-slate-600' : 'bg-white text-slate-900 shadow-sm')
+                }
+              >
+                {t.blockPerMonth}
+              </button>
+              <button
+                type="button"
+                aria-pressed={yearly}
+                onClick={() => setYearly(true)}
+                className={
+                  'rounded-lg px-3 py-1.5 text-sm font-semibold transition ' +
+                  (yearly ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600')
+                }
+              >
+                {t.blockPerYear}
+                <span className="ml-1 font-bold text-brand-700">
+                  −₹{state.planYearSavingRupees.toLocaleString('en-IN')}
+                </span>
+              </button>
+            </div>
+
+            {payUrl ? (
               <div className="mt-4 flex flex-col items-center">
                 <p className="mb-2 text-sm font-semibold text-slate-700">{t.blockScan}</p>
                 <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
@@ -101,7 +158,7 @@ export function SubscriptionRoadblock({
                       figure rather than typing one — a digit out here is a
                       payment we have to chase and refund. */}
                   <QRCodeCanvas
-                    value={state.payUrl}
+                    value={payUrl}
                     size={512}
                     level="M"
                     marginSize={2}
@@ -117,7 +174,7 @@ export function SubscriptionRoadblock({
                 {/* A phone showing this QR cannot scan it. On the same device
                     the intent link opens the payment app directly. */}
                 <a
-                  href={state.payUrl}
+                  href={payUrl}
                   className="mt-3 inline-flex h-11 items-center rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white"
                 >
                   {t.blockScan} · {formatPaise(pricePaise)}
@@ -156,10 +213,10 @@ export function planPayUrl(upiId: string, planName: string, priceRupees: number)
   if (!upiId) return '';
   const params = new URLSearchParams({
     pa: upiId,
-    pn: 'DukaanFlow',
+    pn: BRAND_NAME,
     am: paiseToUpiAmount(rupeesToPaise(priceRupees)),
     cu: 'INR',
-    tn: `DukaanFlow ${planName}`,
+    tn: `${BRAND_NAME} ${planName}`,
   });
   return `upi://pay?${params.toString()}`;
 }

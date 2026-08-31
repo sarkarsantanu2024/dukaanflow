@@ -7,7 +7,7 @@
  *
  *  - **Rupees** — what a shop charges for what it sells. Item prices, order
  *    totals, the khata: whole rupees, as they have been throughout.
- *  - **Paise** — what DukaanFlow charges the shop. Billing needs finer grain
+ *  - **Paise** — what Halkhata charges the shop. Billing needs finer grain
  *    than a rupee because the listing service is priced at 50 paise an item,
  *    and rounding every line would either lose money or overcharge.
  *

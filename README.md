@@ -1,4 +1,4 @@
-# DukaanFlow
+# Halkhata
 
 ## Scan → Select → WhatsApp
 
@@ -29,7 +29,7 @@ Keeping this list short is the product.
 ## How it is sold
 
 One price per shop, set by **catalogue size** — the one number a shopkeeper and
-DukaanFlow both already understand, and the one that tracks the value of the
+Halkhata both already understand, and the one that tracks the value of the
 software. Orders, customers and QR scans are unlimited on every plan: charging a
 shop more for selling more is not a partnership, and a commission model is
 exactly what small shops fear about going online.
@@ -177,7 +177,7 @@ separate models because they answer different questions: orders are a queue to
 work through, sales are what the day took. `Payment` is the subscription ledger.
 
 Photos are held as resized data URLs on `Shop`, not in a blob store. One ~90 KB
-image per shop keeps DukaanFlow deployable with nothing but a database, and the
+image per shop keeps Halkhata deployable with nothing but a database, and the
 column takes a URL unchanged if that ever needs to change.
 
 `totalAmount` is the reporting column. Totals are **never** recomputed from
@@ -356,7 +356,7 @@ shopkeepers.
 
 ### Getting the app to the owner
 
-There is no APK to forward. DukaanFlow is a PWA, so what the owner receives is
+There is no APK to forward. Halkhata is a PWA, so what the owner receives is
 a link:
 
 1. Super Admin taps **Send app link on WhatsApp** on the shop page.
@@ -444,7 +444,7 @@ which is the only reason a year-over-year comparison is possible at all.
 **Unpaid means khata.** Answering "not yet" posts the order total to that
 customer's credit book as a DEBIT in the same breath — goods that left the shop
 unpaid are a debt whether or not anybody wrote it down, and not writing it down
-is what DukaanFlow exists to end. `LedgerEntry.orderId` is unique, so a second
+is what Halkhata exists to end. `LedgerEntry.orderId` is unique, so a second
 tap cannot double what is owed, and correcting the answer to "paid" lifts the
 entry again.
 

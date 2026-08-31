@@ -14,6 +14,7 @@
 import { formatDayTime } from './time';
 import { PAISE_PER_RUPEE } from './money';
 import type { Report } from './analytics';
+import { BRAND_NAME } from './brand';
 
 /**
  * Money for a spreadsheet: rupees with two decimals, unformatted.
@@ -53,7 +54,7 @@ export function reportToCsv(report: Report): string {
     lines.push('');
   };
 
-  lines.push(row(['DukaanFlow business report']));
+  lines.push(row([`${BRAND_NAME} business report`]));
   // One shop, or a whole trade — never both, because saying "All business
   // types" twice under two different labels reads as a bug in the export.
   lines.push(
@@ -267,9 +268,9 @@ export function reportToCsv(report: Report): string {
   return lines.join('\r\n');
 }
 
-/** `dukaanflow-ramu-grocery-august-2026.csv` — sortable, and says what it holds. */
+/** `halkhata-ramu-grocery-august-2026.csv` — sortable, and says what it holds. */
 export function reportFilename(report: Report): string {
   const scope = report.scopeLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const period = report.period.label.toLowerCase().replace(/\s+/g, '-');
-  return `dukaanflow-${scope}-${period}.csv`;
+  return `halkhata-${scope}-${period}.csv`;
 }

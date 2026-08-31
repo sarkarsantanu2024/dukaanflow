@@ -1,4 +1,4 @@
-# Deploying DukaanFlow
+# Deploying Halkhata
 
 From empty account to a QR printed and stuck on a shop counter. Roughly 30 minutes.
 
@@ -6,7 +6,7 @@ From empty account to a QR printed and stuck on a shop counter. Roughly 30 minut
 
 ## 1. Create the Neon database
 
-1. Sign up at <https://neon.tech> and create a project — name it `dukaanflow`,
+1. Sign up at <https://neon.tech> and create a project — name it `halkhata`,
    region **AWS ap-south-1 (Mumbai)** so latency stays low for Indian customers.
 2. Open **Connection Details** and copy **two** strings:
    - **Pooled** (host contains `-pooler`) → `DATABASE_URL`. Serverless functions
@@ -25,8 +25,8 @@ cp .env.example .env
 Fill in:
 
 ```env
-DATABASE_URL="postgresql://…-pooler….neon.tech/dukaanflow?sslmode=require"
-DIRECT_URL="postgresql://…….neon.tech/dukaanflow?sslmode=require"
+DATABASE_URL="postgresql://…-pooler….neon.tech/halkhata?sslmode=require"
+DIRECT_URL="postgresql://…….neon.tech/halkhata?sslmode=require"
 NEXT_PUBLIC_BASE_URL="https://dukaanflow.vercel.app"
 ```
 
@@ -137,9 +137,9 @@ and restart the dev server.
 ```bash
 git init
 git add .
-git commit -m "DukaanFlow MVP"
+git commit -m "Halkhata MVP"
 git branch -M main
-git remote add origin https://github.com/<you>/dukaanflow.git
+git remote add origin https://github.com/<you>/halkhata.git
 git push -u origin main
 ```
 
@@ -191,11 +191,11 @@ are comfortable that a failed migration blocks the deploy.
 
 ## 8. Custom domain
 
-1. Vercel → Project → **Settings → Domains** → add `dukaanflow.in`.
+1. Vercel → Project → **Settings → Domains** → add `halkhata.in`.
 2. At your registrar, add the records Vercel shows — usually an `A` record to
    `76.76.21.21` for the apex, and a `CNAME` to `cname.vercel-dns.com` for `www`.
 3. Wait for DNS to propagate; Vercel issues the TLS certificate automatically.
-4. Update `NEXT_PUBLIC_BASE_URL` to `https://dukaanflow.in` and **redeploy**.
+4. Update `NEXT_PUBLIC_BASE_URL` to `https://halkhata.in` and **redeploy**.
 
 Short domains matter here: the URL is printed under the QR and read aloud over
 the phone.

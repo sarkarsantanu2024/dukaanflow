@@ -8,9 +8,10 @@ import { PlusIcon } from '@/components/ui/Icon';
 import { entitlement, type Plan, type SubStatus } from '@/lib/plans';
 import { formatClockRange } from '@/lib/hours';
 import { formatDay } from '@/lib/time';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'DukaanFlow — Shops' };
+export const metadata = { title: `${BRAND_NAME} — Shops` };
 
 /**
  * Turns a shop's billing state into the one line an operator needs to act on.

@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
+import { BRAND_NAME } from './brand';
 
 /**
  * One-time invite links.
@@ -33,7 +34,7 @@ export function hashInviteToken(token: string): string {
 /** The message the Super Admin sends. Written to be read on a phone, by a shopkeeper. */
 export function inviteMessage(shopName: string, url: string, pin: string | null): string {
   const lines = [
-    `${shopName} — your DukaanFlow shop is ready.`,
+    `${shopName} — your ${BRAND_NAME} shop is ready.`,
     '',
     `Open this link on your phone: ${url}`,
     '',

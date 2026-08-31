@@ -2,15 +2,16 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { demoFilter, showingDemoShops } from '@/lib/demo';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'DukaanFlow — Customers' };
+export const metadata = { title: `${BRAND_NAME} — Customers` };
 
 /**
  * Every customer of every shop, in one table.
  *
  * Scoped per shop in the product — one shopkeeper's regulars are not another's,
- * and DukaanFlow is not in the business of pooling them. This page does not
+ * and Halkhata is not in the business of pooling them. This page does not
  * change that: it is the operator's view of the same rows.
  *
  * Name, number, address, shop, and nothing else. It carried order counts,

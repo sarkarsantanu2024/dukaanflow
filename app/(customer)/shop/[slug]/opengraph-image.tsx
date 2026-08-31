@@ -19,6 +19,7 @@ import { ImageResponse } from 'next/og';
 import { prisma } from '@/lib/prisma';
 import { SHOP_TYPE_LABELS } from '@/lib/validators';
 import { BRAND_GREEN } from '@/lib/brand';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const runtime = 'nodejs';
 export const contentType = 'image/png';
@@ -41,7 +42,7 @@ export default async function ShopCard({ params }: { params: Promise<{ slug: str
 
   // A slug nobody owns still has to answer with an image — a broken preview is
   // worse than a plain one, and this is also what a mistyped link gets.
-  const name = shop?.name ?? 'DukaanFlow';
+  const name = shop?.name ?? BRAND_NAME;
   const trade = shop ? SHOP_TYPE_LABELS[shop.type] : 'Scan → Select → Order';
 
   return new ImageResponse(

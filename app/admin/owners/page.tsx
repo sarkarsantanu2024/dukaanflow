@@ -2,9 +2,10 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { demoFilter, showingDemoShops } from '@/lib/demo';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'DukaanFlow — Shop owners' };
+export const metadata = { title: `${BRAND_NAME} — Shop owners` };
 
 /**
  * Every shop owner, in one table: who they are and how to reach them.

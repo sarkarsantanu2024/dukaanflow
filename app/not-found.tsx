@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BRAND_NAME } from '@/lib/brand';
 
 export default function NotFound() {
   return (
@@ -9,7 +10,7 @@ export default function NotFound() {
         This shop link may be wrong or the shop is no longer listed.
       </p>
       <Link href="/" className="mt-6 font-semibold text-brand-700 underline">
-        Go to DukaanFlow
+        Go to {BRAND_NAME}
       </Link>
     </main>
   );

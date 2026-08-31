@@ -2,8 +2,9 @@ import { AdminHeader } from '@/components/admin/AdminHeader';
 import { ShopForm } from '@/components/admin/ShopForm';
 import { ShopArt } from '@/components/ui/ShopArt';
 import { TRIAL_DAYS } from '@/lib/plans';
+import { BRAND_NAME } from '@/lib/brand';
 
-export const metadata = { title: 'DukaanFlow — New shop' };
+export const metadata = { title: `${BRAND_NAME} — New shop` };
 
 const STEPS = [
   'Fill this in — only the name and WhatsApp number are required.',

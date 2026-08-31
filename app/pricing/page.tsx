@@ -1,11 +1,19 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { PLAN_ORDER, PLAN_SPECS, TRIAL_DAYS, formatPlanPrice } from '@/lib/plans';
+import {
+  PLAN_ORDER,
+  PLAN_SPECS,
+  TRIAL_DAYS,
+  formatPlanPrice,
+  yearPrice,
+  yearSaving,
+} from '@/lib/plans';
 import { ShopArt, VoiceArt } from '@/components/ui/ShopArt';
 import { CheckIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const metadata: Metadata = {
-  title: 'DukaanFlow — Pricing',
+  title: `${BRAND_NAME} — Pricing`,
   description: 'One price per shop, by how many items you sell. No commission on orders.',
   robots: { index: true, follow: true },
 };
@@ -15,7 +23,7 @@ export const metadata: Metadata = {
  *
  * Written for someone standing behind a counter, not a procurement team: the
  * number, what they get, and how to start. The one thing it says loudest is
- * that DukaanFlow never takes a cut of an order — the fear every small shop
+ * that Halkhata never takes a cut of an order — the fear every small shop
  * has about going online is that a platform will start owning their customers.
  *
  * Unlike the console this is a page to read, so it is centred at a comfortable
@@ -50,7 +58,7 @@ const STEPS = [
 export default function PricingPage() {
   const support = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '';
   const startUrl = support
-    ? `https://wa.me/${support}?text=${encodeURIComponent('I want a DukaanFlow shop.')}`
+    ? `https://wa.me/${support}?text=${encodeURIComponent('I want a ${BRAND_NAME} shop.')}`
     : '#plans';
 
   return (
@@ -58,7 +66,7 @@ export default function PricingPage() {
       <header className="bg-gradient-to-br from-brand-700 via-brand-700 to-brand-600 px-4 pb-16 pt-14 text-white">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-10 md:flex-row">
           <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">DukaanFlow</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">{BRAND_NAME}</p>
             <h1 className="mt-3 text-4xl font-bold leading-[1.1] sm:text-5xl">
               One price per shop.
               <br />
@@ -136,10 +144,24 @@ export default function PricingPage() {
                   <span className="text-sm text-slate-500">
                     {/* No tier is free any more, so the "forever" case that
                         used to sit here would only ever be a lie waiting to be
-                        printed. Every plan is monthly. */}
+                        printed. */}
                     / month
                   </span>
                 </p>
+
+                {/* THE YEARLY PRICE, ON THE CARD RATHER THAN BEHIND A TOGGLE.
+                    A shop that pays once a year has one chance to leave instead
+                    of twelve, which matters more to this business than the two
+                    months given away — so the offer has to be read, not
+                    discovered. ₹2,490 for a year of Pro also reads as cheaper
+                    than every billing app a kirana is already paying for. */}
+                <p className="mt-1 text-sm font-semibold text-brand-700">
+                    ₹{yearPrice(spec.id).toLocaleString('en-IN')} for a year
+                  <span className="font-normal text-slate-500">
+                    {' '}— save ₹{yearSaving(spec.id).toLocaleString('en-IN')}
+                  </span>
+                </p>
+
                 <p className="mt-1 text-sm text-slate-500">{spec.tagline}</p>
 
                 <p className="mt-5 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
@@ -241,8 +263,9 @@ export default function PricingPage() {
         <div className="mx-auto max-w-2xl rounded-3xl bg-brand-700 p-8 text-center text-white">
           <h2 className="text-2xl font-bold">Start with {TRIAL_DAYS} days of Pro, free</h2>
           <p className="mx-auto mt-3 max-w-lg text-white/85">
-            Pay by UPI when it ends — monthly, no contract, stop whenever you like. If you stop,
-            your shop page and QR keep working; you simply cannot change items until you come back.
+            Pay by UPI when it ends — by the month or by the year, no contract, stop whenever you
+            like. A year costs two months less than paying monthly. If you stop, your shop page and
+            QR keep working; you simply cannot change items until you come back.
           </p>
           <a
             href={startUrl}
@@ -257,7 +280,7 @@ export default function PricingPage() {
 
         <p className="mt-10 text-center text-xs text-slate-400">
           <Link href="/" className="underline">
-            DukaanFlow
+            {BRAND_NAME}
           </Link>{' '}
           · Scan → Select → Order
         </p>

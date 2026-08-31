@@ -4,9 +4,10 @@ import { resolveOccasions } from '@/lib/occasions';
 import { OCCASION_CATALOGUE } from '@/lib/occasion-catalogue';
 import { SHIPPED_YEARS } from '@/lib/occasion-dates';
 import { shopClock } from '@/lib/time';
+import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'DukaanFlow — Occasions' };
+export const metadata = { title: `${BRAND_NAME} — Occasions` };
 
 export default async function OccasionsPage({
   searchParams,
@@ -28,7 +29,7 @@ export default async function OccasionsPage({
 
       <main className="px-4 py-5 lg:px-6">
         <p className="mb-5 max-w-3xl rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-relaxed text-slate-600 shadow-card">
-          <strong>You do not enter dates.</strong> The festival dates ship with DukaanFlow — press
+          <strong>You do not enter dates.</strong> The festival dates ship with {BRAND_NAME} — press
           the button below and the calendar is ready, Diwali and Eid included.
           <br />
           <br />

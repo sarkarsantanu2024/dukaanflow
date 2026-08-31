@@ -32,7 +32,7 @@ import { LangToggle } from './LangToggle';
 import { WhatsAppIcon } from '@/components/ui/Icon';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 
-const LOCALE_STORAGE_KEY = 'dukaanflow:locale';
+const LOCALE_STORAGE_KEY = 'halkhata:locale';
 
 export type TrackedOrder = {
   id: string;

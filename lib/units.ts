@@ -38,7 +38,7 @@ export function unitsFor(type: ShopType): string[] {
 }
 
 /** Shared id so one datalist can serve every unit field on a page. */
-export const UNIT_LIST_ID = 'dukaanflow-units';
+export const UNIT_LIST_ID = 'halkhata-units';
 
 /**
  * The canonical spelling of a unit, so two ways of typing one thing become one

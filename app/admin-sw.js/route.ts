@@ -1,5 +1,6 @@
+import { BRAND_NAME } from '@/lib/brand';
 /**
- * The one service worker, for every installed DukaanFlow app.
+ * The one service worker, for every installed Halkhata app.
  *
  * Served from the root so it may take any narrower scope — `/owner/<slug>/` for
  * a shopkeeper's app, `/shop/` for a customer's — and so the /admin gate cannot
@@ -12,7 +13,7 @@
  *
  * 2. IT DELIVERS PUSH. A new order for the owner, a status change for the
  *    customer. Everything about what a notification says arrives in the payload;
- *    nothing about DukaanFlow is decided here.
+ *    nothing about Halkhata is decided here.
  *
  * 3. IT SURVIVES A BAD SIGNAL. This is the part that needed the most care,
  *    because this worker used to be network-only ON PURPOSE — a shopkeeper must
@@ -44,7 +45,7 @@ export const runtime = 'nodejs';
 const VERSION = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ?? 'dev';
 
 const SOURCE = `
-const CACHE = 'dukaanflow-${VERSION}';
+const CACHE = 'halkhata-${VERSION}';
 
 // What a page falls back to when it was never visited and there is no network.
 // Inline, because fetching an offline page while offline is the joke it sounds
@@ -152,7 +153,7 @@ self.addEventListener('push', (event) => {
     payload = {};
   }
 
-  const title = payload.title || 'DukaanFlow';
+  const title = payload.title || BRAND_NAME;
   event.waitUntil(
     self.registration.showNotification(title, {
       body: payload.body || '',

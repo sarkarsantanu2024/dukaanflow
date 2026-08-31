@@ -18,7 +18,7 @@ export type PlanState = {
   itemLimit: number;
   canEdit: boolean;
   trialDaysLeft: number | null;
-  /** Pre-built wa.me link to the DukaanFlow operator. */
+  /** Pre-built wa.me link to the Halkhata operator. */
   renewUrl: string;
 };
 

@@ -1,7 +1,7 @@
 /**
  * What a shop charges to send an order out, and the smallest one it will send.
  *
- * Almost every shop that delivers has one or the other, and DukaanFlow had
+ * Almost every shop that delivers has one or the other, and Halkhata had
  * neither — so a kirana two paras away either delivered a ₹20 order at a loss
  * or rang the customer to explain a rule the app never mentioned. Both of those
  * land on the shopkeeper as work.

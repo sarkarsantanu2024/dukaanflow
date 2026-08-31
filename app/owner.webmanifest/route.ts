@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { BRAND_NAME } from '@/lib/brand';
 
 /**
  * Per-shop manifest, so each owner installs an app that opens on their own
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
 
   const manifest = {
     id: `/owner/${slug}`,
-    name: `${shop.name} — DukaanFlow`,
+    name: `${shop.name} — ${BRAND_NAME}`,
     short_name: shop.name.slice(0, 12),
     description: 'Update your prices and stock. Add items by voice.',
     start_url: `/owner/${slug}/sell`,
