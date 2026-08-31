@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { BRAND_LOGO } from '@/lib/brand';
+import { BRAND_GREEN, BRAND_GROUND, BRAND_LOGO } from '@/lib/brand';
 
 export const runtime = 'nodejs';
 
@@ -42,8 +42,8 @@ export async function GET(request: Request) {
     scope: `/shop/${slug}`,
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#f1f5f9',
-    theme_color: '#0b9057',
+    background_color: BRAND_GROUND,
+    theme_color: BRAND_GREEN,
     icons: [
       { src: BRAND_LOGO.icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: BRAND_LOGO.icon512, sizes: '512x512', type: 'image/png', purpose: 'any' },

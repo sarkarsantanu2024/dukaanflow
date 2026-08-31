@@ -256,23 +256,23 @@ export function SubscriptionPanel({
       {/* Boxed off from the subscription controls above on purpose. This charges
           for work done and buys the shop no time at all, so it must never be
           reachable by an operator who thinks they are recording a renewal. */}
-      <div className="mt-4 rounded-xl border border-saffron-200 bg-saffron-50/60 p-3">
-        <h3 className="text-sm font-semibold text-saffron-900">Listing service</h3>
-        <p className="mt-0.5 text-xs text-saffron-800/80">
+      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+        <h3 className="text-sm font-semibold text-slate-900">Listing service</h3>
+        <p className="mt-0.5 text-xs text-slate-800/80">
           Charged when we catalogue the shop&apos;s items for them. 50 paise per item, minimum{' '}
           {formatPaise(LISTING_MINIMUM_PAISE)}. Buys no subscription time.
         </p>
 
         <div className="mt-2.5 flex flex-wrap items-end gap-2">
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-saffron-900">Items listed</span>
+            <span className="mb-1 block text-xs font-semibold text-slate-900">Items listed</span>
             <input
               type="number"
               min={1}
               max={5000}
               value={listedItems}
               onChange={(event) => setListedItems(event.target.value)}
-              className="w-32 rounded-xl border border-saffron-300 bg-white px-3 py-2 tabular-nums"
+              className="w-32 rounded-xl border border-slate-300 bg-white px-3 py-2 tabular-nums"
             />
           </label>
 
@@ -290,7 +290,7 @@ export function SubscriptionPanel({
           </Button>
 
           {atListingFloor && (
-            <p className="text-xs text-saffron-800">
+            <p className="text-xs text-slate-800">
               {listedCount} × 50p is {formatPaise(listedCount * LISTING_PAISE_PER_ITEM)} — the{' '}
               {formatPaise(LISTING_MINIMUM_PAISE)} minimum applies.
             </p>

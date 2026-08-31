@@ -216,7 +216,7 @@ export function PosterSheet({
 
       line(link, afterQr + 140, 24, '#64748b');
 
-      ctx.fillStyle = '#eafaf1';
+      ctx.fillStyle = '#f2f9f5';
       ctx.fillRect(centre - 380, 1370, 760, 130);
       line('Order on WhatsApp · হোয়াটসঅ্যাপে অর্ডার · व्हाट्सएप पर ऑर्डर', 1412, 24, '#475569');
       line(`+91 ${phone}`, 1470, 48, '#0f172a', '800');

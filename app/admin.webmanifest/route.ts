@@ -1,4 +1,4 @@
-import { BRAND_LOGO, BRAND_NAME } from '@/lib/brand';
+import { BRAND_GREEN, BRAND_GROUND, BRAND_LOGO, BRAND_NAME } from '@/lib/brand';
 /**
  * Web app manifest for the shopkeeper's installed admin app.
  *
@@ -22,8 +22,8 @@ const MANIFEST = {
   scope: '/admin',
   display: 'standalone',
   orientation: 'portrait',
-  background_color: '#f1f5f9',
-  theme_color: '#0b9057',
+  background_color: BRAND_GROUND,
+  theme_color: BRAND_GREEN,
   categories: ['business', 'shopping'],
   icons: [
     { src: BRAND_LOGO.icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },

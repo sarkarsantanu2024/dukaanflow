@@ -71,8 +71,23 @@ export const BRAND_WORDMARK: { head: string; tail: string } = {
   tail: 'khata',
 };
 
-/** The one green. Also the manifests' `theme_color`. */
-export const BRAND_GREEN = '#0b9057';
+/**
+ * THE one colour — `brand-600` in the Tailwind scale, and the manifests'
+ * `theme_color`.
+ *
+ * Anywhere outside a Tailwind class has to read it from here: the poster's
+ * canvas, three web manifests, the viewport meta and the offline page inside
+ * the service worker. It was typed out in eight of those places and every one
+ * of them was still the old, hotter, inaccessible green after the scale moved.
+ */
+export const BRAND_GREEN = '#2f7a5e';
+
+/**
+ * The ground the app sits on — `bg-app`, and the manifests' `background_color`,
+ * which is what an installed app paints while it starts. A mismatch here is
+ * visible as a flash of the wrong colour every single launch.
+ */
+export const BRAND_GROUND = '#f5f8f6';
 
 /**
  * Where each rendition of the mark lives.

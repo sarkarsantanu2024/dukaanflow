@@ -72,7 +72,7 @@ export default async function DashboardPage() {
             label="Every month, if nobody leaves"
             value={formatPaise(money.monthlyRecurringPaise)}
             hint={`${paying} paying shop${paying === 1 ? '' : 's'} at today's prices`}
-            tone="saffron"
+            tone="muted"
           />
           <Tile
             label="All time"
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
                 <Figure label="Total" value={shops.length} />
                 <Figure label="Live" value={live} />
                 <Figure label="Paying" value={paying} tone="brand" />
-                <Figure label="On trial" value={trialing} tone="saffron" />
+                <Figure label="On trial" value={trialing} tone="muted" />
                 <Figure label="Lapsed" value={lapsed} tone={lapsed > 0 ? 'warn' : undefined} />
                 <Figure label="Items listed" value={itemCount} />
                 <Figure label="Orders taken" value={orderCount} />
@@ -189,16 +189,16 @@ function Tile({
   label: string;
   value: string;
   hint: string;
-  tone?: 'brand' | 'saffron';
+  tone?: 'brand' | 'muted';
 }) {
   const ring =
     tone === 'brand'
       ? 'border-brand-200 bg-brand-50'
-      : tone === 'saffron'
-        ? 'border-saffron-200 bg-saffron-50'
+      : tone === 'muted'
+        ? 'border-slate-200 bg-slate-50'
         : 'border-slate-200 bg-white';
   const figure =
-    tone === 'brand' ? 'text-brand-800' : tone === 'saffron' ? 'text-saffron-800' : 'text-slate-900';
+    tone === 'brand' ? 'text-brand-800' : tone === 'muted' ? 'text-slate-800' : 'text-slate-900';
 
   return (
     <div className={`rounded-2xl border p-4 shadow-card ${ring}`}>
@@ -225,13 +225,13 @@ function Figure({
 }: {
   label: string;
   value: number;
-  tone?: 'brand' | 'saffron' | 'warn';
+  tone?: 'brand' | 'muted' | 'warn';
 }) {
   const colour =
     tone === 'brand'
       ? 'text-brand-700'
-      : tone === 'saffron'
-        ? 'text-saffron-700'
+      : tone === 'muted'
+        ? 'text-slate-700'
         : tone === 'warn'
           ? 'text-amber-600'
           : 'text-slate-900';
