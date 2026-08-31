@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   // claims, so it is the part that goes in the tab and the link preview.
   title: `${BRAND_NAME} — বলুন, দোকান সাজান`,
   description:
-    'Speak your shelf into a shop. Say "চাল ১ কেজি ১০০" and the item is listed, priced and live — in Bangla, Hindi or English. Customers order from a counter QR straight to your WhatsApp.',
+    'Speak your shelf into a shop. Say "চাল ১ কেজি ১০০" and the item is listed, priced and live — in Bangla, Hindi or English. Customers order from a counter QR, and the order lands in your app.',
   robots: { index: false, follow: false },
 };
 

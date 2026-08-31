@@ -1,13 +1,14 @@
 # Halkhata
 
-## Scan → Select → WhatsApp
+## Scan → Select → Order
 
-QR-to-WhatsApp ordering for Indian kirana shops, tea stalls, roll & momo counters,
+QR ordering for Indian kirana shops, tea stalls, roll & momo counters,
 home kitchens and bakeries.
 
 The shop owner never logs in and never learns new software. A customer scans the
 QR taped to the counter, taps quantities, and the finished order lands in the
-owner's WhatsApp as a plain message. One Super Admin runs everything.
+owner's app, where a bell counts it from every screen. One Super Admin runs
+everything.
 
 ---
 
@@ -15,7 +16,7 @@ owner's WhatsApp as a plain message. One Super Admin runs everything.
 
 | Included | Excluded on purpose |
 | --- | --- |
-| QR shop page, live total, WhatsApp handoff | Delivery tracking |
+| QR shop page, live total, orders in the app | Delivery tracking |
 | Super Admin CRUD for shops and items | Loyalty, CRM, coupons |
 | Owner app: sell, items, orders — in 3 languages | WhatsApp Business API |
 | Voice listing and a counter till with UPI QR | Owner self-signup, email accounts |
@@ -157,7 +158,7 @@ app/
   api/admin/login|logout                 Session
   api/owner/[slug]/login, api/owner/logout   Owner PIN session
   api/admin/shop/[slug]/{items,bulk,pin,invite,sale,order,starter,subscription,images}
-  api/order                              Server-priced order + WhatsApp URL
+  api/order                              Server-priced order, saved to the app
 components/customer|admin|ui
 lib/  prisma auth password guard http validators whatsapp qr slug money bulk rate-limit i18n
 prisma/  schema.prisma  seed.ts
@@ -250,10 +251,16 @@ Momo ₹70). The seed is idempotent — re-running refreshes prices, never dupli
 
 ---
 
-## The WhatsApp message
+## The WhatsApp message — the offline fallback only
 
-Built server-side in [`lib/whatsapp.ts`](lib/whatsapp.ts) from database prices,
-then opened as `https://wa.me/91<phone>?text=<encoded>`:
+Orders do NOT go to WhatsApp. They are saved and land in the owner's app, where
+a bell counts them from every screen; the handoff was removed because at volume
+it buried the owner's family chats under order after order.
+
+This message survives for one case: the customer's network failed three times
+and there is no other way to place the order. It is built server-side in
+[`lib/whatsapp.ts`](lib/whatsapp.ts) from database prices, then opened as
+`https://wa.me/91<phone>?text=<encoded>`:
 
 ```text
 🛒 New Order
@@ -280,7 +287,7 @@ neutralised before they reach the message — a stray asterisk cannot reflow an 
 
 > **One deviation from the original spec:** the `Order Type: Delivery` line. The
 > spec's sample message omitted it, but Delivery/Pickup is a required checkout
-> field and WhatsApp is the shop's only view of the order — without this line the
+> field and on this path WhatsApp is the shop's only view of the order — without it the
 > owner cannot tell whether to send a delivery boy. Delete the line in
 > `buildOrderMessage()` if you want a byte-exact match to the original format.
 
@@ -540,10 +547,10 @@ would risk showing a stale price or a deleted shop.
 amount, no gateway), both downloadable as 512px PNG.
 
 **A4 poster** (`/admin/shop/<slug>/poster`) — "Scan to Order" in English, Bengali
-and Hindi, shop QR, WhatsApp number, optional UPI QR. Print via the browser for
-full multilingual fidelity; the jsPDF export is English-only because jsPDF's
-built-in fonts carry no Devanagari or Bengali glyphs and embedding one would add
-roughly a megabyte for a rarely-used button.
+and Hindi, the shop QR, and the owner's photograph when the shop has one. No
+phone number and no second QR: the code is the order path, and a poster with two
+of them had one that lost. Both the print and the PDF carry all three languages —
+the PDF is the sheet drawn onto a canvas, so the browser shapes the Bengali.
 
 ## Customer experience
 
@@ -637,6 +644,6 @@ domain, and printing the first QR.
 
 ## Roadmap
 
-- **Phase 1 (this repo)** — QR shop page, WhatsApp ordering, admin CRUD, QR generation.
+- **Phase 1 (this repo)** — QR shop page, in-app orders, admin CRUD, QR generation.
 - **Phase 2** — order history views, analytics, richer categories.
 - **Phase 3** — item images, variants, multiple branches, owner logins, WhatsApp API.

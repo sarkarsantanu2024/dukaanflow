@@ -47,13 +47,14 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
 export function PosterSheet({
   shopName,
   slug,
-  phone,
   address,
   ownerImage = '',
 }: {
   shopName: string;
   slug: string;
-  phone: string;
+  // No `phone`. The sheet took the shop's number only to print it under "Order
+  // on WhatsApp", and that panel is gone — leaving the prop would have kept a
+  // dead argument threaded from the page for a line nobody renders.
   address: string;
   /**
    * The owner's photograph, as the data URL the shop record holds. Optional,
@@ -216,10 +217,19 @@ export function PosterSheet({
 
       line(link, afterQr + 140, 24, '#64748b');
 
-      ctx.fillStyle = '#f2f9f5';
-      ctx.fillRect(centre - 380, 1370, 760, 130);
-      line('Order on WhatsApp · হোয়াটসঅ্যাপে অর্ডার · व्हाट्सएप पर ऑर्डर', 1412, 24, '#475569');
-      line(`+91 ${phone}`, 1470, 48, '#0f172a', '800');
+      /**
+       * NO "ORDER ON WHATSAPP" PANEL. It was telling the customer something
+       * that stopped being true.
+       *
+       * Orders have not gone to WhatsApp since the handoff was removed from
+       * `app/api/order/route.ts` — they land in the owner's own app, where the
+       * bell counts them and each one can be worked. This sheet was still
+       * printing the shop's number under the words "Order on WhatsApp", so a
+       * poster on a wall was inviting customers into a channel where nobody
+       * was listening for orders any more, and around the QR that does work.
+       *
+       * The QR is the order path. A poster with two of them had one that lost.
+       */
 
       // The mark above the credit, small and solid — the watermark behind the
       // sheet is a texture and reads as nothing in particular at a glance.
@@ -322,11 +332,6 @@ export function PosterSheet({
         </p>
 
         <p className="mt-3 break-all font-mono text-sm text-slate-500">{link}</p>
-
-        <div className="mt-6 inline-block rounded-xl bg-[#25D366]/10 px-6 py-3">
-          <p className="text-sm text-slate-600">Order on WhatsApp · হোয়াটসঅ্যাপে অর্ডার · व्हाट्सएप पर ऑर्डर</p>
-          <p className="text-2xl font-bold text-slate-900">+91 {phone}</p>
-        </div>
 
         {/* No payment QR here.
             This poster has one job: get a stranger at the counter to scan and

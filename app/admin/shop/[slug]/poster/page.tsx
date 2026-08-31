@@ -32,7 +32,6 @@ export default async function PosterPage({ params }: PageProps) {
         <PosterSheet
           shopName={shop.name}
           slug={shop.slug}
-          phone={shop.phone}
           address={shop.address}
           ownerImage={shop.ownerImageData}
         />
