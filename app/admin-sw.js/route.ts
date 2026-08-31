@@ -1,4 +1,4 @@
-import { BRAND_NAME } from '@/lib/brand';
+import { BRAND_LOGO, BRAND_NAME } from '@/lib/brand';
 /**
  * The one service worker, for every installed Halkhata app.
  *
@@ -153,12 +153,21 @@ self.addEventListener('push', (event) => {
     payload = {};
   }
 
-  const title = payload.title || BRAND_NAME;
+  // Interpolated, not referenced. Everything in this string becomes the worker's
+  // own source, where an identifier from this module does not exist — a bare
+  // BRAND_NAME here threw ReferenceError on any push that arrived without a
+  // title, which is the fallback's only job.
+  const title = payload.title || '${BRAND_NAME}';
   event.waitUntil(
     self.registration.showNotification(title, {
       body: payload.body || '',
-      icon: '/admin-icon?size=192',
-      badge: '/admin-icon?size=192',
+      icon: '${BRAND_LOGO.icon192}',
+      // The badge is the small mark in the status bar, and Android renders it
+      // as a flat silhouette — every colour in the logo is thrown away and
+      // whatever is opaque becomes one white shape. The 512 maskable copy is
+      // the right source for that: its art is already inside the safe zone, so
+      // the silhouette is the shopfront rather than a filled square.
+      badge: '${BRAND_LOGO.maskable512}',
       // Vibration matters more than sound here: this phone is on a counter in a
       // shop with a television on.
       vibrate: [200, 100, 200],

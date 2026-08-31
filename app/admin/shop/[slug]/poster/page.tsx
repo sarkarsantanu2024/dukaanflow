@@ -19,6 +19,7 @@ export default async function PosterPage({ params }: PageProps) {
       address: true,
       upiId: true,
       upiQrData: true,
+      ownerImageData: true,
     },
   });
 
@@ -33,6 +34,7 @@ export default async function PosterPage({ params }: PageProps) {
           slug={shop.slug}
           phone={shop.phone}
           address={shop.address}
+          ownerImage={shop.ownerImageData}
         />
       </main>
     </>

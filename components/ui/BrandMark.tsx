@@ -33,17 +33,41 @@ export function BrandMark({
       {/* The mark stands on its own — no tile behind it.
           It was a green rounded square with the letters "DF" in it, which is
           what an app icon looks like, not what a logo looks like. A logo sits
-          on the page in its own colour beside its own name. The "DF" is also
-          two initials the product no longer has. */}
-      <BrandLogo
-        className={clsx('h-7 w-7 shrink-0', tone === 'dark' ? 'text-white' : 'text-brand-600')}
-      />
+          on the page beside its own name.
+
+          No colour class here any more. The mark is a full-colour illustration
+          that carries its own palette, so `tone` now only reaches the wordmark;
+          passing it a text colour would have been a class that silently did
+          nothing. */}
+      {/* 40px, where the old glyph was 28.
+          A one-colour glyph reads at any size because there is one shape to
+          recognise. This mark is a little scene — an awning, a chart, an arrow
+          around both — and at 28px those collapse into a coloured smudge. An
+          illustration has to be given the room to be an illustration, or it
+          should not be the logo.
+
+          ON THE DARK RAIL IT GETS A WHITE TILE, and that reverses an older
+          rule here. The rule was right for a glyph that took `currentColor`:
+          a logo sits on the page in its own colour, and a tile behind it makes
+          it look like an app icon pasted in. But this mark contains a deep navy
+          chart panel, and navy on a dark green rail is not a logo, it is a
+          smudge — most of the artwork simply stopped being visible. A picture
+          with dark ink in it needs light under it, so the tile is what keeps
+          the mark legible rather than what decorates it. */}
+      <span
+        className={clsx(
+          'inline-flex shrink-0 items-center justify-center',
+          tone === 'dark' && 'rounded-xl bg-white p-1 shadow-sm ring-1 ring-white/60',
+        )}
+      >
+        <BrandLogo className="h-10 w-10" />
+      </span>
       {/* Two tones, one word. "Halkhata" set in a single weight was a label;
           the colour break is what makes the compound read as a name, and it
           ties the wordmark to the mark beside it. */}
       <span
         className={clsx(
-          '-tracking-[0.01em] font-bold leading-tight',
+          '-tracking-[0.01em] text-[1.0625rem] font-bold leading-tight',
           tone === 'dark' ? 'text-white' : 'text-slate-900',
         )}
       >

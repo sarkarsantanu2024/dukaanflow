@@ -62,7 +62,10 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
           button happens to sit. It is the ONLY large field of colour here:
           the bar beside it stays light, because two greens meeting at a
           corner is what makes an interface look painted rather than designed. */}
-      <aside className="no-print sticky top-0 hidden h-dvh w-56 shrink-0 flex-col bg-chrome text-white lg:flex">
+      {/* w-64, not w-56. The rail grew with the mark inside it: a 40px logo and
+          a 15px label in a 224px column left the wordmark almost touching the
+          edge, and navigation that looks cramped reads as an afterthought. */}
+      <aside className="no-print sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-chrome text-white lg:flex">
         <BrandMark href="/admin" tone="dark" className="border-b border-white/10 px-5 py-4" />
 
         <nav className="flex flex-col gap-0.5 px-3 py-3">
@@ -75,7 +78,7 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={clsx(
-                  'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition',
+                  'flex items-center gap-3 rounded-lg px-3 py-3 text-[0.9375rem] font-semibold transition',
                   // Solid white for the current page, not a tint of the rail.
                   // A 12%-white panel is visible on a mockup and invisible on a
                   // real monitor at an angle — and "which page am I on" is the
@@ -86,7 +89,10 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
                     : 'text-brand-50/85 hover:bg-white/15 hover:text-white',
                 )}
               >
-                <Icon className={clsx('h-4 w-4 shrink-0', !active && 'opacity-80')} />
+                {/* 20px. At 16 these line icons were thinner than the label
+                    beside them, so the row read as text with a speck in front
+                    rather than as an icon and its name. */}
+                <Icon className={clsx('h-5 w-5 shrink-0', !active && 'opacity-80')} />
                 {item.label}
               </Link>
             );
@@ -130,7 +136,7 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
                     active ? 'bg-white' : 'bg-transparent',
                   )}
                 />
-                <Icon className="h-6 w-6" />
+                <Icon className="h-7 w-7" />
                 <span className="max-w-full truncate px-1">{item.label}</span>
               </Link>
             );

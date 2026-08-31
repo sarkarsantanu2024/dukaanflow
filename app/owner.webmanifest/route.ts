@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { BRAND_NAME } from '@/lib/brand';
+import { BRAND_LOGO, BRAND_NAME } from '@/lib/brand';
 
 /**
  * Per-shop manifest, so each owner installs an app that opens on their own
@@ -36,9 +36,9 @@ export async function GET(request: Request) {
     background_color: '#f1f5f9',
     theme_color: '#0b9057',
     icons: [
-      { src: '/admin-icon?size=192', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/admin-icon?size=512', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/admin-icon?size=512&maskable=1', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: BRAND_LOGO.icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: BRAND_LOGO.icon512, sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: BRAND_LOGO.maskable512, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   };
 

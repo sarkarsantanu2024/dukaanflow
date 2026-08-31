@@ -1,19 +1,37 @@
 /**
- * The Halkhata glyph — an open ledger, ruled.
+ * The Halkhata mark, as an image.
  *
- * Takes the colour of whatever it sits in, and its ruled lines are holes, so
- * they show whatever is behind. The paths live in `lib/brand.ts`, so the
- * launcher icon and the favicon draw exactly the shape the header does.
+ * It used to be an SVG that took `currentColor`, so one component served the
+ * white-on-dark header and the green-on-white page. The mark is now a supplied
+ * full-colour illustration, so there is nothing to tint — callers size it and
+ * nothing else. `lib/brand.ts` holds the paths; `scripts/build-brand-icons.ts`
+ * regenerates every size from the master.
+ *
+ * A plain `<img>` rather than `next/image`: this renders at 28px in a header
+ * that is already server-rendered, and the file it points at is a pre-sized
+ * 96px PNG. The optimiser would add a round trip to save nothing.
  */
 
-import { LOGO_SHAPES } from '@/lib/brand';
+import { BRAND_LOGO, BRAND_LOGO_ALT } from '@/lib/brand';
 
-export function BrandLogo({ className = 'h-6 w-6' }: { className?: string }) {
+export function BrandLogo({
+  className = 'h-6 w-6',
+  /** Decorative beside the wordmark, which already names the product. */
+  decorative = true,
+}: {
+  className?: string;
+  decorative?: boolean;
+}) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
-      {LOGO_SHAPES.map((shape) => (
-        <path key={shape.d} d={shape.d} fillRule={shape.evenOdd ? 'evenodd' : undefined} />
-      ))}
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={BRAND_LOGO.small}
+      alt={decorative ? '' : BRAND_LOGO_ALT}
+      aria-hidden={decorative || undefined}
+      width={96}
+      height={96}
+      className={className}
+      draggable={false}
+    />
   );
 }
