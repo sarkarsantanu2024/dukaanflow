@@ -1,9 +1,9 @@
 /**
- * The Halkhata glyph — a D cut through on the diagonal.
+ * The Halkhata glyph — an open ledger, ruled.
  *
- * Takes the colour of whatever it sits in, and its holes show whatever is
- * behind. The paths live in `lib/brand.ts`, so the launcher icon and the
- * favicon draw exactly the shape the header does.
+ * Takes the colour of whatever it sits in, and its ruled lines are holes, so
+ * they show whatever is behind. The paths live in `lib/brand.ts`, so the
+ * launcher icon and the favicon draw exactly the shape the header does.
  */
 
 import { LOGO_SHAPES } from '@/lib/brand';
