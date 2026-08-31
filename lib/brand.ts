@@ -1,21 +1,27 @@
 /**
  * The Halkhata mark, as data.
  *
- * A monogram, not a pictogram. The first two attempts drew a little shop —
- * first as an outline, then as solids — and both looked like something out of
- * an icon set rather than a brand: the same visual language as the search
- * magnifier and the trash can sitting three inches away, which is exactly what
- * makes a logo look like a UI element.
+ * An open ledger, ruled. Two pages with the spine as the gap between them.
  *
- * This is a **D**, cut through on the diagonal. The cut is the flow: a letter
- * sliced by motion reads as speed at any size, and it is a shape nothing else
- * in a phone's app drawer shares. The mark carries the product's initial, which
- * is what makes it a mark rather than a drawing of a shop.
+ * The mark this replaced was a QR code's eye with three modules climbing away
+ * from it — scan the code, the order leaves. That drew the old name: DukaanFlow
+ * was about the flow off the counter. The name is now the *book*, so the mark
+ * has to be the book, or the logo argues with the word beside it.
  *
- * ONE PATH, `fill-rule: evenodd`. The counter of the D and the diagonal cut are
- * both holes in the same filled shape, so they show whatever is behind the mark
- * — a green tile, the console's dark rail, a launcher's wallpaper — with no
- * per-context colours to keep in step.
+ * THE ASYMMETRY IS THE NAME. The left page carries three ruled entries and the
+ * right page carries one. হালখাতা is the ledger opened on Poila Boishakh, when
+ * the finished year's book is closed and the new one begun with a single line —
+ * so the mark is a full page facing a page just started. Without that the shape
+ * is a symmetrical open book, which is every notes app in the drawer.
+ *
+ * TWO PATHS, both `fill-rule: evenodd` — one per page, each with its own ruled
+ * lines knocked out of it. The lines are holes rather than a second colour, so
+ * they show whatever is behind the mark: a green tile, the console's dark rail,
+ * a launcher's wallpaper. Nothing per-context to keep in step.
+ *
+ * Drawn wide and chunky on purpose. The favicon renders this at 16px, where a
+ * hairline rule fills in and a 2px spine gap closes up; the gap here is 2.8
+ * units, which survives.
  *
  * KEEP `app/icon.svg` IN STEP WITH THIS. That file is served directly by the
  * framework as the favicon and cannot import anything, so it holds the only
@@ -76,33 +82,27 @@ export const BRAND_GREEN = '#0b9057';
 export type LogoShape = { d: string; evenOdd?: boolean };
 
 export const LOGO_SHAPES: LogoShape[] = [
-  // The eye of a QR code — the square-in-square every phone camera is trained
-  // on, and the one symbol that says "scan me" with no words at all.
+  // THE LEFT PAGE — the year that is finishing, three entries written.
+  // Page 2.4→10.6 across, 4.2→19.8 down. The rules are 3.8 wide and centred in
+  // it, evenly spaced at 7.9 / 11.4 / 14.9.
   {
     evenOdd: true,
     d:
-      // The ring.
-      'M6 10.4h4.4a3.2 3.2 0 0 1 3.2 3.2v4.4a3.2 3.2 0 0 1-3.2 3.2H6a3.2 3.2 0 0 1-3.2-3.2v-4.4A3.2 3.2 0 0 1 6 10.4Z' +
-      // Its opening.
-      'M6.6 13.2h3.2a1.4 1.4 0 0 1 1.4 1.4v2.4a1.4 1.4 0 0 1-1.4 1.4H6.6a1.4 1.4 0 0 1-1.4-1.4v-2.4a1.4 1.4 0 0 1 1.4-1.4Z',
+      // The page.
+      'M4.6 4.2h3.8a2.2 2.2 0 0 1 2.2 2.2v11.2a2.2 2.2 0 0 1-2.2 2.2H4.6a2.2 2.2 0 0 1-2.2-2.2V6.4a2.2 2.2 0 0 1 2.2-2.2Z' +
+      // Three ruled entries, knocked out.
+      'M5.35 7.9h2.3a.75.75 0 0 1 0 1.5H5.35a.75.75 0 0 1 0-1.5Z' +
+      'M5.35 11.4h2.3a.75.75 0 0 1 0 1.5H5.35a.75.75 0 0 1 0-1.5Z' +
+      'M5.35 14.9h2.3a.75.75 0 0 1 0 1.5H5.35a.75.75 0 0 1 0-1.5Z',
   },
-  // The pupil.
+  // THE RIGHT PAGE — the new year, one line in. Same page, one rule, aligned
+  // with the topmost rule opposite so the two pages read as one open spread.
+  // The 2.8-wide gap between the pages is the spine; it is the whole reason
+  // this reads as a book and not as two cards, so do not narrow it.
   {
-    d: 'M7.8 14.8h.8a.8.8 0 0 1 .8.8v.8a.8.8 0 0 1-.8.8h-.8a.8.8 0 0 1-.8-.8v-.8a.8.8 0 0 1 .8-.8Z',
-  },
-  // Three modules breaking off the code and climbing away to the right, each
-  // bigger than the last: the order leaving the counter, and the shop growing
-  // because of it. This is the half of the mark that is not a QR code, and it
-  // is what stops the whole thing reading as a scanner app.
-  // Centres on one 45° line, sizes 3.2 → 3.8 → 4.0, so the eye is read first
-  // and the trail carries the eye up and out of the frame.
-  {
-    d: 'M15.1 13.4h1.4a.9.9 0 0 1 .9.9v1.4a.9.9 0 0 1-.9.9h-1.4a.9.9 0 0 1-.9-.9v-1.4a.9.9 0 0 1 .9-.9Z',
-  },
-  {
-    d: 'M18 9.7h1.6a1.1 1.1 0 0 1 1.1 1.1v1.6a1.1 1.1 0 0 1-1.1 1.1H18a1.1 1.1 0 0 1-1.1-1.1v-1.6A1.1 1.1 0 0 1 18 9.7Z',
-  },
-  {
-    d: 'M20.8 5.6h1.6a1.2 1.2 0 0 1 1.2 1.2v1.6a1.2 1.2 0 0 1-1.2 1.2h-1.6a1.2 1.2 0 0 1-1.2-1.2V6.8a1.2 1.2 0 0 1 1.2-1.2Z',
+    evenOdd: true,
+    d:
+      'M15.6 4.2h3.8a2.2 2.2 0 0 1 2.2 2.2v11.2a2.2 2.2 0 0 1-2.2 2.2h-3.8a2.2 2.2 0 0 1-2.2-2.2V6.4a2.2 2.2 0 0 1 2.2-2.2Z' +
+      'M16.35 7.9h2.3a.75.75 0 0 1 0 1.5H16.35a.75.75 0 0 1 0-1.5Z',
   },
 ];

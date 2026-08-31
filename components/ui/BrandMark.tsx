@@ -33,7 +33,8 @@ export function BrandMark({
       {/* The mark stands on its own — no tile behind it.
           It was a green rounded square with the letters "DF" in it, which is
           what an app icon looks like, not what a logo looks like. A logo sits
-          on the page in its own colour beside its own name. */}
+          on the page in its own colour beside its own name. The "DF" is also
+          two initials the product no longer has. */}
       <BrandLogo
         className={clsx('h-7 w-7 shrink-0', tone === 'dark' ? 'text-white' : 'text-brand-600')}
       />
