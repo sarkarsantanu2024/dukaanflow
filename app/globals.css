@@ -36,6 +36,14 @@
     margin: 0 !important;
     width: 100% !important;
   }
+  /* Browsers strip background images and flatten faint tints when printing, to
+     save ink. The watermark, the owner's photograph and the mark at the foot
+     are the poster's content, not decoration around it, so they must survive —
+     this is the only way to say so. */
+  .print-exact {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   @page {
     size: A4;
     margin: 12mm;

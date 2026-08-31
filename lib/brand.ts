@@ -1,31 +1,26 @@
 /**
- * The Halkhata mark, as data.
+ * The Halkhata mark.
  *
- * An open ledger, ruled. Two pages with the spine as the gap between them.
+ * A supplied illustration — a shop with its awning, a rising chart behind it
+ * and an arrow sweeping round the two — held as a PNG in `public/brand/`.
  *
- * The mark this replaced was a QR code's eye with three modules climbing away
- * from it — scan the code, the order leaves. That drew the old name: DukaanFlow
- * was about the flow off the counter. The name is now the *book*, so the mark
- * has to be the book, or the logo argues with the word beside it.
+ * IT IS A PICTURE, NOT A GLYPH, AND THAT CHANGES THE RULES. The two marks
+ * before it were single-colour vectors that took `currentColor`, so one shape
+ * served the green header, the console's dark rail and a knocked-out tile
+ * without a second asset. This one carries its own colours and cannot be
+ * recoloured, so:
  *
- * THE ASYMMETRY IS THE NAME. The left page carries three ruled entries and the
- * right page carries one. হালখাতা is the ledger opened on Poila Boishakh, when
- * the finished year's book is closed and the new one begun with a single line —
- * so the mark is a full page facing a page just started. Without that the shape
- * is a symmetrical open book, which is every notes app in the drawer.
+ *   - `tone="dark"` no longer tints the mark, only the wordmark beside it. The
+ *     artwork reads on the dark rail because the shop itself is white.
+ *   - Every size is a separate file. They are generated, not hand-cut — see
+ *     `scripts/build-brand-icons.ts`, and re-run it if the artwork changes.
+ *   - The art is trimmed and re-squared during generation. The source sits off
+ *     centre with a soft shadow at its foot, which would otherwise make every
+ *     launcher icon look like it had slipped down inside its tile.
  *
- * TWO PATHS, both `fill-rule: evenodd` — one per page, each with its own ruled
- * lines knocked out of it. The lines are holes rather than a second colour, so
- * they show whatever is behind the mark: a green tile, the console's dark rail,
- * a launcher's wallpaper. Nothing per-context to keep in step.
- *
- * Drawn wide and chunky on purpose. The favicon renders this at 16px, where a
- * hairline rule fills in and a 2px spine gap closes up; the gap here is 2.8
- * units, which survives.
- *
- * KEEP `app/icon.svg` IN STEP WITH THIS. That file is served directly by the
- * framework as the favicon and cannot import anything, so it holds the only
- * other copy of these paths.
+ * The mark also carries a blue that the interface green does not, so it is
+ * deliberately never placed against `brand-600` — it sits on white, on the dark
+ * rail, or on the poster's paper.
  */
 
 /**
@@ -48,8 +43,9 @@
  * actually is, in a word its customers already own, and it collides with
  * nobody.
  *
- * Keep `app/icon.svg`, `package.json` and the README in step by hand — none of
- * them can import from here.
+ * Keep `package.json`, `package-lock.json` and the README in step by hand —
+ * none of them can import from here. The icons no longer need saying: they are
+ * generated from one master by `scripts/build-brand-icons.ts`.
  */
 export const BRAND_NAME = 'Halkhata';
 
@@ -78,31 +74,24 @@ export const BRAND_WORDMARK: { head: string; tail: string } = {
 /** The one green. Also the manifests' `theme_color`. */
 export const BRAND_GREEN = '#0b9057';
 
-/** One filled shape of the glyph, on a 24×24 viewBox. */
-export type LogoShape = { d: string; evenOdd?: boolean };
+/**
+ * Where each rendition of the mark lives.
+ *
+ * `master` is the full-resolution transparent art. `small` is what the
+ * interface uses — a 96px copy, because the header draws the mark at 28px and
+ * shipping a 468px PNG to do it costs a quarter of a megabyte per page.
+ *
+ * The launcher sizes sit on white rather than transparency on purpose: iOS
+ * composites a transparent icon onto black, which would put this artwork's
+ * white shopfront on a black tile.
+ */
+export const BRAND_LOGO = {
+  master: '/brand/halkhata-logo.png',
+  small: '/brand/halkhata-logo-96.png',
+  icon192: '/brand/halkhata-logo-192.png',
+  icon512: '/brand/halkhata-logo-512.png',
+  maskable512: '/brand/halkhata-logo-maskable-512.png',
+} as const;
 
-export const LOGO_SHAPES: LogoShape[] = [
-  // THE LEFT PAGE — the year that is finishing, three entries written.
-  // Page 2.4→10.6 across, 4.2→19.8 down. The rules are 3.8 wide and centred in
-  // it, evenly spaced at 7.9 / 11.4 / 14.9.
-  {
-    evenOdd: true,
-    d:
-      // The page.
-      'M4.6 4.2h3.8a2.2 2.2 0 0 1 2.2 2.2v11.2a2.2 2.2 0 0 1-2.2 2.2H4.6a2.2 2.2 0 0 1-2.2-2.2V6.4a2.2 2.2 0 0 1 2.2-2.2Z' +
-      // Three ruled entries, knocked out.
-      'M5.35 7.9h2.3a.75.75 0 0 1 0 1.5H5.35a.75.75 0 0 1 0-1.5Z' +
-      'M5.35 11.4h2.3a.75.75 0 0 1 0 1.5H5.35a.75.75 0 0 1 0-1.5Z' +
-      'M5.35 14.9h2.3a.75.75 0 0 1 0 1.5H5.35a.75.75 0 0 1 0-1.5Z',
-  },
-  // THE RIGHT PAGE — the new year, one line in. Same page, one rule, aligned
-  // with the topmost rule opposite so the two pages read as one open spread.
-  // The 2.8-wide gap between the pages is the spine; it is the whole reason
-  // this reads as a book and not as two cards, so do not narrow it.
-  {
-    evenOdd: true,
-    d:
-      'M15.6 4.2h3.8a2.2 2.2 0 0 1 2.2 2.2v11.2a2.2 2.2 0 0 1-2.2 2.2h-3.8a2.2 2.2 0 0 1-2.2-2.2V6.4a2.2 2.2 0 0 1 2.2-2.2Z' +
-      'M16.35 7.9h2.3a.75.75 0 0 1 0 1.5H16.35a.75.75 0 0 1 0-1.5Z',
-  },
-];
+/** Alt text wherever the mark is rendered as an image rather than decoration. */
+export const BRAND_LOGO_ALT = `${BRAND_NAME} logo`;
