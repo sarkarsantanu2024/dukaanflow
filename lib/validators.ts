@@ -234,6 +234,14 @@ export const itemUpsertSchema = z.object({
 
 export const itemPatchSchema = z.object({
   id: z.string().uuid('Unknown item'),
+  /**
+   * Editable for the same reason the unit is: a name arrives from the starter
+   * list, the mic or a photographed packet, and any of the three can get it
+   * slightly wrong. Until this existed the only way to correct a spelling was
+   * to delete the item — which takes its price, its stock count and its place
+   * in every report with it.
+   */
+  name: itemNameSchema.optional(),
   pricePaise: priceSchema.optional(),
   priced: z.boolean().optional(),
   // Editable because the pack size is the shop's own decision: a starter item
@@ -258,7 +266,27 @@ export const itemPatchSchema = z.object({
   nameHi: altNameSchema.optional(),
 });
 
-export const itemDeleteSchema = z.object({ id: z.string().uuid('Unknown item') });
+/**
+ * One item, a chosen handful, or the whole list.
+ *
+ * Three shapes rather than three endpoints, because they are one act with
+ * different sizes. `all` is spelled out as its own flag rather than being
+ * inferred from an empty `ids` — "delete the ones I picked", with nothing
+ * picked, must never mean "delete everything", and an accidentally empty array
+ * is exactly how that would happen.
+ */
+export const itemDeleteSchema = z.union([
+  z.object({ id: z.string().uuid('Unknown item') }),
+  z.object({
+    ids: z
+      .array(z.string().uuid('Unknown item'))
+      .min(1, 'Nothing selected')
+      // A whole catalogue at once, and no more: the largest plan caps items
+      // well below this, so a longer list is a bug or a script.
+      .max(2000, 'Too many at once'),
+  }),
+  z.object({ all: z.literal(true) }),
+]);
 
 export const bulkSchema = z.object({
   mode: z.enum(['price', 'stock']),

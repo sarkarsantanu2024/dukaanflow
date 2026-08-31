@@ -46,6 +46,22 @@ type OwnerDictionary = {
   typeInstead: string;
   hideForm: string;
   name: string;
+  /** Refusal when a rename would leave the item with almost no name at all. */
+  nameTooShort: string;
+  /** The list's own size: "1 item" / "14 items". */
+  itemOne: string;
+  itemMany: string;
+  /** Ticking rows to delete them together. */
+  selectedCount: string;
+  clearSelection: string;
+  /** Heading for items with no category of their own. */
+  categoryNone: string;
+  /** Label over the catalogue items this shop has not listed yet. */
+  alsoSold: string;
+  selectAll: string;
+  /** Emptying the whole catalogue, and the question asked before it. */
+  deleteAll: string;
+  deleteAllConfirm: string;
   price: string;
   unit: string;
   category: string;
@@ -62,6 +78,8 @@ type OwnerDictionary = {
   photoAddHint: string;
   photoReading: string;
   voiceAlready: string;
+  /** Heard the instruction, but the item it named is not in this shop. */
+  voiceNotListed: string;
   voiceSetPrice: string;
   otherLanguages: string;
   otherLanguagesHint: string;
@@ -319,9 +337,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     voiceTitle: 'Manage items by voice',
     voiceIdle: 'Tap the mic, then say one instruction per sentence.',
     voiceListening: 'Listening… add a price, mark out of stock, or remove.',
-    voiceExampleAdd: '“rice”',
+    voiceExampleAdd: '“rice 1 kg 100”',
     voiceExampleOut: '“rice out of stock”',
-    voiceExampleRemove: '“remove rice”',
+    voiceExampleRemove: '“rice delete”',
     labelAdd: 'Add / re-price',
     labelOut: 'Out of stock',
     labelRemove: 'Remove',
@@ -341,6 +359,16 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     typeInstead: 'Type instead',
     hideForm: 'Hide form',
     name: 'Name',
+    nameTooShort: 'too short',
+    itemOne: 'item',
+    itemMany: 'items',
+    selectedCount: 'selected',
+    clearSelection: 'Clear',
+    categoryNone: 'Other',
+    alsoSold: 'Usually sold here, not on your list yet — tap to add:',
+    selectAll: 'Select all',
+    deleteAll: 'Delete all items',
+    deleteAllConfirm: 'This removes every item from your shop, with their prices and stock counts. Your orders, khata and takings are not touched. There is no undo.',
     price: 'Price (₹)',
     unit: 'Unit',
     category: 'Category',
@@ -350,12 +378,13 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     clashTitle: 'Two items share a name',
     clashHint: 'Add a pack size to each, so a customer can tell them apart.',
     unpricedTitle: 'Customers cannot see these yet',
-    unpricedHint: 'Set a price on each one and save. Until a price is given the item stays off the shop page — better an item nobody sees than rice offered at a price nobody chose.',
+    unpricedHint: 'Each one shows a suggested price. Check it against what you actually charge, correct it if it is wrong, then press Enter to put the item on sale. Until you do, it stays off your shop page — better an item nobody sees than rice offered at a price nobody chose.',
     notOnSale: 'No price set',
     photoAdd: 'Add by photo',
     photoAddHint: 'Point the camera at the packet. The photo is not saved.',
     photoReading: 'Reading the packet…',
     voiceAlready: 'already on your list',
+    voiceNotListed: 'not on your list',
     voiceSetPrice: 'added — now set the price',
     otherLanguages: 'Other languages (optional)',
     otherLanguagesHint:
@@ -537,7 +566,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     menuToday: 'Available today',
 
     stockLeft: 'Left',
-    stockCount: 'Count this',
+    stockCount: 'Count how many are left',
     stockStop: 'Stop counting',
     stockHint:
       'For things you can count — packets, bottles, bread. Each sale takes one off, and at zero it comes off your shop page on its own. Leave rice and anything you weigh out uncounted.',
@@ -604,7 +633,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     voiceTitle: 'কথা বলে জিনিস সামলান',
     voiceIdle: 'মাইকে চাপ দিন, তারপর এক বাক্যে একটি নির্দেশ বলুন।',
     voiceListening: 'শুনছি… দাম যোগ করুন, শেষ বলুন, বা মুছে দিন।',
-    voiceExampleAdd: '“চাল”',
+    voiceExampleAdd: '“চাল ১ কেজি ১০০”',
     voiceExampleOut: '“চাল শেষ”',
     voiceExampleRemove: '“চাল মুছে দাও”',
     labelAdd: 'যোগ / দাম বদল',
@@ -626,6 +655,16 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     typeInstead: 'লিখে দিন',
     hideForm: 'ফর্ম লুকান',
     name: 'নাম',
+    nameTooShort: 'খুব ছোট',
+    itemOne: 'জিনিস',
+    itemMany: 'জিনিস',
+    selectedCount: 'বাছা হয়েছে',
+    clearSelection: 'বাতিল',
+    categoryNone: 'অন্যান্য',
+    alsoSold: 'এই ধরনের দোকানে থাকে, আপনার তালিকায় নেই — চাপ দিয়ে যোগ করুন:',
+    selectAll: 'সব বাছুন',
+    deleteAll: 'সব জিনিস মুছুন',
+    deleteAllConfirm: 'আপনার দোকানের সব জিনিস, তার দাম আর স্টক মুছে যাবে। অর্ডার, খাতা আর বিক্রির হিসাব ঠিক থাকবে। এটা আর ফেরানো যাবে না।',
     price: 'দাম (₹)',
     unit: 'পরিমাণ',
     category: 'ভাগ',
@@ -633,7 +672,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     nameHi: 'হিন্দি নাম',
     addItem: 'জিনিস যোগ করুন',
     unpricedTitle: 'খদ্দের এগুলো দেখতে পাচ্ছে না',
-    unpricedHint: 'প্রত্যেকটার দাম লিখে সেভ করুন। দাম না দেওয়া পর্যন্ত দোকানের পাতায় দেখা যাবে না।',
+    unpricedHint: 'প্রত্যেকটায় একটা আন্দাজের দাম দেওয়া আছে। আপনি যা নেন সেটা ঠিক আছে কিনা দেখে নিন, দরকার হলে বদলান, তারপর এন্টার চাপুন। ততক্ষণ দোকানের পাতায় দেখা যাবে না।',
     notOnSale: 'দাম দেওয়া হয়নি',
     clashTitle: 'একই নামে দুটি জিনিস',
     clashHint: 'প্রতিটিতে পরিমাণ দিন, তাহলে ক্রেতা আলাদা করতে পারবে।',
@@ -641,6 +680,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     photoAddHint: 'প্যাকেটের দিকে ক্যামেরা ধরুন। ছবি রাখা হয় না।',
     photoReading: 'পড়া হচ্ছে…',
     voiceAlready: 'ইতিমধ্যে তালিকায় আছে',
+    voiceNotListed: 'তালিকায় নেই',
     voiceSetPrice: 'যোগ হয়েছে — এবার দাম দিন',
     otherLanguages: 'অন্য ভাষা (ইচ্ছামতো)',
     otherLanguagesHint:
@@ -818,7 +858,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     menuToday: 'আজ আছে',
 
     stockLeft: 'আছে',
-    stockCount: 'গুনে রাখুন',
+    stockCount: 'কটা আছে গুনে রাখুন',
     stockStop: 'গোনা বন্ধ',
     stockHint:
       'যা গোনা যায় তার জন্য — প্যাকেট, বোতল, পাউরুটি। বিক্রি হলেই একটা কমবে, শূন্য হলে নিজে থেকেই দোকানের পাতা থেকে সরে যাবে। চাল-ডালের মতো মেপে দেওয়া জিনিস গুনবেন না।',
@@ -885,7 +925,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     voiceTitle: 'बोलकर सामान संभालें',
     voiceIdle: 'माइक दबाइए, फिर एक बार में एक बात बोलिए।',
     voiceListening: 'सुन रहे हैं… दाम जोड़िए, खत्म बताइए, या हटाइए।',
-    voiceExampleAdd: '“चावल”',
+    voiceExampleAdd: '“चावल 1 किलो 100”',
     voiceExampleOut: '“चावल खत्म”',
     voiceExampleRemove: '“चावल हटाओ”',
     labelAdd: 'जोड़ें / दाम बदलें',
@@ -907,6 +947,16 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     typeInstead: 'लिखकर डालें',
     hideForm: 'फ़ॉर्म छिपाएँ',
     name: 'नाम',
+    nameTooShort: 'बहुत छोटा',
+    itemOne: 'सामान',
+    itemMany: 'सामान',
+    selectedCount: 'चुने गए',
+    clearSelection: 'हटाएँ',
+    categoryNone: 'अन्य',
+    alsoSold: 'ऐसी दुकान में आम तौर पर रहता है, आपकी सूची में नहीं — जोड़ने के लिए दबाएँ:',
+    selectAll: 'सब चुनें',
+    deleteAll: 'सब सामान हटाएँ',
+    deleteAllConfirm: 'आपकी दुकान का हर सामान, उसका दाम और स्टॉक मिट जाएगा। ऑर्डर, खाता और बिक्री का हिसाब नहीं बदलेगा। यह वापस नहीं होगा।',
     price: 'दाम (₹)',
     unit: 'मात्रा',
     category: 'श्रेणी',
@@ -914,7 +964,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     nameHi: 'हिंदी नाम',
     addItem: 'सामान जोड़ें',
     unpricedTitle: 'ग्राहक इन्हें नहीं देख पा रहे',
-    unpricedHint: 'हर एक का दाम लिखकर सेव करें। दाम दिए बिना दुकान के पेज पर नहीं दिखेगा।',
+    unpricedHint: 'हर एक पर एक अनुमानित दाम दिया है। आप जो लेते हैं वही है या नहीं, देख लीजिए, जरूरत हो तो बदलिए, फिर एंटर दबाइए। तब तक दुकान के पेज पर नहीं दिखेगा।',
     notOnSale: 'दाम नहीं दिया',
     clashTitle: 'एक ही नाम के दो सामान',
     clashHint: 'हर एक में मात्रा डालिए, ताकि ग्राहक फर्क समझ सके।',
@@ -922,6 +972,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     photoAddHint: 'पैकेट की ओर कैमरा कीजिए। फोटो सेव नहीं होती।',
     photoReading: 'पढ़ रहे हैं…',
     voiceAlready: 'पहले से सूची में है',
+    voiceNotListed: 'सूची में नहीं है',
     voiceSetPrice: 'जुड़ गया — अब दाम डालिए',
     otherLanguages: 'अन्य भाषा (वैकल्पिक)',
     otherLanguagesHint:
@@ -1099,7 +1150,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     menuToday: 'आज उपलब्ध',
 
     stockLeft: 'बचा',
-    stockCount: 'गिनती रखें',
+    stockCount: 'कितने बचे हैं, गिनती रखें',
     stockStop: 'गिनती बंद',
     stockHint:
       'जो गिना जा सके उसके लिए — पैकेट, बोतल, ब्रेड। हर बिक्री पर एक कम होगा, और शून्य होते ही दुकान के पेज से अपने आप हट जाएगा। चावल जैसी तौलकर दी जाने वाली चीज़ें मत गिनिए।',
