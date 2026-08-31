@@ -48,7 +48,7 @@ type Dictionary = {
   required: string;
   delivery: string;
   pickup: string;
-  sendOnWhatsApp: string;
+  placeOrder: string;
   sending: string;
   back: string;
   emptyShop: string;
@@ -188,7 +188,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     required: 'required',
     delivery: 'Delivery',
     pickup: 'Pickup',
-    sendOnWhatsApp: 'Place order',
+    placeOrder: 'Place order',
     sending: 'Sending…',
     back: 'Back',
     emptyShop: 'No items yet',
@@ -303,7 +303,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     required: 'আবশ্যক',
     delivery: 'ডেলিভারি',
     pickup: 'দোকান থেকে নেব',
-    sendOnWhatsApp: 'অর্ডার দিন',
+    placeOrder: 'অর্ডার দিন',
     sending: 'পাঠানো হচ্ছে…',
     back: 'পিছনে',
     emptyShop: 'এখনও কোনো জিনিস নেই',
@@ -418,7 +418,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     required: 'आवश्यक',
     delivery: 'डिलीवरी',
     pickup: 'दुकान से लेंगे',
-    sendOnWhatsApp: 'ऑर्डर करें',
+    placeOrder: 'ऑर्डर करें',
     sending: 'भेजा जा रहा है…',
     back: 'वापस',
     emptyShop: 'अभी कोई सामान नहीं',

@@ -47,10 +47,13 @@ export default function LandingPage() {
         </span>
       </p>
 
-      {/* The QR half stays, demoted to what it is: the second sentence. */}
+      {/* The QR half stays, demoted to what it is: the second sentence.
+          It said "lands in your WhatsApp", which stopped being true when the
+          handoff was removed — orders land in the owner's own app now, and
+          saying otherwise sold a shopkeeper a flow they would not find. */}
       <p className="mt-6 max-w-md text-slate-600">
-        Customers scan the QR at your counter and the order lands in your
-        WhatsApp. No app for the shop, no login, no training.
+        Customers scan the QR at your counter and the order lands in your app —
+        with a bell that counts it from every screen. No login, no training.
       </p>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

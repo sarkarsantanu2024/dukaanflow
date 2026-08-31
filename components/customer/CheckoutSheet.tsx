@@ -259,13 +259,18 @@ export function CheckoutSheet({
             </Button>
             <Button
               type="submit"
-              variant="whatsapp"
+              // Was `whatsapp` — WhatsApp's own green, on a button that has
+              // not opened WhatsApp since the order handoff was removed. A
+              // customer reading that green expects to be handed to a chat and
+              // is instead shown a confirmation, which is the button lying
+              // about where it goes. The primary action gets the primary style.
+              variant="primary"
               size="lg"
               fullWidth
               disabled={belowMinimum}
               loading={submitting}
             >
-              {submitting ? t.sending : t.sendOnWhatsApp}
+              {submitting ? t.sending : t.placeOrder}
             </Button>
           </div>
         </form>

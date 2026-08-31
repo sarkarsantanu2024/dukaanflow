@@ -93,7 +93,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .join(' · ');
 
   return {
-    title: `${shop.name} — Order on WhatsApp`,
+    // Not "Order on WhatsApp" any more — orders land in the owner's app, and
+    // this title is what a customer sees in a link preview and a saved tab.
+    title: `${shop.name} — Order online`,
     description,
     // So the shop can be kept on a customer's home screen and ordered from
     // again without the QR sticker in front of them. One icon per shop — see
