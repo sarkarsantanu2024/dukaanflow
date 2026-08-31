@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { ToastProvider } from '@/components/ui/Toast';
 import './globals.css';
-import { BRAND_NAME } from '@/lib/brand';
+import { BRAND_GREEN, BRAND_NAME } from '@/lib/brand';
 
 export const metadata: Metadata = {
   // "Scan → Select → Order" described the product accurately and described
@@ -17,7 +17,10 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#0b9057',
+  // The Android address bar. Typed out here it stayed on the old green after
+  // the scale moved, so the browser chrome and the app's own rail were two
+  // different greens stacked on top of each other.
+  themeColor: BRAND_GREEN,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

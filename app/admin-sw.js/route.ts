@@ -1,4 +1,4 @@
-import { BRAND_LOGO, BRAND_NAME } from '@/lib/brand';
+import { BRAND_GREEN, BRAND_GROUND, BRAND_LOGO, BRAND_NAME } from '@/lib/brand';
 /**
  * The one service worker, for every installed Halkhata app.
  *
@@ -57,12 +57,12 @@ const OFFLINE_PAGE = \`<!doctype html>
 <title>No internet</title>
 <style>
  body{margin:0;min-height:100dvh;display:flex;align-items:center;justify-content:center;
-      font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#f1f5f9;color:#334155}
+      font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:${BRAND_GROUND};color:#334155}
  div{max-width:22rem;padding:2rem;text-align:center}
  p{margin:.4rem 0}
  b{display:block;font-size:1.15rem;color:#0f172a;margin-bottom:.75rem}
  button{margin-top:1.25rem;height:3rem;padding:0 1.5rem;border:0;border-radius:.75rem;
-        background:#0b9057;color:#fff;font-size:1rem;font-weight:600}
+        background:${BRAND_GREEN};color:#fff;font-size:1rem;font-weight:600}
 </style></head>
 <body><div>
  <p style="font-size:2.5rem;margin:0">📶</p>

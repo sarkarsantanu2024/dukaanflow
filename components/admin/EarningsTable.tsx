@@ -83,7 +83,7 @@ export function EarningsTable({
                   <td className="py-2 pr-3 text-right tabular-nums text-slate-600">
                     {formatPaise(row.subscriptionPaise)}
                   </td>
-                  <td className="py-2 pr-3 text-right tabular-nums text-saffron-700">
+                  <td className="py-2 pr-3 text-right tabular-nums text-slate-700">
                     {row.listingPaise > 0 ? formatPaise(row.listingPaise) : '—'}
                   </td>
                   <td className="py-2 text-right font-semibold tabular-nums text-slate-900">

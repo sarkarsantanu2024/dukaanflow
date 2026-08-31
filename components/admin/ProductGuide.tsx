@@ -29,7 +29,7 @@ const ACTOR_LABEL: Record<TourStep['actor'], string> = {
 const ACTOR_TONE: Record<TourStep['actor'], string> = {
   operator: 'bg-slate-100 text-slate-700',
   owner: 'bg-brand-50 text-brand-800 ring-1 ring-brand-100',
-  customer: 'bg-saffron-50 text-saffron-800 ring-1 ring-saffron-200',
+  customer: 'bg-slate-50 text-slate-800 ring-1 ring-slate-200',
 };
 
 export function ProductGuide() {
