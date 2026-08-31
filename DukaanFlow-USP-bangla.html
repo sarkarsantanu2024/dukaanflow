@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DukaanFlow — আপনার USP কী হওয়া উচিত</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --ground:#F6F8F6; --surface:#FFFFFF; --surface-2:#EDF2EF;
+    --ink:#131E1A; --ink-2:#3E4F49; --muted:#6B7C75;
+    --rule:#D9E2DD; --rule-strong:#B9C7C1;
+    --accent:#0E7A5F; --accent-soft:#DFF0E9;
+    --good:#14705A; --good-bg:#E1F0EA;
+    --caution:#96650B; --caution-bg:#F6EBD5;
+    --risk:#A33827; --risk-bg:#F6E2DD;
+    --f-display:"Noto Serif Bengali","Nirmala UI",Georgia,serif;
+    --f-body:"Noto Sans Bengali","Nirmala UI","Segoe UI",Arial,sans-serif;
+    --f-mono:"IBM Plex Mono",Consolas,monospace;
+    --page:1080px; --measure:70ch;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0D1512; --surface:#141F1B; --surface-2:#1B2823;
+      --ink:#E7EEEA; --ink-2:#BDCBC4; --muted:#8A9A93;
+      --rule:#24322D; --rule-strong:#35463F;
+      --accent:#47C39A; --accent-soft:#16302A;
+      --good:#4FC69F; --good-bg:#143028;
+      --caution:#D6A64A; --caution-bg:#322817;
+      --risk:#E08872; --risk-bg:#33201B;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0D1512; --surface:#141F1B; --surface-2:#1B2823;
+    --ink:#E7EEEA; --ink-2:#BDCBC4; --muted:#8A9A93;
+    --rule:#24322D; --rule-strong:#35463F;
+    --accent:#47C39A; --accent-soft:#16302A;
+    --good:#4FC69F; --good-bg:#143028;
+    --caution:#D6A64A; --caution-bg:#322817;
+    --risk:#E08872; --risk-bg:#33201B;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:var(--f-body); font-size:16.5px; line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{max-width:var(--page); margin:0 auto; padding:0 24px 90px}
+  .col{max-width:var(--measure)}
+
+  .eyebrow{
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+  }
+
+  header.masthead{padding:64px 0 36px; border-bottom:1px solid var(--rule)}
+  h1{
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(32px,5.4vw,52px); line-height:1.25;
+    margin:14px 0 0; letter-spacing:-.005em; text-wrap:balance;
+  }
+  .standfirst{
+    font-family:var(--f-display); font-size:clamp(17px,2.2vw,20px);
+    line-height:1.75; color:var(--ink-2); max-width:60ch; margin:18px 0 0;
+  }
+  .byline{
+    margin-top:24px; font-family:var(--f-mono); font-size:11.5px;
+    color:var(--muted); display:flex; flex-wrap:wrap; gap:6px 20px;
+  }
+
+  section{margin-top:64px}
+  .section-head{border-top:2px solid var(--ink); padding-top:14px; margin-bottom:26px}
+  .section-head .eyebrow{display:block; margin-bottom:8px}
+  h2{
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(24px,3.2vw,32px); line-height:1.35; margin:0; text-wrap:balance;
+  }
+  .section-head p{margin:12px 0 0; color:var(--ink-2); max-width:var(--measure)}
+  p{margin:0 0 16px}
+  strong{font-weight:700; color:var(--ink)}
+  em{font-style:normal; color:var(--accent); font-weight:600}
+
+  /* ---- the big USP block ---- */
+  .usp-hero{
+    background:var(--accent-soft);
+    border:1px solid var(--accent);
+    border-left-width:5px;
+    padding:32px 30px 34px;
+    margin-top:36px;
+  }
+  .usp-hero .tag{
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--accent);
+  }
+  .usp-line{
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(26px,4.2vw,40px); line-height:1.35;
+    margin:12px 0 0; color:var(--ink); text-wrap:balance;
+  }
+  .usp-sub{margin:16px 0 0; font-size:16.5px; color:var(--ink-2); max-width:62ch}
+
+  .support{
+    display:grid; gap:16px; margin-top:20px;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  }
+  .scard{
+    background:var(--surface); border:1px solid var(--rule);
+    padding:20px 20px 22px; display:flex; flex-direction:column; gap:8px;
+  }
+  .scard .n{
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+  }
+  .scard h3{font-family:var(--f-display); font-size:20px; font-weight:700; margin:0; line-height:1.4}
+  .scard p{margin:0; font-size:14.5px; color:var(--ink-2); line-height:1.7}
+
+  /* ---- table ---- */
+  .table-wrap{overflow-x:auto; border:1px solid var(--rule); background:var(--surface)}
+  table{border-collapse:collapse; width:100%; min-width:760px; font-size:14px}
+  thead th{
+    background:var(--surface-2); text-align:left;
+    font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--ink-2);
+    padding:12px; border-bottom:1px solid var(--rule-strong); white-space:nowrap;
+  }
+  tbody td,tbody th{padding:13px 12px; border-bottom:1px solid var(--rule); vertical-align:top; color:var(--ink-2); line-height:1.6}
+  tbody th{text-align:left; font-weight:700; color:var(--ink); min-width:150px; border-right:1px solid var(--rule)}
+  tr.mine th,tr.mine td{background:var(--accent-soft)}
+  tr.mine th{color:var(--accent)}
+  .num{font-family:var(--f-mono); font-variant-numeric:tabular-nums; white-space:nowrap}
+  .yes{color:var(--good); font-weight:600}
+  .no{color:var(--muted)}
+  .part{color:var(--caution)}
+  .table-note{font-size:13px; color:var(--muted); margin-top:12px; max-width:var(--measure)}
+
+  /* ---- not-usp list ---- */
+  .nots{display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule)}
+  .not{background:var(--surface); padding:20px 22px; display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start}
+  .not .x{color:var(--risk); font-family:var(--f-mono); font-size:20px; font-weight:600; line-height:1.3}
+  .not h4{font-family:var(--f-display); font-size:19px; font-weight:700; margin:0 0 4px; line-height:1.4}
+  .not p{margin:0; font-size:14.5px; color:var(--ink-2)}
+
+  /* ---- pitch scripts ---- */
+  .pitch{
+    background:var(--surface); border:1px solid var(--rule);
+    border-top:3px solid var(--accent); padding:22px 22px 24px; margin-bottom:16px;
+  }
+  .pitch .who{
+    font-family:var(--f-mono); font-size:11px; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin-bottom:10px;
+  }
+  .pitch blockquote{
+    margin:0; padding:0 0 0 16px; border-left:3px solid var(--rule-strong);
+    font-family:var(--f-display); font-size:17.5px; line-height:1.8; color:var(--ink);
+  }
+  .pitch .note{margin:12px 0 0; font-size:13.5px; color:var(--muted)}
+
+  /* ---- taglines ---- */
+  .taglines{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .tl{
+    background:var(--surface); border:1px solid var(--rule); padding:18px 20px;
+  }
+  .tl .t{font-family:var(--f-display); font-size:21px; font-weight:700; line-height:1.45; color:var(--ink)}
+  .tl .d{margin-top:6px; font-size:13.5px; color:var(--muted)}
+  .tl.pick{border-color:var(--accent); background:var(--accent-soft)}
+  .tl.pick .t{color:var(--accent)}
+
+  /* ---- steps ---- */
+  .steps{display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule)}
+  .step{background:var(--surface); padding:22px 24px; display:grid; grid-template-columns:52px 1fr; gap:18px; align-items:start}
+  .step .n{font-family:var(--f-display); font-size:32px; font-weight:700; color:var(--rule-strong); line-height:1; font-variant-numeric:tabular-nums}
+  .step h4{font-family:var(--f-display); font-size:20px; font-weight:700; margin:0 0 6px; line-height:1.4}
+  .step p{margin:0; font-size:14.5px; color:var(--ink-2)}
+
+  .closing{margin-top:64px; border-top:2px solid var(--ink); padding-top:26px}
+  .closing p{font-family:var(--f-display); font-size:18.5px; line-height:1.85; color:var(--ink-2); max-width:62ch}
+  .closing p:first-of-type{color:var(--ink)}
+
+  footer{
+    margin-top:48px; padding-top:18px; border-top:1px solid var(--rule);
+    font-size:12.5px; color:var(--muted); line-height:1.8;
+  }
+  .printhint{
+    margin-top:28px; padding:14px 18px; background:var(--surface-2);
+    border:1px dashed var(--rule-strong); font-size:13.5px; color:var(--ink-2);
+  }
+
+  @media print{
+    :root{--ground:#fff; --surface:#fff; --surface-2:#f4f4f4}
+    body{background:#fff; color:#111; font-size:11.5pt}
+    .page{max-width:none; padding:0}
+    .printhint{display:none}
+    section{margin-top:26px; page-break-inside:avoid}
+    .usp-hero,.pitch,.step,.not,.scard{page-break-inside:avoid}
+    table{min-width:0; font-size:9.5pt}
+    a{color:#111; text-decoration:none}
+  }
+  @media (max-width:620px){
+    .step,.not{grid-template-columns:1fr; gap:6px}
+    .step .n{font-size:22px}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <span class="eyebrow">DukaanFlow · প্রতিযোগী বিশ্লেষণের পরের ধাপ</span>
+  <h1>আপনার USP কী হওয়া উচিত</h1>
+  <p class="standfirst">
+    এগারোটা প্রতিযোগী দেখে ভয় পাওয়ার কিছু নেই — কিন্তু “আমাদের সব আছে” বলে জেতাও যাবে না।
+    এই ডকুমেন্টে একটাই কাজ: আপনার দোকানদারকে বলার মতো <strong>একটা বাক্য</strong> ঠিক করা,
+    আর কেন সেটাই ঠিক তার প্রমাণ দেওয়া।
+  </p>
+  <div class="byline">
+    <span>তারিখ: ১ সেপ্টেম্বর ২০২৬</span>
+    <span>ফিচার তালিকা DukaanFlow-এর কোড থেকে যাচাই করা</span>
+    <span>প্রতিযোগীর দাম: প্রকাশিত তথ্য অনুযায়ী</span>
+  </div>
+</header>
+
+<!-- ========== THE USP ========== -->
+<section style="margin-top:36px">
+  <div class="usp-hero">
+    <span class="tag">প্রধান USP — এটাই বলবেন</span>
+    <p class="usp-line">টাইপ করতে হবে না। মুখে বলুন — দোকান অনলাইনে।</p>
+    <p class="usp-sub">
+      DukaanFlow ভারতের একমাত্র দোকান-অ্যাপ যেখানে <strong>দোকানদার মুখে বলে জিনিস তোলেন</strong> আর
+      <strong>গ্রাহক মুখে বলে অর্ডার দেন</strong> — বাংলা, হিন্দি আর ইংরেজিতে। টেবিলের একটা প্রতিযোগীরও
+      এটা নেই। একটাও না।
+    </p>
+  </div>
+
+  <div class="support">
+    <div class="scard">
+      <span class="n">সহায়ক USP · ১</span>
+      <h3>আমরা আপনার দোকান সাজিয়ে দেব</h3>
+      <p>
+        ₹৯৯ থেকে শুরু (আইটেম-প্রতি ৫০ পয়সা) — অপারেটর নিজে গিয়ে গোটা দোকানের তালিকা তুলে দেয়।
+        দোকানদারকে কিছুই করতে হয় না। KiranaOS-এর ₹৩৫/মাসের প্ল্যানে এটা কাঠামোগতভাবেই ঢোকানো সম্ভব নয়।
+      </p>
+    </div>
+    <div class="scard">
+      <span class="n">সহায়ক USP · ২</span>
+      <h3>খাতা, দোকান আর খদ্দের — এক জায়গায়</h3>
+      <p>
+        Vyapar বা myBillBook শুধু দোকানদারের জন্য। Khatabook শুধু ধার-বাকির জন্য।
+        DukaanFlow-এ QR, স্টোরফ্রন্ট, অর্ডার, ডেলিভারি আর কত দিনের বাকি — সব একসাথে।
+      </p>
+    </div>
+    <div class="scard">
+      <span class="n">সহায়ক USP · ৩</span>
+      <h3>দাম মেপে নেওয়া যায়</h3>
+      <p>
+        দাম ঠিক হয় আইটেম সংখ্যায় — যে সংখ্যাটা দোকানদার নিজে তিন সেকেন্ডে গুনে দেখতে পারেন।
+        অর্ডারে কোনো কমিশন নেই, লেনদেনে কোনো কাটা নেই।
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== WHY ========== -->
+<section>
+  <div class="section-head">
+    <span class="eyebrow">কেন এটাই USP</span>
+    <h2>ভয়েস-ই একমাত্র জিনিস যা কেউ কপি করে রাখেনি</h2>
+    <p>
+      একটা ভালো USP-র তিনটে শর্ত: (১) সত্যি হতে হবে, (২) প্রতিযোগীর কাছে থাকা চলবে না,
+      (৩) দোকানদারের সমস্যার সাথে মিলতে হবে। ভয়েস তিনটেই পূরণ করে।
+    </p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>পণ্য</th>
+          <th>আসলে কী</th>
+          <th>দাম (২০২৬)</th>
+          <th>ভয়েস</th>
+          <th>গ্রাহকের QR দোকান</th>
+          <th>খাতা</th>
+          <th>GST বিল</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="mine">
+          <th>DukaanFlow<br><span class="num" style="font-weight:400;font-size:11px">আপনার পণ্য</span></th>
+          <td>দোকানের কাউন্টার, অনলাইন দোকান আর ধারের খাতা — একটাই ফোন-অ্যাপ</td>
+          <td class="num">₹৯৯–৪৪৯/মাস<br>₹৯৯০–৪,৪৯০/বছর</td>
+          <td class="yes">✓ তোলা <em>ও</em> অর্ডার<br>বাংলা/হিন্দি/ইংরেজি</td>
+          <td class="yes">✓ QR + ছাপার পোস্টার</td>
+          <td class="yes">✓ কত দিনের বাকি + CSV</td>
+          <td class="no">✕ নেই</td>
+        </tr>
+        <tr>
+          <th>KiranaOS<br><span class="num" style="font-weight:400;font-size:11px">সরাসরি প্রতিযোগী</span></th>
+          <td>কিরানার জন্য ডিজিটাল স্টোরফ্রন্ট, তৈরি ক্যাটালগ, WhatsApp অ্যালার্ট</td>
+          <td class="num">৩১ ডিসে. ২০২৬ পর্যন্ত ফ্রি<br>তারপর ₹৩৫/মাস</td>
+          <td class="no">✕</td>
+          <td class="yes">✓</td>
+          <td class="part">~ স্পষ্ট নয়</td>
+          <td class="no">✕</td>
+        </tr>
+        <tr>
+          <th>Vyapar</th>
+          <td>GST বিলিং, স্টক, হিসাব — বাজারের সবচেয়ে চেনা নাম</td>
+          <td class="num">মোবাইল ফ্রি<br>ডেস্কটপ ₹৩,৩৯৯/বছর<br>+১৮% GST</td>
+          <td class="no">✕</td>
+          <td class="no">✕</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓ সম্পূর্ণ</td>
+        </tr>
+        <tr>
+          <th>myBillBook</th>
+          <td>ক্লাউড GST বিলিং ও হিসাব, বিশাল বিজ্ঞাপন খরচ</td>
+          <td class="num">~₹২৫০–৩৪৯/মাস</td>
+          <td class="no">✕</td>
+          <td class="no">✕</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓ সম্পূর্ণ</td>
+        </tr>
+        <tr>
+          <th>Vanij</th>
+          <td>ফ্রি-তে শুরু GST বিলিং + উধার খাতা, এক প্ল্যানেই সব</td>
+          <td class="num">₹২৯৯/মাস · ₹২,৯৯৯/বছর<br>₹৯,৯৯৯ আজীবন</td>
+          <td class="no">✕</td>
+          <td class="no">✕</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓ সম্পূর্ণ</td>
+        </tr>
+        <tr>
+          <th>Zobaze POS</th>
+          <td>ফ্রি মোবাইল POS ও বিলিং, ভারত-কেন্দ্রিক নয়</td>
+          <td class="num">ফ্রি (১০০ আইটেম)<br>পেইড ~₹২৮২/মাস</td>
+          <td class="no">✕</td>
+          <td class="part">~ স্টোর লিংক</td>
+          <td class="part">~ বাকি হিসাব</td>
+          <td class="part">~ সাধারণ</td>
+        </tr>
+        <tr>
+          <th>Khatabook<br>OkCredit</th>
+          <td>ফ্রি ধার-বাকির খাতা, বিশাল ব্যবহারকারী। দু’জনেই নিজেদের স্টোরফ্রন্ট বন্ধ করে দিয়েছে</td>
+          <td class="num">ফ্রি</td>
+          <td class="no">✕</td>
+          <td class="no">✕ করেছিল, বন্ধ</td>
+          <td class="yes">✓ এটাই মূল পণ্য</td>
+          <td class="part">~ সাধারণ</td>
+        </tr>
+        <tr>
+          <th>Dukaan<br>Bikayi</th>
+          <td>কিরানা ছেড়ে D2C ব্র্যান্ড ও অনলাইন সেলারের দিকে সরে গেছে</td>
+          <td class="num">D2C স্তরের দাম<br>(যাচাই করুন)</td>
+          <td class="no">✕</td>
+          <td class="yes">✓</td>
+          <td class="no">✕</td>
+          <td class="part">~</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-note">
+    “~” মানে কাছাকাছি কিছু আছে, ঠিক এক জিনিস নয় — WhatsApp-এ বিলের PDF পাঠানো আর
+    WhatsApp-এ অর্ডার আসা এক নয়। ভারতীয় বিলিং সফটওয়্যারের দাম ঘন ঘন বদলায়, তাই কোথাও
+    উদ্ধৃত করার আগে আবার যাচাই করে নিন।
+  </p>
+
+  <p class="col" style="margin-top:26px">
+    <strong>টেবিলটা এক লাইনে:</strong> ভয়েসের কলামে আপনি ছাড়া আর কারও টিক নেই।
+    বাকি সব কলামে কেউ না কেউ আপনার সমান বা আপনার চেয়ে এগিয়ে। তাই USP ওই একটা কলামেই থাকতে হবে।
+  </p>
+  <p class="col">
+    আর ভয়েস নিছক একটা ফিচার নয় — এটা আপনার <em>সবচেয়ে বড় সমস্যার সমাধান</em>।
+    দোকান সাইন আপ করল, QR ছাপা হল, কিন্তু একটাও আইটেম তোলা হল না — এই ব্যর্থতাটাই
+    আপনার কনসোলে ধরা পড়ে। কারণ দোকানদার ফোনে বাংলা টাইপ করতে পারেন না। মুখে বলতে পারেন।
+  </p>
+</section>
+
+<!-- ========== NOT USP ========== -->
+<section>
+  <div class="section-head">
+    <span class="eyebrow">সমান জরুরি</span>
+    <h2>যেগুলো আপনার USP নয় — বলতে গেলেই হারবেন</h2>
+    <p>নতুন প্রোডাক্ট সবচেয়ে বেশি ভুল করে এখানেই: যে জায়গায় জেতা যায় না, সেখানে লড়তে গিয়ে।</p>
+  </div>
+
+  <div class="nots">
+    <div class="not">
+      <span class="x">✕</span>
+      <div>
+        <h4>“আমাদের দাম কম”</h4>
+        <p>
+          KiranaOS ₹৩৫/মাস, আর এই বছর পুরো ফ্রি। Vyapar-এর মোবাইল অ্যাপ ফ্রি। Khatabook, OkCredit ফ্রি।
+          দামে লড়লে আপনি নিশ্চিত হারবেন, আর নিজের মার্জিনও নষ্ট করবেন।
+        </p>
+      </div>
+    </div>
+    <div class="not">
+      <span class="x">✕</span>
+      <div>
+        <h4>“আমাদের সব ফিচার আছে”</h4>
+        <p>
+          নেই। GST বিল নেই, বারকোড নেই, HSN নেই — কোডে যাচাই করা। ফিচার গুনতে বসলে
+          Vyapar আর myBillBook আপনার চেয়ে অনেক এগিয়ে। এই তুলনায় ঢুকবেনই না।
+        </p>
+      </div>
+    </div>
+    <div class="not">
+      <span class="x">✕</span>
+      <div>
+        <h4>“আমরা দোকান ডিজিটাল করি”</h4>
+        <p>
+          এই কথাটা Khatabook, OkCredit আর Dukaan তিনজনেই বলেছিল, আর তিনজনেই কিরানা স্টোরফ্রন্ট
+          বন্ধ করেছে। দোকানদার এই বাক্যটা আগে শুনেছেন এবং বিশ্বাস করেননি। কাজের কথা বলুন —
+          “মুখে বললেই তালিকা তৈরি”।
+        </p>
+      </div>
+    </div>
+    <div class="not">
+      <span class="x">✕</span>
+      <div>
+        <h4>“QR স্ক্যান করে অর্ডার” — একা এটা নয়</h4>
+        <p>
+          এটা আপনার পণ্যের মূল কাঠামো, কিন্তু USP নয় — KiranaOS-এরও ঠিক এটাই আছে, সস্তায়।
+          QR-টা <em>কী দিয়ে ভরা হল</em> সেটাই আপনার আলাদা জায়গা।
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== PITCH ========== -->
+<section>
+  <div class="section-head">
+    <span class="eyebrow">মুখে বলার বাক্য</span>
+    <h2>কাকে কী বলবেন</h2>
+    <p>একই USP, তিন রকম শ্রোতা। বাক্যগুলো সরাসরি ব্যবহার করার জন্য লেখা।</p>
+  </div>
+
+  <div class="pitch">
+    <div class="who">দোকানদারকে · কাউন্টারে দাঁড়িয়ে</div>
+    <blockquote>
+      “দাদা, ফোনে টাইপ করতে হবে না। শুধু বলুন — ‘আটা এক কেজি পঁয়তাল্লিশ টাকা’ —
+      দোকানে উঠে যাবে। আপনার পুরো দোকান আমরা এক সপ্তাহে তুলে দেব, ₹৯৯-এ।
+      তারপর খদ্দের কাউন্টারের QR স্ক্যান করে অর্ডার দেবে, অর্ডার আসবে আপনার WhatsApp-এ।
+      বাকির খাতাও এখানেই থাকবে — কার কত দিনের বাকি, চোখের সামনে।”
+    </blockquote>
+    <p class="note">
+      প্রথমেই দাম বলবেন না। প্রথমে ফোনটা হাতে নিয়ে <strong>একটা আইটেম মুখে বলে তুলে দেখান</strong> —
+      ৩০ সেকেন্ডের ডেমো। এটাই আপনার সবচেয়ে বড় বিক্রির অস্ত্র।
+    </p>
+  </div>
+
+  <div class="pitch">
+    <div class="who">ডিস্ট্রিবিউটর বা পার্টনারকে</div>
+    <blockquote>
+      “আপনার রুটের দোকানগুলোয় আমরা এমন একটা অ্যাপ দিচ্ছি যেটা দোকানদারকে টাইপ করতে হয় না —
+      মুখে বললেই চলে। তাই যে দোকানদাররা এতদিন কোনো সফটওয়্যার চালাতে পারেননি, তাঁরাও পারছেন।
+      আপনি ইতিমধ্যেই সপ্তাহে একবার ওই কাউন্টারে যাচ্ছেন। কুড়িটা দোকান দিয়ে শুরু করি?”
+    </blockquote>
+    <p class="note">
+      পার্টনারের কাছে আপনার USP হল <strong>“যাঁরা পারেন না, তাঁরাও পারবেন”</strong> — অর্থাৎ বাজারটা বড় হয়।
+    </p>
+  </div>
+
+  <div class="pitch">
+    <div class="who">বিনিয়োগকারী বা মেন্টরকে</div>
+    <blockquote>
+      “কিরানা স্টোরফ্রন্ট আগে তিনবার ফেল করেছে — MyStore, OkShop, Dukaan — কারণ ক্যাটালগ কখনও
+      তৈরিই হত না। আমরা সেই একটা সমস্যাতেই আঘাত করেছি: ভয়েস দিয়ে তালিকা তোলা, আর
+      টাকা নিয়ে আমরা নিজেরাই তালিকা তুলে দেওয়া। ক্যাটালগ সাইজ অনুযায়ী দাম, অর্ডারে কোনো কমিশন নেই।”
+    </blockquote>
+    <p class="note">
+      আগের ব্যর্থতাগুলো <strong>নিজে থেকে স্বীকার করুন</strong> — ওঁরা এমনিতেই জানেন। স্বীকার করে
+      তারপর বলুন আপনি কোন জায়গাটা আলাদা করে ধরেছেন। এতে বিশ্বাসযোগ্যতা বাড়ে।
+    </p>
+  </div>
+</section>
+
+<!-- ========== TAGLINES ========== -->
+<section>
+  <div class="section-head">
+    <span class="eyebrow">ট্যাগলাইন</span>
+    <h2>পোস্টার আর হোমপেজের জন্য</h2>
+    <p>QR পোস্টার, WhatsApp স্ট্যাটাস আর ল্যান্ডিং পেজে এক লাইনেই বসবে।</p>
+  </div>
+
+  <div class="taglines">
+    <div class="tl pick">
+      <div class="t">মুখে বলুন — দোকান অনলাইনে।</div>
+      <div class="d">সুপারিশ। ছোট, বলার মতো, আর সরাসরি USP-টাই বলছে।</div>
+    </div>
+    <div class="tl">
+      <div class="t">টাইপ নয়। শুধু বলুন।</div>
+      <div class="d">সবচেয়ে ছোট সংস্করণ — পোস্টারে বড় করে ছাপার জন্য ভালো।</div>
+    </div>
+    <div class="tl">
+      <div class="t">যে দোকান কথা শোনে।</div>
+      <div class="d">ব্র্যান্ড-ধাঁচের, একটু বেশি স্মার্ট — অল্প শিক্ষিত ক্রেতার কাছে কম স্পষ্ট।</div>
+    </div>
+    <div class="tl">
+      <div class="t">দোকান, খাতা আর খদ্দের — এক জায়গায়।</div>
+      <div class="d">দ্বিতীয় লাইন হিসেবে ভালো, প্রথম লাইন হিসেবে দুর্বল (ভয়েস বাদ পড়ে যায়)।</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== STEPS ========== -->
+<section>
+  <div class="section-head">
+    <span class="eyebrow">এরপর কী</span>
+    <h2>USP ঠিক হওয়ার পর চারটে কাজ</h2>
+    <p>ক্রম গুরুত্বপূর্ণ — আগেরটা কাজ না করলে পরেরটার কোনো মানে নেই।</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <span class="n">০১</span>
+      <div>
+        <h4>ছয় সপ্তাহ ধরে একটাই সংখ্যা মাপুন</h4>
+        <p>
+          দোকানদার না বলা সত্ত্বেও কত জন খদ্দের নিজে থেকে QR স্ক্যান করে অর্ডার দিলেন।
+          এই সংখ্যা বাড়লে আগের তিনটে ব্যর্থতা আপনার ক্ষেত্রে খাটে না। না বাড়লে কোনো ফিচার
+          বা দাম দিয়ে সেটা ঠিক করা যাবে না।
+        </p>
+      </div>
+    </div>
+    <div class="step">
+      <span class="n">০২</span>
+      <div>
+        <h4>হোমপেজ আর পোস্টারে USP-টা বসান</h4>
+        <p>
+          এখন ল্যান্ডিং পেজে লেখা আছে “Scan → Select → Order” — এটা KiranaOS-ও লিখতে পারে।
+          বদলে ভয়েসের কথাটা সামনে আনুন, আর QR পোস্টারে বাংলায় এক লাইন যোগ করুন।
+        </p>
+      </div>
+    </div>
+    <div class="step">
+      <span class="n">০৩</span>
+      <div>
+        <h4>₹৯৯-এর তালিকা-সেবাটাকেই প্রথম অফার বানান</h4>
+        <p>
+          সাবস্ক্রিপশন দিয়ে কথা শুরু করবেন না। “₹৯৯ দিন, এই সপ্তাহে আপনার দোকান অনলাইনে” —
+          এটা দোকানদার বোঝেন। মাসিক প্ল্যানের কথা আসবে দোকান চালু হওয়ার পরে।
+        </p>
+      </div>
+    </div>
+    <div class="step">
+      <span class="n">০৪</span>
+      <div>
+        <h4>GST নিয়ে সিদ্ধান্ত নিয়ে লিখে রাখুন</h4>
+        <p>
+          হয় সাধারণ একটা ট্যাক্স ইনভয়েস যোগ করুন, নয়তো স্পষ্ট করে বলুন আপনি Vyapar-এর
+          <em>পাশে</em> থাকবেন, তার বদলে নয় — তাহলে Basic আর Starter মিলিয়ে একটা সস্তা টায়ার
+          রাখাই ভালো। ঝুলিয়ে রাখবেন না; এর উপর দাম, পিচ আর রোডম্যাপ তিনটেই নির্ভর করছে।
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="closing">
+  <p>
+    সংক্ষেপে: প্রতিযোগী অনেক, কিন্তু আপনার ঘরে একজনই — KiranaOS। বাকিরা অন্য জিনিস বিক্রি করে।
+  </p>
+  <p>
+    আর আপনার আসল প্রশ্নটা “এত প্রতিযোগীর মধ্যে টিকব কি না” নয়। আসল প্রশ্ন — কাউন্টারে দাঁড়ানো
+    খদ্দের মুখে চেয়ে নেওয়ার বদলে QR স্ক্যান করবেন কি না। এই প্রশ্নেই তিনটে বড় কোম্পানি ভুল করেছিল,
+    আর এই একটা প্রশ্নের উত্তর আপনার নিজের দোকানগুলো ছাড়া আর কেউ দিতে পারবে না।
+  </p>
+</div>
+
+<div class="printhint">
+  <strong>PDF বানাতে:</strong> এই পাতাটা ব্রাউজারে খুলে <span class="num">Ctrl + P</span> চাপুন →
+  Destination-এ <strong>“Save as PDF”</strong> বেছে নিন → Save। ছাপার জন্য আলাদা লেআউট
+  ইতিমধ্যেই এই ফাইলে দেওয়া আছে।
+</div>
+
+<footer>
+  DukaanFlow-এর ফিচার তালিকা ১ সেপ্টেম্বর ২০২৬-এ কোড থেকে সরাসরি যাচাই করা:
+  <span class="num">lib/plans.ts</span>, <span class="num">prisma/schema.prisma</span>,
+  API রুট এবং owner / customer / admin কম্পোনেন্ট। GST ইনভয়েস, বারকোড ও HSN — তিনটিই অনুপস্থিত বলে নিশ্চিত করা হয়েছে।<br>
+  প্রতিযোগীদের দাম সংশ্লিষ্ট কোম্পানির প্রকাশিত প্ল্যান ও পাবলিক ডিরেক্টরি থেকে নেওয়া
+  (Vyapar, myBillBook, Vanij, KiranaOS, Zobaze, Khatabook, OkCredit, Dukaan, Bikayi)।
+  ভারতীয় SMB সফটওয়্যারের দাম দ্রুত বদলায় ও বিক্রির সময় ছাড় দেওয়া হয় — বিনিয়োগকারী বা
+  গ্রাহকের সামনে বলার আগে প্রতিটি সংখ্যা আবার যাচাই করে নেবেন।
+</footer>
+
+</div>
+</body>
+</html>
