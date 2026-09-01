@@ -21,7 +21,7 @@
 
 import { SearchIcon } from '@/components/ui/Icon';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ItemCard, itemName } from '@/components/customer/ItemCard';
+import { ItemCard, itemName, sellsAnyAmount } from '@/components/customer/ItemCard';
 import { VoiceOrder } from '@/components/customer/VoiceOrder';
 import { CartBar } from '@/components/customer/CartBar';
 import { CartDrawer, type CartLine } from '@/components/customer/CartDrawer';
@@ -32,7 +32,8 @@ import clsx from 'clsx';
 import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
 import { useToast } from '@/components/ui/Toast';
-import { formatPaise } from '@/lib/money';
+import { formatPaise, linePaise } from '@/lib/money';
+import { roundQuantity } from '@/lib/units';
 import { ownerDict } from '@/lib/owner-i18n';
 import { dict } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
@@ -162,22 +163,35 @@ export function SellScreen({
           unit: item.unit,
           quantity: cart[item.id]!,
           pricePaise: item.pricePaise,
+          // The till weighs things out too: the owner selling fifty grams of
+          // posto across the counter gets the same amount picker the customer
+          // gets on the shop page.
+          loose: sellsAnyAmount(item),
         })),
     [sellable, cart, locale],
   );
 
-  const totalPaise = lines.reduce((sum, line) => sum + line.item.pricePaise * line.quantity, 0);
+  // Rounded per line, never per total: see `linePaise`.
+  const totalPaise = lines.reduce(
+    (sum, line) => sum + linePaise(line.item.pricePaise, line.quantity),
+    0,
+  );
 
   /** Voice adds are relative — saying "rice" twice means two of them. */
   function addQuantity(id: string, more: number) {
-    setCart((current) => ({ ...current, [id]: Math.min((current[id] ?? 0) + more, 99) }));
+    setCart((current) => ({
+      ...current,
+      [id]: Math.min(roundQuantity((current[id] ?? 0) + more), 99),
+    }));
   }
 
   function setQuantity(id: string, next: number) {
     setCart((current) => {
       const updated = { ...current };
+      // Thousandths, so a weighed amount survives the round trip exactly as
+      // the shop page's basket does.
       if (next <= 0) delete updated[id];
-      else updated[id] = Math.min(next, 99);
+      else updated[id] = Math.min(roundQuantity(next), 99);
       return updated;
     });
   }
@@ -514,7 +528,8 @@ export function SellScreen({
 
         {!cartOpen && (
           <CartBar
-            totalItems={lines.reduce((count, line) => count + line.quantity, 0)}
+            // One per line: "0.05 items" is not a count anybody wants to read.
+            totalItems={lines.length}
             totalAmountPaise={totalPaise}
             onReview={() => setCartOpen(true)}
             locale={locale}

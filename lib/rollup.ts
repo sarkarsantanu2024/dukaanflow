@@ -32,6 +32,22 @@ import { shopClock, shopMonthStart } from './time';
 /** Snapshot line shape, as written by both the order and the sale routes. */
 type Line = { name: string; unit: string; quantity: number; amountPaise: number };
 
+/**
+ * A year's quantity, as a whole number of the item's own unit.
+ *
+ * `ItemPeriodStat.quantity` is an integer column and a customer may now buy any
+ * amount of anything weighed — twenty separate 50 g sales of posto add up to
+ * 1 kg, which is what this reports. Rounded rather than truncated, and only
+ * here at the write: the tallying above stays exact, so a year of quarter-kilo
+ * sales is not rounded away one line at a time.
+ *
+ * The revenue is unaffected; it is summed in paise from the line amounts and is
+ * the figure every money report reads.
+ */
+function wholeUnits(quantity: number): number {
+  return Math.max(0, Math.round(quantity));
+}
+
 function readLines(json: unknown): Line[] {
   if (!Array.isArray(json)) return [];
   const lines: Line[] = [];
@@ -207,7 +223,7 @@ export async function rollupYear(
             occasionName: window.name,
             itemName,
             itemUnit,
-            quantity: tally.quantity,
+            quantity: wholeUnits(tally.quantity),
             revenuePaise: tally.revenuePaise,
             transactions: tally.transactions,
           },
@@ -215,7 +231,7 @@ export async function rollupYear(
           // same rows, so incrementing would double it.
           update: {
             occasionName: window.name,
-            quantity: tally.quantity,
+            quantity: wholeUnits(tally.quantity),
             revenuePaise: tally.revenuePaise,
             transactions: tally.transactions,
           },

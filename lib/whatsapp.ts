@@ -1,4 +1,17 @@
 import { plainPaise } from './money';
+import { amountLabel } from './units';
+
+/**
+ * How much of one item, as a shopkeeper reads it on their phone.
+ *
+ * "×0.05" is what a fractional quantity looks like written as a multiplier, and
+ * it is the one thing nobody in this chain can act on: the shop has to weigh
+ * out an amount, so the message has to name one. Weighed goods say "50 g", and
+ * counted goods keep the "×3" they always had.
+ */
+function saidAs(line: { unit: string; quantity: number }): string {
+  return amountLabel(line.unit, line.quantity) ?? `×${line.quantity}`;
+}
 
 export type OrderLine = {
   name: string;
@@ -33,7 +46,7 @@ export function escapeWhatsAppText(value: string): string {
 export function buildOrderMessage(input: OrderMessageInput): string {
   const lines = input.lines.map((line) => {
     const label = escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
-    return `• ${label} ×${line.quantity} = ${plainPaise(line.amountPaise)}`;
+    return `• ${label} ${saidAs(line)} = ${plainPaise(line.amountPaise)}`;
   });
 
   const parts = [
@@ -103,11 +116,11 @@ export function buildRevisedMessage(input: {
 
   const kept = input.lines.map((line) =>
     line.wasQuantity !== line.quantity
-      ? `• ${label(line)} ×${line.quantity} (was ×${line.wasQuantity}) = ${plainPaise(line.amountPaise)}`
-      : `• ${label(line)} ×${line.quantity} = ${plainPaise(line.amountPaise)}`,
+      ? `• ${label(line)} ${saidAs(line)} (was ${saidAs({ unit: line.unit, quantity: line.wasQuantity })}) = ${plainPaise(line.amountPaise)}`
+      : `• ${label(line)} ${saidAs(line)} = ${plainPaise(line.amountPaise)}`,
   );
 
-  const gone = input.removed.map((line) => `• ${label(line)} ×${line.quantity} — not available`);
+  const gone = input.removed.map((line) => `• ${label(line)} ${saidAs(line)} — not available`);
 
   return [
     `${hello} we did not have everything you asked for. ${shop}`,
@@ -163,7 +176,7 @@ export function buildRoundMessage(input: {
     const items = order.lines
       .map((line) => {
         const label = escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
-        return `   • ${label} ×${line.quantity}`;
+        return `   • ${label} ${saidAs(line)}`;
       })
       .join('\n');
 
@@ -227,7 +240,7 @@ export function buildStatusMessage(input: {
   const items = input.lines
     .map((line) => {
       const label = escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
-      return `• ${label} ×${line.quantity} = ${plainPaise(line.amountPaise)}`;
+      return `• ${label} ${saidAs(line)} = ${plainPaise(line.amountPaise)}`;
     })
     .join('\n');
 

@@ -3,6 +3,8 @@ import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { saleSchema } from '@/lib/validators';
 import { upsertCustomer } from '@/lib/khata';
+import { linePaise } from '@/lib/money';
+import { amountLabel, isLooseUnit } from '@/lib/units';
 
 export const runtime = 'nodejs';
 
@@ -48,7 +50,22 @@ export async function POST(request: Request, { params }: Context) {
     const item = byId.get(line.itemId);
     // An item deleted mid-sale simply drops out; the rest of the sale stands.
     if (!item) continue;
-    const amountPaise = item.pricePaise * line.quantity;
+    /**
+     * A COUNTER SALE IS WEIGHED TOO.
+     *
+     * The till sells whatever the shop sells, in whatever amount the customer
+     * asked for at the counter — fifty grams of posto off a kilo price is the
+     * same sale here as on the shop page. So the quantity may be fractional,
+     * and the money is rounded to the paise once, here.
+     *
+     * Whole for anything counted rather than weighed: the same rule the order
+     * route enforces, for the same reason — nobody hands over 0.4 of a bottle.
+     */
+    const quantity =
+      isLooseUnit(item.unit) && item.stockQty === null
+        ? line.quantity
+        : Math.max(1, Math.round(line.quantity));
+    const amountPaise = linePaise(item.pricePaise, quantity);
     totalAmountPaise += amountPaise;
     // The snapshot keys carry their unit. Readers of this JSON get no help
     // from the compiler, so the name is the only thing telling them these are
@@ -56,7 +73,7 @@ export async function POST(request: Request, { params }: Context) {
     lines.push({
       name: item.name,
       unit: item.unit,
-      quantity: line.quantity,
+      quantity,
       pricePaise: item.pricePaise,
       amountPaise,
     });
@@ -87,7 +104,9 @@ export async function POST(request: Request, { params }: Context) {
   for (const line of items) {
     const item = byId.get(line.itemId);
     if (!item || item.stockQty === null) continue;
-    const left = Math.max(0, item.stockQty - line.quantity);
+    // A counted item is never sold in fractions (see above), so this stays a
+    // whole number going into a whole-number column.
+    const left = Math.max(0, item.stockQty - Math.round(line.quantity));
     await prisma.item.update({
       where: { id: item.id },
       data: { stockQty: left, ...(left === 0 ? { inStock: false } : {}) },
@@ -103,7 +122,12 @@ export async function POST(request: Request, { params }: Context) {
         customerId: customer.id,
         kind: 'DEBIT',
         amountPaise: totalAmountPaise,
-        note: lines.map((line) => `${line.name} x${line.quantity}`).join(', ').slice(0, 120),
+        // "Posto 50 g", not "Posto x0.05" — the udhaar note is read by the
+        // shopkeeper and, at a statement, by the customer who owes it.
+        note: lines
+          .map((line) => `${line.name} ${amountLabel(line.unit, line.quantity) ?? `x${line.quantity}`}`)
+          .join(', ')
+          .slice(0, 120),
         saleId: sale.id,
       },
     });

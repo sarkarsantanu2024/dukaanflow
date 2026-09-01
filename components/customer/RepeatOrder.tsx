@@ -15,7 +15,8 @@
 
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
-import { formatPaise } from '@/lib/money';
+import { formatPaise, linePaise } from '@/lib/money';
+import { amountLabel } from '@/lib/units';
 import { dict, type Locale } from '@/lib/i18n';
 import type { CustomerItem } from './ItemCard';
 import { itemName } from './ItemCard';
@@ -78,7 +79,10 @@ export function RepeatOrder({
 
   if (available.length === 0) return null;
 
-  const total = available.reduce((sum, line) => sum + line.item.pricePaise * line.quantity, 0);
+  const total = available.reduce(
+    (sum, line) => sum + linePaise(line.item.pricePaise, line.quantity),
+    0,
+  );
 
   function dismiss() {
     setOrder(null);
@@ -89,7 +93,8 @@ export function RepeatOrder({
     }
   }
 
-  const count = available.reduce((sum, line) => sum + line.quantity, 0);
+  // Lines, not the sum of the amounts: "1.25 items" is not a count.
+  const count = available.length;
 
   return (
     <section className="mt-6 overflow-hidden rounded-2xl border border-brand-200 bg-white">
@@ -131,8 +136,11 @@ export function RepeatOrder({
       <ul className="divide-y divide-slate-100">
         {available.map(({ item, quantity }) => (
           <li key={item.id} className="flex items-center gap-3 px-4 py-2">
+            {/* The amount for anything weighed — a chip reading "0.25" is the
+                stored fraction of a pack, which is meaningless to a shopper.
+                Counted items keep the plain number they always had. */}
             <span className="flex h-7 min-w-[1.75rem] shrink-0 items-center justify-center rounded-lg bg-brand-100 px-1.5 text-sm font-bold tabular-nums text-brand-800">
-              {quantity}
+              {amountLabel(item.unit, quantity) ?? quantity}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium text-slate-800">
@@ -141,7 +149,7 @@ export function RepeatOrder({
               {item.unit && <span className="block text-xs text-slate-400">{item.unit}</span>}
             </span>
             <span className="shrink-0 text-sm tabular-nums text-slate-600">
-              {formatPaise(item.pricePaise * quantity)}
+              {formatPaise(linePaise(item.pricePaise, quantity))}
             </span>
           </li>
         ))}

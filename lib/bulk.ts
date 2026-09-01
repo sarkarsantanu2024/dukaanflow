@@ -73,7 +73,18 @@ export function matchKey(name: string, unit: string): string {
  * created. Recognises the common Indian retail unit suffixes; anything else
  * becomes the whole name with an empty unit.
  */
-const UNIT_SUFFIX = /\s+(\d+(?:\.\d+)?\s*(?:kg|g|gm|gram|l|ltr|litre|liter|ml|pc|pcs|piece|pieces|packet|pack|plate|cup|dozen)|\(\d+\s*pcs?\))$/i;
+/**
+ * Every unit the product itself offers, plus the spellings people type.
+ *
+ * It has to be every one of them: a label whose unit is not recognised here
+ * becomes part of the NAME, so "Cold Drink 1 bottle" pasted into the bulk box
+ * created a second item called "Cold Drink 1 bottle" alongside the real one.
+ * The bottles, boxes, bundles, glasses and bowls in `lib/units.ts` were all
+ * missing — and so was "half plate", which is the only unit in the product that
+ * begins with a word rather than a number.
+ */
+const UNIT_SUFFIX =
+  /\s+((?:\d+(?:\.\d+)?\s*(?:kg|kgs|g|gm|gms|gram|grams|l|ltr|litre|liter|litres|liters|ml|pc|pcs|piece|pieces|packet|packets|pack|packs|plate|plates|cup|cups|bowl|bowls|glass|glasses|bottle|bottles|box|boxes|bundle|bundles|dozen))|\(\d+\s*pcs?\)|half\s+(?:plate|bowl|cup|glass))$/i;
 
 export function splitNameAndUnit(label: string): { name: string; unit: string } {
   const cleaned = label.replace(/\s+/g, ' ').trim();

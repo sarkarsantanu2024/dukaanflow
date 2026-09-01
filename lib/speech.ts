@@ -10,6 +10,17 @@
  */
 
 import { splitNameAndUnit } from '@/lib/bulk';
+import {
+  MIN_LOOSE_BASE,
+  amountLabel,
+  comparableMeasures,
+  formatMeasure,
+  isLooseUnit,
+  parseMeasure,
+  quantityFromBase,
+  roundQuantity,
+  type Measure,
+} from '@/lib/units';
 
 /** Recognition locales offered in the mic UI. Value is a BCP-47 tag. */
 export const VOICE_LANGS = [
@@ -75,7 +86,64 @@ const WORD_TENS: Record<string, number> = {
   seventy: 70, eighty: 80, ninety: 90,
 };
 
-const WORD_SCALES: Record<string, number> = { hundred: 100, thousand: 1000 };
+const WORD_SCALES: Record<string, number> = {
+  hundred: 100, thousand: 1000,
+  // "দেড়শো গ্রাম" is a hundred and fifty grams, and a shopper says it far more
+  // often than "একশো পঞ্চাশ". The fraction words below carry the 1.5; this is
+  // the "শো" they attach to.
+  শো: 100, শ: 100, শত: 100, sho: 100,
+  सौ: 100, hazar: 1000, হাজার: 1000, हज़ार: 1000, हजार: 1000,
+};
+
+/**
+ * The "শো" suffix, for the tokens that arrive with it already glued on.
+ *
+ * A recogniser hands back দেড়শো as one word, not as দেড় followed by শো, so a
+ * per-token lookup misses it entirely. Split before looking up.
+ */
+const HUNDRED_SUFFIX = /^(.+?)(শো|শত|শ|sho|सौ)$/;
+
+/**
+ * HOW HALF A KILO IS ACTUALLY ASKED FOR.
+ *
+ * Nothing in this file could read a fraction, and fractions are how everybody
+ * in this market buys: দেড় কেজি চিনি, আধা লিটার তেল, আড়াইশো গ্রাম ডাল, सवा
+ * किलो आटा. Every one of those fell through to the default quantity of one, so
+ * a shopper asking for half a kilo got a whole one and a shopper asking for
+ * two and a half kilos got one.
+ *
+ * Two kinds of word:
+ *
+ *   standalone — দেড় (1.5), আড়াই (2.5), আধা (0.5), পোয়া (0.25). A number in
+ *   their own right, and the commonest of the lot.
+ *
+ *   modifier — সাড়ে X (X + 0.5), সোয়া X (X + 0.25), পৌনে X (X − 0.25). These
+ *   sit BEFORE the number they change, which is why they are handled as a
+ *   pending offset rather than as a value.
+ */
+const WORD_FRACTIONS: Record<string, number> = {
+  half: 0.5, quarter: 0.25,
+  aadha: 0.5, adha: 0.5, adhaa: 0.5,
+  আধা: 0.5, আধ: 0.5, হাফ: 0.5, আধেক: 0.5,
+  आधा: 0.5, आधी: 0.5, आध: 0.5,
+  // 1.5 and 2.5 have single words in both languages, and no compound form.
+  দেড়: 1.5, দেড়টা: 1.5, der: 1.5, derh: 1.5,
+  डेढ़: 1.5, डेढ: 1.5, dedh: 1.5,
+  আড়াই: 2.5, arai: 2.5, aarai: 2.5,
+  ঢাই: 2.5, ढाई: 2.5,
+  // A "poya" is a quarter — a quarter kilo at a kirana counter.
+  পোয়া: 0.25, poya: 0.25, পৌয়া: 0.25,
+};
+
+/** Modifiers that adjust the number that FOLLOWS them. */
+const WORD_FRACTION_PREFIX: Record<string, number> = {
+  সাড়ে: 0.5, sare: 0.5, saare: 0.5, সারে: 0.5,
+  साढ़े: 0.5, साढे: 0.5, sadhe: 0.5,
+  // NOT "soya": that is the soyabean this shop sells, and reading it as a
+  // quarter would turn an order for সয়াবিন into a quarter of a bean.
+  সোয়া: 0.25, सवा: 0.25, sawa: 0.25, sava: 0.25,
+  পৌনে: -0.25, poune: -0.25, পোনে: -0.25, पौने: -0.25, paune: -0.25,
+};
 
 /** Digits in Devanagari (०-९) and Bengali (০-৯) become ASCII. */
 function normaliseDigits(text: string): string {
@@ -87,8 +155,38 @@ function normaliseDigits(text: string): string {
 }
 
 /**
+ * What one token is worth as a number, or null when it is an ordinary word.
+ *
+ * Handles the glued-together forms a recogniser produces: দেড়শো is 150, not a
+ * word it has never seen.
+ */
+function tokenValue(word: string): number | null {
+  if (word in WORD_UNITS) return WORD_UNITS[word]!;
+  if (word in WORD_TENS) return WORD_TENS[word]!;
+  if (word in WORD_FRACTIONS) return WORD_FRACTIONS[word]!;
+
+  const hundred = word.match(HUNDRED_SUFFIX);
+  if (hundred) {
+    const stem = hundred[1]!;
+    const value =
+      stem in WORD_FRACTIONS ? WORD_FRACTIONS[stem]! :
+      stem in WORD_UNITS ? WORD_UNITS[stem]! :
+      stem in WORD_TENS ? WORD_TENS[stem]! : null;
+    if (value !== null) return value * 100;
+  }
+
+  return null;
+}
+
+/** Kills the floating-point tail: 0.30000000000000004 is not a quantity. */
+function round3(value: number): number {
+  return Math.round(value * 1000) / 1000;
+}
+
+/**
  * Collapses runs of number words into digits: "sixty eight" → "68",
- * "two hundred fifty" → "250". Non-number words pass through untouched.
+ * "two hundred fifty" → "250", "সাড়ে তিন" → "3.5", "আড়াইশো" → "250".
+ * Non-number words pass through untouched.
  */
 export function wordsToDigits(text: string): string {
   const tokens = normaliseDigits(text).split(/\s+/);
@@ -97,28 +195,68 @@ export function wordsToDigits(text: string): string {
   let total = 0;
   let current = 0;
   let open = false;
+  /**
+   * A "সাড়ে"/"সোয়া"/"পৌনে" waiting for its number. Applied when the number
+   * arrives, and — if none does — spent on its own, because "সাড়ে" alone in
+   * front of a unit ("সাড়ে কেজি") is nobody's sentence but "আধা" is, and both
+   * arrive here the same way.
+   */
+  let pending: number | null = null;
 
   function flush() {
-    if (open) output.push(String(total + current));
+    if (open) {
+      let value = total + current;
+      if (pending !== null) value += pending;
+      output.push(String(round3(value)));
+    } else if (pending !== null) {
+      // A modifier with nothing to modify: "সাড়ে" on its own means one and a
+      // half of whatever follows.
+      output.push(String(round3(1 + pending)));
+    }
     total = 0;
     current = 0;
     open = false;
+    pending = null;
   }
 
   for (const token of tokens) {
-    const word = token.toLowerCase().replace(/[.,!?]/g, '');
-    if (word === 'and' && open) continue; // "one hundred and five"
+    // Punctuation goes, EXCEPT a full stop between two digits — that is a
+    // decimal point, and stripping it turned "1.5 kg" into fifteen kilos.
+    const word = token
+      .toLowerCase()
+      .replace(/[,!?]/g, '')
+      .replace(/(?<!\d)\.|\.(?!\d)/g, '');
+    // "one hundred and five", "one and a half kg" — both join two numbers.
+    if ((word === 'and' || word === 'a') && open) continue;
 
-    if (word in WORD_UNITS) {
-      current += WORD_UNITS[word]!;
+    // "সাড়ে তিন কেজি" — the modifier comes first and waits.
+    if (word in WORD_FRACTION_PREFIX) {
+      flush();
+      pending = WORD_FRACTION_PREFIX[word]!;
+      continue;
+    }
+
+    // A spoken decimal the recogniser already wrote as digits: "1.5 kg".
+    if (/^\d+(?:\.\d+)?$/.test(word)) {
+      current += Number(word);
       open = true;
-    } else if (word in WORD_TENS) {
-      current += WORD_TENS[word]!;
+      continue;
+    }
+
+    const value = tokenValue(word);
+    if (value !== null) {
+      current += value;
       open = true;
     } else if (word in WORD_SCALES) {
       const scale = WORD_SCALES[word]!;
-      // "hundred" with nothing before it means one hundred.
+      // "hundred" with nothing before it means one hundred; "দেড়" before it
+      // means a hundred and fifty.
       current = (current || 1) * scale;
+      if (pending !== null) {
+        // "সাড়ে তিনশো" is 350, not 300.5 — the modifier scales with the number.
+        current += pending * scale;
+        pending = null;
+      }
       if (scale === 1000) {
         total += current;
         current = 0;
@@ -281,7 +419,9 @@ export function parseSpokenListing(transcript: string): SpokenListing | null {
    * unit becomes a quantity of one rather than part of the product's name.
    */
   if (!unit) {
-    const bare = name.match(/\s+([\p{L}]+)$/u);
+    // `\p{M}` too: an Indic unit word ends in a vowel sign more often than not,
+    // and a letters-only run stops before it.
+    const bare = name.match(/\s+([\p{L}\p{M}]+)$/u);
     if (bare && UNIT_WORD.test(bare[1]!)) {
       unit = canonicaliseUnit(`1 ${bare[1]!}`);
       name = name.slice(0, bare.index).trim();
@@ -294,6 +434,12 @@ export function parseSpokenListing(transcript: string): SpokenListing | null {
   // into the database; the draft has to agree or the form offers a unit that
   // will not resolve onto the row the owner meant.
   unit = unit.replace(/(\d)\s*([a-z])/gi, '$1 $2').replace(/\s+/g, ' ').trim();
+
+  // A serving is never written as a decimal. "Chowmein half plate 40" now
+  // reads its "half" as a number, which is right everywhere except here: the
+  // unit list a shopkeeper picks from says "half plate", not "0.5 plate", and
+  // two spellings of one serving would list the dish twice.
+  unit = unit.replace(/^0\.5\s+(plate|bowl|glass|cup)$/i, 'half $1');
 
   return { name: titleCase(name), unit, pricePaise, category: category ? titleCase(category) : '' };
 }
@@ -595,7 +741,20 @@ export function resolveSpokenCommand(
     kind: 'upsert',
     draft,
     needsConfirm: true,
-    label: labelFor(draft.matched ?? draft),
+    /**
+     * WHAT WILL BE SAVED, not what it nearly matched.
+     *
+     * This read `draft.matched ?? draft`, so a sentence that only half-matched
+     * an existing row was read back under that row's name: "Chandramukhi aloo"
+     * asked "Potato · 1 kg?" and then created an item called Chandramukhi Aloo
+     * when the owner said yes. The confirmation has to name the thing it is
+     * confirming, and the only time that is the existing row is when the match
+     * was certain enough to be a re-pricing of it.
+     */
+    label:
+      draft.matched && draft.confidence >= CONFIDENT_MATCH
+        ? labelFor(draft.matched)
+        : labelFor(draft),
   };
 }
 
@@ -627,15 +786,54 @@ export type MatchableItem = {
   /** The same item's name in the other two languages, when it has one. */
   nameHi?: string;
   nameBn?: string;
+  /**
+   * Whether the shop can sell any amount of this, or only whole units.
+   *
+   * The caller decides — it is the same test the storefront's amount picker and
+   * the order route use (`sellsAnyAmount`), and speech must not reach a
+   * different answer from either. Left out, only the unit is consulted.
+   */
+  loose?: boolean;
 };
 
-export type SpokenOrderLine = { id: string; quantity: number; phrase: string; confidence: number };
+export type SpokenOrderLine = {
+  id: string;
+  quantity: number;
+  phrase: string;
+  confidence: number;
+  /**
+   * The amount the shopper actually asked for, when they said one — "250 g",
+   * "1.5 kg" — as opposed to the number of packs that fits it. Null when they
+   * named no amount at all, which is most orders.
+   */
+  requested: string | null;
+  /**
+   * Whether `quantity` packs come to exactly `requested`.
+   *
+   * False means the shop does not sell in a size that adds up to what was
+   * asked — 250 g of sugar sold by the kilo — and the caller must ask before
+   * putting it in the basket rather than quietly rounding somebody's order up
+   * by four times.
+   */
+  exact: boolean;
+};
 
 export type SpokenOrderResult = {
   /** Confident enough to add straight to the cart. */
   lines: SpokenOrderLine[];
   /** Heard something close, but not close enough to act on — ask first. */
   unsure: SpokenOrderLine[];
+  /**
+   * More than one order line may hold.
+   *
+   * Kept apart from `unsure` because there is nothing to confirm: "300 chini"
+   * was answered with "did you mean 99 × sugar 1 kg?", which is a hundred
+   * kilos of sugar offered to somebody who almost certainly meant 300 grams or
+   * three hundred rupees' worth. Clamping a number that large and asking about
+   * the clamp is not a question anybody can answer usefully — the amount has to
+   * be said again.
+   */
+  tooMany: SpokenOrderLine[];
 };
 
 const ORDER_FILLER =
@@ -654,15 +852,19 @@ export function parseSpokenOrder(
   alternatives: string[],
   items: MatchableItem[],
 ): SpokenOrderResult {
-  let best: SpokenOrderResult = { lines: [], unsure: [] };
+  let best: SpokenOrderResult = { lines: [], unsure: [], tooMany: [] };
   let bestQuality = -1;
 
   for (const transcript of alternatives) {
     const attempt = resolveOrder(transcript, items);
     // Prefer the reading that lands the most confident items; a reading that
-    // only produces guesses never beats one that produces a certainty.
+    // only produces guesses never beats one that produces a certainty, and a
+    // reading that only found an impossible amount beats nothing at all —
+    // "say the amount again" is more use than "item not found".
     const quality =
-      attempt.lines.reduce((sum, line) => sum + line.confidence, 0) + attempt.unsure.length * 0.1;
+      attempt.lines.reduce((sum, line) => sum + line.confidence, 0) +
+      attempt.unsure.length * 0.1 +
+      attempt.tooMany.length * 0.05;
     if (quality > bestQuality) {
       bestQuality = quality;
       best = attempt;
@@ -677,51 +879,215 @@ function resolveOrder(transcript: string, items: MatchableItem[]): SpokenOrderRe
   const clauses = cleaned.split(/\s+(?:and|aur|ar|और|আর|এবং)\s+|,/);
   const lines: SpokenOrderLine[] = [];
   const unsure: SpokenOrderLine[] = [];
+  const tooMany: SpokenOrderLine[] = [];
 
   for (const clause of clauses) {
     const phrase = clause.trim();
     if (!phrase) continue;
 
-    const match = bestMatch(phrase, items);
-    if (!match || match.confidence < UNSURE_MATCH) continue;
+    /**
+     * THE PACK SIZE IS PART OF WHAT WAS SAID, not decoration on the name.
+     *
+     * A shop that lists sugar in 1 kg and 500 g both matches "500 gram chini"
+     * equally well by name, and picking whichever happened to score a
+     * hundredth higher hands the shopper the wrong shelf. So every item the
+     * clause nearly matches is priced out in packs, and the one whose pack the
+     * spoken amount lands on exactly wins.
+     */
+    const ranked = rankMatches(phrase, items);
+    const top = ranked[0];
+    if (!top || top.confidence < UNSURE_MATCH) continue;
 
-    const quantity = spokenQuantity(phrase, match.item);
-    if (quantity < 1) continue;
+    const contenders = ranked.filter((entry) => top.confidence - entry.confidence <= 0.08);
+    const priced = contenders.map((entry) => ({ entry, amount: spokenAmount(phrase, entry.item) }));
+    const chosen = priced.find((option) => option.amount.exact && option.amount.requested) ?? priced[0]!;
 
-    const line = { id: match.item.id, quantity, phrase, confidence: match.confidence };
-    const bucket = match.confidence >= CONFIDENT_MATCH ? lines : unsure;
+    const { entry: match, amount } = chosen;
+    // Zero is nothing to add; less than one is fifty grams of poppy seeds. This
+    // read `< 1` and silently dropped every weighed amount under a full unit —
+    // which, for anything priced by the kilo, is most of what a kirana sells.
+    if (amount.quantity <= 0) continue;
 
-    const existing = bucket.find((entry) => entry.id === line.id);
-    if (existing) existing.quantity = Math.min(existing.quantity + quantity, 99);
+    const line: SpokenOrderLine = {
+      id: match.item.id,
+      quantity: amount.quantity,
+      phrase,
+      confidence: match.confidence,
+      requested: amount.requested,
+      exact: amount.exact,
+    };
+
+    /**
+     * An amount the shop cannot make up out of whole packs goes to the "did you
+     * mean" bucket even when the item itself was heard perfectly. The name is
+     * not what is in doubt — the quantity is, and it is the quantity that
+     * decides what the shopper pays.
+     */
+    const bucket = amount.overMax
+      ? tooMany
+      : match.confidence >= CONFIDENT_MATCH && amount.exact
+        ? lines
+        : unsure;
+
+    const existing = bucket.find((candidate) => candidate.id === line.id);
+    if (existing) existing.quantity = Math.min(existing.quantity + line.quantity, MOST_PER_LINE);
     else bucket.push(line);
   }
 
-  return { lines, unsure };
+  return { lines, unsure, tooMany };
 }
 
-/**
- * How many of `item` the clause asks for.
- *
- * A number that restates the item's own pack size is a description, not a
- * count: in "basmati rice 5 kg" the 5 belongs to the 5 kg pack, so the answer
- * is one pack — while in "2 kg rice" (a 1 kg item) the 2 really is the count.
- */
-function spokenQuantity(phrase: string, item: MatchableItem): number {
-  const itemUnit = canonicaliseUnit(item.unit.toLowerCase()).replace(/\s+/g, ' ').trim();
+/** The most any one line may ask for. Mirrors `quantitySchema` on the server. */
+export const MOST_PER_LINE = 99;
 
-  for (const match of phrase.matchAll(/(\d+)\s*([\p{L}]+)?/gu)) {
+type SpokenAmount = {
+  /** Whole packs of the item's own unit. */
+  quantity: number;
+  /** What the shopper asked for, when they named an amount: "250 g". */
+  requested: string | null;
+  /** Whether `quantity` packs come to exactly that. */
+  exact: boolean;
+  /**
+   * The amount asked for is past what one line may hold. `quantity` is clamped,
+   * but the caller must not offer that clamp as a suggestion — see `tooMany`.
+   */
+  overMax: boolean;
+};
+
+/**
+ * How much of `item` the clause asks for, as a multiple of its unit.
+ *
+ * This is arithmetic, and it used to be string comparison. A shopper says an
+ * AMOUNT — two kilos, half a litre, দেড় কেজি, আড়াইশো গ্রাম — and the shop
+ * quotes a RATE per pack, and the number that goes in the basket is one divided
+ * by the other. Comparing them as text got every part of it wrong:
+ *
+ *   "2 kg musur dal" of a dal priced per 500 g  →  2, meaning 1 kg. Half.
+ *   "250 gram chini"  of sugar priced per kilo  →  250 packs, capped at 99.
+ *                                                  Four thousand rupees of
+ *                                                  sugar.
+ *
+ * Both are now what was asked for: 4 × 500 g, and 0.25 of a kilo. A weighed
+ * item takes the amount exactly — the pack size is the price basis, not a
+ * minimum — while a counted one (a plate, a packet, a bottle) still rounds to
+ * whole units, because there is no way to hand over 0.4 of a bottle.
+ *
+ * A number with no unit after it: for a weighed item, anything from twenty
+ * upwards is the small unit — "300 চিনি" is three hundred grams, which is what
+ * somebody at a counter means and never three hundred kilos — and below that it
+ * is a count of the rate's own unit, so "2 চিনি" stays two kilos. A clause with
+ * no number at all is one unit, exactly as tapping the card is.
+ */
+function spokenAmount(phrase: string, item: MatchableItem): SpokenAmount {
+  const unit = canonicaliseUnit(item.unit.toLowerCase());
+  const pack = parseMeasure(unit);
+  const divisible = (item.loose ?? true) && isLooseUnit(unit);
+
+  /** Amounts said in a unit this item can be measured in, added up. */
+  let askedBase = 0;
+  let askedUnit: Measure | null = null;
+  /** A bare number, kept as a fallback: "2 chini" is two packs. */
+  let bareCount: number | null = null;
+
+  /**
+   * `\p{M}` matters as much as `\p{L}` here, and leaving it out was the whole
+   * 99-packet bug: গ্রাম is five characters of which three are combining marks,
+   * so `[\p{L}]+` captured the single letter গ, no unit word was recognised,
+   * and "250 গ্রাম চিনি" became a bare count of 250 packets of sugar.
+   */
+  for (const match of phrase.matchAll(/(\d+(?:\.\d+)?)\s*([\p{L}\p{M}]+)?/gu)) {
     const value = Number(match[1]);
-    if (!Number.isFinite(value) || value < 1) continue;
+    if (!Number.isFinite(value) || value <= 0) continue;
 
     const following = (match[2] ?? '').toLowerCase();
     if (following && UNIT_WORD.test(following)) {
-      const spelled = canonicaliseUnit(`${value} ${following}`);
-      if (spelled === itemUnit) continue; // the pack size, said back to us
+      const said = parseMeasure(canonicaliseUnit(`${value} ${following}`));
+      // Same dimension as the pack — grams against a kilo, millilitres against
+      // a litre. "1 kg 500 g" adds up rather than the second number winning.
+      if (said && pack && comparableMeasures(said, pack)) {
+        askedBase += said.base;
+        askedUnit = askedUnit && askedUnit.base >= said.base ? askedUnit : said;
+        continue;
+      }
+      // A unit the pack cannot be converted into — "2 packet" of something
+      // sold by the kilo. Their number is the count they mean.
+      if (bareCount === null) bareCount = value;
+      continue;
     }
-    return Math.min(value, 99);
+
+    if (bareCount === null) bareCount = value;
   }
 
-  return 1;
+  /**
+   * A bare number against a weighed item, and what it has to mean.
+   *
+   * "৩০০ চিনি" is three hundred grams of sugar. Read as a count of the rate's
+   * unit it was three hundred kilos, which is how the mic came to offer
+   * ninety-nine kilos of sugar — a number so far from the ask that no
+   * confirmation dialog can rescue it. Below twenty the count reading is the
+   * right one: "দুই চিনি" is two kilos, and nobody asks for nineteen grams.
+   */
+  const SMALL_UNIT_FROM = 20;
+  if (divisible && pack && askedBase === 0 && bareCount !== null && bareCount >= SMALL_UNIT_FROM) {
+    askedBase = bareCount;
+    askedUnit = { amount: bareCount, unit: pack.dimension === 'volume' ? 'ml' : 'g', dimension: pack.dimension, base: bareCount };
+    bareCount = null;
+  }
+
+  if (pack && askedBase > 0 && askedUnit) {
+    const requested = formatMeasure(scaleMeasure(askedUnit, askedBase));
+    const packs = askedBase / pack.base;
+
+    /**
+     * Weighed and poured goods take the amount as asked. THE RATE IS NOT A
+     * MINIMUM: fifty grams of poppy seeds quoted at ₹1,500 the kilo is 0.05,
+     * costs ₹75, and is an ordinary Sunday ask in every kirana in Kolkata.
+     */
+    if (divisible) {
+      const floor = quantityFromBase(unit, MIN_LOOSE_BASE);
+      const wanted = Math.max(roundQuantity(packs), floor);
+      return {
+        quantity: Math.min(wanted, MOST_PER_LINE),
+        requested,
+        exact: true,
+        overMax: wanted > MOST_PER_LINE,
+      };
+    }
+
+    // Counted: whole units only, and the shopper is asked when the amount does
+    // not divide into them.
+    const rounded = Math.max(1, Math.round(packs));
+    const capped = Math.min(rounded, MOST_PER_LINE);
+    return {
+      quantity: capped,
+      requested,
+      exact: Math.abs(packs - capped) < 0.001,
+      overMax: rounded > MOST_PER_LINE,
+    };
+  }
+
+  if (bareCount !== null) {
+    // A count of the item's own unit — "two kilos", "three plates". Fractions
+    // survive for weighed goods ("দেড় চিনি" is a kilo and a half) and round for
+    // counted ones.
+    const wanted = divisible ? roundQuantity(bareCount) : Math.max(1, Math.round(bareCount));
+    return {
+      quantity: Math.min(Math.max(wanted, divisible ? wanted : 1), MOST_PER_LINE),
+      requested: divisible ? amountLabel(unit, wanted) : null,
+      exact: divisible || Math.abs(bareCount - wanted) < 0.001,
+      overMax: wanted > MOST_PER_LINE,
+    };
+  }
+
+  // No number at all. One unit of whatever the shop quotes it in, which is
+  // exactly what tapping the card does.
+  return { quantity: 1, requested: null, exact: true, overMax: false };
+}
+
+/** The same total, expressed in `like`'s unit — 1500 g against a kg is 1.5 kg. */
+function scaleMeasure(like: Measure, base: number): Measure {
+  const perUnit = like.base / like.amount;
+  return { ...like, amount: round3(base / perUnit), base };
 }
 
 /**
@@ -1054,11 +1420,35 @@ function wordScore(word: string, spoken: string[]): number {
  * exact item wins.
  */
 function bestMatch(phrase: string, items: MatchableItem[]): Match | null {
-  const spoken = tokens(phrase);
-  if (spoken.length === 0) return null;
+  return rankMatches(phrase, items)[0] ?? null;
+}
 
-  let winner: MatchableItem | null = null;
-  let winningScore = 0;
+/**
+ * Every item the clause could mean, best first.
+ *
+ * The order side needs more than the winner: a shop listing sugar in 1 kg and
+ * 500 g scores both identically on the name, and which one the shopper meant is
+ * decided by the amount they asked for, not by the name at all. See
+ * `resolveOrder`.
+ */
+function rankMatches(phrase: string, items: MatchableItem[]): Match[] {
+  const spoken = tokens(phrase);
+  if (spoken.length === 0) return [];
+
+  /**
+   * The spoken words that are trying to NAME something.
+   *
+   * Numbers and unit words are not part of a name — "2 kg" says how much, not
+   * what — so they must not count against an item for going unmatched. Short
+   * tokens are dropped too: a stray "ta", "ki" or "er" from a classifier or a
+   * possessive is grammar the recogniser handed back whole, not a word the
+   * shopper meant as an item.
+   */
+  const naming = spoken.filter(
+    (word) => !/^\d/.test(word) && word.length >= 3 && !UNIT_WORD.test(word),
+  );
+
+  const scored: Match[] = [];
 
   for (const item of items) {
     let itemBest = 0;
@@ -1072,6 +1462,32 @@ function bestMatch(phrase: string, items: MatchableItem[]): Match | null {
       if (total === 0) continue;
 
       let coverage = total / words.length;
+
+      /**
+       * AND HOW MUCH OF WHAT WAS SAID DID THIS ITEM ACCOUNT FOR?
+       *
+       * Coverage alone asks only whether the item's own words were heard, and
+       * that made a shop's "Potato" a perfect match for "Chandramukhi aloo" —
+       * every word of "Potato" was there, so the qualifier the shopkeeper spent
+       * a breath saying was thrown away and they were told the item was already
+       * on their list. Chandramukhi is a different potato at a different price,
+       * and a kirana's list is mostly made of exactly this kind of distinction:
+       * Miniket rice, Gobindobhog rice, musur dal, motor dal.
+       *
+       * So a word that was said and matched nothing pulls the score down. Half
+       * the score stays with coverage, so one stray word in a longer sentence
+       * cannot break a match that is otherwise right, while a name half of
+       * which is unaccounted for lands in "did you mean" instead of being acted
+       * on silently.
+       */
+      if (naming.length > 0) {
+        let heard = 0;
+        for (const token of naming) {
+          if (words.some((word) => wordScore(word, [token]) > 0)) heard += 1;
+        }
+        coverage *= 0.5 + 0.5 * (heard / naming.length);
+      }
+
       // The unit is a tiebreaker, never a match on its own.
       if (item.unit && spoken.join(' ').includes(item.unit.toLowerCase())) {
         coverage = Math.min(1, coverage + 0.05);
@@ -1079,13 +1495,12 @@ function bestMatch(phrase: string, items: MatchableItem[]): Match | null {
       if (coverage > itemBest) itemBest = coverage;
     }
 
-    if (itemBest > winningScore) {
-      winningScore = itemBest;
-      winner = item;
-    }
+    if (itemBest > 0) scored.push({ item, confidence: itemBest });
   }
 
-  return winner ? { item: winner, confidence: winningScore } : null;
+  // Stable, so an equal score keeps the shop's own order — the same item won
+  // before this returned a list, and nothing should start choosing differently.
+  return scored.sort((a, b) => b.confidence - a.confidence);
 }
 
 /**

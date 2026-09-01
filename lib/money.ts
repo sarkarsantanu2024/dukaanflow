@@ -77,6 +77,23 @@ export function paiseToInput(paise: number): string {
 }
 
 /**
+ * What one line of an order or a bill comes to.
+ *
+ * THE ONE PLACE A QUANTITY MEETS A PRICE. Quantities are no longer whole — a
+ * customer buying fifty grams of a kilo-priced item sends 0.05 — and
+ * `pricePaise * quantity` in floating point produces 6500.000000000001 as
+ * readily as 6500. Rounding here, once, at the moment the two are multiplied, is
+ * what keeps a total equal to the sum of the lines a shopkeeper can see.
+ *
+ * Every caller that prices a line must use this rather than the bare product,
+ * or two screens will disagree about a bill by a paisa and neither will be able
+ * to explain why.
+ */
+export function linePaise(pricePaise: number, quantity: number): number {
+  return Math.round(pricePaise * quantity);
+}
+
+/**
  * "₹1,250" for a round figure, "₹12.50" when there are paise.
  *
  * The trailing ".00" is dropped on purpose: nearly every amount in this product

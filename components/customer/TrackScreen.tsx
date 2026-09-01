@@ -26,6 +26,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatPaise } from '@/lib/money';
+import { amountLabel } from '@/lib/units';
 import { formatClock, formatDay } from '@/lib/time';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { LangToggle } from './LangToggle';
@@ -194,7 +195,12 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
               <li key={index} className="flex justify-between gap-3 text-slate-700">
                 <span className="min-w-0">
                   {lineName(line, locale)}
-                  {line.unit ? ` · ${line.unit}` : ''} × {line.quantity}
+                  {line.unit ? ` · ${line.unit}` : ''}{' '}
+                  {/* The amount, where the item is sold by weight: "× 0.05"
+                      is what a fractional quantity looks like as a multiplier,
+                      and the customer needs to read back the 50 g they
+                      asked for. */}
+                  {amountLabel(line.unit, line.quantity) ?? `× ${line.quantity}`}
                 </span>
                 <span className="shrink-0 tabular-nums">{formatPaise(line.amountPaise)}</span>
               </li>

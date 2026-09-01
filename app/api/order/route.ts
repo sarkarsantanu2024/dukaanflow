@@ -6,7 +6,8 @@ import { orderSchema } from '@/lib/validators';
 import type { OrderLine } from '@/lib/whatsapp';
 import { upsertCustomer } from '@/lib/khata';
 import { quoteDelivery } from '@/lib/delivery';
-import { formatPaise } from '@/lib/money';
+import { formatPaise, linePaise } from '@/lib/money';
+import { isLooseUnit, roundQuantity } from '@/lib/units';
 import { sendPush } from '@/lib/push';
 import { newOrderNotification } from '@/lib/push-text';
 import type { Locale } from '@/lib/i18n';
@@ -70,7 +71,10 @@ export async function POST(request: Request) {
   // Collapse duplicate ids so a repeated line cannot inflate the quantity cap.
   const requested = new Map<string, number>();
   for (const entry of items) {
-    requested.set(entry.itemId, Math.min(99, (requested.get(entry.itemId) ?? 0) + entry.quantity));
+    requested.set(
+      entry.itemId,
+      Math.min(99, roundQuantity((requested.get(entry.itemId) ?? 0) + entry.quantity)),
+    );
   }
 
   const dbItems = await prisma.item.findMany({
@@ -100,6 +104,39 @@ export async function POST(request: Request) {
 
   const label = (item: { name: string; unit: string }) =>
     [item.name, item.unit].filter(Boolean).join(' ');
+
+  /**
+   * A FRACTION OF SOMETHING THAT CANNOT BE CUT.
+   *
+   * Weighed and poured goods divide — fifty grams of poppy seeds priced by the
+   * kilo is an ordinary ask, and the whole point of a fractional quantity. A
+   * plate of chowmein, a biscuit packet, a bottle of oil does not: 0.4 of one
+   * is not something anybody can hand over, so a payload naming one is refused
+   * rather than rounded into a number the shop would have to guess at.
+   *
+   * The storefront never offers it either — see `AmountStepper` — but hiding is
+   * not enforcing.
+   */
+  const indivisible = dbItems.filter(
+    (item) =>
+      !Number.isInteger(requested.get(item.id)!) &&
+      /**
+       * A counted item cannot be split either, whatever its unit says.
+       *
+       * `stockQty` is a whole number of packs, and there is nowhere to keep the
+       * 700 g left over from selling 300 g off a count of one — so an owner who
+       * is counting a loose item is, for now, selling it whole. Clearing the
+       * count on that item is what makes it divisible again, and the storefront
+       * offers the amount picker on exactly the same test.
+       */
+      (!isLooseUnit(item.unit) || item.stockQty !== null),
+  );
+  if (indivisible.length > 0) {
+    return fail(
+      `${indivisible.map(label).join(', ')} — sold whole. Please choose a whole number.`,
+      409,
+    );
+  }
 
   const outOfStock = dbItems.filter((item) => !item.inStock);
   if (outOfStock.length > 0) {
@@ -136,7 +173,10 @@ export async function POST(request: Request) {
       unit: item.unit,
       pricePaise: item.pricePaise,
       quantity,
-      amountPaise: item.pricePaise * quantity,
+      // Rounded to the paise HERE and nowhere else. `pricePaise × 0.05` is
+      // 6500.000000000001 in floating point, and a total built out of those is
+      // a total that fails to equal itself.
+      amountPaise: linePaise(item.pricePaise, quantity),
     };
   });
 
@@ -170,6 +210,9 @@ export async function POST(request: Request) {
   const created = await prisma.$transaction(async (tx) => {
     for (const item of dbItems) {
       if (item.stockQty === null) continue;
+      // Whole, guaranteed: a counted item with a fractional quantity was
+      // refused above, so this decrement can never be a fraction of a pack
+      // going into an integer column.
       const quantity = requested.get(item.id)!;
       const updated = await tx.item.updateMany({
         where: { id: item.id, stockQty: { gte: quantity } },
@@ -221,7 +264,7 @@ export async function POST(request: Request) {
           unit: item.unit,
           pricePaise: item.pricePaise,
           quantity: requested.get(item.id)!,
-          amountPaise: item.pricePaise * requested.get(item.id)!,
+          amountPaise: linePaise(item.pricePaise, requested.get(item.id)!),
         })),
         // The grand total, goods plus the journey. Every report and the khata
         // read this column as "what this order came to", and a delivery charge
