@@ -128,12 +128,20 @@ export function newOrderNotification(input: {
 export function orderStatusNotification(input: {
   locale: Locale;
   shopName: string;
-  status: 'NEW' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+  status: 'NEW' | 'CONFIRMED' | 'READY' | 'COMPLETED' | 'CANCELLED';
   orderType: 'DELIVERY' | 'PICKUP';
 }): { title: string; body: string } | null {
   const t = pushDict(input.locale);
 
-  if (input.status === 'COMPLETED') {
+  /**
+   * "Your order is ready" belongs to READY, and used to fire on COMPLETED.
+   *
+   * That was the wrong moment by one whole step: COMPLETED means the goods have
+   * been handed over and the money accounted for, so the invitation to come and
+   * collect arrived after the collection. COMPLETED now sends nothing — the
+   * customer is standing there with the bag.
+   */
+  if (input.status === 'READY') {
     return input.orderType === 'PICKUP'
       ? { title: t.readyPickupTitle, body: `${t.readyPickupBody} ${input.shopName}` }
       : { title: t.readyDeliveryTitle, body: `${t.readyDeliveryBody} ${input.shopName}` };

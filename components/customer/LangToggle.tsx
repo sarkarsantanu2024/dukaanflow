@@ -26,7 +26,9 @@ export function LangToggle({
           onClick={() => onChange(locale)}
           aria-pressed={value === locale}
           className={clsx(
-            'min-w-[44px] rounded-full px-3 py-1.5 text-xs font-semibold transition',
+            // 44px wide and 40 tall. It was 44×28: wide enough and too short,
+            // which on a phone is a mis-tap into whatever sits under it.
+            'inline-flex min-h-[40px] min-w-[44px] items-center justify-center rounded-full px-3 text-xs font-semibold transition',
             value === locale
               ? 'bg-white text-slate-900 shadow-sm'
               : 'text-slate-500 hover:text-slate-800',

@@ -32,12 +32,13 @@ import { BrandMark } from '@/components/ui/BrandMark';
 import { LangToggle } from './LangToggle';
 import { WhatsAppIcon } from '@/components/ui/Icon';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
+import { useHtmlLang } from '@/components/ui/useHtmlLang';
 
 const LOCALE_STORAGE_KEY = 'halkhata:locale';
 
 export type TrackedOrder = {
   id: string;
-  status: 'NEW' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+  status: 'NEW' | 'CONFIRMED' | 'READY' | 'COMPLETED' | 'CANCELLED';
   orderType: 'DELIVERY' | 'PICKUP';
   totalAmountPaise: number;
   deliveryFeePaise: number;
@@ -74,6 +75,7 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
   const [locale, setLocale] = useState<Locale>('bn');
   const t = dict(locale);
   const router = useRouter();
+  useHtmlLang(locale);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(LOCALE_STORAGE_KEY);
@@ -102,7 +104,11 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
    * phone with this in a background tab is a phone in somebody's pocket — and
    * that is exactly the case that should cost the server nothing.
    */
-  const waiting = order?.status === 'NEW' || order?.status === 'CONFIRMED';
+  // Worth watching while the shop is still working on it, and while it is packed
+  // and not yet collected — a customer refreshing this page is asking exactly
+  // "has anything happened?".
+  const waiting =
+    order?.status === 'NEW' || order?.status === 'CONFIRMED' || order?.status === 'READY';
 
   useEffect(() => {
     if (!waiting) return;
@@ -148,16 +154,23 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
    * shop has it" and "the shop has accepted it" is real to the shopkeeper and
    * means nothing to the person waiting — orders arrive accepted anyway, and
    * two near-identical states would only look like something had stalled.
+   *
+   * READY and COMPLETED, on the other hand, must not read the same. A finished,
+   * paid order used to be told it was "ready and on its way to you" — a message
+   * about a bag the customer was already holding, because "ready" and "done"
+   * were one state. Ready is ready; done is done.
    */
   const state =
-    order.status === 'COMPLETED'
+    order.status === 'READY'
       ? {
-          tone: 'bg-green-50 text-green-800',
+          tone: 'bg-amber-50 text-amber-800',
           line: order.orderType === 'PICKUP' ? t.trackStateReadyPickup : t.trackStateReadyDelivery,
         }
-      : order.status === 'CANCELLED'
-        ? { tone: 'bg-slate-100 text-slate-600', line: t.trackStateCancelled }
-        : { tone: 'bg-brand-50 text-brand-800', line: t.trackStatePreparing };
+      : order.status === 'COMPLETED'
+        ? { tone: 'bg-green-50 text-green-800', line: t.trackStateDone }
+        : order.status === 'CANCELLED'
+          ? { tone: 'bg-slate-100 text-slate-600', line: t.trackStateCancelled }
+          : { tone: 'bg-brand-50 text-brand-800', line: t.trackStatePreparing };
 
   const goodsPaise = order.totalAmountPaise - order.deliveryFeePaise;
 

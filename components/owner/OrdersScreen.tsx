@@ -3,10 +3,11 @@
 /**
  * The orders queue.
  *
- * Orders already arrive on the shop's WhatsApp — that is not going away, and it
- * is what makes Halkhata work on a phone with no app. But a WhatsApp thread
- * is a conversation, not a worklist: once an owner has the app open, they need
- * to see what is still waiting, and mark off what they have taken.
+ * Orders arrive here, from the shop's own QR page, and this is the only place
+ * they arrive: WhatsApp is where the owner TELLS a customer something, never
+ * where an order comes in. What the owner needs from this screen is what a
+ * WhatsApp thread cannot give — a worklist showing what is still waiting, and a
+ * way to mark off what has been done.
  *
  * The screen is built around one question an owner asks about twenty times a
  * day — "what still needs doing?" — so it opens on the orders that do. A flat
@@ -21,7 +22,7 @@
  */
 
 import { formatClock, formatDay, startOfBusinessDay } from '@/lib/time';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { handledExpiredSession } from './sessionGuard';
 import clsx from 'clsx';
@@ -61,7 +62,7 @@ function lineName(
   return line.name;
 }
 
-export type OrderStatus = 'NEW' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+export type OrderStatus = 'NEW' | 'CONFIRMED' | 'READY' | 'COMPLETED' | 'CANCELLED';
 
 export type OwnerOrder = {
   id: string;
@@ -122,14 +123,26 @@ export type OwnerOrder = {
  */
 function worthMessaging(order: OwnerOrder): boolean {
   if (order.status === 'CANCELLED') return true;
-  if (order.status !== 'COMPLETED') return false;
+  // READY, not COMPLETED. "Your order is ready" is an invitation to come and
+  // collect, and it used to be attached to the state that means the customer
+  // already has the bag.
+  if (order.status !== 'READY') return false;
   if (order.orderType === 'DELIVERY') return false;
   return !order.reachable;
 }
 
+/**
+ * How often an open orders screen asks the server what it has missed.
+ *
+ * Twenty seconds is the compromise: fast enough that a customer who orders and
+ * then walks in is not ahead of the shop's own screen, slow enough to be
+ * nothing on a Vercel bill or a 4G connection.
+ */
+const ORDERS_POLL_MS = 20_000;
+
 type Tab = 'ALL' | OrderStatus;
 
-const TAB_ORDER: Tab[] = ['NEW', 'CONFIRMED', 'COMPLETED', 'ALL', 'CANCELLED'];
+const TAB_ORDER: Tab[] = ['NEW', 'CONFIRMED', 'READY', 'COMPLETED', 'ALL', 'CANCELLED'];
 
 /**
  * Today in the shop's own day.
@@ -228,6 +241,7 @@ export function OrdersScreen({
       ALL: orders.length,
       NEW: 0,
       CONFIRMED: 0,
+      READY: 0,
       COMPLETED: 0,
       CANCELLED: 0,
     };
@@ -244,14 +258,19 @@ export function OrdersScreen({
       // Only money the owner has actually agreed to. An order sitting
       // unanswered is not takingsPaise, and a figure checked against the cash
       // drawer must never be the optimistic one.
-      if (order.status === 'CONFIRMED' || order.status === 'COMPLETED') {
+      if (
+        order.status === 'CONFIRMED' ||
+        order.status === 'READY' ||
+        order.status === 'COMPLETED'
+      ) {
         takingsPaise += order.totalAmountPaise;
       }
     }
     return { count, takingsPaise };
   }, [orders]);
 
-  const waiting = counts.NEW + counts.CONFIRMED;
+  // A READY order is still waiting: it is packed and nobody has it yet.
+  const waiting = counts.NEW + counts.CONFIRMED + counts.READY;
 
   /**
    * What is still to go out, oldest first — the round, in the order it should
@@ -260,7 +279,10 @@ export function OrdersScreen({
   const pending = useMemo(
     () =>
       orders
-        .filter((order) => order.status === 'NEW' || order.status === 'CONFIRMED')
+        .filter(
+          (order) =>
+            order.status === 'NEW' || order.status === 'CONFIRMED' || order.status === 'READY',
+        )
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     [orders],
   );
@@ -271,7 +293,8 @@ export function OrdersScreen({
     // rule a queue at a counter already follows. Everything finished sits
     // under it, newest first, because that half is a record being read
     // backwards from now.
-    const rank = (status: OrderStatus) => (status === 'NEW' || status === 'CONFIRMED' ? 0 : 1);
+    const rank = (status: OrderStatus) =>
+      status === 'NEW' || status === 'CONFIRMED' || status === 'READY' ? 0 : 1;
     return [...orders].sort((a, b) => {
       const byRank = rank(a.status) - rank(b.status);
       if (byRank !== 0) return byRank;
@@ -280,6 +303,71 @@ export function OrdersScreen({
         : b.createdAt.localeCompare(a.createdAt);
     });
   }, [orders]);
+
+  /**
+   * THE SCREEN CANNOT BE A SNAPSHOT.
+   *
+   * An owner leaves this open on the counter all day. Until now the only thing
+   * that ever refreshed it was the owner's own tap, so an order placed while
+   * they were looking at it never appeared — the waiting count sat there being
+   * wrong, and the only alert was a push notification, which is exactly the
+   * thing the phones in this market drop.
+   *
+   * So: a poll while the tab is actually being looked at, and an immediate
+   * refresh the moment it is looked at again. `router.refresh()` re-runs the
+   * server component and diffs — it does not scroll, does not clear a form and
+   * does not close the panel the owner has open.
+   *
+   * Paused while hidden on purpose. A phone in a pocket with a dozen tabs open
+   * should not be polling anybody's database, and coming back to the tab
+   * refreshes anyway.
+   */
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const start = () => {
+      if (timer) return;
+      timer = setInterval(() => router.refresh(), ORDERS_POLL_MS);
+    };
+    const stop = () => {
+      if (!timer) return;
+      clearInterval(timer);
+      timer = null;
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        router.refresh();
+        start();
+      } else {
+        stop();
+      }
+    };
+
+    if (document.visibilityState === 'visible') start();
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', onVisibility);
+    };
+  }, [router]);
+
+  /**
+   * A new order that arrived on its own is worth a word, once.
+   *
+   * The poll above makes it appear; this makes the owner look up. Only ever an
+   * increase, and never on first render — a screen that announces the orders
+   * already on it every time it loads is a screen people learn to ignore.
+   */
+  const seenWaiting = useRef<number | null>(null);
+  useEffect(() => {
+    const previous = seenWaiting.current;
+    seenWaiting.current = waiting;
+    if (previous === null || waiting <= previous) return;
+    push(t.newOrderAlert, 'success');
+  }, [waiting, push, t.newOrderAlert]);
 
   async function setStatus(
     id: string,
@@ -406,6 +494,7 @@ export function OrdersScreen({
   const statusLabel: Record<OrderStatus, string> = {
     NEW: t.orderNew,
     CONFIRMED: t.orderConfirmed,
+    READY: t.orderReady,
     COMPLETED: t.orderCompleted,
     CANCELLED: t.orderCancelled,
   };
@@ -532,6 +621,7 @@ export function OrdersScreen({
                     'shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold',
                     order.status === 'NEW' && 'bg-amber-50 text-amber-700',
                     order.status === 'CONFIRMED' && 'bg-blue-50 text-blue-700',
+                    order.status === 'READY' && 'bg-amber-50 text-amber-800',
                     order.status === 'COMPLETED' && 'bg-green-50 text-green-700',
                     order.status === 'CANCELLED' && 'bg-slate-100 text-slate-500',
                   )}
@@ -781,7 +871,9 @@ export function OrdersScreen({
                     decisions left are "it is done" and "we cannot do it".
                     `NEW` is still handled below for orders placed before this
                     changed — they must not become unfinishable. */}
-                {(order.status === 'CONFIRMED' || order.status === 'NEW') &&
+                {(order.status === 'CONFIRMED' ||
+                  order.status === 'NEW' ||
+                  order.status === 'READY') &&
                   (settling === order.id ? (
                     /* The one question that decides where the money goes, asked
                        at the only moment the owner knows the answer. Two plain
@@ -857,13 +949,35 @@ export function OrdersScreen({
                       <CheckIcon className="h-5 w-5" />
                     </button>
                   ))}
+                {/* PACKED AND WAITING — the step that did not exist.
+                    Without it the only way to tell a customer their order was
+                    ready was to mark it done and answer for money nobody had
+                    handed over yet. One tap sets READY, which is what sends
+                    the customer their notification; the WhatsApp button beside
+                    it then carries the same words for a customer whose phone
+                    cannot be reached. */}
+                {(order.status === 'NEW' || order.status === 'CONFIRMED') &&
+                  settling !== order.id &&
+                  revising !== order.id && (
+                    <button
+                      type="button"
+                      disabled={busyId === order.id}
+                      onClick={() => void setStatus(order.id, 'READY')}
+                      className="h-10 shrink-0 rounded-lg bg-amber-500 px-3 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:opacity-50"
+                    >
+                      {t.markReady}
+                    </button>
+                  )}
+
                 {/* An icon like the other three, and now behind a question.
                     It was the odd one out as a word because it is the one act
                     on this card with no undo, and an unlabelled ✗ beside a ✓
                     is a mis-tap that turns a customer away. Asking first buys
                     the consistency safely — and the dialog says what it means
                     in the owner's own language, which the icon cannot. */}
-                {(order.status === 'NEW' || order.status === 'CONFIRMED') && (
+                {(order.status === 'NEW' ||
+                  order.status === 'CONFIRMED' ||
+                  order.status === 'READY') && (
                   <button
                     type="button"
                     disabled={busyId === order.id}
