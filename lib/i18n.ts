@@ -150,6 +150,13 @@ type Dictionary = {
   /** Where the order has got to, in the customer's own words. */
   trackStatePreparing: string;
   trackStateReadyPickup: string;
+  /**
+   * The end of the line: handed over and settled.
+   *
+   * Without it a finished order still told the customer it was "on its way",
+   * because "ready" and "done" were one state.
+   */
+  trackStateDone: string;
   trackStateReadyDelivery: string;
   trackStateCancelled: string;
   trackChanged: string;
@@ -272,6 +279,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     trackPlaced: 'Placed',
     trackStatePreparing: 'The shop has your order and is getting it ready.',
     trackStateReadyPickup: 'Ready. Please collect it from the shop.',
+    trackStateDone: 'Done — thank you. This order is settled.',
     trackStateReadyDelivery: 'Ready and on its way to you.',
     trackStateCancelled: 'The shop could not take this order.',
     trackChanged: 'The shop changed this order',
@@ -392,6 +400,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     trackPlaced: 'দেওয়া হয়েছে',
     trackStatePreparing: 'দোকান অর্ডারটি পেয়েছে, তৈরি করছে।',
     trackStateReadyPickup: 'তৈরি হয়ে গেছে। দোকান থেকে নিয়ে আসুন।',
+    trackStateDone: 'হয়ে গেছে — ধন্যবাদ। এই অর্ডারের হিসাব মেটানো হয়েছে।',
     trackStateReadyDelivery: 'তৈরি — আপনার কাছে রওনা হয়েছে।',
     trackStateCancelled: 'দোকান এই অর্ডারটি নিতে পারেনি।',
     trackChanged: 'দোকান অর্ডারটা বদলেছে',
@@ -512,6 +521,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     trackPlaced: 'दिया गया',
     trackStatePreparing: 'दुकान को ऑर्डर मिल गया है, तैयार हो रहा है।',
     trackStateReadyPickup: 'तैयार है। दुकान से ले जाइए।',
+    trackStateDone: 'हो गया — धन्यवाद। इस ऑर्डर का हिसाब पूरा है।',
     trackStateReadyDelivery: 'तैयार — आपकी तरफ़ रवाना हो गया।',
     trackStateCancelled: 'दुकान यह ऑर्डर नहीं ले सकी।',
     trackChanged: 'दुकान ने ऑर्डर बदला है',

@@ -12,6 +12,46 @@ input, real orders placed and worked through to completion.
 > session (WhatsApp-ordering copy, voice quantity parsing) are **not live yet**.
 > Every finding below was reproduced against the live site.
 
+## Amendments after re-verification (2026-09-01, same day)
+
+The findings were re-checked against the source before being fixed. Three
+changed:
+
+- **BUG-008 (emoji stripped) is WITHDRAWN — a false positive.** The emoji
+  survives: `চিনি 🍬` is intact in storage, on the owner's Sell screen and in
+  the admin list. What I saw on the Bengali storefront was `nameBn`, the
+  canonical translation the vocabulary fills in automatically, not a stripped
+  primary name. Nothing in the codebase strips emoji.
+- **BUG-004 is narrower than first written.** The form does handle 422s and a
+  toast *did* appear; my text scan missed it because the message is the generic
+  "Please check the highlighted fields". The real defect: the API's field key is
+  `pricePaise` and the form renders `errors.price`, so the field was never
+  highlighted — a toast promising a highlight that does not exist.
+- **BUG-002 is re-framed.** A "your order is ready" message and push already
+  existed; both were keyed to COMPLETED, which also means handed-over-and-paid.
+  So the defect is not a missing message but a missing *state*: there was no way
+  to say "packed, on the counter, not yet paid", and telling the customer
+  required first declaring the order done and answering for money nobody had
+  handed over.
+
+Revised totals: **137 passed, 9 failed, 7 blocked.**
+
+## Fix status
+
+| Bug | Severity | Status |
+|---|---|---|
+| BUG-001 stale orders screen | P1 | Fixed in tree — 20 s visibility-gated poll, refresh on focus, one-off new-order toast |
+| BUG-002 no READY state | P1 | Fixed in tree — **needs `prisma db push` before deploy** |
+| BUG-003 WhatsApp-ordering copy | P2 | **Deployed and verified live** |
+| BUG-004 swallowed validation error | P2 | Fixed in tree — field keys mapped, specific message in the toast |
+| BUG-005 `html lang` | P3 | Fixed in tree — `useHtmlLang` on storefront, track and owner app |
+| BUG-006 customer 404 for admin URLs | P3 | Fixed in tree — console 404 page + `/admin/shops` and `/owner/<slug>/items` redirects |
+| BUG-007 completed reads "on its way" | P3 | Fixed in tree — new `trackStateDone` in all three languages |
+| BUG-008 emoji stripped | — | **Withdrawn, false positive** |
+| BUG-009 small tap targets | P3 | Fixed in tree — language pills 44×40, phone links 44 tall |
+| BUG-010 plan named "EX" | P4 | Fixed in tree — reads "Business" (enum value unchanged) |
+| OPS-001 admin/admin | P1 | **Open — operator action only** |
+
 ---
 
 ## A. Executive Summary

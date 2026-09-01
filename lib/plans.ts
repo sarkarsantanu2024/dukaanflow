@@ -130,7 +130,10 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
   },
   EX: {
     id: 'EX',
-    name: 'EX',
+    // The enum value stays EX because it is written into existing rows; the
+    // name a shopkeeper reads is "Business", because "EX" told them nothing
+    // about what they were buying.
+    name: 'Business',
     price: 449,
     // A ceiling rather than true "unlimited": a catalogue past this is a
     // different kind of business, and should be a conversation with the

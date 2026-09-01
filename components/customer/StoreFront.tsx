@@ -15,6 +15,7 @@ import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
+import { useHtmlLang } from '@/components/ui/useHtmlLang';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
 import { roundQuantity } from '@/lib/units';
@@ -120,6 +121,8 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   const [wasRemembered, setWasRemembered] = useState(false);
 
   const t = dict(locale);
+  // So a Bengali page is declared as Bengali. See `useHtmlLang`.
+  useHtmlLang(locale);
 
   useEffect(() => {
     const saved = readRemembered();

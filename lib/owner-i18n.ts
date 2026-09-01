@@ -108,6 +108,8 @@ type OwnerDictionary = {
   noOrdersHint: string;
   orderNew: string;
   orderConfirmed: string;
+  /** Packed and waiting — for collection, or for the round to go out. */
+  orderReady: string;
   orderCompleted: string;
   orderCancelled: string;
   /** The paid-or-khata question asked when finishing an order. */
@@ -141,6 +143,13 @@ type OwnerDictionary = {
   noticeScheduled: string;
   noticeFinished: string;
   markConfirmed: string;
+  /**
+   * The button that says an order is packed and tells the customer so.
+   *
+   * One tap for both, because they are one act: an owner who marks it ready and
+   * does not tell anybody has done nothing the customer can act on.
+   */
+  markReady: string;
   markCompleted: string;
   markCancelled: string;
   /** Asked before an order is turned away — the one act here with no undo. */
@@ -418,6 +427,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noOrdersHint: 'Orders appear here the moment a customer sends one from your QR.',
     orderNew: 'Order placed',
     orderConfirmed: 'Preparing',
+    orderReady: 'Ready',
     orderCompleted: 'Completed',
     orderCancelled: 'Cancelled',
     paymentAsk: 'Has the customer paid?',
@@ -446,6 +456,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noticeScheduled: 'Starts later — customers cannot see it yet',
     noticeFinished: 'Finished — customers can no longer see it',
     markConfirmed: 'Accept',
+    markReady: 'Ready — tell them',
     markCompleted: 'Mark done',
     markCancelled: 'Cancel order',
     markCancelledConfirm: 'The customer is not served and the order cannot be brought back.',
@@ -717,6 +728,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noOrdersHint: 'আপনার QR থেকে কেউ অর্ডার পাঠালেই এখানে দেখাবে।',
     orderNew: 'অর্ডার এসেছে',
     orderConfirmed: 'তৈরি হচ্ছে',
+    orderReady: 'তৈরি আছে',
     orderCompleted: 'হয়ে গেছে',
     orderCancelled: 'বাতিল',
     paymentAsk: 'খদ্দের কি টাকা দিয়েছে?',
@@ -745,6 +757,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noticeScheduled: 'পরে শুরু হবে — খদ্দের এখনো দেখতে পাচ্ছে না',
     noticeFinished: 'শেষ হয়ে গেছে — খদ্দের আর দেখতে পাচ্ছে না',
     markConfirmed: 'নিলাম',
+    markReady: 'তৈরি — জানিয়ে দিন',
     markCompleted: 'হয়ে গেছে',
     markCancelled: 'অর্ডার বাতিল',
     markCancelledConfirm: 'খদ্দের জিনিস পাবে না, আর অর্ডারটা আর ফেরানো যাবে না।',
@@ -1012,6 +1025,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noOrdersHint: 'आपके QR से कोई ऑर्डर भेजते ही यहाँ दिखेगा।',
     orderNew: 'ऑर्डर आया',
     orderConfirmed: 'तैयार हो रहा है',
+    orderReady: 'तैयार है',
     orderCompleted: 'हो गया',
     orderCancelled: 'रद्द',
     paymentAsk: 'क्या ग्राहक ने पैसे दिए?',
@@ -1040,6 +1054,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noticeScheduled: 'बाद में शुरू होगी — ग्राहक अभी नहीं देख सकते',
     noticeFinished: 'खत्म — ग्राहक अब नहीं देख सकते',
     markConfirmed: 'लिया',
+    markReady: 'तैयार — बता दें',
     markCompleted: 'हो गया',
     markCancelled: 'ऑर्डर रद्द',
     markCancelledConfirm: 'ग्राहक को सामान नहीं मिलेगा, और ऑर्डर वापस नहीं आएगा।',

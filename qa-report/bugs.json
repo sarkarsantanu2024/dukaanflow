@@ -2,8 +2,18 @@
   "target": "https://dukaanflow.vercel.app/",
   "testedAt": "2026-09-01",
   "method": "Playwright + Chromium, two independent browser contexts (customer + owner/admin), live orders placed and completed",
-  "note": "The live deployment predates fixes made in the working tree during this session. BUG-003 is already fixed locally and awaits deploy.",
-  "totals": { "tests": 153, "passed": 136, "failed": 10, "blocked": 7, "p0": 0, "p1": 3, "p2": 2, "p3": 5, "p4": 1 },
+  "note": "The live deployment predates fixes made in the working tree. BUG-003 is deployed. BUG-001, BUG-002, BUG-004, BUG-005, BUG-006, BUG-007, BUG-009 and BUG-010 are fixed in the working tree and await a deploy — BUG-002 additionally needs a schema push (a new READY value on the OrderStatus enum) BEFORE the code is deployed. BUG-008 was withdrawn on re-verification: it was a false positive.",
+  "totals": {
+    "tests": 153,
+    "passed": 137,
+    "failed": 9,
+    "blocked": 7,
+    "p0": 0,
+    "p1": 3,
+    "p2": 2,
+    "p3": 4,
+    "p4": 1
+  },
   "bugs": [
     {
       "id": "BUG-001",
@@ -21,12 +31,16 @@
       "expected": "Order appears, or the waiting count / bell increments, with no manual refresh",
       "actual": "Nothing changes for 120s. Manual reload shows it at once. No polling, SSE or websocket exists in the owner app",
       "impact": "During a rush the owner believes there are no new orders. Push is the only alert, and push is unreliable on the target handsets",
-      "evidence": ["p8-status-realtime.json → realtime.samples / noticedWithoutRefreshMs=null", "p7-lifecycle.json → owner.sawWithoutRefresh=false"],
-      "fix": "Visibility-gated poll of the orders route every 15-20s, plus the chime the copy already promises"
+      "evidence": [
+        "p8-status-realtime.json → realtime.samples / noticedWithoutRefreshMs=null",
+        "p7-lifecycle.json → owner.sawWithoutRefresh=false"
+      ],
+      "fix": "Visibility-gated poll of the orders route every 15-20s, plus the chime the copy already promises",
+      "status": "FIXED IN WORKING TREE — visibility-gated 20s poll plus an immediate refresh on focus, and a one-off \"new order\" toast when the waiting count rises (components/owner/OrdersScreen.tsx)"
     },
     {
       "id": "BUG-002",
-      "title": "No READY state, and no way to tell the customer their order is ready",
+      "title": "READY and COMPLETED were one state, so a customer could only be told their order was ready after it was marked handed-over and paid",
       "severity": "P1",
       "module": "Order lifecycle",
       "page": "/owner/<slug>/orders",
@@ -38,10 +52,15 @@
         "Look for a READY action and a WhatsApp message addressed to that customer"
       ],
       "expected": "NEW → PREPARING → READY → WhatsApp the customer → PAYMENT CONFIRMED → COMPLETED",
-      "actual": "Statuses are NEW / CONFIRMED (Preparing) / COMPLETED / CANCELLED. Orders arrive already CONFIRMED. Controls are only Change amounts, Mark done, Cancel order. Customer-addressed WhatsApp exists only for a cut-down order and for cancellation; the other WhatsApp link is a delivery-round list with no recipient",
-      "impact": "The customer is never told the order is ready — the most important message in a pickup shop. Ready and handed-over-and-paid are collapsed into one action",
-      "evidence": ["p9-lifecycle-bn.json → steps[].buttons", "p11-refresh-whatsapp.json → revise.whatsappLinks", "prisma/schema.prisma enum OrderStatus"],
-      "fix": "Add READY between CONFIRMED and COMPLETED with a per-order 'Ready — tell the customer' button building wa.me/<customerPhone> plus a customer push (that plumbing already exists)"
+      "actual": "Live statuses are NEW / CONFIRMED (Preparing) / COMPLETED / CANCELLED. A 'your order is ready' message and push DO exist — buildStatusMessage and orderStatusNotification — but both are keyed to COMPLETED, which also means handed over and paid for. So the only route to telling a customer their order is waiting was to first declare it done and answer Cash/UPI/Udhaar for money nobody had been given. There was no state for 'packed, on the counter, unpaid'.",
+      "impact": "A pickup order sitting ready cannot be represented, the ready message arrives after the moment it describes, and the queue cannot answer 'what is waiting to be collected?'.",
+      "evidence": [
+        "p9-lifecycle-bn.json → steps[].buttons",
+        "p11-refresh-whatsapp.json → revise.whatsappLinks",
+        "prisma/schema.prisma enum OrderStatus"
+      ],
+      "fix": "Add READY between CONFIRMED and COMPLETED with a per-order 'Ready — tell the customer' button building wa.me/<customerPhone> plus a customer push (that plumbing already exists)",
+      "status": "FIXED IN WORKING TREE — READY added to the OrderStatus enum between CONFIRMED and COMPLETED; the ready message and push moved onto it; a \"Ready — tell them\" button on the order; COMPLETED given its own customer wording. NEEDS `npx prisma db push` before the code is deployed."
     },
     {
       "id": "BUG-003",
@@ -51,11 +70,16 @@
       "page": "/pricing, /admin/reports, owner till note",
       "role": "Prospective shop owner, Super Admin",
       "reproducibility": "Always",
-      "steps": ["Open /pricing", "Read the Basic feature list, the comparison table and step 4 of How it works"],
+      "steps": [
+        "Open /pricing",
+        "Read the Basic feature list, the comparison table and step 4 of How it works"
+      ],
       "expected": "Copy describes QR ordering, an order queue in the app, push notification, and WhatsApp only for telling the customer",
       "actual": "'Unlimited orders on WhatsApp'; 'Orders on WhatsApp, unlimited'; 'the order arrives on your WhatsApp'; reports label the channel 'WhatsApp orders'",
       "impact": "New owners watch the wrong screen and conclude the app lost an order",
-      "evidence": ["p1-recon-auth.json + full live /pricing text capture"],
+      "evidence": [
+        "p1-recon-auth.json + full live /pricing text capture"
+      ],
       "status": "FIXED IN WORKING TREE (lib/plans.ts, app/pricing/page.tsx, app/admin/reports/page.tsx, lib/report-csv.ts, lib/owner-i18n.ts, README.md) — awaiting deploy",
       "fix": "Deploy the corrected copy"
     },
@@ -74,10 +98,14 @@
         "Repeat with -10, abc and 99999999"
       ],
       "expected": "The server's own message is shown on the price field or as a toast",
-      "actual": "The API returns 422 with the exact message ('Price must be at least 50 paise' / 'Price looks too large') and the UI shows nothing: no toast, no field error, no aria-invalid",
+      "actual": "The API returns 422 with the exact reason. The form DOES handle errors — but the route's key is `pricePaise` and the form renders `errors.price`, so the field error never appeared, and the toast said only the generic 'Please check the highlighted fields' while highlighting nothing. (My first pass reported no feedback at all; the generic toast was there and my text scan missed it. The defect is the key mismatch and the useless message.)",
       "impact": "Adding items is the first thing every owner does; a typo'd price produces a dead button with no explanation",
-      "evidence": ["p6-validation-repro.json → rejects[].api[0].status=422 with visibleMessages=[]", "screenshots/reject-*.png"],
-      "fix": "Read payload.errors from the 422 and set the field error (the Input component already renders `error`); fall back to a toast with payload.error"
+      "evidence": [
+        "p6-validation-repro.json → rejects[].api[0].status=422 with visibleMessages=[]",
+        "screenshots/reject-*.png"
+      ],
+      "fix": "Read payload.errors from the 422 and set the field error (the Input component already renders `error`); fall back to a toast with payload.error",
+      "status": "FIXED IN WORKING TREE — API field names mapped onto the form, and the toast now carries the specific reason"
     },
     {
       "id": "BUG-005",
@@ -85,12 +113,18 @@
       "severity": "P3",
       "module": "Customer storefront, owner app",
       "reproducibility": "Always",
-      "steps": ["Open /shop/<slug> (defaults to Bengali)", "Inspect document.documentElement.lang"],
+      "steps": [
+        "Open /shop/<slug> (defaults to Bengali)",
+        "Inspect document.documentElement.lang"
+      ],
       "expected": "lang='bn' for Bengali, 'hi' for Hindi",
       "actual": "Always 'en' while the visible text is Bengali",
       "impact": "Screen readers pronounce Bengali with an English voice — unusable for exactly the low-literacy users voice ordering targets",
-      "evidence": ["p13-owner-pin-voice.json → lang.shop"],
-      "fix": "Set lang from the active locale"
+      "evidence": [
+        "p13-owner-pin-voice.json → lang.shop"
+      ],
+      "fix": "Set lang from the active locale",
+      "status": "FIXED IN WORKING TREE — awaiting deploy"
     },
     {
       "id": "BUG-006",
@@ -98,12 +132,19 @@
       "severity": "P3",
       "module": "Global not-found",
       "reproducibility": "Always",
-      "steps": ["Signed in as admin, open /admin/shops", "As owner, open /owner/<slug>/items"],
+      "steps": [
+        "Signed in as admin, open /admin/shops",
+        "As owner, open /owner/<slug>/items"
+      ],
       "expected": "A context-appropriate 404, or a redirect to /admin and /owner/<slug>/inventory",
       "actual": "The customer-facing 404: 'This shop link may be wrong or the shop is no longer listed'",
       "impact": "Confusing; both URLs are guessable from the UI's own words ('Shops', 'Items')",
-      "evidence": ["p1-recon-auth.json", "p14-pin-voice.json → owner.screens[items].status=404"],
-      "fix": "Route-group not-found pages, or redirects for these two URLs"
+      "evidence": [
+        "p1-recon-auth.json",
+        "p14-pin-voice.json → owner.screens[items].status=404"
+      ],
+      "fix": "Route-group not-found pages, or redirects for these two URLs",
+      "status": "FIXED IN WORKING TREE — awaiting deploy"
     },
     {
       "id": "BUG-007",
@@ -112,23 +153,34 @@
       "module": "Customer tracking",
       "page": "/track/<id>",
       "reproducibility": "Always",
-      "steps": ["Complete an order as the owner (Mark done → Cash)", "Open the customer's track link"],
+      "steps": [
+        "Complete an order as the owner (Mark done → Cash)",
+        "Open the customer's track link"
+      ],
       "expected": "A final state — completed / handed over / thank you",
       "actual": "'Ready and on its way to you.' for a COMPLETED and paid order",
-      "evidence": ["p11-refresh-whatsapp.json → track['order3 completed']"],
-      "fix": "Add a COMPLETED string for the customer; keep 'on its way' for the ready state"
+      "evidence": [
+        "p11-refresh-whatsapp.json → track['order3 completed']"
+      ],
+      "fix": "Add a COMPLETED string for the customer; keep 'on its way' for the ready state",
+      "status": "FIXED IN WORKING TREE — awaiting deploy"
     },
     {
       "id": "BUG-008",
-      "title": "Emoji silently dropped from item names",
-      "severity": "P3",
+      "title": "WITHDRAWN (false positive) — emoji are not stripped from item names",
+      "severity": "WITHDRAWN",
       "module": "Items",
       "reproducibility": "Always",
-      "steps": ["Add an item named 'চিনি 🍬'", "View the storefront"],
+      "steps": [
+        "Add an item named 'চিনি 🍬'",
+        "View the storefront"
+      ],
       "expected": "Saved as typed, or a message saying what was removed",
-      "actual": "Saved as 'চিনি'; the emoji is stripped with no message",
-      "evidence": ["p5-items.json → storefront.text"],
-      "fix": "Either keep the emoji or say it was removed"
+      "actual": "Re-verified: the emoji survives. 'চিনি 🍬' is stored and shown intact on the owner's Sell screen and in the admin list. What I saw on the Bengali storefront was `nameBn` — the canonical Bengali translation the vocabulary filled in automatically — not a stripped primary name. No code strips emoji anywhere.",
+      "evidence": [
+        "p5-items.json → storefront.text"
+      ],
+      "fix": "None needed."
     },
     {
       "id": "BUG-009",
@@ -138,8 +190,11 @@
       "reproducibility": "Always, every viewport",
       "expected": "24px minimum (WCAG 2.5.8); 44px is the practical phone target",
       "actual": "5 controls under 32px on /shop (language pills and similar), 1 on /pricing",
-      "evidence": ["p12-platform.json → responsive[*].pages[shop].smallTargets=5"],
-      "fix": "Raise to 44px"
+      "evidence": [
+        "p12-platform.json → responsive[*].pages[shop].smallTargets=5"
+      ],
+      "fix": "Raise to 44px",
+      "status": "FIXED IN WORKING TREE — awaiting deploy"
     },
     {
       "id": "BUG-010",
@@ -148,7 +203,8 @@
       "module": "Pricing",
       "actual": "Plans are Basic ₹99/25, Starter ₹149/100, Pro ₹249/250, EX ₹449/1000. Annual arithmetic is correct on all four",
       "impact": "'EX' means nothing to a shopkeeper; Pro adds little over Starter",
-      "fix": "Rename EX → Business; consider 50/150/500/2000 limits and a concrete Pro-only feature"
+      "fix": "Rename EX → Business; consider 50/150/500/2000 limits and a concrete Pro-only feature",
+      "status": "FIXED IN WORKING TREE — awaiting deploy"
     },
     {
       "id": "OPS-001",
@@ -156,16 +212,52 @@
       "severity": "P1 (operational)",
       "module": "Deployment",
       "actual": "admin/admin authenticates on the live host and fronts every shop, customer phone number and khata balance. Rate limiting (8/10min) slows brute force but not a guessed pair",
-      "fix": "Rotate the password now; add a second factor for the Super Admin before any real shop is onboarded"
+      "fix": "Rotate the password now; add a second factor for the Super Admin before any real shop is onboarded",
+      "status": "OPEN — only the operator can rotate this. `npm run hash <new password>` produces the bcrypt hash for ADMIN_PASSWORD_HASH."
     }
   ],
   "blocked": [
-    { "id": "V-1", "area": "Web push delivery end to end", "reason": "Headless Chromium reports Notification.permission='denied' even with the permission granted to the context; no PushManager subscription is created. Service worker registration, the Turn on control and the permission-blocked message were all verified", "toUnblock": "A real Chrome (headed) or a real Android device with notifications allowed, plus a second device to place the order" },
-    { "id": "V-2", "area": "Voice ordering and voice item entry", "reason": "SpeechRecognition exists in headless Chromium but there is no audio pipeline or speech service; clicking the mic produced no recognition and no error within 8s", "toUnblock": "Headed real Chrome with a microphone, or a synthesised WAV fed in as a fake capture device" },
-    { "id": "V-3", "area": "Cross-browser (Firefox, WebKit, Edge)", "reason": "Only Chromium was installed", "toUnblock": "Install the other Playwright browsers / use the installed Chrome and Edge channels" },
-    { "id": "V-4", "area": "Delivery-round WhatsApp link has no recipient", "reason": "Almost certainly intended (owner picks the helper) but unconfirmed", "toUnblock": "Product confirmation" },
-    { "id": "V-5", "area": "Mid-submit network failure and the WhatsApp fallback", "reason": "Not exercised: simulating a dropped connection against production risked half-created orders on a live shop", "toUnblock": "Run it against a throwaway QA shop with request interception" },
-    { "id": "V-6", "area": "Rate-limiter recovery messaging", "reason": "Lockout confirmed; the message does not say how long to wait", "toUnblock": "Timed retry test" },
-    { "id": "V-7", "area": "Keyboard-only checkout end to end", "reason": "Storefront focus and tab order verified; the full basket→form→submit path was not completed by keyboard alone", "toUnblock": "One scripted keyboard-only pass" }
+    {
+      "id": "V-1",
+      "area": "Web push delivery end to end",
+      "reason": "Headless Chromium reports Notification.permission='denied' even with the permission granted to the context; no PushManager subscription is created. Service worker registration, the Turn on control and the permission-blocked message were all verified",
+      "toUnblock": "A real Chrome (headed) or a real Android device with notifications allowed, plus a second device to place the order"
+    },
+    {
+      "id": "V-2",
+      "area": "Voice ordering and voice item entry",
+      "reason": "SpeechRecognition exists in headless Chromium but there is no audio pipeline or speech service; clicking the mic produced no recognition and no error within 8s",
+      "toUnblock": "Headed real Chrome with a microphone, or a synthesised WAV fed in as a fake capture device"
+    },
+    {
+      "id": "V-3",
+      "area": "Cross-browser (Firefox, WebKit, Edge)",
+      "reason": "Only Chromium was installed",
+      "toUnblock": "Install the other Playwright browsers / use the installed Chrome and Edge channels"
+    },
+    {
+      "id": "V-4",
+      "area": "Delivery-round WhatsApp link has no recipient",
+      "reason": "Almost certainly intended (owner picks the helper) but unconfirmed",
+      "toUnblock": "Product confirmation"
+    },
+    {
+      "id": "V-5",
+      "area": "Mid-submit network failure and the WhatsApp fallback",
+      "reason": "Not exercised: simulating a dropped connection against production risked half-created orders on a live shop",
+      "toUnblock": "Run it against a throwaway QA shop with request interception"
+    },
+    {
+      "id": "V-6",
+      "area": "Rate-limiter recovery messaging",
+      "reason": "Lockout confirmed; the message does not say how long to wait",
+      "toUnblock": "Timed retry test"
+    },
+    {
+      "id": "V-7",
+      "area": "Keyboard-only checkout end to end",
+      "reason": "Storefront focus and tab order verified; the full basket→form→submit path was not completed by keyboard alone",
+      "toUnblock": "One scripted keyboard-only pass"
+    }
   ]
 }

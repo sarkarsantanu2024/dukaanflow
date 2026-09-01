@@ -105,6 +105,26 @@ const EMPTY_NEW_ITEM: NewItem = {
   category: '',
 };
 
+/**
+ * The API's field names, mapped onto this form's.
+ *
+ * THIS IS WHY A REJECTED SAVE SAID NOTHING. The route answers 422 with
+ * `{ errors: { pricePaise: 'Price must be at least 50 paise' } }`, the form
+ * renders `errors.price`, and the two never met — so a zero, a negative or a
+ * mistyped price produced a dead button and no explanation at all. The generic
+ * toast ("please check the highlighted fields") made it worse by promising a
+ * highlight that was not there.
+ */
+const FIELD_FOR: Record<string, string> = { pricePaise: 'price' };
+
+function formErrors(errors: Record<string, string> | undefined): Record<string, string> {
+  const mapped: Record<string, string> = {};
+  for (const [field, message] of Object.entries(errors ?? {})) {
+    mapped[FIELD_FOR[field] ?? field] = message;
+  }
+  return mapped;
+}
+
 export function ItemsManager({
   slug,
   items,
@@ -405,8 +425,13 @@ export function ItemsManager({
       const payload = (await response.json()) as { error?: string; errors?: Record<string, string> };
 
       if (!response.ok) {
-        setErrors(payload.errors ?? {});
-        push(payload.error ?? t.networkError, 'error');
+        const fields = formErrors(payload.errors);
+        setErrors(fields);
+        // The specific reason, not "check the highlighted fields". The server
+        // knows exactly what was wrong with the price; saying so is the whole
+        // difference between a form a shopkeeper can fix and one that ignores
+        // them.
+        push(Object.values(fields)[0] ?? payload.error ?? t.networkError, 'error');
         return;
       }
 

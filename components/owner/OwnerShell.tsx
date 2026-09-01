@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { ownerDict } from '@/lib/owner-i18n';
+import { useHtmlLang } from '@/components/ui/useHtmlLang';
 import type { Locale } from '@/lib/i18n';
 import { OwnerHeader } from './OwnerHeader';
 import { PlanBanner, type PlanState } from './PlanBanner';
@@ -88,6 +89,8 @@ export function OwnerShell({
 }) {
   const t = ownerDict(locale);
   const pathname = usePathname();
+  // The owner's app speaks the shop's language; the document should say so.
+  useHtmlLang(locale);
 
   // Items first: a shop is listed before it is sold from, and an owner opening
   // the app on day one should land beside the thing they still have to do.

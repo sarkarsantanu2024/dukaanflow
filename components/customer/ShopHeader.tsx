@@ -164,7 +164,9 @@ export function ShopHeader({
                   contacts, cannot read a number out of an icon. */}
               <a
                 href={`tel:+91${shop.phone}`}
-                className="text-xs font-semibold tabular-nums text-slate-600 hover:text-brand-700"
+                // A 16px-tall tap target is a number you can read and cannot
+                // hit. The padding grows the target without growing the text.
+                className="inline-flex min-h-11 items-center text-xs font-semibold tabular-nums text-slate-600 hover:text-brand-700"
               >
                 +91 {shop.phone}
               </a>
