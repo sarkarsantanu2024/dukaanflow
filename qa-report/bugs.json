@@ -259,5 +259,20 @@
       "reason": "Storefront focus and tab order verified; the full basket→form→submit path was not completed by keyboard alone",
       "toUnblock": "One scripted keyboard-only pass"
     }
-  ]
+  ],
+  "verifiedLiveAt": "2026-09-01, after deploy",
+  "liveVerification": {
+    "BUG-001": "PASS — an untouched owner screen showed a new order 12s after it was placed (was: never within 120s)",
+    "BUG-002": "PASS — \"Ready — tell them\" set READY; Mark done + Cash then set COMPLETED",
+    "BUG-003": "PASS — pricing page reads \"Unlimited QR orders, straight into your app\"",
+    "BUG-004": "PASS — a price of 0 now shows \"Price must be at least 50 paise\" and marks the field invalid",
+    "BUG-005": "PASS — html lang is \"bn\" on the Bengali storefront",
+    "BUG-006": "PASS — /admin/shops redirects to /admin, /owner/<slug>/items to /inventory",
+    "BUG-007": "PASS — a completed order tells the customer \"Done — thank you. This order is settled.\"",
+    "BUG-009": "PASS — zero sub-32px tap targets on the storefront (was 5)",
+    "BUG-010": "PASS — the top plan reads \"Business\"",
+    "fractional amounts": "PASS — ₹1,500/kg posto, 250 g chip, ₹375 in the basket and 37500 paise at the server",
+    "BUG-011 (found during verification, fixed)": "A weighed line printed the pack size next to the amount — \"· 1 kg 250 g\", which reads as 1.25 kg. Fixed and deployed.",
+    "OPS-001": "STILL OPEN — operator action"
+  }
 }

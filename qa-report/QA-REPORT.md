@@ -52,6 +52,39 @@ Revised totals: **137 passed, 9 failed, 7 blocked.**
 | BUG-010 plan named "EX" | P4 | Fixed in tree — reads "Business" (enum value unchanged) |
 | OPS-001 admin/admin | P1 | **Open — operator action only** |
 
+## Live verification after deploy (2026-09-01)
+
+Every fix re-tested against the deployed site, in two independent browser
+sessions, on a throwaway shop that was deleted afterwards:
+
+| Check | Result |
+|---|---|
+| New order on an untouched owner screen | **12 s** (was: never seen in 120 s) |
+| "Ready — tell them" → status | READY |
+| Mark done → Cash → status | COMPLETED |
+| Customer track at READY | "Ready and on its way to you." |
+| Customer track at COMPLETED | "Done — thank you. This order is settled." |
+| Price of 0 on the item form | "Price must be at least 50 paise", field marked invalid |
+| `html lang` on the Bengali storefront | `bn` |
+| Sub-32 px tap targets on `/shop` | 0 (was 5) |
+| `/admin/shops`, `/owner/<slug>/items` | redirect to `/admin`, `/inventory` |
+| Top plan name | "Business" |
+| ₹1,500/kg posto, 250 g | basket ₹375, server 37,500 paise |
+
+One new defect was found *by* this verification and fixed: a weighed line printed
+its pack size beside the amount — "· 1 kg 250 g" — which reads as 1.25 kg.
+
+Web push delivery and voice recognition remain **BLOCKED** here (no push service
+and no audio pipeline in headless Chromium). The READY push is sent server-side
+by the same code path that already sent the completion push, so it is wired, but
+delivery to a handset is unverified.
+
+**Note on the ready WhatsApp button:** it appears for **pickup** orders whose
+customer cannot be reached by push — by existing design, a delivery order gets no
+"it is on its way" message because the bag arriving is the message. The READY
+push itself is sent for both. If you want the WhatsApp hand-off on delivery
+orders too, that is a one-line change to `worthMessaging`.
+
 ---
 
 ## A. Executive Summary
