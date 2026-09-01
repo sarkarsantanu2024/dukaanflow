@@ -33,8 +33,13 @@ enum OrderType {
   PICKUP
 }
 
-/// The life of one order, in the order an owner works it. `asc` on this enum is
-/// the queue: what still needs doing first, what is finished last.
+/// The life of one order, in the order an owner works it.
+///
+/// The order they are written in is documentation, not behaviour. Postgres
+/// appends a new enum value at the end whatever this file says — READY really
+/// sits after CANCELLED in the database — so nothing may sort on this column.
+/// The queue is ranked in `OrdersScreen`, which is also where an owner can see
+/// the rule being applied.
 ///
 /// CONFIRMED, READY and COMPLETED are deliberately separate. "I have taken this
 /// order", "it is packed and waiting" and "the customer has it and has paid" are
