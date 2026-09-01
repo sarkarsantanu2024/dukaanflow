@@ -414,7 +414,7 @@ stock toggle, delete, categories, search.
 shop or one business type**, printable and downloadable as CSV. What sells and
 what takes the money; the busiest hour and the busiest weekday, bucketed on the
 shop's own clock rather than the server's; the shape of the period day by day or
-month by month; WhatsApp orders against counter sales; payment mode, delivery
+month by month; QR orders against counter sales; payment mode, delivery
 against pickup, and what became of each order; a shop leaderboard; proven
 sellers currently marked out of stock; and items listed that sold nothing.
 

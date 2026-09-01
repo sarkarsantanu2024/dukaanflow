@@ -162,7 +162,9 @@ export function reportToCsv(report: Report): string {
     'Where the money came from',
     ['Channel', 'Transactions', 'Revenue (₹)'],
     [
-      ['WhatsApp orders', report.channels.orders.transactions, rupees(report.channels.orders.revenuePaise)],
+      // "QR orders", not WhatsApp: see the note beside the same row on the
+      // reports page.
+      ['QR orders', report.channels.orders.transactions, rupees(report.channels.orders.revenuePaise)],
       ['Counter sales', report.channels.counter.transactions, rupees(report.channels.counter.revenuePaise)],
     ],
   );

@@ -92,7 +92,14 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
       'Up to 25 items',
       'QR shop page and printable poster',
       'Voice listing in English, Hindi and Bengali',
-      'Unlimited orders on WhatsApp',
+      // NOT "orders on WhatsApp". Orders do not arrive on WhatsApp and never
+      // have on this product: a customer scans the QR, orders on the shop's own
+      // page, and the order lands in the owner's app with a notification. The
+      // old line described a competitor's workflow and set up every new shop to
+      // sit watching the wrong screen — and to think the app had lost an order
+      // when nothing appeared in WhatsApp.
+      'Unlimited QR orders, straight into your app',
+      'A notification on your phone for every new order',
     ],
   },
   STARTER: {

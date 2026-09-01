@@ -39,7 +39,9 @@ const HEADLINE_STATS = [
 /** Rows are what a shopkeeper actually asks about, in the order they ask. */
 const COMPARISON: { feature: string; free: boolean; starter: boolean; pro: boolean }[] = [
   { feature: 'QR shop page and printable poster', free: true, starter: true, pro: true },
-  { feature: 'Orders on WhatsApp, unlimited', free: true, starter: true, pro: true },
+  { feature: 'Unlimited QR orders, in your app', free: true, starter: true, pro: true },
+  { feature: 'New-order notification on your phone', free: true, starter: true, pro: true },
+  { feature: 'WhatsApp the customer when it is ready', free: true, starter: true, pro: true },
   { feature: 'Add items by speaking', free: true, starter: true, pro: true },
   { feature: 'Counter till with UPI QR', free: true, starter: true, pro: true },
   { feature: 'Order history in the app', free: false, starter: true, pro: true },
@@ -52,7 +54,11 @@ const STEPS = [
   'We set up your shop and print your QR — send us the name, number and address.',
   'You get a link on WhatsApp. Open it, and your shop app is ready. Nothing to download from a store.',
   'Add your items by speaking, in your own language. Your phone reads each one back.',
-  'Customers scan the QR, choose, and the order arrives on your WhatsApp. You keep every rupee.',
+  // The real lifecycle, in the order it happens. WhatsApp appears where it
+  // actually belongs — telling the customer their order is ready — and not as
+  // the channel orders arrive on, which it is not.
+  'Customers scan the QR and choose. The order lands in your app and your phone buzzes.',
+  'Mark it ready, WhatsApp the customer, take the money, and tick it paid. You keep every rupee.',
 ];
 
 export default function PricingPage() {
