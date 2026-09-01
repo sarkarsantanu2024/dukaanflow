@@ -215,7 +215,13 @@ export default async function ReportsPage({
                 head={['Channel', 'Sales', 'Revenue']}
                 rows={[
                   [
-                    'WhatsApp orders',
+                    // Orders arrive from the shop's own QR page, into the
+                    // owner's app. WhatsApp carries the "your order is ready"
+                    // message to the customer afterwards and has never been the
+                    // channel an order comes in on — labelling the column that
+                    // way told the operator the product works like a
+                    // competitor's.
+                    'QR orders',
                     report.channels.orders.transactions,
                     formatPaise(report.channels.orders.revenuePaise),
                   ],
