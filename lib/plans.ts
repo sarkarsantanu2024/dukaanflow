@@ -86,10 +86,10 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
     id: 'FREE',
     name: 'Basic',
     price: 99,
-    itemLimit: 25,
+    itemLimit: 50,
     tagline: 'Enough for a tea stall or a small counter.',
     features: [
-      'Up to 25 items',
+      'Up to 50 items',
       'QR shop page and printable poster',
       'Voice listing in English, Hindi and Bengali',
       // NOT "orders on WhatsApp". Orders do not arrive on WhatsApp and never
@@ -106,10 +106,10 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
     id: 'STARTER',
     name: 'Starter',
     price: 149,
-    itemLimit: 100,
+    itemLimit: 150,
     tagline: 'The everyday kirana plan.',
     features: [
-      'Up to 100 items',
+      'Up to 150 items',
       'Everything in Basic',
       'Order history in the app',
       'Bulk price and stock updates',
@@ -119,10 +119,10 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
     id: 'PRO',
     name: 'Pro',
     price: 249,
-    itemLimit: 250,
+    itemLimit: 500,
     tagline: 'A full kirana counter.',
     features: [
-      'Up to 250 items',
+      'Up to 500 items',
       'Everything in Starter',
       'Storefront and owner photos',
       'Priority support on WhatsApp',
@@ -138,10 +138,10 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
     // A ceiling rather than true "unlimited": a catalogue past this is a
     // different kind of business, and should be a conversation with the
     // operator, not a silent bill.
-    itemLimit: 1000,
+    itemLimit: 2000,
     tagline: 'Full grocery stores and restaurants.',
     features: [
-      'Up to 1,000 items',
+      'Up to 2,000 items',
       'Everything in Pro',
       'Bulk listing service available',
       'Priority support on WhatsApp',

@@ -174,16 +174,44 @@ git push -u origin main
 every generated QR points at. **Set it before generating QR codes**, and redeploy
 after changing it — otherwise printed posters will point at the old origin.
 
-## 7. Apply migrations to production
+## 7. Apply schema changes
 
-Local `.env` already points at the same Neon database, so step 3 covered it. For
-later schema changes:
+> **Local `.env` points at PRODUCTION.** That is how, on 2026-08-28, a schema
+> command run from a laptop dropped and recreated every table in the live
+> database. Until a dev branch exists, every `prisma` command you run here is a
+> production operation.
+>
+> `npm run db:push` (and `db:migrate`, `db:deploy`) now go through
+> `scripts/db-target.ts`, which prints the host and **refuses** if it is
+> production. Deliberate production work is still possible:
+>
+> ```bash
+> ALLOW_PROD_DB=1 npm run db:push
+> ```
+
+### Get yourself a dev branch (do this once)
+
+1. Neon console → this project → **Branches** → **New branch** from `main`.
+   Name it `dev`. It is a copy-on-write clone, so it costs almost nothing.
+2. Copy its **pooled** and **direct** connection strings.
+3. Put them in local `.env` as `DATABASE_URL` and `DIRECT_URL`. Vercel keeps
+   pointing at `main` — production is unaffected.
+4. Add the new branch host to `PRODUCTION_HOSTS` in `scripts/db-target.ts`?
+   No — the opposite: leave that list naming only production, so the guard stays
+   quiet on `dev` and loud on `main`.
+5. `npm run db:push` now shows `branch: non-production` and runs without a flag.
+
+### The schema change itself
 
 ```bash
-npx prisma migrate dev --name add_something   # locally, creates the migration
-git push                                       # Vercel redeploys
-npx prisma migrate deploy                      # apply to production
+npm run db:push                # against dev, freely
+git push                       # Vercel redeploys the code
+ALLOW_PROD_DB=1 npm run db:push  # then production, deliberately
 ```
+
+Order matters when a change is additive-but-required — a new enum value the new
+code writes, say. Apply it to production **before** the code that uses it
+deploys, or the first request to use it fails.
 
 To run migrations automatically on every deploy, change the build command to
 `prisma migrate deploy && prisma generate && next build`. Only do this once you
