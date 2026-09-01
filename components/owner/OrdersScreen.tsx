@@ -113,11 +113,15 @@ export type OwnerOrder = {
  *    one piece of news that costs somebody a walk to the shop if it fails to
  *    arrive, and a notification is exactly the thing that arrives late on the
  *    phones this market runs on. Belt and braces, deliberately.
- *  - **Ready for collection — only if we cannot tell them ourselves.** They
- *    have to walk over, so somebody has to say so.
- *  - **Ready for delivery — never.** The bag arriving at the door is the
- *    message. A text saying "it is on its way" reaches them roughly when the
- *    delivery boy does.
+ *  - **Ready — only if we cannot tell them ourselves.** Verified: a subscribed
+ *    customer gets "Your order is ready" on their phone within seconds of the
+ *    owner tapping Ready, so showing the button as well would be asking the
+ *    shopkeeper to leave the app to repeat a message already delivered.
+ *  - **Ready with no subscription — always, collection or delivery.** This used
+ *    to exclude delivery outright, on the reasoning that the bag arriving is the
+ *    message. True for a customer whose phone we can reach, and wrong for one we
+ *    cannot: they are then told nothing at all, and a delivery they do not know
+ *    is coming is a door nobody answers.
  *  - **Still preparing — never.** An order that arrived accepted has nothing to
  *    report, and "we have your order" is news to nobody who just placed one.
  */
@@ -127,7 +131,6 @@ function worthMessaging(order: OwnerOrder): boolean {
   // collect, and it used to be attached to the state that means the customer
   // already has the bag.
   if (order.status !== 'READY') return false;
-  if (order.orderType === 'DELIVERY') return false;
   return !order.reachable;
 }
 
