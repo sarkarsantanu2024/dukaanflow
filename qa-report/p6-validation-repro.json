@@ -1,0 +1,61 @@
+{
+  "slug": "qa-test-shop-120712",
+  "at": "2026-09-01T07:52:52.995Z",
+  "rejects": [
+    {
+      "label": "empty name",
+      "api": [],
+      "visibleMessages": []
+    },
+    {
+      "label": "zero price",
+      "api": [
+        {
+          "method": "POST",
+          "status": 422,
+          "body": "{\"error\":\"Please check the highlighted fields\",\"errors\":{\"pricePaise\":\"Price must be at least 50 paise\"}}"
+        }
+      ],
+      "visibleMessages": []
+    },
+    {
+      "label": "negative price",
+      "api": [
+        {
+          "method": "POST",
+          "status": 422,
+          "body": "{\"error\":\"Please check the highlighted fields\",\"errors\":{\"pricePaise\":\"Price must be at least 50 paise\"}}"
+        }
+      ],
+      "visibleMessages": []
+    },
+    {
+      "label": "non-numeric price",
+      "api": [
+        {
+          "method": "POST",
+          "status": 422,
+          "body": "{\"error\":\"Please check the highlighted fields\",\"errors\":{\"pricePaise\":\"Price must be at least 50 paise\"}}"
+        }
+      ],
+      "visibleMessages": []
+    },
+    {
+      "label": "huge price",
+      "api": [
+        {
+          "method": "POST",
+          "status": 422,
+          "body": "{\"error\":\"Please check the highlighted fields\",\"errors\":{\"pricePaise\":\"Price looks too large\"}}"
+        }
+      ],
+      "visibleMessages": []
+    }
+  ],
+  "edit": {
+    "found": 1,
+    "before": "55",
+    "afterReload": "77",
+    "storefrontShows": "QA Rice | ₹77 | / 1 kg | আছে | QA Sugar | ₹60 | / 1 kg | আ"
+  }
+}

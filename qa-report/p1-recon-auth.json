@@ -1,0 +1,413 @@
+{
+  "base": "https://dukaanflow.vercel.app",
+  "at": "2026-09-01T07:08:43.532Z",
+  "public": [
+    {
+      "path": "/",
+      "status": 200,
+      "ms": 547,
+      "meta": {
+        "title": "Halkhata — বলুন, দোকান সাজান",
+        "description": "Speak your shelf into a shop. Say \"চাল ১ কেজি ১০০\" and the item is listed, priced and live — in Bangla, Hindi or English. Customers order from a counter QR, and the order lands in your app.",
+        "ogTitle": null,
+        "ogImage": null,
+        "canonical": null,
+        "icon": "/icon.png?b2d8dcd029b2de41",
+        "h1": [
+          "“চাল ১ কেজি ১০০”"
+        ],
+        "h2count": 0,
+        "imgsNoAlt": 1,
+        "imgs": 1,
+        "lang": "en",
+        "bodyText": "Halkhata\n\nদোকান সাজান মুখে বলে\n\n“চাল ১ কেজি ১০০”\n\nবলুন — জিনিসটা দামসহ তালিকায় উঠে গেল, খদ্দের দেখতে পেল।\nবাংলা, হিন্দি বা ইংরেজিতে। টাইপ করতে হবে না।\n\nCustomers scan the QR at your counter and the order lands in your app — with a bell that counts it from every screen. No login, no training.\n\nদাম দ",
+        "docScrollW": 1280,
+        "winW": 1280
+      },
+      "sink": {
+        "console": [],
+        "pageErrors": [],
+        "failed": [],
+        "http": []
+      }
+    },
+    {
+      "path": "/pricing",
+      "status": 200,
+      "ms": 504,
+      "meta": {
+        "title": "Halkhata — Pricing",
+        "description": "One price per shop, by how many items you sell. No commission on orders.",
+        "ogTitle": null,
+        "ogImage": null,
+        "canonical": null,
+        "icon": "/icon.png?b2d8dcd029b2de41",
+        "h1": [
+          "One price per shop.Never a cut of your orders."
+        ],
+        "h2count": 3,
+        "imgsNoAlt": 0,
+        "imgs": 0,
+        "lang": "en",
+        "bodyText": "HALKHATA\n\nOne price per shop.\nNever a cut of your orders.\n\nYou pay for how many items you list — nothing else. Orders, customers and QR scans are unlimited on every plan, because charging a shop more for selling more is not a partnership.\n\nStart on WhatsApp\nSee the plans\n0%\ncommission on every order",
+        "docScrollW": 1280,
+        "winW": 1280
+      },
+      "sink": {
+        "console": [],
+        "pageErrors": [],
+        "failed": [],
+        "http": []
+      }
+    },
+    {
+      "path": "/join",
+      "status": 404,
+      "ms": 366,
+      "meta": {
+        "title": "Halkhata — বলুন, দোকান সাজান",
+        "description": "Speak your shelf into a shop. Say \"চাল ১ কেজি ১০০\" and the item is listed, priced and live — in Bangla, Hindi or English. Customers order from a counter QR, and the order lands in your app.",
+        "ogTitle": null,
+        "ogImage": null,
+        "canonical": null,
+        "icon": "/icon.png?b2d8dcd029b2de41",
+        "h1": [
+          "Page not found"
+        ],
+        "h2count": 0,
+        "imgsNoAlt": 0,
+        "imgs": 0,
+        "lang": "en",
+        "bodyText": "🔍\n\nPage not found\n\nThis shop link may be wrong or the shop is no longer listed.\n\nGo to Halkhata",
+        "docScrollW": 1280,
+        "winW": 1280
+      },
+      "sink": {
+        "console": [
+          {
+            "url": "https://dukaanflow.vercel.app/join",
+            "text": "Failed to load resource: the server responded with a status of 404 ()"
+          }
+        ],
+        "pageErrors": [],
+        "failed": [],
+        "http": [
+          {
+            "url": "https://dukaanflow.vercel.app/join",
+            "status": 404
+          }
+        ]
+      }
+    },
+    {
+      "path": "/admin/login",
+      "status": 200,
+      "ms": 1254,
+      "meta": {
+        "title": "Halkhata — Admin sign in",
+        "description": "Speak your shelf into a shop. Say \"চাল ১ কেজি ১০০\" and the item is listed, priced and live — in Bangla, Hindi or English. Customers order from a counter QR, and the order lands in your app.",
+        "ogTitle": null,
+        "ogImage": null,
+        "canonical": null,
+        "icon": "/icon.png?b2d8dcd029b2de41",
+        "h1": [
+          "Super Admin"
+        ],
+        "h2count": 0,
+        "imgsNoAlt": 0,
+        "imgs": 0,
+        "lang": "en",
+        "bodyText": "HALKHATA\n\nSuper Admin\n\nOne password. Shop owners never sign in here.",
+        "docScrollW": 1280,
+        "winW": 1280
+      },
+      "sink": {
+        "console": [],
+        "pageErrors": [],
+        "failed": [],
+        "http": []
+      }
+    },
+    {
+      "path": "/track/does-not-exist",
+      "status": 200,
+      "ms": 1377,
+      "meta": {
+        "title": "Your order — Halkhata",
+        "description": "Speak your shelf into a shop. Say \"চাল ১ কেজি ১০০\" and the item is listed, priced and live — in Bangla, Hindi or English. Customers order from a counter QR, and the order lands in your app.",
+        "ogTitle": null,
+        "ogImage": null,
+        "canonical": null,
+        "icon": "/icon.png?b2d8dcd029b2de41",
+        "h1": [
+          "অর্ডার পাওয়া গেল না"
+        ],
+        "h2count": 0,
+        "imgsNoAlt": 1,
+        "imgs": 1,
+        "lang": "en",
+        "bodyText": "Halkhata\nEN\nবাং\nहिं\n\n🔎\n\nঅর্ডার পাওয়া গেল না\n\nলিংকটা পুরনো হতে পারে। পুরনো অর্ডার কিছুদিন পর মুছে যায়।\n\nPowered by Nexvora Technologies.\n\nFor support 9804243159",
+        "docScrollW": 1280,
+        "winW": 1280
+      },
+      "sink": {
+        "console": [],
+        "pageErrors": [],
+        "failed": [],
+        "http": []
+      }
+    },
+    {
+      "path": "/shop/does-not-exist",
+      "status": 404,
+      "ms": 4693,
+      "meta": {
+        "title": "Shop not found",
+        "description": "Speak your shelf into a shop. Say \"চাল ১ কেজি ১০০\" and the item is listed, priced and live — in Bangla, Hindi or English. Customers order from a counter QR, and the order lands in your app.",
+        "ogTitle": "Shop not found",
+        "ogImage": "https://dukaanflow.vercel.app/shop/does-not-exist/opengraph-image-1907gw?db71cd6dc2f64825",
+        "canonical": null,
+        "icon": "/icon.png?b2d8dcd029b2de41",
+        "h1": [
+          "Page not found"
+        ],
+        "h2count": 0,
+        "imgsNoAlt": 0,
+        "imgs": 0,
+        "lang": "en",
+        "bodyText": "🔍\n\nPage not found\n\nThis shop link may be wrong or the shop is no longer listed.\n\nGo to Halkhata",
+        "docScrollW": 1280,
+        "winW": 1280
+      },
+      "sink": {
+        "console": [
+          {
+            "url": "https://dukaanflow.vercel.app/shop/does-not-exist",
+            "text": "Failed to load resource: the server responded with a status of 404 ()"
+          }
+        ],
+        "pageErrors": [],
+        "failed": [],
+        "http": [
+          {
+            "url": "https://dukaanflow.vercel.app/shop/does-not-exist",
+            "status": 404
+          }
+        ]
+      }
+    }
+  ],
+  "protectedUnauth": [
+    {
+      "path": "/admin",
+      "status": 200,
+      "landedOn": "/admin/login",
+      "leaked": "HALKHATA\n\nSuper Admin\n\nOne password. Shop owners never sign in here."
+    },
+    {
+      "path": "/admin/dashboard",
+      "status": 200,
+      "landedOn": "/admin/login?next=%2Fadmin%2Fdashboard",
+      "leaked": "HALKHATA\n\nSuper Admin\n\nOne password. Shop owners never sign in here."
+    },
+    {
+      "path": "/admin/shops",
+      "status": 200,
+      "landedOn": "/admin/login?next=%2Fadmin%2Fshops",
+      "leaked": "HALKHATA\n\nSuper Admin\n\nOne password. Shop owners never sign in here."
+    },
+    {
+      "path": "/admin/customers",
+      "status": 200,
+      "landedOn": "/admin/login?next=%2Fadmin%2Fcustomers",
+      "leaked": "HALKHATA\n\nSuper Admin\n\nOne password. Shop owners never sign in here."
+    },
+    {
+      "path": "/admin/owners",
+      "status": 200,
+      "landedOn": "/admin/login?next=%2Fadmin%2Fowners",
+      "leaked": "HALKHATA\n\nSuper Admin\n\nOne password. Shop owners never sign in here."
+    },
+    {
+      "path": "/admin/reports",
+      "status": 200,
+      "landedOn": "/admin/login?next=%2Fadmin%2Freports",
+      "leaked": "HALKHATA\n\nSuper Admin\n\nOne password. Shop owners never sign in here."
+    },
+    {
+      "path": "/admin/occasions",
+      "status": 200,
+      "landedOn": "/admin/login?next=%2Fadmin%2Foccasions",
+      "leaked": "HALKHATA\n\nSuper Admin\n\nOne password. Shop owners never sign in here."
+    }
+  ],
+  "apis": [
+    {
+      "api": "/api/admin/reports",
+      "status": 401,
+      "text": "{\"error\":\"Not authenticated\"}"
+    },
+    {
+      "api": "/api/admin/occasions",
+      "status": 401,
+      "text": "{\"error\":\"Not authenticated\"}"
+    },
+    {
+      "api": "/api/admin/shop/demo/items",
+      "status": 401,
+      "text": "{\"error\":\"Not authenticated\"}"
+    },
+    {
+      "api": "POST /api/order (bad shop)",
+      "status": 404,
+      "text": "{\"error\":\"Shop not found\",\"errors\":{}}"
+    }
+  ],
+  "auth": [
+    {
+      "label": "valid",
+      "landedOn": "/admin/login",
+      "ms": 2565,
+      "visibleError": "",
+      "cookieNames": [
+        "df_admin(httpOnly)(secure)|Lax"
+      ],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password | Sign in",
+      "errors": 0
+    },
+    {
+      "label": "wrong password",
+      "landedOn": "/admin/login",
+      "ms": 2556,
+      "visibleError": "Incorrect username or password",
+      "cookieNames": [],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password |  | Incorrect username or password |  | Sign in",
+      "errors": 1
+    },
+    {
+      "label": "wrong username",
+      "landedOn": "/admin/login",
+      "ms": 2559,
+      "visibleError": "Incorrect username or password",
+      "cookieNames": [],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password |  | Incorrect username or password |  | Sign in",
+      "errors": 1
+    },
+    {
+      "label": "both wrong",
+      "landedOn": "/admin/login",
+      "ms": 2554,
+      "visibleError": "Incorrect username or password",
+      "cookieNames": [],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password |  | Incorrect username or password |  | Sign in",
+      "errors": 1
+    },
+    {
+      "label": "both empty",
+      "landedOn": "/admin/login",
+      "ms": 2564,
+      "visibleError": "",
+      "cookieNames": [],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password |  | Please check the highlighted fields |  | Sign in",
+      "errors": 1
+    },
+    {
+      "label": "empty password",
+      "landedOn": "/admin/login",
+      "ms": 2556,
+      "visibleError": "",
+      "cookieNames": [],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password |  | Please check the highlighted fields |  | Sign in",
+      "errors": 1
+    },
+    {
+      "label": "empty username",
+      "landedOn": "/admin/login",
+      "ms": 2569,
+      "visibleError": "",
+      "cookieNames": [],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password |  | Please check the highlighted fields |  | Sign in",
+      "errors": 1
+    },
+    {
+      "label": "padded username",
+      "landedOn": "/admin/login",
+      "ms": 2580,
+      "visibleError": "",
+      "cookieNames": [
+        "df_admin(httpOnly)(secure)|Lax"
+      ],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password | Sign in",
+      "errors": 0
+    },
+    {
+      "label": "uppercase username",
+      "landedOn": "/admin/login",
+      "ms": 2567,
+      "visibleError": "",
+      "cookieNames": [
+        "df_admin(httpOnly)(secure)|Lax"
+      ],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password | Sign in",
+      "errors": 0
+    },
+    {
+      "label": "padded password",
+      "landedOn": "/admin/login",
+      "ms": 2574,
+      "visibleError": "Incorrect username or password",
+      "cookieNames": [],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password |  | Incorrect username or password |  | Sign in",
+      "errors": 1
+    },
+    {
+      "label": "very long",
+      "landedOn": "/admin/login",
+      "ms": 2557,
+      "visibleError": "",
+      "cookieNames": [],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password |  | Please check the highlighted fields |  | Sign in",
+      "errors": 1
+    },
+    {
+      "label": "sql-ish injection",
+      "landedOn": "/admin/login",
+      "ms": 2575,
+      "visibleError": "Too many attempts. Please wait and try again.",
+      "cookieNames": [],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password |  | Too many attempts. Please wait and try again. |  | Sign in",
+      "errors": 1
+    },
+    {
+      "label": "xss payload",
+      "landedOn": "/admin/login",
+      "ms": 2564,
+      "visibleError": "Too many attempts. Please wait and try again.",
+      "cookieNames": [],
+      "signedIn": false,
+      "bodyStart": "HALKHATA |  | Super Admin |  | One password. Shop owners never sign in here. |  | Username | Password |  | Too many attempts. Please wait and try again. |  | Sign in",
+      "errors": 1
+    }
+  ],
+  "session": {
+    "afterLogin": "/admin/login",
+    "afterReload": "/admin/login",
+    "secondTab": "/admin/login?next=%2Fadmin%2Fshops",
+    "logoutControls": 0,
+    "afterLogout": null,
+    "backAfterLogout": null,
+    "apiAfterLogout": null
+  }
+}

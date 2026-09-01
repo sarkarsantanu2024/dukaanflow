@@ -1,0 +1,499 @@
+{
+  "slug": "qa-test-shop-120712",
+  "at": "2026-09-01T07:45:15.227Z",
+  "battery": [
+    {
+      "label": "empty name",
+      "sent": {
+        "name": "",
+        "price": "50",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "1",
+      "formStillOpen": true,
+      "appearsInList": false,
+      "changed": false
+    },
+    {
+      "label": "empty price",
+      "sent": {
+        "name": "QA NoPrice",
+        "price": "",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "1",
+      "formStillOpen": true,
+      "appearsInList": false,
+      "changed": false
+    },
+    {
+      "label": "zero price",
+      "sent": {
+        "name": "QA Zero",
+        "price": "0",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "1",
+      "formStillOpen": true,
+      "appearsInList": false,
+      "changed": true
+    },
+    {
+      "label": "negative price",
+      "sent": {
+        "name": "QA Negative",
+        "price": "-10",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "1",
+      "formStillOpen": true,
+      "appearsInList": false,
+      "changed": true
+    },
+    {
+      "label": "huge price",
+      "sent": {
+        "name": "QA Huge",
+        "price": "99999999",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "1",
+      "formStillOpen": true,
+      "appearsInList": false,
+      "changed": true
+    },
+    {
+      "label": "three decimals",
+      "sent": {
+        "name": "QA Decimal",
+        "price": "12.505",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "1",
+      "formStillOpen": true,
+      "appearsInList": false,
+      "changed": true
+    },
+    {
+      "label": "non-numeric price",
+      "sent": {
+        "name": "QA Text",
+        "price": "abc",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "1",
+      "formStillOpen": true,
+      "appearsInList": false,
+      "changed": true
+    },
+    {
+      "label": "200-char name",
+      "sent": {
+        "name": "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL…(200)",
+        "price": "50",
+        "unit": "1 kg"
+      },
+      "message": "Item name is too long",
+      "itemsShown": "1",
+      "formStillOpen": true,
+      "appearsInList": false,
+      "changed": true
+    },
+    {
+      "label": "xss payload",
+      "sent": {
+        "name": "<script>alert(1)</script>",
+        "price": "50",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "1",
+      "formStillOpen": true,
+      "appearsInList": false,
+      "changed": false
+    },
+    {
+      "label": "padded name",
+      "sent": {
+        "name": "  QA Padded  ",
+        "price": "50",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "1",
+      "formStillOpen": true,
+      "appearsInList": false,
+      "changed": false
+    },
+    {
+      "label": "bengali + emoji",
+      "sent": {
+        "name": "চিনি 🍬",
+        "price": "48",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "2",
+      "formStillOpen": true,
+      "appearsInList": true,
+      "changed": true
+    },
+    {
+      "label": "good #1",
+      "sent": {
+        "name": "QA Sugar",
+        "price": "48",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "3",
+      "formStillOpen": true,
+      "appearsInList": true,
+      "changed": true
+    },
+    {
+      "label": "good #2",
+      "sent": {
+        "name": "QA Rice",
+        "price": "55",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "4",
+      "formStillOpen": true,
+      "appearsInList": true,
+      "changed": true
+    },
+    {
+      "label": "good #3",
+      "sent": {
+        "name": "QA Dal",
+        "price": "110",
+        "unit": "500 g"
+      },
+      "message": "",
+      "itemsShown": "6",
+      "formStillOpen": true,
+      "appearsInList": true,
+      "changed": true
+    },
+    {
+      "label": "same name+unit, new price",
+      "sent": {
+        "name": "QA Sugar",
+        "price": "60",
+        "unit": "1 kg"
+      },
+      "message": "",
+      "itemsShown": "6",
+      "formStillOpen": true,
+      "appearsInList": true,
+      "changed": true
+    }
+  ],
+  "crud": {
+    "priceInputs": 6
+  },
+  "listing": "Halkhata | Dashboard | Shops | Owners | Customers | Add shop | Reports | Occasions | Super Admin · one account for every shop. | Back | QA Test Shop 120712 | Items | Edit & QR | Sign out | 6 items | Select all | Delete all items | Other | 6 | In stock | ₹ | In stock | ₹ | In stock | ₹ | In stock | ₹ | In stock | ₹ | চিনি · चीनी | In stock | ₹ | Manage items by voice | English | हिंदी | বাংলা | Tap the mic, then say one instruction per sentence. | Add / re-price: “rice 1 kg 100” | Out of stock: “rice out of stock” | Remove: “rice delete” | Type instead | Add common items | 130 usual items for this shop type | Bulk update | Paste a price or stock list",
+  "storefront": {
+    "text": "Halkhata | Scan → Select → Order | EN | বাং | हिं | Q | QA Test Shop 120712 | Grocery / Kirana · QA Owner | +91 9800000001 | QA lane, Kolkata | <script>alert(1)</script> | ₹50 | / 1 kg | আছে | QA Dal | ₹110 | / 500 g | আছে | QA Padded | ₹50 | / 1 kg | আছে | QA Rice | ₹55 | / 1 kg | আছে | QA Sugar | ₹60 | / 1 kg | আছে | চিনি | ₹48 | / 1 kg | আছে | Powered by Nexvora Technologies. | For support 9804243159",
+    "rawScriptInjected": false,
+    "dialogsFired": 0
+  },
+  "sink": {
+    "console": [
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items",
+        "text": "Failed to load resource: the server responded with a status of 422 ()"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items",
+        "text": "Failed to load resource: the server responded with a status of 422 ()"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items",
+        "text": "Failed to load resource: the server responded with a status of 422 ()"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items",
+        "text": "Failed to load resource: the server responded with a status of 422 ()"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items",
+        "text": "Failed to load resource: the server responded with a status of 422 ()"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items",
+        "text": "Failed to load resource: the server responded with a status of 422 ()"
+      }
+    ],
+    "pageErrors": [],
+    "failed": [
+      {
+        "url": "https://dukaanflow.vercel.app/admin/owners?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/customers?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/occasions?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/dashboard?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/owners?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/customers?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/dashboard?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/dashboard?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/customers?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/owners?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/dashboard?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/owners?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/customers?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/owners?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/dashboard?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/occasions?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/dashboard?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/occasions?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items?_rsc=eW3S85G_PEZeo7zD",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/occasions?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items?_rsc=eW3S85G_PEZeo7zD",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/owners?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items?_rsc=eW3S85G_PEZeo7zD",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/dashboard?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/customers?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/occasions?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items?_rsc=eW3S85G_PEZeo7zD",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/occasions?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/items?_rsc=eW3S85G_PEZeo7zD",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/owners?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/dashboard?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/reports?_rsc=zIo6OcmeFezEJwpC",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "http": [
+      {
+        "url": "https://dukaanflow.vercel.app/api/admin/shop/qa-test-shop-120712/items",
+        "status": 422
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/api/admin/shop/qa-test-shop-120712/items",
+        "status": 422
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/api/admin/shop/qa-test-shop-120712/items",
+        "status": 422
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/api/admin/shop/qa-test-shop-120712/items",
+        "status": 422
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/api/admin/shop/qa-test-shop-120712/items",
+        "status": 422
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/api/admin/shop/qa-test-shop-120712/items",
+        "status": 422
+      }
+    ]
+  }
+}

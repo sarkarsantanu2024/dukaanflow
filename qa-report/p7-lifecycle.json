@@ -1,0 +1,113 @@
+{
+  "slug": "qa-test-shop-120712",
+  "at": "2026-09-01T07:55:34.479Z",
+  "customer": {
+    "loginRequired": false,
+    "picked": [
+      "QA Sugar | ₹60 | / 1 kg | In stock | − | 2 | +",
+      "QA Rice | ₹77 | / 1 kg | In stock | − | 3 | +",
+      "QA Dal | ₹110 | / 500 g | In stock | − | 1 | +"
+    ],
+    "expectedGoods": 461,
+    "barLabel": "View basket — 6 items, ₹461",
+    "barTotal": 461,
+    "basket": "Your basket | QA Dal | ₹110 / 500 g | ₹110 | − | 1 | + | QA Rice | ₹77 / 1 kg | ₹231 | − | 3 | + | QA Sugar | ₹60 / 1 kg | ₹120 | − | 2 | + | Total | ₹461 | Continue →",
+    "orderCalls": [
+      {
+        "status": 200,
+        "request": {
+          "shopSlug": "qa-test-shop-120712",
+          "customerName": "QA Customer",
+          "customerPhone": "9800000002",
+          "customerAddress": "QA lane 2",
+          "customerArea": "QA Para",
+          "orderType": "DELIVERY",
+          "items": [
+            {
+              "itemId": "da355dc4-0b0d-4a03-849f-d40fa4829ccc",
+              "quantity": 2
+            },
+            {
+              "itemId": "b948f7cd-6e6d-40c1-bf7e-139fc80e32fb",
+              "quantity": 3
+            },
+            {
+              "itemId": "729b592a-6a27-4d70-aa92-695a58293ff2",
+              "quantity": 1
+            }
+          ]
+        },
+        "body": "{\"orderId\":\"36fd0b50-4e07-4633-9e1c-6d0cd39dce27\",\"totalAmountPaise\":46100,\"deliveryFeePaise\":0}"
+      }
+    ],
+    "afterPlace": "Halkhata | EN | বাং | हिं | Q | QA Test Shop 120712 | Grocery / Kirana · QA Owner | +91 9800000001 | QA lane, Kolkata | <script>alert(1)</script> | ₹50 | / 1 kg | In stock | QA Dal | ₹110 | / 500 g | In stock | QA Padded | ₹50 | / 1 kg | In stock | QA Rice | ₹77 | / 1 kg | In stock | QA Sugar | ₹60 | / 1 kg | In stock | চিনি 🍬 | ₹48 | / 1 kg | In stock | Same as last time? | 6 items · ₹461 | ▾ | Order sent to the shop | The shop has it now. They will call you when it is ready. | Saved on this phone — next time you only tap Place order. | Shall we tell you when it is ready? | Your phone will let you know when the shop has it ready. Nothing else, ever. | Yes, tell me | No thanks | Your order ",
+    "trackLink": "/track/36fd0b50-4e07-4633-9e1c-6d0cd39dce27",
+    "orderId": "36fd0b50-4e07-4633-9e1c-6d0cd39dce27",
+    "afterRefresh": "Halkhata | EN | বাং | हिं | Q | QA Test Shop 120712 | Grocery / Kirana · QA Owner | +91 9800000001 | QA lane, Kolkata | <script>alert(1)</script> | ₹50 | / 1 kg | In stock | QA Dal | ₹110 | / 500 g | In stock | QA Padded | ₹50 | / 1 kg | In stock | QA Rice | ₹77 | / 1 kg | In stock | QA Sugar | ₹60 | / 1 kg | In stock | চিনি 🍬 | ₹48 | / 1 kg | In stock | Same as last time? | 6 items · ₹461 | ▾ | ",
+    "orderCallsAfterRefresh": 1
+  },
+  "owner": {
+    "beforeText": "Halkhata | ভাষা | EN | বাং | हिं | এখনও কোনো অর্ডার নেই | আপনার QR থেকে কেউ অর্ডার পাঠালেই এখানে দেখাবে। | জিনিস | বিক্রি | খাতা | অর্ডার",
+    "beforeButtons": [
+      "সাইন আউট"
+    ],
+    "withoutRefresh": "Halkhata | ভাষা | EN | বাং | हिं | এখনও কোনো অর্ডার নেই | আপনার QR থেকে কেউ অর্ডার পাঠালেই এখানে দেখাবে। | জিনিস | বিক্রি | খাতা | অর্ডার",
+    "sawWithoutRefresh": false,
+    "afterRefresh": "Halkhata | ভাষা | EN | বাং | हिं | আজ | 1 | আজকের টাকা | ₹461 | বাকি আছে | 1 | এই ফোনে আওয়াজ পান | অর্ডার এলে অ্যাপ বন্ধ থাকলেও এই ফোনটা বাজবে। | চালু করুন | তালিকা WhatsApp-এ পাঠান | (1) | QA Customer · 9800000002 | QA lane 2 | ডেলিভারি · 1:25 pm | তৈরি হচ্ছে | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | পরিমাণ বদলান | জিনিস | বিক্রি | খাতা | অর্ডার",
+    "buttons": [
+      "সাইন আউট",
+      "চালু করুন",
+      "পরিমাণ বদলান",
+      "হয়ে গেছে",
+      "অর্ডার বাতিল"
+    ],
+    "whatsappLinks": [
+      "https://wa.me/?text=QA Test Shop 120712 — orders to deliver\n\n1. QA Customer — 9800000002\n   QA lane 2\n   • QA Dal 500 g ×1\n   • QA Sugar 1 kg ×2\n   • QA Rice 1 kg ×3\n   ₹461"
+    ]
+  },
+  "lifecycle": [
+    {
+      "step": "as received",
+      "status": [],
+      "buttons": [
+        "সাইন আউট",
+        "চালু করুন",
+        "পরিমাণ বদলান",
+        "হয়ে গেছে",
+        "অর্ডার বাতিল"
+      ],
+      "text": "Halkhata | ভাষা | EN | বাং | हिं | আজ | 1 | আজকের টাকা | ₹461 | বাকি আছে | 1 | এই ফোনে আওয়াজ পান | অর্ডার এলে অ্যাপ বন্ধ থাকলেও এই ফোনটা বাজবে। | চালু করুন | তালিকা WhatsApp-এ পাঠান | (1) | QA Customer · 9800000002 | QA lane 2 | ডেলিভারি · 1:25 pm | তৈরি হচ্ছে | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | পরিমাণ বদলান | জিনিস | বিক্রি | খাতা | অর্ডার"
+    }
+  ],
+  "consistency": {
+    "track": "Halkhata | EN | বাং | हिं | QA Test Shop 120712 | Your order | Placed 01/09/2026 · 1:25 pm · Delivery | The shop has your order and is getting it ready. | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | Total | ₹461 | QA Test Shop 120712 | Order again from this shop | Keep this page. It shows what the shop is doing with your order. | Powered by Nexvora Technologies. | For support 9804243159",
+    "ownerAfterReload": "Halkhata | ভাষা | EN | বাং | हिं | আজ | 1 | আজকের টাকা | ₹461 | বাকি আছে | 1 | এই ফোনে আওয়াজ পান | অর্ডার এলে অ্যাপ বন্ধ থাকলেও এই ফোনটা বাজবে। | চালু করুন | তালিকা WhatsApp-এ পাঠান | (1) | QA Customer · 9800000002 | QA lane 2 | ডেলিভারি · 1:25 pm | তৈরি হচ্ছে | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | পরিমাণ বদলান | জিনিস | বিক্রি | খাতা | অর্ডার",
+    "afterFreshLogin": "Halkhata | ভাষা | EN | বাং | हिं | আজ | 1 | আজকের টাকা | ₹461 | বাকি আছে | 1 | এই ফোনে আওয়াজ পান | অর্ডার এলে অ্যাপ বন্ধ থাকলেও এই ফোনটা বাজবে। | চালু করুন | তালিকা WhatsApp-এ পাঠান | (1) | QA Customer · 9800000002 | QA lane 2 | ডেলিভারি · 1:25 pm | তৈরি হচ্ছে | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | পরিমাণ বদলান | জিনিস | বিক্রি | খাতা | অর্ডার"
+  },
+  "customerSink": {
+    "console": [],
+    "pageErrors": [],
+    "failed": [
+      {
+        "url": "https://dukaanflow.vercel.app/track/36fd0b50-4e07-4633-9e1c-6d0cd39dce27?_rsc=JueTcaaQpE6d0Mpz",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  },
+  "ownerSink": {
+    "console": [],
+    "pageErrors": [],
+    "failed": [
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/sell?_rsc=vRWJKimeKTmHmGm9",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/inventory?_rsc=vRWJKimeKTmHmGm9",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  }
+}

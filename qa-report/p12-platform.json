@@ -1,0 +1,516 @@
+{
+  "at": "2026-09-01T08:23:24.884Z",
+  "cancel": {
+    "buttons": 1,
+    "dialog": {
+      "text": "Cancel order | The customer is not served and the order cannot be brought back. | No | Cancel order",
+      "buttons": [
+        "No",
+        "Cancel order"
+      ]
+    },
+    "after": "Halkhata | Language | EN | বাং | हिं | Today | 4 | Takings | ₹862 | Waiting | 1 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (1) | QA Fifth · 9800000006 | QA lane | Delivery · 1:50 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | ₹110 | Change amounts | QA Fourth · 9800000005 | QA lane | Delivery · 1:49 pm | Changed | Cancelled | QA Sugar · 1 kg × 2 | ₹120 | ₹120 | QA Third · 9800000004 | QA lane | Delivery · 1:49 pm | Completed | QA Rice · 1 kg × 3 | ₹231 | ₹231 | QA Second · 9800000003 | QA lane 3 | Delive",
+    "cancelledCount": 1,
+    "whatsappToCustomer": [
+      "https://wa.me/919800000005?text=Namaste QA Fourth, sorry — we could not take your order this time. QA Test Shop 120712"
+    ]
+  },
+  "pushDenied": {
+    "turnOn": 1,
+    "samples": [
+      {
+        "atMs": 500,
+        "hit": "Your browser has blocked notifications for this site. Turn them back on in the browser’s site settings, then try again."
+      },
+      {
+        "atMs": 1000,
+        "hit": "Your browser has blocked notifications for this site. Turn them back on in the browser’s site settings, then try again."
+      },
+      {
+        "atMs": 1500,
+        "hit": "Your browser has blocked notifications for this site. Turn them back on in the browser’s site settings, then try again."
+      },
+      {
+        "atMs": 2000,
+        "hit": "Your browser has blocked notifications for this site. Turn them back on in the browser’s site settings, then try again."
+      },
+      {
+        "atMs": 2500,
+        "hit": "Your browser has blocked notifications for this site. Turn them back on in the browser’s site settings, then try again."
+      },
+      {
+        "atMs": 3000,
+        "hit": "Your browser has blocked notifications for this site. Turn them back on in the browser’s site settings, then try again."
+      },
+      {
+        "atMs": 3500,
+        "hit": "Your browser has blocked notifications for this site. Turn them back on in the browser’s site settings, then try again."
+      }
+    ],
+    "permission": "denied"
+  },
+  "responsive": [
+    {
+      "name": "desktop-1920",
+      "width": 1920,
+      "height": 1080,
+      "pages": [
+        {
+          "label": "home",
+          "hOverflow": false,
+          "scrollW": 1920,
+          "winW": 1920,
+          "smallTargets": 0,
+          "offscreenControls": 0
+        },
+        {
+          "label": "pricing",
+          "hOverflow": false,
+          "scrollW": 1920,
+          "winW": 1920,
+          "smallTargets": 1,
+          "offscreenControls": 0
+        },
+        {
+          "label": "shop",
+          "hOverflow": false,
+          "scrollW": 1920,
+          "winW": 1920,
+          "smallTargets": 5,
+          "offscreenControls": 0
+        }
+      ]
+    },
+    {
+      "name": "desktop-1440",
+      "width": 1440,
+      "height": 900,
+      "pages": [
+        {
+          "label": "home",
+          "hOverflow": false,
+          "scrollW": 1440,
+          "winW": 1440,
+          "smallTargets": 0,
+          "offscreenControls": 0
+        },
+        {
+          "label": "pricing",
+          "hOverflow": false,
+          "scrollW": 1440,
+          "winW": 1440,
+          "smallTargets": 1,
+          "offscreenControls": 0
+        },
+        {
+          "label": "shop",
+          "hOverflow": false,
+          "scrollW": 1440,
+          "winW": 1440,
+          "smallTargets": 5,
+          "offscreenControls": 0
+        }
+      ]
+    },
+    {
+      "name": "desktop-1366",
+      "width": 1366,
+      "height": 768,
+      "pages": [
+        {
+          "label": "home",
+          "hOverflow": false,
+          "scrollW": 1366,
+          "winW": 1366,
+          "smallTargets": 0,
+          "offscreenControls": 0
+        },
+        {
+          "label": "pricing",
+          "hOverflow": false,
+          "scrollW": 1366,
+          "winW": 1366,
+          "smallTargets": 1,
+          "offscreenControls": 0
+        },
+        {
+          "label": "shop",
+          "hOverflow": false,
+          "scrollW": 1366,
+          "winW": 1366,
+          "smallTargets": 5,
+          "offscreenControls": 0
+        }
+      ]
+    },
+    {
+      "name": "tablet-1024",
+      "width": 1024,
+      "height": 768,
+      "pages": [
+        {
+          "label": "home",
+          "hOverflow": false,
+          "scrollW": 1024,
+          "winW": 1024,
+          "smallTargets": 0,
+          "offscreenControls": 0
+        },
+        {
+          "label": "pricing",
+          "hOverflow": false,
+          "scrollW": 1024,
+          "winW": 1024,
+          "smallTargets": 1,
+          "offscreenControls": 0
+        },
+        {
+          "label": "shop",
+          "hOverflow": false,
+          "scrollW": 1024,
+          "winW": 1024,
+          "smallTargets": 5,
+          "offscreenControls": 0
+        }
+      ]
+    },
+    {
+      "name": "tablet-768",
+      "width": 768,
+      "height": 1024,
+      "pages": [
+        {
+          "label": "home",
+          "hOverflow": false,
+          "scrollW": 768,
+          "winW": 768,
+          "smallTargets": 0,
+          "offscreenControls": 0
+        },
+        {
+          "label": "pricing",
+          "hOverflow": false,
+          "scrollW": 768,
+          "winW": 768,
+          "smallTargets": 1,
+          "offscreenControls": 0
+        },
+        {
+          "label": "shop",
+          "hOverflow": false,
+          "scrollW": 768,
+          "winW": 768,
+          "smallTargets": 5,
+          "offscreenControls": 0
+        }
+      ]
+    },
+    {
+      "name": "phone-430",
+      "width": 430,
+      "height": 932,
+      "pages": [
+        {
+          "label": "home",
+          "hOverflow": false,
+          "scrollW": 430,
+          "winW": 430,
+          "smallTargets": 0,
+          "offscreenControls": 0
+        },
+        {
+          "label": "pricing",
+          "hOverflow": false,
+          "scrollW": 430,
+          "winW": 430,
+          "smallTargets": 1,
+          "offscreenControls": 0
+        },
+        {
+          "label": "shop",
+          "hOverflow": false,
+          "scrollW": 430,
+          "winW": 430,
+          "smallTargets": 5,
+          "offscreenControls": 0
+        }
+      ]
+    },
+    {
+      "name": "phone-390",
+      "width": 390,
+      "height": 844,
+      "pages": [
+        {
+          "label": "home",
+          "hOverflow": false,
+          "scrollW": 390,
+          "winW": 390,
+          "smallTargets": 0,
+          "offscreenControls": 0
+        },
+        {
+          "label": "pricing",
+          "hOverflow": false,
+          "scrollW": 390,
+          "winW": 390,
+          "smallTargets": 1,
+          "offscreenControls": 0
+        },
+        {
+          "label": "shop",
+          "hOverflow": false,
+          "scrollW": 390,
+          "winW": 390,
+          "smallTargets": 5,
+          "offscreenControls": 0
+        }
+      ]
+    },
+    {
+      "name": "phone-375",
+      "width": 375,
+      "height": 812,
+      "pages": [
+        {
+          "label": "home",
+          "hOverflow": false,
+          "scrollW": 375,
+          "winW": 375,
+          "smallTargets": 0,
+          "offscreenControls": 0
+        },
+        {
+          "label": "pricing",
+          "hOverflow": false,
+          "scrollW": 375,
+          "winW": 375,
+          "smallTargets": 1,
+          "offscreenControls": 0
+        },
+        {
+          "label": "shop",
+          "hOverflow": false,
+          "scrollW": 375,
+          "winW": 375,
+          "smallTargets": 5,
+          "offscreenControls": 0
+        }
+      ]
+    },
+    {
+      "name": "phone-360",
+      "width": 360,
+      "height": 800,
+      "pages": [
+        {
+          "label": "home",
+          "hOverflow": false,
+          "scrollW": 360,
+          "winW": 360,
+          "smallTargets": 0,
+          "offscreenControls": 0
+        },
+        {
+          "label": "pricing",
+          "hOverflow": false,
+          "scrollW": 360,
+          "winW": 360,
+          "smallTargets": 1,
+          "offscreenControls": 0
+        },
+        {
+          "label": "shop",
+          "hOverflow": false,
+          "scrollW": 360,
+          "winW": 360,
+          "smallTargets": 5,
+          "offscreenControls": 0
+        }
+      ]
+    }
+  ],
+  "a11y": {
+    "tabOrder": [
+      {
+        "tag": "A",
+        "name": "Halkhata — home",
+        "focusVisible": true
+      },
+      {
+        "tag": "BUTTON",
+        "name": "EN",
+        "focusVisible": true
+      },
+      {
+        "tag": "BUTTON",
+        "name": "বাং",
+        "focusVisible": true
+      },
+      {
+        "tag": "BUTTON",
+        "name": "हिं",
+        "focusVisible": true
+      },
+      {
+        "tag": "A",
+        "name": "+91 9800000001",
+        "focusVisible": true
+      },
+      {
+        "tag": "A",
+        "name": "WhatsApp +91 9800000001",
+        "focusVisible": true
+      },
+      {
+        "tag": "BUTTON",
+        "name": "যোগ করুন — <script>alert(1)</scrip",
+        "focusVisible": true
+      },
+      {
+        "tag": "BUTTON",
+        "name": "যোগ করুন — QA Dal",
+        "focusVisible": true
+      },
+      {
+        "tag": "BUTTON",
+        "name": "যোগ করুন — QA Padded",
+        "focusVisible": true
+      },
+      {
+        "tag": "BUTTON",
+        "name": "যোগ করুন — QA Rice",
+        "focusVisible": true
+      },
+      {
+        "tag": "BUTTON",
+        "name": "যোগ করুন — QA Sugar",
+        "focusVisible": true
+      },
+      {
+        "tag": "BUTTON",
+        "name": "যোগ করুন — চিনি",
+        "focusVisible": true
+      },
+      {
+        "tag": "BUTTON",
+        "name": "বলে অর্ডার করুন",
+        "focusVisible": true
+      },
+      {
+        "tag": "A",
+        "name": "9804243159",
+        "focusVisible": true
+      }
+    ],
+    "afterEnterOnFocused": "Halkhata | EN | বাং | हिं | Q | QA Test Shop 120712 | Grocery / Kirana · QA Owner | +91 9800000001 | QA lane, Kolkata | <script>alert(",
+    "audit": {
+      "imgsWithoutAlt": 0,
+      "imgTotal": 1,
+      "inputsWithoutLabel": 0,
+      "inputTotal": 0,
+      "iconButtonsWithoutName": 0,
+      "buttonTotal": 10,
+      "h1": 1,
+      "lang": "en",
+      "landmarks": {
+        "main": 1,
+        "header": 1,
+        "nav": 0
+      }
+    }
+  },
+  "perf": [
+    {
+      "label": "home",
+      "pass": 0,
+      "wallMs": 344,
+      "ttfb": 98,
+      "domContentLoaded": 261,
+      "load": 331,
+      "fcp": 264,
+      "transferKb": 4
+    },
+    {
+      "label": "home",
+      "pass": 1,
+      "wallMs": 84,
+      "ttfb": 31,
+      "domContentLoaded": 49,
+      "load": 79,
+      "fcp": 68,
+      "transferKb": 0
+    },
+    {
+      "label": "pricing",
+      "pass": 0,
+      "wallMs": 111,
+      "ttfb": 31,
+      "domContentLoaded": 58,
+      "load": 106,
+      "fcp": null,
+      "transferKb": 10
+    },
+    {
+      "label": "pricing",
+      "pass": 1,
+      "wallMs": 75,
+      "ttfb": 31,
+      "domContentLoaded": 53,
+      "load": 66,
+      "fcp": null,
+      "transferKb": 0
+    },
+    {
+      "label": "shop",
+      "pass": 0,
+      "wallMs": 1015,
+      "ttfb": 31,
+      "domContentLoaded": 965,
+      "load": 986,
+      "fcp": 968,
+      "transferKb": 6
+    },
+    {
+      "label": "shop",
+      "pass": 1,
+      "wallMs": 739,
+      "ttfb": 31,
+      "domContentLoaded": 714,
+      "load": 734,
+      "fcp": null,
+      "transferKb": 6
+    },
+    {
+      "label": "track-miss",
+      "pass": 0,
+      "wallMs": 331,
+      "ttfb": 30,
+      "domContentLoaded": 300,
+      "load": 325,
+      "fcp": null,
+      "transferKb": 3
+    },
+    {
+      "label": "track-miss",
+      "pass": 1,
+      "wallMs": 301,
+      "ttfb": 31,
+      "domContentLoaded": 278,
+      "load": 295,
+      "fcp": null,
+      "transferKb": 3
+    }
+  ],
+  "sink": {
+    "console": [],
+    "pageErrors": [],
+    "failed": [
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/orders?_rsc=jK75Y6ss1hvhoXoH",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  }
+}

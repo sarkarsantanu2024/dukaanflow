@@ -1,0 +1,80 @@
+{
+  "at": "2026-09-01T09:20:13.483Z",
+  "pin": {
+    "api": [
+      {
+        "status": 200,
+        "body": "{\"pin\":\"440787\"}"
+      }
+    ],
+    "fromApi": "440787",
+    "panel": null,
+    "used": "440787"
+  },
+  "owner": {
+    "afterLogin": {
+      "url": "/owner/qa-test-shop-120712/sell",
+      "text": "Halkhata | Language | EN | বাং | हिं | <script>alert(1)</script> | ₹50 | / 1 kg | In stock | QA Dal | ₹110 | / 500 g | In stock | QA Padded | ₹50 | / 1 kg | In stock | QA Rice | ₹77 | / 1 kg | In stock | QA Sugar | ₹60 | / 1 kg | In stock | চিনি 🍬 | ₹48 | / 1 kg | In stock | Items | Sell | Khata | Orders"
+    },
+    "screens": [
+      {
+        "screen": "orders",
+        "status": 200,
+        "landedOn": "/owner/qa-test-shop-120712/orders",
+        "overflow": false,
+        "text": "Halkhata | Language | EN | বাং | हिं | Today | 3 | Takings | ₹752 | Waiting | 0 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | QA Fifth · 9800000006 | QA l"
+      },
+      {
+        "screen": "items",
+        "status": 404,
+        "landedOn": "/owner/qa-test-shop-120712/items",
+        "overflow": false,
+        "text": "🔍 | Page not found | This shop link may be wrong or the shop is no longer listed. | Go to Halkhata"
+      },
+      {
+        "screen": "sell",
+        "status": 200,
+        "landedOn": "/owner/qa-test-shop-120712/sell",
+        "overflow": false,
+        "text": "Halkhata | Language | EN | বাং | हिं | <script>alert(1)</script> | ₹50 | / 1 kg | In stock | QA Dal | ₹110 | / 500 g | In stock | QA Padded | ₹50 | / 1 kg | In stock | QA Rice | ₹77 | / 1 kg | In stock | QA Sugar | ₹60 |"
+      },
+      {
+        "screen": "khata",
+        "status": 200,
+        "landedOn": "/owner/qa-test-shop-120712/khata",
+        "overflow": false,
+        "text": "Halkhata | Language | EN | বাং | हिं | Total outstanding | ₹60 | Udhaar book | Spreadsheet (CSV) | Statement (PDF) | Your khata as a file you keep — a spreadsheet, or a statement to print. | QA | QA Second | +91 98000000"
+      },
+      {
+        "screen": "inventory",
+        "status": 200,
+        "landedOn": "/owner/qa-test-shop-120712/inventory",
+        "overflow": false,
+        "text": "Halkhata | Language | EN | বাং | हिं | 6 items | Select all | Delete all items | Other | 6 | In stock | ₹ | Mark out | Count how many are left | In stock | ₹ | Mark out | Count how many are left | In stock | ₹ | Mark out"
+      }
+    ],
+    "crossShop": {
+      "landedOn": "/owner/sree-gure-vander/login",
+      "text": "Halkhata | Sree Gure Vander | এই দোকানের জন্য এখনও মালিকের অ্যাক্সেস চালু হয়নি। Halkhata-এর সঙ্গে যোগাযোগ করে পিন নিন।"
+    },
+    "adminApi": {
+      "status": 401,
+      "body": "{\"error\":\"Not authenticated\"}"
+    },
+    "otherShopApi": {
+      "status": 401,
+      "body": "{\"error\":\"Not authenticated\"}"
+    },
+    "afterSignOut": {
+      "url": "/owner/qa-test-shop-120712/login"
+    },
+    "backAfterSignOut": {
+      "url": "/owner/sree-gure-vander/login",
+      "leaks": false
+    }
+  },
+  "voice": {
+    "micFound": 1,
+    "messages": []
+  }
+}

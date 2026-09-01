@@ -1,0 +1,130 @@
+{
+  "slug": "qa-test-shop-120712",
+  "at": "2026-09-01T08:09:55.155Z",
+  "locale": {
+    "calls": [
+      {
+        "status": 200,
+        "body": "{\"success\":true}"
+      }
+    ],
+    "changed": false,
+    "beforeStart": "Halkhata | ভাষা | EN | বাং | हिं | আজ | 2 | আজকের টাকা | ₹521 | বাকি আছে | 2 | এই ফোনে আওয়াজ পান | অর্ডার এলে অ্যাপ বন্",
+    "afterStart": "Halkhata | ভাষা | EN | বাং | हिं | আজ | 2 | আজকের টাকা | ₹521 | বাকি আছে | 2 | এই ফোনে আওয়াজ পান | অর্ডার এলে অ্যাপ বন্"
+  },
+  "steps": [
+    {
+      "step": "start",
+      "buttons": [
+        "সাইন আউট",
+        "চালু করুন",
+        "পরিমাণ বদলান",
+        "হয়ে গেছে",
+        "অর্ডার বাতিল",
+        "পরিমাণ বদলান",
+        "হয়ে গেছে",
+        "অর্ডার বাতিল"
+      ],
+      "statusWords": [
+        "তৈরি হচ্ছে",
+        "তৈরি হচ্ছে"
+      ],
+      "todayCount": "2",
+      "waiting": "2",
+      "text": "Halkhata | ভাষা | EN | বাং | हिं | আজ | 2 | আজকের টাকা | ₹521 | বাকি আছে | 2 | এই ফোনে আওয়াজ পান | অর্ডার এলে অ্যাপ বন্ধ থাকলেও এই ফোনটা বাজবে। | চালু করুন | তালিকা WhatsApp-এ পাঠান | (2) | QA Customer · 9800000002 | QA lane 2 | ডেলিভারি · 1:25 pm | তৈরি হচ্ছে | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | পরিমাণ বদলান | QA Second · 9800000003 | QA lane 3 | ডেলিভারি · 1"
+    },
+    {
+      "step": "after Mark done",
+      "buttons": [
+        "Sign out",
+        "Turn on",
+        "Change amounts",
+        "Cash",
+        "UPI",
+        "Udhaar",
+        "Cancel order",
+        "Change amounts",
+        "Mark done",
+        "Cancel order"
+      ],
+      "statusWords": [
+        "Preparing",
+        "Preparing"
+      ],
+      "todayCount": "2",
+      "waiting": "2",
+      "text": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 2 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (2) | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | Change amounts | Has the customer "
+    },
+    {
+      "step": "reloaded without answering payment",
+      "buttons": [
+        "Sign out",
+        "Turn on",
+        "Change amounts",
+        "Mark done",
+        "Cancel order",
+        "Change amounts",
+        "Mark done",
+        "Cancel order"
+      ],
+      "statusWords": [
+        "Preparing",
+        "Preparing"
+      ],
+      "todayCount": "2",
+      "waiting": "2",
+      "text": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 2 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (2) | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | Change amounts | QA Second · 98000"
+    },
+    {
+      "step": "after reload",
+      "buttons": [
+        "Sign out",
+        "Turn on",
+        "Change amounts",
+        "Mark done",
+        "Cancel order",
+        "Change amounts",
+        "Mark done",
+        "Cancel order"
+      ],
+      "statusWords": [
+        "Preparing",
+        "Preparing"
+      ],
+      "todayCount": "2",
+      "waiting": "2",
+      "text": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 2 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (2) | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | Change amounts | QA Second · 98000"
+    }
+  ],
+  "revise": {
+    "count": 0
+  },
+  "markDoneCount": 1,
+  "payment": {
+    "askVisible": null,
+    "paidButtons": 0,
+    "khataButtons": 0,
+    "stillAskingAfterReload": 0
+  },
+  "afterFreshLogin": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 2 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (2) | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | Change amounts | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Preparing | QA Sugar · 1 kg × 1 | ₹60 | ₹60 | Change amounts | Items | Sell | Khata | Orders",
+  "tabs": [],
+  "sink": {
+    "console": [],
+    "pageErrors": [],
+    "failed": [
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/khata?_rsc=vRWJKimeKTmHmGm9",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/sell?_rsc=vRWJKimeKTmHmGm9",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/orders?_rsc=jK75Y6ss1hvhoXoH",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  }
+}

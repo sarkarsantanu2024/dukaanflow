@@ -1,0 +1,96 @@
+{
+  "at": "2026-09-01T07:23:16.813Z",
+  "steps": [],
+  "cartBarLabel": "View basket — 5 items, ₹254",
+  "expectedTotal": 254,
+  "barTotal": 254,
+  "basketText": "Your basket | Masoor Dal | ₹55 / 500 g | ₹110 | − | 2 | + | Sugar | ₹48 / 1 kg | ₹144 | − | 3 | + | Total | ₹254 | Continue →",
+  "basketLines": [
+    "Masoor Dal | ₹55 / 500 g | ₹110 | − | 2 | +",
+    "Sugar | ₹48 / 1 kg | ₹144 | − | 3 | +"
+  ],
+  "afterZeroing": {
+    "linesBefore": 2,
+    "linesAfter": 0,
+    "text": "Your basket | Nothing in your basket yet."
+  },
+  "afterMashingPlus": "Your basket | Nothing in your basket yet.",
+  "afterReload": {
+    "barLabel": null,
+    "bodyHasStepper": 0
+  },
+  "hasContinue": 1,
+  "checkout": {
+    "text": "Halkhata | EN | বাং | हिं | Sree Gure Vander | Grocery / Kirana · Atanu | +91 7044241939 | Polta | 6:06 am – 9:48 pm | All | Dal & Pulses | Rice & Atta | Staples | Vegetables | Masoor Dal | ₹55 | / 500 g | In stock | Moong Dal | ₹70 | / 500 g | In stock | Soyabean | ₹200 | / 1 kg | In stock | Basmati Rice | ₹130 | / 1 kg | In stock | Gobindobhog Rice | ₹110 | / 1 kg | In stock | Salt | ₹25 | / 1 kg | In stock | Sugar | ₹48 | / 1 kg | In stock | − | 1 | + | Potato | ₹25 | / 1 kg | In stock | 1 | Your order | 1 items · ₹48 | 🏪 Pickup | Name(required) | Phone(required) | Area(required) | Back | Place order | Powered by Nexvora Technologies. | For support 9804243159",
+    "placeButtons": 1,
+    "emptySubmit": "Halkhata | EN | বাং | हिं | Sree Gure Vander | Grocery / Kirana · Atanu | +91 7044241939 | Polta | 6:06 am – 9:48 pm | All | Dal & Pulses | Rice & Atta | Staples | Vegetables | Masoor Dal | ₹55 | / 500 g | In stock | Moong Dal | ₹70 | / 500 g | In stock | Soyabean | ₹200 | / 1 kg | In stock | Basmati Rice | ₹130 | / 1 kg | In stock | Gobindobhog Rice | ₹110 | / 1 kg | In stock | Salt | ₹25 | / 1 kg | In stock | Sugar | ₹48 | / 1 kg | In stock | − | 1 | + | Potato | ₹25 | / 1 kg | In stock | 1 | Your order | 1 items · ₹48 | 🏪 Pickup | Name(required) | Please give your name | Phone(required) | Enter a valid 10-digit mobile number | Area(required) | Which area are you in? | Back | Place order ",
+    "stayedOnForm": true,
+    "inputs": [
+      {
+        "type": null,
+        "inputMode": null,
+        "name": "customerName",
+        "label": "Name(required)",
+        "required": false,
+        "maxLength": -1,
+        "placeholder": "Your name"
+      },
+      {
+        "type": "tel",
+        "inputMode": "numeric",
+        "name": "customerPhone",
+        "label": "Phone(required)",
+        "required": false,
+        "maxLength": 13,
+        "placeholder": "10-digit mobile number"
+      },
+      {
+        "type": null,
+        "inputMode": null,
+        "name": "customerArea",
+        "label": "Area(required)",
+        "required": false,
+        "maxLength": -1,
+        "placeholder": "Bazaar side, near the school"
+      }
+    ],
+    "phoneTests": [
+      {
+        "value": "1",
+        "filled": "1",
+        "message": "Name(required)",
+        "stayed": true
+      },
+      {
+        "value": "123",
+        "filled": "123",
+        "message": "Name(required)",
+        "stayed": true
+      },
+      {
+        "value": "00000",
+        "filled": "00000",
+        "message": "Name(required)",
+        "stayed": true
+      },
+      {
+        "value": "abcdefghij",
+        "filled": "abcdefghij",
+        "message": "Name(required)",
+        "stayed": true
+      },
+      {
+        "value": "12345678901234",
+        "filled": "1234567890123",
+        "message": "Name(required)",
+        "stayed": true
+      }
+    ]
+  },
+  "sink": {
+    "console": [],
+    "pageErrors": [],
+    "failed": [],
+    "http": []
+  }
+}

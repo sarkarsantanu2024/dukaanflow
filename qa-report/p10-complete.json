@@ -1,0 +1,162 @@
+{
+  "slug": "qa-test-shop-120712",
+  "at": "2026-09-01T08:15:44.640Z",
+  "steps": [
+    {
+      "step": "start",
+      "statuses": [
+        "Preparing",
+        "Preparing"
+      ],
+      "today": "2",
+      "takings": "521",
+      "waiting": "2",
+      "buttons": [
+        "Sign out",
+        "Turn on",
+        "Change amounts",
+        "Mark done",
+        "Cancel order",
+        "Change amounts",
+        "Mark done",
+        "Cancel order"
+      ],
+      "text": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 2 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (2) | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | Change amounts | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Preparing | QA Sugar · 1 kg × 1 | ₹60 | ₹60 | Change amount"
+    },
+    {
+      "step": "payment question",
+      "statuses": [
+        "Preparing",
+        "Preparing"
+      ],
+      "today": "2",
+      "takings": "521",
+      "waiting": "2",
+      "buttons": [
+        "Sign out",
+        "Turn on",
+        "Change amounts",
+        "Cash",
+        "UPI",
+        "Udhaar",
+        "Cancel order",
+        "Change amounts",
+        "Mark done",
+        "Cancel order"
+      ],
+      "text": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 2 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (2) | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | Change amounts | Has the customer paid? | Cash | UPI | Udhaar | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Preparing | "
+    },
+    {
+      "step": "after Cash",
+      "statuses": [
+        "Preparing",
+        "Preparing"
+      ],
+      "today": "2",
+      "takings": "521",
+      "waiting": "2",
+      "buttons": [
+        "Sign out",
+        "Turn on",
+        "Change amounts",
+        "Cash",
+        "UPI",
+        "Udhaar",
+        "Cancel order",
+        "Change amounts",
+        "Mark done",
+        "Cancel order"
+      ],
+      "text": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 2 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (2) | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | Change amounts | Has the customer paid? | Cash | UPI | Udhaar | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Preparing | "
+    },
+    {
+      "step": "after reload",
+      "statuses": [
+        "Preparing",
+        "Completed"
+      ],
+      "today": "2",
+      "takings": "521",
+      "waiting": "1",
+      "buttons": [
+        "Sign out",
+        "Turn on",
+        "Change amounts",
+        "Mark done",
+        "Cancel order"
+      ],
+      "text": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 1 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (1) | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Preparing | QA Sugar · 1 kg × 1 | ₹60 | ₹60 | Change amounts | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Completed | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | Items | Sell "
+    }
+  ],
+  "revise": {
+    "count": 1,
+    "opened": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 1 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (1) | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Preparing | What can you actually give? | Short of something? Lower the amount here instead of cancelling. The total is worked out again and the customer is told what changed. | QA Sugar · 1 kg | − | 1 | + | Leave it | S",
+    "plusDisabledBefore": true,
+    "afterMinus": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 1 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (1) | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Preparing | What can you actually give? | Short of something? Lower the amount here instead of cancelling. The total is ",
+    "plusEnabledAfterMinus": true,
+    "afterMashingPlus": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 1 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (1) | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Preparing | What can you actually give? | Short of something? Lower the amount here instead of cancelling. The total is ",
+    "plusDisabledAtOriginal": true,
+    "afterSave": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 1 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (1) | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Preparing | QA Sugar · 1 kg × 1 | ₹60 | ₹60 | Change amounts | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Completed | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ",
+    "whatsappAfterSave": [
+      "https://wa.me/?text=QA Test Shop 120712 — orders to deliver\n\n1. QA Second — 9800000003\n   QA lane 3\n   • QA Sugar 1 kg ×1\n   ₹60"
+    ]
+  },
+  "khata": {
+    "udhaarButton": 1,
+    "afterUdhaar": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 1 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (1) | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Preparing | QA Sugar · 1 kg × 1 | ₹60 | ₹60 | Change amounts | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Completed | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ",
+    "page": "Halkhata | Language | EN | বাং | हिं | Total outstanding | ₹60 | Udhaar book | Spreadsheet (CSV) | Statement (PDF) | Your khata as a file you keep — a spreadsheet, or a statement to print. | QA | QA Second | +91 9800000003 · QA Para 2 | ₹60 | owes | QA | QA Customer | +91 9800000002 · QA Para | ₹0 | settled | Add someone new | For a customer not in the book yet. Anyone already listed above is quicker to update on their own row. | Name | Phone | Area | Amount (₹) | What did they take? | Pick items | Gave goods | Got payment | Items | Sell | Khata | Orders"
+  },
+  "cashButtons": 1,
+  "patchesSoFar": [],
+  "tabs": [],
+  "finalFresh": "Halkhata | Language | EN | বাং | हिं | Today | 2 | Takings | ₹521 | Waiting | 0 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Completed | QA Sugar · 1 kg × 1 | ₹60 | ₹60 | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Completed | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 | ₹120 | QA Rice · 1 kg × 3 | ₹231 | ₹461 | Items | Sell | Khata | Orders",
+  "patches": [
+    {
+      "url": "qa-test-shop-120712/order",
+      "method": "PATCH",
+      "status": 200,
+      "body": ""
+    },
+    {
+      "url": "qa-test-shop-120712/order",
+      "method": "PATCH",
+      "status": 200,
+      "body": "{\"success\":true,\"khataAmountPaise\":6000}"
+    }
+  ],
+  "sink": {
+    "console": [],
+    "pageErrors": [],
+    "failed": [
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/khata?_rsc=vRWJKimeKTmHmGm9",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/inventory?_rsc=vRWJKimeKTmHmGm9",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/khata?_rsc=vRWJKimeKTmHmGm9",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/khata?_rsc=vRWJKimeKTmHmGm9",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/sell?_rsc=vRWJKimeKTmHmGm9",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/orders?_rsc=jK75Y6ss1hvhoXoH",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/orders?_rsc=jK75Y6ss1hvhoXoH",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  }
+}

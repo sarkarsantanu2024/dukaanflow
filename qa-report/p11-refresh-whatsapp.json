@@ -1,0 +1,101 @@
+{
+  "slug": "qa-test-shop-120712",
+  "at": "2026-09-01T08:19:22.218Z",
+  "refresh": {
+    "samples": [
+      {
+        "atMs": 1500,
+        "completed": 2,
+        "stillAsking": false,
+        "waiting": "1"
+      }
+    ]
+  },
+  "revise": {
+    "found": 1,
+    "buttonsInPanel": [
+      "Sign out",
+      "Turn on",
+      "−",
+      "+",
+      "Leave it",
+      "Save and tell the customer",
+      "Mark done",
+      "Cancel order"
+    ],
+    "saveLabel": "Save and tell the customer",
+    "after": "Halkhata | Language | EN | বাং | हिं | Today | 4 | Takings | ₹932 | Waiting | 1 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (1) | QA Fourth · 9800000005 | QA lane | Delivery · 1:49 pm | Preparing | QA Sugar · 1 kg × 3 | ₹180 | Send the change on WhatsApp | ₹180 | Change amounts | QA Third · 9800000004 | QA lane | Delivery · 1:49 pm | Completed | QA Rice · 1 kg × 3 | ₹231 | ₹231 | QA Second · 9800000003 | QA lane 3 | Delivery · 1:31 pm | Completed | QA Sugar · 1 kg × 1 | ₹60 | ₹60 | QA Customer · 9800000002 | QA lane 2 | Delivery · 1:25 pm | Completed | QA Dal · 500 g × 1 | ₹110 | QA Sugar · 1 kg × 2 |",
+    "whatsappLinks": [
+      "https://wa.me/?text=QA Test Shop 120712 — orders to deliver\n\n1. QA Fourth — 9800000005\n   QA lane\n   • QA Sugar 1 kg ×3\n   ₹180",
+      "https://wa.me/919800000005?text=Namaste QA Fourth, we did not have everything you asked for. QA Test Shop 120712\n\nThis is what we can send:\n• QA Sugar 1 kg ×2 (was ×3) = ₹120\n\nNew total: ₹120"
+    ]
+  },
+  "track": {
+    "order3 completed": "Halkhata | EN | বাং | हिं | QA Test Shop 120712 | Your order | Placed 01/09/2026 · 1:49 pm · Delivery | Ready and on its way to you. | QA Rice · 1 kg × 3 | ₹231 | Total | ₹231 | QA Test Shop 120712 | Order again from this shop | Keep this page. It shows what the shop is doing with your order. | Powered by Nexvora Technologies. | For support 9804243159",
+    "order4 revised": "Halkhata | EN | বাং | हिं | QA Test Shop 120712 | Your order | Placed 01/09/2026 · 1:49 pm · Delivery | The shop has your order and is getting it ready. | The shop changed this order | They did not have everything. This is what is coming, and what it costs. | QA Sugar · 1 kg × 2 | ₹120 | Total | ₹120 | QA Test Shop 120712 | Order again from this shop | Keep this page. It shows what the shop is doing with your order. | Powered by Nexvora Technologies. | For support 9804243159"
+  },
+  "cancel": {
+    "confirmText": "Halkhata | Language | EN | বাং | हिं | Today | 5 | Takings | ₹982 | Waiting | 2 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (2) | QA Fourth · 9800000005 | QA lane | Delivery · 1:49 pm | Changed | Preparing | QA Sugar · 1 kg × 2 | ₹120 | ₹120 | Change amounts | QA Fifth · 9800000006 | QA lane | Delivery · 1:",
+    "after": "Halkhata | Language | EN | বাং | हिं | Today | 5 | Takings | ₹982 | Waiting | 2 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (2) | QA Fourth · 9800000005 | QA lane | Delivery · 1:49 pm | Changed | Preparing | QA Sugar · 1 kg × 2 | ₹120 | ₹120 | Change amounts | QA Fifth · 9800000006 | QA lane | Delivery · 1:50 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | ₹110 | Change amounts | QA Third · 9800000004 | QA lane | Delivery · 1:49 pm | Completed | QA Rice · 1 kg × 3 | ₹231 | ₹231 | QA Second · 9800000003 | Q",
+    "customerSees": "Halkhata | EN | বাং | हिं | QA Test Shop 120712 | Your order | Placed 01/09/2026 · 1:50 pm · Delivery | The shop has your order and is getting it ready. | QA Dal · 500 g × 1 | ₹110 | Total | ₹110 | QA Test Shop 120712 | Order again from this shop | Keep this page. It shows what the shop is doing with your order. | Powered by Nexvora Technologies. | For support 9804243159"
+  },
+  "push": {
+    "swRegistered": [
+      "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/"
+    ],
+    "permissionBefore": "denied",
+    "turnOnFound": 1,
+    "afterTurnOn": "Halkhata | Language | EN | বাং | हिं | Today | 4 | Takings | ₹862 | Waiting | 1 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (1) | QA Fifth · 9800000006 | QA lane | Delivery · 1:50 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | ₹110 | Change amounts | QA Fourth · 9800000005 | QA lane | Delivery · 1:49 pm | Cha",
+    "permissionAfter": "denied",
+    "calls": [],
+    "subscription": "no subscription",
+    "denied": {
+      "text": "Halkhata | Language | EN | বাং | हिं | Today | 4 | Takings | ₹862 | Waiting | 1 | Get a sound on this phone | When an order comes in, this phone will ring even if the app is shut. | Turn on | Send list on WhatsApp | (1) | QA Fifth · 9800000006 | QA lane | Delivery · 1:50 pm | Preparing | QA Dal · 500 g × 1 | ₹110 | ₹110 | Change amounts | QA Fourth · 9800000005 | QA lane | Delivery · 1:49 pm | Cha",
+      "permission": "denied"
+    }
+  },
+  "order3": {
+    "id": "45d2da72-1f3e-4415-89ab-9db99007bcc3",
+    "calls": [
+      {
+        "status": 200,
+        "body": "{\"orderId\":\"45d2da72-1f3e-4415-89ab-9db99007bcc3\",\"totalAmountPaise\":23100,\"deliveryFeePaise\":0}"
+      }
+    ]
+  },
+  "order4": {
+    "id": "d2a7a248-f689-4939-b055-086f82fc2878",
+    "calls": [
+      {
+        "status": 200,
+        "body": "{\"orderId\":\"d2a7a248-f689-4939-b055-086f82fc2878\",\"totalAmountPaise\":18000,\"deliveryFeePaise\":0}"
+      }
+    ]
+  },
+  "order5": {
+    "id": "42705a70-6fd0-4374-bf97-901fb860d73f"
+  },
+  "sink": {
+    "console": [],
+    "pageErrors": [],
+    "failed": [
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/inventory?_rsc=vRWJKimeKTmHmGm9",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/orders?_rsc=jK75Y6ss1hvhoXoH",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/orders?_rsc=jK75Y6ss1hvhoXoH",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/owner/qa-test-shop-120712/orders?_rsc=jK75Y6ss1hvhoXoH",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  }
+}

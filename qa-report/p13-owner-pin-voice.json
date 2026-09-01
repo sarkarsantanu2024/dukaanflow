@@ -1,0 +1,108 @@
+{
+  "at": "2026-09-01T09:15:32.785Z",
+  "pin": {
+    "pageButtons": [
+      "Sign out",
+      "+ Photo",
+      "Choose",
+      "+ Photo",
+      "Choose",
+      "+ Photo",
+      "Choose",
+      "Save changes",
+      "Cancel",
+      "Delete shop",
+      "Download PNG",
+      "Copy link",
+      "Make it a year — saves ₹498",
+      "Record ₹249 payment",
+      "Mark past due",
+      "Cancel",
+      "Charge ₹99",
+      "Send app link on WhatsApp",
+      "Create owner PIN",
+      "Copy owner link"
+    ],
+    "issueLabel": "Create owner PIN",
+    "value": "120712",
+    "panelText": "Halkhata | Dashboard | Shops | Owners | Customers | Add shop | Reports | Occasions | Super Admin · one account for every shop. | Back | QA Test Shop 120712 | Items (6) | QR poster | Sign out | The shop | What customers see when they scan the QR. | Shop name | Type | Grocery / Kirana | Restaurant | Tea Stall | Roll & Momo | Home Kitchen | Bakery | Other | Slug(the QR link) | Customers scan to /shop/qa-test-shop-120712 | Address | Opens | Closes | State(for festival reporting) | Not set | Andaman & Nicobar Islands | Andhra Pradesh | Arunachal Pradesh | Assam | Bihar | Chandigarh | Chhattisgarh |",
+    "inviteLink": null
+  },
+  "ownerLogin": {
+    "redirectedTo": "/owner/qa-test-shop-120712/login",
+    "loginText": "Halkhata | Q | QA Test Shop 120712 | Run your shop from your phone — prices, stock, orders and khata. Sign in with your 6-digit PIN. | PIN | Sign in",
+    "wrongPin": {
+      "url": "/owner/qa-test-shop-120712/login",
+      "text": ""
+    },
+    "afterRightPin": {
+      "url": "/owner/qa-test-shop-120712/login",
+      "text": "Halkhata | Q | QA Test Shop 120712 | Run your shop from your phone — prices, stock, orders and khata. Sign in with your 6-digit PIN. | PIN | Incorrect PIN | Sign in"
+    },
+    "crossShop": {
+      "status": 200,
+      "landedOn": "/owner/sree-gure-vander/login",
+      "text": "Halkhata | Sree Gure Vander | এই দোকানের জন্য এখনও মালিকের অ্যাক্সেস চালু হয়নি। Halkhata-এর সঙ্গে যোগাযোগ করে পিন নিন।"
+    },
+    "adminReach": {
+      "landedOn": "/admin/login",
+      "text": "HALKHATA | Super Admin | One password. Shop owners never sign in here."
+    }
+  },
+  "poster": {
+    "text": "Halkhata | Dashboard | Shops | Owners | Customers | Add shop | Reports | Occasions | Super Admin · one account for every shop. | Back | QA Test Shop 120712 | QR poster | Sign out | Print A4 poster | Download PDF | Both carry all three languages. Print uses the browser; the PDF is the same sheet as an image, so it travels on WhatsApp. | QA Test Shop 120712 | QA lane, Kolkata | Scan to Order | স্ক্যান করে অর্ডার করুন | स्कैन करके ऑर्डर करें | Just open your phone camera — no app needed | ফোনের ক্য",
+    "hasCanvasOrSvg": 15
+  },
+  "voice": {
+    "apiPresent": {
+      "SpeechRecognition": true,
+      "webkit": true,
+      "speechSynthesis": true
+    },
+    "micButtonOnShop": [
+      "বলে অর্ডার করুন"
+    ]
+  },
+  "lang": {
+    "shop": {
+      "htmlLang": "en",
+      "sampleText": "Halkhata | EN | বাং | हिं | Q | QA Test Shop 120712 | Grocery / Kirana · QA Owner | +91 9800",
+      "hasBengali": true
+    }
+  },
+  "sink": {
+    "console": [],
+    "pageErrors": [],
+    "failed": [
+      {
+        "url": "https://dukaanflow.vercel.app/admin/owners?_rsc=tMB9F1guooska6FJ",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=tMB9F1guooska6FJ",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/shop/qa-test-shop-120712/poster?_rsc=tMB9F1guooska6FJ",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/dashboard?_rsc=ppPFlRLvlWtvyXJb",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin?_rsc=ppPFlRLvlWtvyXJb",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/owners?_rsc=ppPFlRLvlWtvyXJb",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "url": "https://dukaanflow.vercel.app/admin/customers?_rsc=ppPFlRLvlWtvyXJb",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  }
+}

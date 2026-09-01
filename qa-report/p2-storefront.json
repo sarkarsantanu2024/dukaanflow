@@ -1,0 +1,72 @@
+{
+  "shop": "/shop/sree-gure-vander",
+  "at": "2026-09-01T07:21:11.697Z",
+  "items": [
+    {
+      "text": "মুসুর ডাল | ₹55 | / 500 g | আছে",
+      "hasStepper": false
+    },
+    {
+      "text": "মুগ ডাল | ₹70 | / 500 g | আছে",
+      "hasStepper": false
+    },
+    {
+      "text": "সয়াবিন | ₹200 | / 1 kg | আছে",
+      "hasStepper": false
+    },
+    {
+      "text": "বাসমতি চাল | ₹130 | / 1 kg | আছে",
+      "hasStepper": false
+    },
+    {
+      "text": "গোবিন্দভোগ চাল | ₹110 | / 1 kg | আছে",
+      "hasStepper": false
+    },
+    {
+      "text": "নুন | ₹25 | / 1 kg | আছে",
+      "hasStepper": false
+    },
+    {
+      "text": "চিনি | ₹48 | / 1 kg | আছে",
+      "hasStepper": false
+    },
+    {
+      "text": "আলু | ₹25 | / 1 kg | আছে",
+      "hasStepper": false
+    }
+  ],
+  "afterFirstAdd": {
+    "card": "মুসুর ডাল | ₹55 | / 500 g | আছে",
+    "bar": null
+  },
+  "afterStepping": {
+    "cardNow": "মুসুর ডাল | ₹55 | / 500 g | আছে | − | 3 | +",
+    "barNow": null
+  },
+  "basket": {
+    "text": "Halkhata | EN | বাং | हिं | Sree Gure Vander | Grocery / Kirana · Atanu | +91 7044241939 | Polta | 6:06 am – 9:48 pm | সব | ডাল | চাল-আটা | নিত্য প্রয়োজনীয় | সবজি | মুসুর ডাল | ₹55 | / 500 g | আছে | − | 3 | + | মুগ ডাল | ₹70 | / 500 g | আছে | − | 1 | + | সয়াবিন | ₹200 | / 1 kg | আছে | বাসমতি চাল | ₹130 | / 1 kg | আছে | গোবিন্দভোগ চাল | ₹110 | / 1 kg | আছে | নুন | ₹25 | / 1 kg | আছে | চিনি | ₹48 | / 1 kg | আছে | আলু | ₹25 | / 1 kg | আছে | 4 | Powered by Nexvora Technologies. | For support 9804243159"
+  },
+  "languages": [
+    {
+      "label": "EN",
+      "firstCard": "Masoor Dal | ₹55 | / 500 g | In stock | − | 3 | +",
+      "heading": "Halkhata | EN | বাং | हिं | Sree Gure Vander | Grocery / Kirana · Atanu | +91 7044241939 | Polta | 6:06 am – 9:48 pm | All | Dal & Pulse"
+    },
+    {
+      "label": "বাং",
+      "firstCard": "মুসুর ডাল | ₹55 | / 500 g | আছে | − | 3 | +",
+      "heading": "Halkhata | EN | বাং | हिं | Sree Gure Vander | Grocery / Kirana · Atanu | +91 7044241939 | Polta | 6:06 am – 9:48 pm | সব | ডাল | চাল-আটা | "
+    },
+    {
+      "label": "हिं",
+      "firstCard": "मसूर दाल | ₹55 | / 500 g | उपलब्ध | − | 3 | +",
+      "heading": "Halkhata | EN | বাং | हिं | Sree Gure Vander | Grocery / Kirana · Atanu | +91 7044241939 | Polta | 6:06 am – 9:48 pm | सभी | दाल | चावल-आट"
+    }
+  ],
+  "sink": {
+    "console": [],
+    "pageErrors": [],
+    "failed": [],
+    "http": []
+  }
+}
