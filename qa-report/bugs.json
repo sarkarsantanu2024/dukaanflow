@@ -214,6 +214,25 @@
       "actual": "admin/admin authenticates on the live host and fronts every shop, customer phone number and khata balance. Rate limiting (8/10min) slows brute force but not a guessed pair",
       "fix": "Rotate the password now; add a second factor for the Super Admin before any real shop is onboarded",
       "status": "OPEN — only the operator can rotate this. `npm run hash <new password>` produces the bcrypt hash for ADMIN_PASSWORD_HASH."
+    },
+    {
+      "id": "BUG-012",
+      "title": "A missing microphone was reported as \"voice is not available on this browser\"",
+      "severity": "P3",
+      "module": "Voice",
+      "reproducibility": "Always, on a machine with no microphone",
+      "steps": [
+        "Open a shop page in Chrome on a device with no microphone",
+        "Tap the mic"
+      ],
+      "expected": "\"No microphone found on this device.\" — a string that already exists in all three languages",
+      "actual": "The recogniser reports `audio-capture`, which fell through to `unknown` and rendered \"Voice is not available on this browser. Please tap Add instead.\"",
+      "impact": "Sends somebody to change browsers over a microphone that was never plugged in, or a headset that has just been unplugged.",
+      "evidence": [
+        "Direct SpeechRecognition probe in real Chrome: events [\"start\",\"error:audio-capture\",\"end\"]"
+      ],
+      "fix": "Map `audio-capture` to `no-microphone` in components/voice/useVoice.ts",
+      "status": "FIXED and deployed"
     }
   ],
   "blocked": [
@@ -274,5 +293,20 @@
     "fractional amounts": "PASS — ₹1,500/kg posto, 250 g chip, ₹375 in the basket and 37500 paise at the server",
     "BUG-011 (found during verification, fixed)": "A weighed line printed the pack size next to the amount — \"· 1 kg 250 g\", which reads as 1.25 kg. Fixed and deployed.",
     "OPS-001": "STILL OPEN — operator action"
+  },
+  "blockedResolution": {
+    "V-1 web push": "CLEARED. The block was Chrome refusing the Push API in incognito — which every Playwright context is. With a persistent Chrome profile: owner received \"New order · ₹55 / QA Push Customer · QA Para · Delivery\" 3s after a customer in a separate browser ordered; customer received \"Your order is ready. Please collect it from …\" 3s after the owner tapped Ready. One notification each, correct payload and recipient. Subscriptions verified in the database against the right shop and phone. Android field behaviour (doze, PWA background) still needs a handset.",
+    "V-2 voice": "STILL BLOCKED, reason established: Chrome's speech recogniser ignores --use-file-for-fake-audio-capture and errors `audio-capture`, and this machine has no microphone at all (`NotFoundError`). Needs a device with a mic. The attempt did find BUG-012.",
+    "V-3 cross-browser": "Still open. Real Chrome now exercised as well as Chromium; Firefox and WebKit not installed.",
+    "V-4 delivery-round WhatsApp link": "Confirmed intentional (no recipient, so the owner picks the delivery helper).",
+    "V-5 network failure": "Still open.",
+    "V-6 rate-limiter recovery message": "Still open.",
+    "V-7 keyboard-only checkout": "Still open."
+  },
+  "productDecisionsApplied": {
+    "ready WhatsApp on delivery orders": "Applied. The button now appears whenever a READY order's customer has no push subscription — collection or delivery — and stays hidden when the push has already been delivered. Previously delivery was excluded outright, so an unreachable delivery customer was told nothing at all.",
+    "plan item limits": "Applied: 50 / 150 / 500 / 2,000 (was 25 / 100 / 250 / 1,000). Prices unchanged and annual savings still correct.",
+    "production-DB guard": "Added. npm run db:push prints the host and refuses production; ALLOW_PROD_DB=1 overrides. DEPLOYMENT.md carries the Neon dev-branch procedure.",
+    "admin password": "Hash generated and applied to local .env; verified that the new password matches and \"admin\" no longer does. Setting ADMIN_PASSWORD_HASH in Vercel is the operator's step — no Vercel token here."
   }
 }

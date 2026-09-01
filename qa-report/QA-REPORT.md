@@ -85,6 +85,40 @@ customer cannot be reached by push — by existing design, a delivery order gets
 push itself is sent for both. If you want the WhatsApp hand-off on delivery
 orders too, that is a one-line change to `worthMessaging`.
 
+## Blocked areas — revisited with real Chrome (2026-09-02)
+
+**Web push: CLEARED.** The block was never the app. Chrome refuses the Push API
+in incognito mode, and every Playwright browser context is incognito — so no
+subscription could be created and nothing could arrive. With a persistent Chrome
+profile, both directions were observed:
+
+| Direction | Result |
+|---|---|
+| Customer orders → owner's phone | "New order · ₹55 / QA Push Customer · QA Para · Delivery" — **3 s**, one notification |
+| Owner taps Ready → customer's phone | "Your order is ready / Please collect it from …" — **3 s**, one notification |
+
+Subscriptions were checked in the database: CUSTOMER row against the right shop
+and phone, OWNER row against the shop. This is also the first proof that the
+READY push added for BUG-002 actually reaches the customer.
+
+Android field behaviour — doze, an installed PWA in the background, tapping the
+notification on a locked phone — still needs a handset. Desktop delivery is no
+longer an assumption.
+
+**Voice: still blocked, and now for a stated reason.** Two independent walls:
+Chrome's speech recogniser ignores `--use-file-for-fake-audio-capture` (it errors
+`audio-capture` while `getUserMedia` happily returns the fake device), and this
+machine has **no microphone at all** (`getUserMedia` → `NotFoundError`). Feeding
+synthesised speech in is not possible without a virtual audio device driver, so
+this needs a phone or a laptop with a mic. Ten seconds of speaking will do it.
+
+The attempt was not wasted: it produced **BUG-012**. With no usable microphone
+the recogniser reports `audio-capture`, which fell through to `unknown` and told
+the shopkeeper "voice is not available on this browser" — advice to change
+browsers over a mic that was never plugged in. A "No microphone found on this
+device" string already existed in all three languages; that error now reaches it.
+Fixed and deployed.
+
 ---
 
 ## A. Executive Summary
