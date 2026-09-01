@@ -169,6 +169,20 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
         // Chrome streams audio to Google's servers; offline means no results.
         setErrorCode('network');
         setState('error');
+      } else if (code === 'audio-capture') {
+        /**
+         * The permission was granted and there is still nothing to listen to.
+         *
+         * A desktop with no microphone, a headset that has just been unplugged,
+         * or another application holding the device — all land here, and all of
+         * them are "no microphone" as far as the person tapping the mic is
+         * concerned. This fell through to `unknown`, which reads "voice is not
+         * available on this browser" — sending somebody to change browsers over
+         * a mic that was never plugged in. Found by testing on a machine that
+         * genuinely has no microphone.
+         */
+        setErrorCode('no-microphone');
+        setState('error');
       } else {
         setErrorCode('unknown');
         setState('error');

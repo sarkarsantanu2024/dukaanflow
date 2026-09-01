@@ -8,9 +8,9 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
+    "db:push": "tsx scripts/db-target.ts && prisma db push",
+    "db:migrate": "tsx scripts/db-target.ts && prisma migrate dev",
+    "db:deploy": "tsx scripts/db-target.ts && prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "hash": "tsx scripts/hash-password.ts",
@@ -18,7 +18,8 @@
     "rollup": "tsx scripts/rollup.ts",
     "demo": "tsx scripts/seed-demo-shop.ts",
     "vercel:env": "tsx scripts/vercel-env.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:target": "tsx scripts/db-target.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
