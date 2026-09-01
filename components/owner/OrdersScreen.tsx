@@ -657,7 +657,7 @@ export function OrdersScreen({
                         >
                           <span className="min-w-0 flex-1 truncate text-sm text-slate-700">
                             {lineName(line, locale)}
-                            {line.unit ? ` · ${line.unit}` : ''}
+                            {line.unit && !isLooseUnit(line.unit) ? ` · ${line.unit}` : ''}
                             {next !== line.quantity && (
                               <span className="text-slate-400">
                                 {' '}
@@ -746,7 +746,10 @@ export function OrdersScreen({
                     >
                       <span className="min-w-0 truncate">
                         {lineName(line, locale)}
-                        {line.unit ? ` · ${line.unit}` : ''} {lineAmount(line)}
+                        {/* No pack size beside a weighed amount — see the
+                             note on the customer's track page. */}
+                        {line.unit && !isLooseUnit(line.unit) ? ` · ${line.unit}` : ''}{' '}
+                        {lineAmount(line)}
                       </span>
                       <span className="shrink-0 tabular-nums">{formatPaise(line.amountPaise)}</span>
                     </li>

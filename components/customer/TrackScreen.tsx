@@ -26,7 +26,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatPaise } from '@/lib/money';
-import { amountLabel } from '@/lib/units';
+import { amountLabel, isLooseUnit } from '@/lib/units';
 import { formatClock, formatDay } from '@/lib/time';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { LangToggle } from './LangToggle';
@@ -208,7 +208,13 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
               <li key={index} className="flex justify-between gap-3 text-slate-700">
                 <span className="min-w-0">
                   {lineName(line, locale)}
-                  {line.unit ? ` · ${line.unit}` : ''}{' '}
+                  {/* THE PACK SIZE IS NOT PRINTED BESIDE A WEIGHED AMOUNT.
+                      "QA Posto · 1 kg 250 g" is what that produced, and it
+                      reads as a kilo and a quarter rather than as a quarter of
+                      a kilo bought at a kilo's rate. For a weighed line the
+                      amount says everything; for a counted one the pack size
+                      is what "× 2" is two of. */}
+                  {line.unit && !isLooseUnit(line.unit) ? ` · ${line.unit}` : ''}{' '}
                   {/* The amount, where the item is sold by weight: "× 0.05"
                       is what a fractional quantity looks like as a multiplier,
                       and the customer needs to read back the 50 g they
