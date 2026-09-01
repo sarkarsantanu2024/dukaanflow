@@ -208,7 +208,7 @@ export function buildRoundMessage(input: {
 export function buildStatusMessage(input: {
   shopName: string;
   customerName: string;
-  status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NEW';
+  status: 'CONFIRMED' | 'READY' | 'COMPLETED' | 'CANCELLED' | 'NEW';
   totalAmountPaise: number;
   orderType: 'DELIVERY' | 'PICKUP';
   /** What was ordered. A total with nothing behind it cannot be checked. */
@@ -217,16 +217,25 @@ export function buildStatusMessage(input: {
   const hello = input.customerName ? `Namaste ${input.customerName},` : 'Namaste,';
   const shop = escapeWhatsAppText(input.shopName);
 
+  /**
+   * READY is where "your order is ready" belongs, and COMPLETED is a receipt.
+   *
+   * They were one message on one state, which meant the only way to tell a
+   * customer their order was waiting was to first declare it handed over and
+   * answer for money nobody had been given yet.
+   */
   const body =
-    input.status === 'COMPLETED'
+    input.status === 'READY'
       ? input.orderType === 'PICKUP'
         ? `your order is ready. Please collect it from ${shop}.`
         : `your order is ready and on its way from ${shop}.`
-      : input.status === 'CONFIRMED'
-        ? `we have your order and are getting it ready. ${shop}`
-        : input.status === 'CANCELLED'
-          ? `sorry — we could not take your order this time. ${shop}`
-          : `we have received your order. ${shop}`;
+      : input.status === 'COMPLETED'
+        ? `thank you — your order is settled. ${shop}`
+        : input.status === 'CONFIRMED'
+          ? `we have your order and are getting it ready. ${shop}`
+          : input.status === 'CANCELLED'
+            ? `sorry — we could not take your order this time. ${shop}`
+            : `we have received your order. ${shop}`;
 
   // A cancellation is not a bill, so it carries neither items nor a total.
   if (input.status === 'CANCELLED' || input.totalAmountPaise <= 0) {

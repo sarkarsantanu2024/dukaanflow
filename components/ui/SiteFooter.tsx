@@ -33,7 +33,8 @@ export function SiteFooter() {
             For support{' '}
             <a
               href={`tel:+91${support.phone}`}
-              className="font-semibold tabular-nums text-slate-700 hover:text-brand-700"
+              // Same reason as the shop's own number: readable, and now hittable.
+              className="inline-flex min-h-11 items-center font-semibold tabular-nums text-slate-700 hover:text-brand-700"
             >
               {support.phone}
             </a>

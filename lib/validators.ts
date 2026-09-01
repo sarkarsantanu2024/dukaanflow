@@ -442,7 +442,7 @@ export const ledgerDeleteSchema = z.object({ id: z.string().uuid('Unknown entry'
 
 export const orderStatusSchema = z.object({
   id: z.string().uuid('Unknown order'),
-  status: z.enum(['NEW', 'CONFIRMED', 'COMPLETED', 'CANCELLED']),
+  status: z.enum(['NEW', 'CONFIRMED', 'READY', 'COMPLETED', 'CANCELLED']),
   /**
    * Did the money arrive? Only read when completing an order.
    *

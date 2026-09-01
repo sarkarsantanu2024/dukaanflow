@@ -36,12 +36,21 @@ enum OrderType {
 /// The life of one order, in the order an owner works it. `asc` on this enum is
 /// the queue: what still needs doing first, what is finished last.
 ///
-/// CONFIRMED and COMPLETED are deliberately separate. "I have taken this order"
-/// and "the customer has it" are different moments, and the gap between them is
-/// the only thing an owner is actually tracking during a rush.
+/// CONFIRMED, READY and COMPLETED are deliberately separate. "I have taken this
+/// order", "it is packed and waiting" and "the customer has it and has paid" are
+/// three different moments, and the gaps between them are the only thing an owner
+/// is actually tracking during a rush.
+///
+/// READY was missing, and its absence bent the whole flow. "Ready" and "done and
+/// paid" were the same state, so an owner could not say a pickup order was
+/// waiting on the counter without also declaring it handed over and answering
+/// for money they had not yet been given — and the customer's "your order is
+/// ready" message only fired at that point, which is too late to be an
+/// invitation to come and collect.
 enum OrderStatus {
   NEW
   CONFIRMED
+  READY
   COMPLETED
   CANCELLED
 }
