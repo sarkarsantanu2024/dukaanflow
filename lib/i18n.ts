@@ -87,6 +87,27 @@ type Dictionary = {
   voiceDidYouMean: string;
   voiceYes: string;
   voiceNo: string;
+  /**
+   * When the amount asked for is not what the shop sells in.
+   *
+   * "250 g" of sugar sold by the kilo cannot be ordered as asked, and the
+   * honest answer names both halves of the mismatch — what was said, and what
+   * the shop's pack is — rather than silently putting a kilo in the basket.
+   */
+  voiceYouSaid: string;
+  voiceSoldIn: string;
+  /** The label on the amount picker — how much of a weighed item to send. */
+  amount: string;
+  /** "Any amount" — said on a card whose item is sold loose off a scale. */
+  anyAmount: string;
+  /**
+   * The amount asked for is past what one line of an order may hold.
+   *
+   * Followed by the limit. Said rather than clamped: "300 chini" answered with
+   * "did you mean 99 kg of sugar?" is a question nobody can use, and the number
+   * was far more likely to have been grams or rupees.
+   */
+  voiceTooMuch: string;
   repeatTitle: string;
   repeatHint: string;
   repeatAdd: string;
@@ -222,6 +243,11 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceDidYouMean: 'Did you mean',
     voiceYes: 'Yes, add',
     voiceNo: 'No',
+    voiceYouSaid: 'You said',
+    voiceSoldIn: 'this shop sells it in',
+    amount: 'Amount',
+    anyAmount: 'any amount',
+    voiceTooMuch: 'That is more than one order can hold. Please say the amount again — at most',
 
     onlyLeft: 'Only left:',
     goods: 'Items',
@@ -337,6 +363,11 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceDidYouMean: 'আপনি কি বলতে চেয়েছেন',
     voiceYes: 'হ্যাঁ, যোগ করুন',
     voiceNo: 'না',
+    voiceYouSaid: 'আপনি বলেছেন',
+    voiceSoldIn: 'এই দোকানে বিক্রি হয়',
+    amount: 'পরিমাণ',
+    anyAmount: 'যত খুশি',
+    voiceTooMuch: 'একবারে এত নেওয়া যায় না। পরিমাণটা আবার বলুন — সর্বোচ্চ',
 
     onlyLeft: 'আছে মাত্র:',
     goods: 'জিনিসপত্র',
@@ -452,6 +483,11 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceDidYouMean: 'क्या आपका मतलब है',
     voiceYes: 'हाँ, जोड़ें',
     voiceNo: 'नहीं',
+    voiceYouSaid: 'आपने कहा',
+    voiceSoldIn: 'यह दुकान बेचती है',
+    amount: 'मात्रा',
+    anyAmount: 'जितना चाहें',
+    voiceTooMuch: 'एक बार में इतना नहीं लिया जा सकता। मात्रा दोबारा बोलिए — ज़्यादा से ज़्यादा',
 
     onlyLeft: 'सिर्फ़ बचा:',
     goods: 'सामान',

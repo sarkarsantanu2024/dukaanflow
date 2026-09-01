@@ -15,9 +15,16 @@ import { useCallback, useRef, useState } from 'react';
 import { MicButton } from '@/components/voice/MicButton';
 import { CloseIcon } from '@/components/ui/Icon';
 import { speak, useVoice, type VoiceErrorCode } from '@/components/voice/useVoice';
-import { parseSpokenOrder, spokenYesNo, type VoiceLang } from '@/lib/speech';
+import {
+  MOST_PER_LINE,
+  parseSpokenOrder,
+  spokenYesNo,
+  type SpokenOrderLine,
+  type VoiceLang,
+} from '@/lib/speech';
 import { dict, type Locale } from '@/lib/i18n';
-import { itemName, type CustomerItem } from './ItemCard';
+import { itemName, sellsAnyAmount, type CustomerItem } from './ItemCard';
+import { amountLabel } from '@/lib/units';
 
 /** The shop page already has a language toggle — reuse it for the mic. */
 const RECOGNITION_LANG: Record<Locale, VoiceLang> = {
@@ -26,7 +33,16 @@ const RECOGNITION_LANG: Record<Locale, VoiceLang> = {
   bn: 'bn-IN',
 };
 
-type Suggestion = { id: string; quantity: number; label: string };
+type Suggestion = {
+  id: string;
+  quantity: number;
+  label: string;
+  /**
+   * Why this is being asked rather than added: "You said 250 g · this shop
+   * sells it in 1 kg". Empty when the item itself was what was uncertain.
+   */
+  note?: string;
+};
 
 /**
  * Why the mic did not start, in the shopper's language.
@@ -99,7 +115,7 @@ export function VoiceOrder({
         if (answer === 'yes') {
           accept(outstanding);
           setSuggestions([]);
-          const summary = outstanding.map((entry) => `${entry.quantity} ${entry.label}`).join(', ');
+          const summary = outstanding.map((entry) => entry.label).join(', ');
           setFeedback(`${summary} — ${words.voiceAdded}`);
           announce(`${summary} ${words.voiceAdded}`);
           return;
@@ -116,21 +132,50 @@ export function VoiceOrder({
       // Out-of-stock items are not orderable, so they must not win a match
       // over an in-stock item the shopper could actually have meant.
       const available = itemsRef.current.filter((item) => item.inStock);
-      const { lines, unsure } = parseSpokenOrder(alternatives, available);
+      // `loose` travels with the item so the parser reaches the same answer the
+      // card and the server do about whether this shop can weigh out any
+      // amount of it — three different tests would mean the mic offering 250 g
+      // of something the order route then refuses.
+      const { lines, unsure, tooMany } = parseSpokenOrder(
+        alternatives,
+        available.map((item) => ({ ...item, loose: sellsAnyAmount(item) })),
+      );
 
-      const describe = (id: string, quantity: number): Suggestion | null => {
-        const item = available.find((candidate) => candidate.id === id);
+      const describe = (line: SpokenOrderLine): Suggestion | null => {
+        const item = available.find((candidate) => candidate.id === line.id);
         if (!item) return null;
         const name = itemName(item, localeRef.current);
-        return { id, quantity, label: item.unit ? `${name} ${item.unit}` : name };
+        // "চিনি 250 g", not "চিনি 1 kg" with a quantity of 0.25 beside it: the
+        // label has to be the amount going into the basket, because it is what
+        // the phone reads out and what the shopper checks it against.
+        const amount = amountLabel(item.unit, line.quantity);
+        return {
+          id: line.id,
+          quantity: line.quantity,
+          // The whole phrase, count included, because every message below reads
+          // this out as it stands: "চিনি 250 g" for something weighed, and
+          // "2 × চাউমিন 1 plate" for something counted. A bare quantity in
+          // front of it would say "0.25 চিনি 250 g".
+          label: amount
+            ? `${name} ${amount}`
+            : `${line.quantity} × ${[name, item.unit].filter(Boolean).join(' ')}`,
+          // The amount asked for, when the shop cannot make it up out of whole
+          // packs. Both halves of the mismatch, because either on its own reads
+          // as the app having misheard: "you said 250 g" invites saying it
+          // again, "sold in 1 kg" does not explain why anything is being asked.
+          note:
+            line.requested && !line.exact
+              ? `${words.voiceYouSaid} ${line.requested} · ${words.voiceSoldIn} ${item.unit}`
+              : undefined,
+        };
       };
 
-      const added = lines.map((line) => describe(line.id, line.quantity)).filter(Boolean) as Suggestion[];
-      const maybe = unsure.map((line) => describe(line.id, line.quantity)).filter(Boolean) as Suggestion[];
+      const added = lines.map(describe).filter(Boolean) as Suggestion[];
+      const maybe = unsure.map(describe).filter(Boolean) as Suggestion[];
 
       if (added.length > 0) {
         accept(added);
-        const summary = added.map((entry) => `${entry.quantity} ${entry.label}`).join(', ');
+        const summary = added.map((entry) => entry.label).join(', ');
         setFeedback(`${summary} — ${words.voiceAdded}`);
         announce(`${summary} ${words.voiceAdded}`);
         return;
@@ -138,9 +183,27 @@ export function VoiceOrder({
 
       if (maybe.length > 0) {
         setSuggestions(maybe);
-        const summary = maybe.map((entry) => `${entry.quantity} ${entry.label}`).join(', ');
+        const summary = maybe.map((entry) => entry.label).join(', ');
         setFeedback('');
-        announce(`${words.voiceDidYouMean} ${summary}`);
+        // The mismatch is spoken as well as printed. A shopper using the mic
+        // may be doing so because they cannot read the screen, and "did you
+        // mean one kilo" with no mention of the 250 g they asked for sounds
+        // like the app simply mis-heard them.
+        const notes = maybe.map((entry) => entry.note).filter(Boolean).join('. ');
+        announce(`${notes ? `${notes}. ` : ''}${words.voiceDidYouMean} ${summary}`);
+        return;
+      }
+
+      /**
+       * More than one line may hold. Nothing is added and nothing is offered:
+       * the shopper is told the limit and asked to say the amount again, which
+       * is the only thing that can actually resolve it. "300 chini" used to
+       * come back as "did you mean 99 × sugar 1 kg?".
+       */
+      if (tooMany.length > 0) {
+        const message = `${words.voiceTooMuch} ${MOST_PER_LINE}`;
+        setFeedback(message);
+        announce(message);
         return;
       }
 
@@ -213,9 +276,22 @@ export function VoiceOrder({
               <p className="text-sm text-amber-900">
                 {t.voiceDidYouMean}{' '}
                 <strong>
-                  {suggestions.map((entry) => `${entry.quantity} × ${entry.label}`).join(', ')}
+                  {suggestions.map((entry) => entry.label).join(', ')}
                 </strong>
               </p>
+              {/* Why it is being asked at all. Without this, a shopper who said
+                  "250 gram" is shown "1 × sugar 1 kg" and has no way to tell
+                  whether the app misheard the item or is rounding the amount —
+                  and the two need opposite responses from them. */}
+              {suggestions.some((entry) => entry.note) && (
+                <ul className="mt-1 space-y-0.5 text-xs text-amber-800">
+                  {suggestions
+                    .filter((entry) => entry.note)
+                    .map((entry) => (
+                      <li key={entry.id}>{entry.note}</li>
+                    ))}
+                </ul>
+              )}
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
@@ -223,7 +299,7 @@ export function VoiceOrder({
                     accept(suggestions);
                     setSuggestions([]);
                     setFeedback(
-                      `${suggestions.map((e) => `${e.quantity} ${e.label}`).join(', ')} — ${t.voiceAdded}`,
+                      `${suggestions.map((e) => e.label).join(', ')} — ${t.voiceAdded}`,
                     );
                   }}
                   className="h-10 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700"

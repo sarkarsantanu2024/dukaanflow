@@ -428,7 +428,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     soundOff: 'Sound off',
     newOrderAlert: 'New order',
     sessionEnded: 'Your session has ended. Please sign in with your PIN again.',
-    tillOrdersNote: 'This is for customers at the counter. WhatsApp orders are paid for on the Orders page — ringing one up here would count it twice.',
+    tillOrdersNote: 'This is for customers at the counter. Orders from your QR page are paid for on the Orders page — ringing one up here would count it twice.',
     noticeTitle: 'Notice for customers',
     noticeNone: 'No notice',
     noticeWrite: 'Write',
@@ -577,7 +577,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     stockCount: 'Count how many are left',
     stockStop: 'Stop counting',
     stockHint:
-      'For things you can count — packets, bottles, bread. Each sale takes one off, and at zero it comes off your shop page on its own. Leave rice and anything you weigh out uncounted.',
+      'For things you can count — packets, bottles, bread. Each sale takes one off, and at zero it comes off your shop page on its own. Leave rice and anything you weigh out uncounted: a counted item can only be sold whole, so a customer could not ask for 250 g of it.',
     stockSoldOut: 'Sold out — taken off your shop page',
 
     pushTitle: 'Get a sound on this phone',
@@ -872,7 +872,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     stockCount: 'কটা আছে গুনে রাখুন',
     stockStop: 'গোনা বন্ধ',
     stockHint:
-      'যা গোনা যায় তার জন্য — প্যাকেট, বোতল, পাউরুটি। বিক্রি হলেই একটা কমবে, শূন্য হলে নিজে থেকেই দোকানের পাতা থেকে সরে যাবে। চাল-ডালের মতো মেপে দেওয়া জিনিস গুনবেন না।',
+      'যা গোনা যায় তার জন্য — প্যাকেট, বোতল, পাউরুটি। বিক্রি হলেই একটা কমবে, শূন্য হলে নিজে থেকেই দোকানের পাতা থেকে সরে যাবে। চাল-ডালের মতো মেপে দেওয়া জিনিস গুনবেন না: গোনা জিনিস গোটা হিসেবেই বিক্রি হয়, খদ্দের ২৫০ গ্রাম চাইতে পারবেন না।',
     stockSoldOut: 'শেষ — দোকানের পাতা থেকে সরে গেছে',
 
     pushTitle: 'এই ফোনে আওয়াজ পান',
@@ -1022,7 +1022,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     soundOff: 'आवाज़ बंद',
     newOrderAlert: 'नया ऑर्डर',
     sessionEnded: 'आपका सत्र समाप्त हो गया। दोबारा PIN से आएँ।',
-    tillOrdersNote: 'यह दुकान पर आए ग्राहक के लिए है। व्हाट्सएप ऑर्डर का पैसा “ऑर्डर” पेज पर लें — यहाँ जोड़ने से दो बार गिना जाएगा।',
+    tillOrdersNote: 'यह दुकान पर आए ग्राहक के लिए है। QR से आए ऑर्डर का पैसा “ऑर्डर” पेज पर लें — यहाँ जोड़ने से दो बार गिना जाएगा।',
     noticeTitle: 'ग्राहकों के लिए सूचना',
     noticeNone: 'कोई सूचना नहीं',
     noticeWrite: 'लिखें',
@@ -1167,7 +1167,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     stockCount: 'कितने बचे हैं, गिनती रखें',
     stockStop: 'गिनती बंद',
     stockHint:
-      'जो गिना जा सके उसके लिए — पैकेट, बोतल, ब्रेड। हर बिक्री पर एक कम होगा, और शून्य होते ही दुकान के पेज से अपने आप हट जाएगा। चावल जैसी तौलकर दी जाने वाली चीज़ें मत गिनिए।',
+      'जो गिना जा सके उसके लिए — पैकेट, बोतल, ब्रेड। हर बिक्री पर एक कम होगा, और शून्य होते ही दुकान के पेज से अपने आप हट जाएगा। चावल जैसी तौलकर दी जाने वाली चीज़ें मत गिनिए: गिनी हुई चीज़ पूरी ही बिकती है, ग्राहक 250 ग्राम नहीं मांग पाएगा।',
     stockSoldOut: 'खत्म — दुकान के पेज से हट गया',
 
     pushTitle: 'इस फोन पर आवाज़ पाइए',

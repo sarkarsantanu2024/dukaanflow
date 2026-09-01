@@ -960,7 +960,11 @@ function assemble(input: Ingredients): Report {
     name: tally.name,
     unit: tally.unit,
     revenuePaise: tally.revenuePaise,
-    quantity: tally.quantity,
+    // Rounded to a whole number of the item's own unit. Amounts are fractional
+    // now — a customer may buy 50 g of something priced by the kilo — and a
+    // report reading "12.35" units sold is precision nobody asked for on a page
+    // whose job is ranking. The revenue beside it is exact, in paise.
+    quantity: Math.round(tally.quantity * 100) / 100,
     transactions: tally.transactions,
     shops: tally.shops.size,
     revenueShare: revenuePaise > 0 ? round1((tally.revenuePaise / revenuePaise) * 100) : 0,

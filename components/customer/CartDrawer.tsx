@@ -20,7 +20,9 @@
  * order itself, stays behind Continue.
  */
 
-import { formatPaise } from '@/lib/money';
+import { formatPaise, linePaise } from '@/lib/money';
+import { amountLabel, isLooseUnit, totalMeasure } from '@/lib/units';
+import { AmountStepper } from './AmountStepper';
 import { dict, type Locale } from '@/lib/i18n';
 import { Drawer } from '@/components/ui/Drawer';
 import { useConfirm } from '@/components/ui/useConfirm';
@@ -31,8 +33,17 @@ export type CartLine = {
   id: string;
   label: string;
   unit: string;
+  /** Multiples of `unit` — 0.05 of a "1 kg" line is fifty grams. */
   quantity: number;
   pricePaise: number;
+  /**
+   * Whether this item may be sold in any amount, or only whole.
+   *
+   * Decided by the shop's own settings (see `sellsAnyAmount`), so the basket
+   * offers the same control the item's card did — a shopper who chose 250 g on
+   * the menu must not find a whole-pack counter here.
+   */
+  loose?: boolean;
 };
 
 export function CartDrawer({
@@ -199,6 +210,24 @@ export function CartDrawer({
                     <p className="text-sm text-slate-500">
                       {formatPaise(line.pricePaise)}
                       {line.unit && <span className="text-slate-400"> / {line.unit}</span>}
+                      {/* WHAT THE LINE COMES TO, IN THE UNIT THEY BUY IN.
+                          "3 × 500 g" is a kilo and a half, and a shopper
+                          checking their basket against what they need should
+                          not have to do that multiplication in their head —
+                          nor should they discover at the door that "3" meant a
+                          kilo and a half. Weighed items say the amount they
+                          chose; counted ones say what the count adds up to. */}
+                      {(isLooseUnit(line.unit)
+                        ? amountLabel(line.unit, line.quantity)
+                        : totalMeasure(line.unit, line.quantity)) && (
+                        <span className="text-slate-400">
+                          {' '}
+                          ·{' '}
+                          {isLooseUnit(line.unit)
+                            ? amountLabel(line.unit, line.quantity)
+                            : totalMeasure(line.unit, line.quantity)}
+                        </span>
+                      )}
                     </p>
                   </div>
 
@@ -206,11 +235,27 @@ export function CartDrawer({
                       arithmetic the shopper should not have to do to check
                       the number on the button below. */}
                   <p className="shrink-0 font-semibold tabular-nums text-slate-900">
-                    {formatPaise(line.pricePaise * line.quantity)}
+                    {formatPaise(linePaise(line.pricePaise, line.quantity))}
                   </p>
                 </div>
 
                 <div className="mt-2.5 flex items-center gap-2">
+                  {/* Weighed goods are changed by amount here too — the same
+                      control as on the card, so 250 g stays 250 g rather than
+                      being rounded into a pack count the moment the shopper
+                      opens their basket. */}
+                  {line.loose ? (
+                    <div className="min-w-0 flex-1">
+                      <AmountStepper
+                        unit={line.unit}
+                        pricePaise={line.pricePaise}
+                        quantity={line.quantity}
+                        onChange={(next) => onSetQuantity(line.id, next)}
+                        locale={locale}
+                        compact
+                      />
+                    </div>
+                  ) : (
                   <div className="flex items-center gap-1 rounded-xl bg-brand-50 p-1">
                     <button
                       type="button"
@@ -232,6 +277,7 @@ export function CartDrawer({
                       +
                     </button>
                   </div>
+                  )}
 
                   {/* The bin alone. "Remove" beside it said the same thing
                       twice, in a word that had to be translated three ways,

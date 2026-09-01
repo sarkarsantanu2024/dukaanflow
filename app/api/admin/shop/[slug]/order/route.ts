@@ -7,6 +7,8 @@ import { upsertCustomer } from '@/lib/khata';
 import { sendPush } from '@/lib/push';
 import { orderRevisedNotification, orderStatusNotification } from '@/lib/push-text';
 import { quoteDelivery } from '@/lib/delivery';
+import { linePaise } from '@/lib/money';
+import { amountLabel } from '@/lib/units';
 import type { Locale } from '@/lib/i18n';
 
 export const runtime = 'nodejs';
@@ -238,13 +240,15 @@ export async function PUT(request: Request, { params }: Context) {
     // sends every line, but a partial payload must not silently drop goods.
     const next = wanted.has(line.itemId) ? Math.min(wanted.get(line.itemId)!, line.quantity) : line.quantity;
 
-    if (next < line.quantity) returning.set(line.itemId, line.quantity - next);
+    if (next < line.quantity) {
+      returning.set(line.itemId, Math.round((line.quantity - next) * 1000) / 1000);
+    }
 
     if (next <= 0) {
       removed.push(line);
       continue;
     }
-    after_.push({ ...line, quantity: next, amountPaise: line.pricePaise * next });
+    after_.push({ ...line, quantity: next, amountPaise: linePaise(line.pricePaise, next) });
   }
 
   if (after_.length === 0) {
@@ -278,9 +282,14 @@ export async function PUT(request: Request, { params }: Context) {
     // What the customer is not getting goes back on the shelf, so the next
     // person can be sold it.
     for (const [itemId, quantity] of returning) {
+      // A counted item is only ever ordered in whole packs — the order route
+      // refuses a fraction of one — so rounding here restores exactly what was
+      // taken, and never puts a fraction into a whole-number column.
+      const whole = Math.round(quantity);
+      if (whole <= 0) continue;
       await tx.item.updateMany({
         where: { id: itemId, shopId: shop.id, stockQty: { not: null } },
-        data: { stockQty: { increment: quantity }, inStock: true },
+        data: { stockQty: { increment: whole }, inStock: true },
       });
     }
 
@@ -331,7 +340,16 @@ function readSnapshot(itemsJson: unknown): SnapshotLine[] {
   return itemsJson.flatMap((raw) => {
     if (!raw || typeof raw !== 'object') return [];
     const row = raw as Record<string, unknown>;
-    const quantity = Math.max(0, Math.round(num(row.quantity)));
+    /**
+     * NOT rounded to a whole number any more.
+     *
+     * Quantities are multiples of the item's unit and may be fractional — 0.05
+     * of a kilo-priced item is the fifty grams the customer asked for — and
+     * `Math.round` turned every one of those into nothing at all, which on this
+     * path would have quietly deleted the line and re-quoted the order without
+     * it. Three decimal places, the same grain the API accepts.
+     */
+    const quantity = Math.max(0, Math.round(num(row.quantity) * 1000) / 1000);
     const amountPaise =
       row.amountPaise !== undefined
         ? num(row.amountPaise)
@@ -362,11 +380,14 @@ function readSnapshot(itemsJson: unknown): SnapshotLine[] {
 async function restoreStock(shopId: string, lines: SnapshotLine[]): Promise<void> {
   for (const line of lines) {
     if (!line.itemId || line.quantity <= 0) continue;
+    // Whole packs only: see the note in the revise transaction.
+    const whole = Math.round(line.quantity);
+    if (whole <= 0) continue;
     await prisma.item.updateMany({
       // `stockQty: { not: null }` is the whole guard: an item nobody counts must
       // stay uncounted rather than acquiring a total out of a cancellation.
       where: { id: line.itemId, shopId, stockQty: { not: null } },
-      data: { stockQty: { increment: line.quantity }, inStock: true },
+      data: { stockQty: { increment: whole }, inStock: true },
     });
   }
 }
@@ -379,7 +400,12 @@ function summarise(itemsJson: unknown): string {
       if (!raw || typeof raw !== 'object') return '';
       const row = raw as Record<string, unknown>;
       const name = typeof row.name === 'string' ? row.name : '';
-      return name ? `${name} x${Number(row.quantity) || 1}` : '';
+      if (!name) return '';
+      const unit = typeof row.unit === 'string' ? row.unit : '';
+      const quantity = Number(row.quantity) || 1;
+      // "Posto 50 g" rather than "Posto x0.05": this line is read in the credit
+      // book by the shopkeeper and on a statement by the customer who owes it.
+      return `${name} ${amountLabel(unit, quantity) ?? `x${quantity}`}`;
     })
     .filter(Boolean)
     .join(', ')

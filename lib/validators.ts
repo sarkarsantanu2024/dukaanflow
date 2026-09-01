@@ -55,7 +55,26 @@ export const priceSchema = z
   .min(50, 'Price must be at least 50 paise')
   .max(10_000_000, 'Price looks too large');
 
-export const quantitySchema = z.number().int().min(1, 'Minimum 1').max(99, 'Maximum 99 per item');
+/**
+ * How much of one item, as a multiple of that item's own unit.
+ *
+ * NOT an integer any more. A shop that prices poppy seeds at ₹1,500 per kg is
+ * quoting a rate, not setting a minimum, and the customer who wants fifty grams
+ * of it sends 0.05 — see the note at the head of `lib/units.ts`. The route is
+ * what decides whether a given item may be split at all: a packet of biscuits
+ * or a plate of chowmein cannot, and only whole numbers are accepted for those.
+ *
+ * Three decimal places, so a gram of a kilo is expressible and nothing finer
+ * can arrive to be rounded away silently. The floor is one thousandth rather
+ * than something friendlier because the unit could be "5 kg", where a thousandth
+ * is still five grams.
+ */
+export const quantitySchema = z
+  .number({ invalid_type_error: 'Quantity must be a number' })
+  .finite('Quantity must be a number')
+  .min(0.001, 'Minimum 0.001')
+  .max(99, 'Maximum 99 per item')
+  .transform((value) => Math.round(value * 1000) / 1000);
 
 export const itemNameSchema = z
   .string()
@@ -354,8 +373,19 @@ export const orderReviseSchema = z.object({
     .array(
       z.object({
         itemId: z.string().uuid(),
-        /** Zero removes the line — "we have none of this at all". */
-        quantity: z.number().int().min(0).max(99),
+        /**
+         * Zero removes the line — "we have none of this at all".
+         *
+         * Fractional for the same reason an order is: an owner with 700 g of
+         * posto left, against an order for a kilo, should be able to send the
+         * 700 g rather than choose between a kilo and nothing.
+         */
+        quantity: z
+          .number()
+          .finite()
+          .min(0)
+          .max(99)
+          .transform((value) => Math.round(value * 1000) / 1000),
       }),
     )
     .min(1, 'Nothing to change')

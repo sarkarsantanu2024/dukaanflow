@@ -30,6 +30,13 @@ import { CheckIcon, CloseIcon, PhoneIcon, PinIcon, WhatsAppIcon } from '@/compon
 import { useConfirm } from '@/components/ui/useConfirm';
 import { formatPaise } from '@/lib/money';
 import {
+  amountLabel,
+  baseFromQuantity,
+  isLooseUnit,
+  quantityFromBase,
+  stepBase,
+} from '@/lib/units';
+import {
   buildRevisedMessage,
   buildRoundMessage,
   buildStatusMessage,
@@ -134,6 +141,30 @@ const TAB_ORDER: Tab[] = ['NEW', 'CONFIRMED', 'COMPLETED', 'ALL', 'CANCELLED'];
  */
 function isToday(iso: string): boolean {
   return new Date(iso) >= startOfBusinessDay();
+}
+
+/**
+ * One tap of the owner's revise stepper, in the same amounts the customer's
+ * picker uses: 50 g at a time under a kilo, 250 g up to five, a kilo above —
+ * and whole packs for anything counted.
+ */
+function reviseStep(unit: string, quantity: number, direction: 1 | -1): number {
+  if (!isLooseUnit(unit)) return quantity + direction;
+  const base = baseFromQuantity(unit, quantity);
+  const step = stepBase(unit, base);
+  return Math.max(0, quantityFromBase(unit, base + step * direction));
+}
+
+/**
+ * How much of a line, as the person packing it needs to read it.
+ *
+ * "× 0.05" cannot be weighed out. Since a customer may now order any amount of
+ * anything sold by weight or volume — fifty grams of posto priced by the kilo —
+ * the packing list has to name the amount, and only counted goods keep a
+ * multiplier.
+ */
+function lineAmount(line: { unit: string; quantity: number }): string {
+  return amountLabel(line.unit, line.quantity) ?? `× ${line.quantity}`;
 }
 
 export function OrdersScreen({
@@ -540,7 +571,7 @@ export function OrdersScreen({
                             {next !== line.quantity && (
                               <span className="text-slate-400">
                                 {' '}
-                                · {t.reviseWas} {line.quantity}
+                                · {t.reviseWas} {lineAmount(line)}
                               </span>
                             )}
                           </span>
@@ -557,14 +588,16 @@ export function OrdersScreen({
                                 onClick={() =>
                                   setRevision((current) => ({
                                     ...current,
-                                    [line.itemId]: Math.max(0, next - 1),
+                                    [line.itemId]: Math.max(0, reviseStep(line.unit, next, -1)),
                                   }))
                                 }
                                 className="h-8 w-8 rounded text-lg font-bold text-slate-700"
                               >
                                 −
                               </button>
-                              <span className="w-6 text-center font-bold tabular-nums">{next}</span>
+                              <span className="w-16 text-center font-bold tabular-nums">
+                                {lineAmount({ unit: line.unit, quantity: next })}
+                              </span>
                               <button
                                 type="button"
                                 aria-label="+"
@@ -572,7 +605,10 @@ export function OrdersScreen({
                                 onClick={() =>
                                   setRevision((current) => ({
                                     ...current,
-                                    [line.itemId]: Math.min(line.quantity, next + 1),
+                                    [line.itemId]: Math.min(
+                                      line.quantity,
+                                      reviseStep(line.unit, next, 1),
+                                    ),
                                   }))
                                 }
                                 className="h-8 w-8 rounded text-lg font-bold text-slate-700 disabled:opacity-30"
@@ -582,7 +618,7 @@ export function OrdersScreen({
                             </span>
                           ) : (
                             <span className="shrink-0 text-sm tabular-nums text-slate-500">
-                              × {line.quantity}
+                              {lineAmount(line)}
                             </span>
                           )}
                         </li>
@@ -620,7 +656,7 @@ export function OrdersScreen({
                     >
                       <span className="min-w-0 truncate">
                         {lineName(line, locale)}
-                        {line.unit ? ` · ${line.unit}` : ''} × {line.quantity}
+                        {line.unit ? ` · ${line.unit}` : ''} {lineAmount(line)}
                       </span>
                       <span className="shrink-0 tabular-nums">{formatPaise(line.amountPaise)}</span>
                     </li>

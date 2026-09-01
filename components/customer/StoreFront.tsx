@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { SearchIcon } from '@/components/ui/Icon';
 import { ShopHeader, type ShopSummary } from './ShopHeader';
-import { ItemCard, itemName, type CustomerItem } from './ItemCard';
+import { ItemCard, itemName, sellsAnyAmount, type CustomerItem } from './ItemCard';
 import { CartBar } from './CartBar';
 import { CartDrawer, type CartLine } from './CartDrawer';
 import { CheckoutSheet, type CheckoutSubmit } from './CheckoutSheet';
@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
+import { roundQuantity } from '@/lib/units';
+import { linePaise } from '@/lib/money';
 import { quoteDelivery } from '@/lib/delivery';
 import { rememberShop } from '@/lib/saved-shops';
 import { OrderPlaced } from './OrderPlaced';
@@ -69,6 +71,14 @@ function readRemembered(): RememberedCustomer | null {
   }
 }
 
+/**
+ * What is in the basket: item id → how much of it, in multiples of that item's
+ * own unit.
+ *
+ * FRACTIONAL, since a pack size is a rate and not a minimum — 0.05 against a
+ * kilo-priced item is the fifty grams of posto the customer asked for. See the
+ * note at the head of `lib/units.ts`.
+ */
 type Cart = Record<string, number>;
 
 /**
@@ -164,8 +174,11 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     for (const item of items) {
       const quantity = cart[item.id] ?? 0;
       if (quantity > 0) {
-        count += quantity;
-        amount += quantity * item.pricePaise;
+        // ONE PER LINE, not the sum of the quantities. "0.05 items" is not a
+        // number anybody wants on the basket button, and half a kilo of posto
+        // plus a kilo of rice is two things in a bag either way.
+        count += 1;
+        amount += linePaise(item.pricePaise, quantity);
       }
     }
     return { totalItems: count, totalAmountPaise: amount };
@@ -203,6 +216,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           unit: item.unit,
           quantity: cart[item.id]!,
           pricePaise: item.pricePaise,
+          loose: sellsAnyAmount(item),
         })),
     [items, cart, locale],
   );
@@ -222,14 +236,20 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
 
   /** Voice adds are relative — saying "rice" twice means two of them. */
   function addQuantity(itemId: string, more: number) {
-    setCart((current) => ({ ...current, [itemId]: Math.min((current[itemId] ?? 0) + more, 99) }));
+    setCart((current) => ({
+      ...current,
+      [itemId]: Math.min(roundQuantity((current[itemId] ?? 0) + more), 99),
+    }));
   }
 
   function setQuantity(itemId: string, next: number) {
     setCart((current) => {
       const updated = { ...current };
+      // Rounded to the thousandth on the way in, so a fraction of a pack
+      // arrives at the server exactly as it was shown to the shopper — and so
+      // no float tail can survive into a price.
       if (next <= 0) delete updated[itemId];
-      else updated[itemId] = Math.min(next, 99);
+      else updated[itemId] = Math.min(roundQuantity(next), 99);
       return updated;
     });
   }
@@ -341,7 +361,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
               unit: line.unit,
               pricePaise: line.pricePaise,
               quantity: line.quantity,
-              amountPaise: line.pricePaise * line.quantity,
+              amountPaise: linePaise(line.pricePaise, line.quantity),
             })),
             totalAmountPaise: totalAmountPaise,
             customerName: values.customerName,
