@@ -12,6 +12,7 @@
 import { splitNameAndUnit } from '@/lib/bulk';
 import {
   MIN_LOOSE_BASE,
+  MOST_PER_LINE,
   amountLabel,
   comparableMeasures,
   formatMeasure,
@@ -1028,8 +1029,15 @@ function resolveOrder(transcript: string, items: MatchableItem[]): SpokenOrderRe
   return { lines, unsure, tooMany };
 }
 
-/** The most any one line may ask for. Mirrors `quantitySchema` on the server. */
-export const MOST_PER_LINE = 99;
+/**
+ * The most any one line may ask for.
+ *
+ * Re-exported rather than redeclared: this file used to keep its own copy of
+ * the number, which is how a cap that the basket, the till, the order route and
+ * two schemas all enforce came to be written out nine times. It is defined once
+ * in `lib/units.ts` now, and everything that clamps a quantity reads it there.
+ */
+export { MOST_PER_LINE } from '@/lib/units';
 
 type SpokenAmount = {
   /** Whole packs of the item's own unit. */

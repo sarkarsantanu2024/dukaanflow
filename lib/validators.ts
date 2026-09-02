@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isStateCode } from './states';
+import { MOST_PER_LINE, QUANTITY_DP } from './units';
 
 export const SHOP_TYPES = [
   'GROCERY',
@@ -73,8 +74,8 @@ export const quantitySchema = z
   .number({ invalid_type_error: 'Quantity must be a number' })
   .finite('Quantity must be a number')
   .min(0.001, 'Minimum 0.001')
-  .max(99, 'Maximum 99 per item')
-  .transform((value) => Math.round(value * 1000) / 1000);
+  .max(MOST_PER_LINE, `Maximum ${MOST_PER_LINE} per item`)
+  .transform((value) => Math.round(value * 10 ** QUANTITY_DP) / 10 ** QUANTITY_DP);
 
 export const itemNameSchema = z
   .string()
@@ -384,8 +385,8 @@ export const orderReviseSchema = z.object({
           .number()
           .finite()
           .min(0)
-          .max(99)
-          .transform((value) => Math.round(value * 1000) / 1000),
+          .max(MOST_PER_LINE)
+          .transform((value) => Math.round(value * 10 ** QUANTITY_DP) / 10 ** QUANTITY_DP),
       }),
     )
     .min(1, 'Nothing to change')

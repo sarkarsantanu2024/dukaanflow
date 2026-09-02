@@ -33,7 +33,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
 import { useToast } from '@/components/ui/Toast';
 import { formatPaise, linePaise } from '@/lib/money';
-import { roundQuantity } from '@/lib/units';
+import { MOST_PER_LINE, roundQuantity } from '@/lib/units';
 import { ownerDict } from '@/lib/owner-i18n';
 import { dict } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
@@ -194,7 +194,7 @@ export function SellScreen({
   function addQuantity(id: string, more: number) {
     setCart((current) => ({
       ...current,
-      [id]: Math.min(roundQuantity((current[id] ?? 0) + more), 99),
+      [id]: Math.min(roundQuantity((current[id] ?? 0) + more), MOST_PER_LINE),
     }));
   }
 
@@ -204,7 +204,7 @@ export function SellScreen({
       // Thousandths, so a weighed amount survives the round trip exactly as
       // the shop page's basket does.
       if (next <= 0) delete updated[id];
-      else updated[id] = Math.min(roundQuantity(next), 99);
+      else updated[id] = Math.min(roundQuantity(next), MOST_PER_LINE);
       return updated;
     });
   }

@@ -236,6 +236,28 @@ export function formatMeasure(measure: Measure): string {
 /** Thousandths of a unit: enough for a gram of a kilo. */
 export const QUANTITY_DP = 3;
 
+/**
+ * THE MOST OF ONE ITEM ANY SINGLE LINE MAY HOLD, in multiples of its own unit.
+ *
+ * This number was written out as a bare `99` in nine different files — two card
+ * steppers, two baskets, the till, the khata picker, the order route and two
+ * validation schemas — and the voice parser kept its own copy of it under
+ * another name. Nine places that all have to agree, and nothing tying them
+ * together: raise the ceiling in the basket and the server silently refuses the
+ * order the shopper was allowed to build, or raise it on the server and the
+ * card's + button stops one short for no visible reason.
+ *
+ * It lives here because this is the module that decides what a quantity is.
+ * Everything that clamps one imports it.
+ *
+ * Note what it counts: PACKS, not weight. Ninety-nine of a "250 g" pack is
+ * 24.75 kg and ninety-nine of a "1 kg" pack is 99 kg, so the ceiling is a
+ * different amount on every row — which is why nothing shown to a shopper may
+ * ever print this number raw. `amountLabel(unit, MOST_PER_LINE)` turns it into
+ * the amount they were speaking in.
+ */
+export const MOST_PER_LINE = 99;
+
 /** The least anybody may order of a divisible item, in base units (g or ml). */
 export const MIN_LOOSE_BASE = 10;
 
