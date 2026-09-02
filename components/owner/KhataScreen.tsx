@@ -131,6 +131,7 @@ export function KhataScreen({
     total: t.khataTotal,
     outstanding: t.khataTotal,
     nobody: t.khataNobody,
+    summary: t.khataSummary,
   };
 
   function accountFor(customer: KhataCustomer): StatementAccount {
@@ -150,7 +151,12 @@ export function KhataScreen({
       const now = new Date();
       const blob = await khataStatementPdf({
         shopName,
-        accounts: customers.map(accountFor),
+        // What is on screen, not everything in the database. The shopkeeper
+        // tapped this while looking at a list of who owes money; handing them a
+        // file with a different set of people in it than the one they were
+        // reading is how a download stops being trusted. Opening "Paid up"
+        // therefore includes those too — the file matches the page.
+        accounts: listed.map(accountFor),
         labels: pdfLabels,
         generatedAt: now,
       });
