@@ -190,6 +190,16 @@ export function SignOutIcon(props: IconProps) {
   );
 }
 
+/** A sheet ruled into cells — the khata as a spreadsheet. */
+export function SheetIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 4h16v16H4z" />
+      <path d="M4 10h16M4 15h16M10 4v16" />
+    </Svg>
+  );
+}
+
 export function InstallIcon(props: IconProps) {
   return (
     <Svg {...props}>
