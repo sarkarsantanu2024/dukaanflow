@@ -26,7 +26,28 @@ type SpeechRecognitionLike = {
   onresult: ((event: any) => void) | null;
   onerror: ((event: any) => void) | null;
   onend: (() => void) | null;
+  onstart: (() => void) | null;
+  onspeechstart: (() => void) | null;
 };
+
+/**
+ * How long the recogniser may go without a single sign of life before it is
+ * torn down and rebuilt.
+ *
+ * Chrome ends a recognition session of its own accord well inside a minute of
+ * silence, and `onend` restarts it — so in a healthy session something touches
+ * `lastEventRef` every few seconds whether or not anybody is talking. Ninety
+ * seconds of nothing at all is not a quiet shop; it is Chrome's speech service
+ * having gone away without telling us, which it does, and which no amount of
+ * waiting recovers from.
+ */
+const SILENT_LIMIT_MS = 90_000;
+
+/** How often to ask whether that has happened. */
+const WATCHDOG_MS = 15_000;
+
+/** Long enough for Chrome to finish tearing a session down before the next. */
+const RESTART_DELAY_MS = 250;
 
 function recognitionCtor(): (new () => SpeechRecognitionLike) | null {
   if (typeof window === 'undefined') return null;
@@ -70,61 +91,102 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
   // The recogniser stops itself after a pause; `wantedRef` tells onend whether
   // that was the user tapping stop or just silence, so we can restart.
   const wantedRef = useRef(false);
+  const restartTimerRef = useRef<number | null>(null);
+  /** When this recogniser last showed any sign of life. See `SILENT_LIMIT_MS`. */
+  const lastEventRef = useRef(0);
   const onPhraseRef = useRef(onPhrase);
   onPhraseRef.current = onPhrase;
+  const langRef = useRef(lang);
+  langRef.current = lang;
 
   useEffect(() => {
     setSupported(recognitionCtor() !== null && 'speechSynthesis' in window);
   }, []);
 
-  const stop = useCallback(() => {
-    wantedRef.current = false;
-    recognitionRef.current?.stop();
-    setState('idle');
-    setInterim('');
+  const cancelRestart = useCallback(() => {
+    if (restartTimerRef.current !== null) {
+      window.clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
   }, []);
 
-  const start = useCallback(async () => {
+  /**
+   * TAKES A RECOGNISER OUT OF SERVICE FOR GOOD.
+   *
+   * Unhooking the handlers before aborting is the whole point, and it is what
+   * was missing. `abort()` makes Chrome fire `onend` on the NEXT tick — by
+   * which time `start()` had already built a replacement and set `wantedRef`
+   * back to true, so the dead recogniser's own `onend` read "yes, we want to be
+   * listening" and called `start()` on ITSELF. Two recognisers then streamed
+   * the same microphone, and because `aborted` is treated as routine noise in
+   * `onerror`, the pair simply took turns aborting and restarting each other
+   * with nothing reaching `onPhrase`.
+   *
+   * Every spoken reply does a stop/start cycle, so a few of these stacked up
+   * within a couple of minutes of ordinary use: the button still said
+   * Listening, and the mic had stopped hearing anything.
+   */
+  const retire = useCallback((recognition: SpeechRecognitionLike | null) => {
+    if (!recognition) return;
+    recognition.onresult = null;
+    recognition.onerror = null;
+    recognition.onend = null;
+    recognition.onstart = null;
+    recognition.onspeechstart = null;
+    try {
+      recognition.abort();
+    } catch {
+      /* already gone */
+    }
+  }, []);
+
+  const stop = useCallback(() => {
+    wantedRef.current = false;
+    cancelRestart();
+    const current = recognitionRef.current;
+    recognitionRef.current = null;
+    retire(current);
+    setState('idle');
+    setInterim('');
+  }, [cancelRestart, retire]);
+
+  /**
+   * Builds a recogniser and starts it, replacing whatever was running.
+   *
+   * Split out from `start` so the watchdog and the restart timer can rebuild
+   * the session without going back through the permission prompt — that check
+   * belongs to the user tapping the mic, not to a recovery that happens while
+   * they are mid-sentence.
+   */
+  const launch = useCallback(() => {
     const Ctor = recognitionCtor();
     if (!Ctor) return;
 
-    // A previous failure must not linger on screen once the user retries.
-    setErrorCode(null);
-
-    // `http://` on a LAN address (192.168.x.x, a phone testing the dev server)
-    // is not a secure context, and Chrome then refuses the mic with the same
-    // opaque error as a real block. Say which one it is.
-    if (!window.isSecureContext) {
-      setErrorCode('insecure-context');
-      setState('denied');
-      return;
-    }
-
-    // Ask for the mic explicitly first. SpeechRecognition asks implicitly, but
-    // its rejection carries no reason; getUserMedia distinguishes "user said
-    // no" from "this device has no microphone", and it is what actually raises
-    // Chrome's permission prompt on the first tap.
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // We only wanted the permission — recognition opens its own stream.
-      stream.getTracks().forEach((track) => track.stop());
-    } catch (error) {
-      const name = (error as { name?: string })?.name;
-      setErrorCode(name === 'NotFoundError' || name === 'OverconstrainedError' ? 'no-microphone' : 'not-allowed');
-      setState('denied');
-      return;
-    }
-
-    recognitionRef.current?.abort();
+    cancelRestart();
+    const previous = recognitionRef.current;
+    recognitionRef.current = null;
+    retire(previous);
 
     const recognition = new Ctor();
-    recognition.lang = lang;
+    recognition.lang = langRef.current;
     recognition.continuous = true;
     recognition.interimResults = true;
     // Ask for several readings, not just the top one — see `onPhrase`.
     recognition.maxAlternatives = 5;
 
+    /** Ignore anything from an instance that has since been replaced. */
+    const current = () => recognitionRef.current === recognition;
+    const alive = () => {
+      lastEventRef.current = Date.now();
+    };
+
+    recognition.onstart = alive;
+    recognition.onspeechstart = alive;
+
     recognition.onresult = (event: any) => {
+      if (!current()) return;
+      alive();
+
       let pending = '';
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
         const result = event.results[i] as unknown as ArrayLike<RecognitionResult> & {
@@ -148,11 +210,15 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
     };
 
     recognition.onerror = (event: any) => {
+      if (!current()) return;
       const code = String(event?.error ?? '');
 
       // "no-speech" and "aborted" are routine during a long session; onend
       // restarts us, so they must not surface as failures.
-      if (!code || code === 'no-speech' || code === 'aborted') return;
+      if (!code || code === 'no-speech' || code === 'aborted') {
+        alive();
+        return;
+      }
 
       wantedRef.current = false;
 
@@ -190,22 +256,42 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
     };
 
     recognition.onend = () => {
+      if (!current()) return;
+      alive();
       setInterim('');
-      if (wantedRef.current) {
-        // Chrome ends the session after ~60s of silence. Restart so the
-        // shopkeeper can keep dictating without tapping the mic again.
+
+      if (!wantedRef.current) {
+        setState((state) => (state === 'listening' ? 'idle' : state));
+        return;
+      }
+
+      /**
+       * Chrome ends the session on its own after a stretch of silence. Restart,
+       * so the shopkeeper can keep dictating without tapping the mic again —
+       * but on a later tick, not from inside this handler.
+       *
+       * Calling `start()` synchronously here throws `InvalidStateError` when
+       * the session has not finished tearing down, and the old code answered
+       * that by falling through to `idle`: the mic died and only the label
+       * said so.
+       */
+      restartTimerRef.current = window.setTimeout(() => {
+        restartTimerRef.current = null;
+        if (!current() || !wantedRef.current) return;
         try {
           recognition.start();
-          return;
+          lastEventRef.current = Date.now();
         } catch {
-          /* already restarting */
+          // Still not ready, or already running again. A full rebuild is
+          // always safe and the watchdog would do it anyway.
+          launchRef.current?.();
         }
-      }
-      setState((current) => (current === 'listening' ? 'idle' : current));
+      }, RESTART_DELAY_MS);
     };
 
     recognitionRef.current = recognition;
     wantedRef.current = true;
+    lastEventRef.current = Date.now();
     try {
       recognition.start();
       setState('listening');
@@ -213,28 +299,92 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
       setErrorCode('unknown');
       setState('error');
     }
-  }, [lang]);
+  }, [cancelRestart, retire]);
+
+  // `onend` may need to rebuild the session, and it closes over `launch`
+  // before `launch` exists. A ref is the only way round that ordering.
+  const launchRef = useRef<(() => void) | null>(null);
+  launchRef.current = launch;
+
+  const start = useCallback(async () => {
+    if (!recognitionCtor()) return;
+
+    // A previous failure must not linger on screen once the user retries.
+    setErrorCode(null);
+
+    // `http://` on a LAN address (192.168.x.x, a phone testing the dev server)
+    // is not a secure context, and Chrome then refuses the mic with the same
+    // opaque error as a real block. Say which one it is.
+    if (!window.isSecureContext) {
+      setErrorCode('insecure-context');
+      setState('denied');
+      return;
+    }
+
+    // Ask for the mic explicitly first. SpeechRecognition asks implicitly, but
+    // its rejection carries no reason; getUserMedia distinguishes "user said
+    // no" from "this device has no microphone", and it is what actually raises
+    // Chrome's permission prompt on the first tap.
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // We only wanted the permission — recognition opens its own stream.
+      stream.getTracks().forEach((track) => track.stop());
+    } catch (error) {
+      const name = (error as { name?: string })?.name;
+      setErrorCode(name === 'NotFoundError' || name === 'OverconstrainedError' ? 'no-microphone' : 'not-allowed');
+      setState('denied');
+      return;
+    }
+
+    launch();
+  }, [launch]);
 
   const toggle = useCallback(() => {
     if (state === 'listening') stop();
     else void start();
   }, [state, start, stop]);
 
+  /**
+   * THE RECOGNISER THAT DIES WITHOUT SAYING SO.
+   *
+   * Chrome's speech service can stop delivering results and never fire `onend`
+   * or `onerror` — the object stays in its "started" state and simply hears
+   * nothing, for the rest of the session. Nothing in the callbacks can notice
+   * that, because the whole failure is the absence of callbacks.
+   *
+   * So the session is checked from outside it. A healthy recogniser touches
+   * `lastEventRef` every few seconds — Chrome closes and we reopen it far
+   * inside the limit even in a silent room — and a minute and a half of total
+   * silence from the API means it is gone. Rebuilt from scratch rather than
+   * restarted: an instance in that state does not come back.
+   */
+  useEffect(() => {
+    if (state !== 'listening') return;
+
+    const timer = window.setInterval(() => {
+      if (!wantedRef.current || restartTimerRef.current !== null) return;
+      if (Date.now() - lastEventRef.current < SILENT_LIMIT_MS) return;
+      launch();
+    }, WATCHDOG_MS);
+
+    return () => window.clearInterval(timer);
+  }, [state, launch]);
+
   // Never leave the mic hot after the component goes away.
   useEffect(() => {
     return () => {
       wantedRef.current = false;
-      recognitionRef.current?.abort();
+      if (restartTimerRef.current !== null) window.clearTimeout(restartTimerRef.current);
+      const current = recognitionRef.current;
+      recognitionRef.current = null;
+      retire(current);
       if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
     };
-  }, []);
+  }, [retire]);
 
   // A language change mid-session needs a fresh recogniser.
   useEffect(() => {
-    if (wantedRef.current) {
-      stop();
-      void start();
-    }
+    if (wantedRef.current) launch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
