@@ -23,4 +23,7 @@ if (password.length < 10) {
 // painful for anyone brute-forcing a leaked hash.
 const hash = bcrypt.hashSync(password, 12);
 
-console.log('\nADMIN_PASSWORD_HASH=' + JSON.stringify(hash) + '\n');
+console.log('\n  Vercel — paste this value exactly as it is:\n');
+console.log('    ' + hash);
+console.log('\n  Local .env — dollars escaped, or it will not load:\n');
+console.log("    ADMIN_PASSWORD_HASH='" + hash.replaceAll('$', '\\$') + "'\n");
