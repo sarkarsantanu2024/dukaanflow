@@ -232,7 +232,25 @@ export function VoiceOrder({
        * come back as "did you mean 99 × sugar 1 kg?".
        */
       if (tooMany.length > 0) {
-        const message = `${words.voiceTooMuch} ${MOST_PER_LINE}`;
+        /**
+         * THE CEILING, IN THE UNITS THE SHOPPER WAS SPEAKING IN.
+         *
+         * This said "at most 99", and 99 is a count of the item's own pack —
+         * which the shopper has never seen, does not think in, and which means
+         * a different amount for every row on the menu. On sago priced per
+         * 250 g the real ceiling is 24.75 kg; on rice priced per kilo it is
+         * 99 kg. Quoting the same "99" for both told somebody who had asked for
+         * 300 kg nothing they could act on.
+         */
+        const limits = tooMany.map((line) => {
+          const item = available.find((candidate) => candidate.id === line.id);
+          if (!item) return '';
+          const name = itemName(item, localeRef.current);
+          const most = amountLabel(item.unit, MOST_PER_LINE);
+          return `${name} — ${most ?? `${MOST_PER_LINE} × ${item.unit}`}`;
+        });
+
+        const message = `${words.voiceTooMuch} ${limits.filter(Boolean).join(', ')}`;
         setFeedback(message);
         announce(message);
         return;
