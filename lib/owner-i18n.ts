@@ -257,6 +257,8 @@ type OwnerDictionary = {
   khataSettled: string;
   /** The fold-away line for customers who owe nothing. */
   /** Said when the share sheet cannot take a file and the PDF was downloaded instead. */
+  /** The first page of a multi-customer statement: who owes what. */
+  khataSummary: string;
   khataPdfAttach: string;
   khataShowSettled: string;
   khataHideSettled: string;
@@ -571,6 +573,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataOwingDays: 'owing {n} days',
     khataOwingMonths: 'owing {n} months',
     khataSettled: 'settled',
+    khataSummary: 'Who owes what',
     khataPdfAttach: 'PDF saved — attach it in WhatsApp.',
     khataShowSettled: 'Paid up',
     khataHideSettled: 'Hide paid up',
@@ -875,6 +878,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataOwingDays: '{n} দিন ধরে বাকি',
     khataOwingMonths: '{n} মাস ধরে বাকি',
     khataSettled: 'শোধ',
+    khataSummary: 'কার কত বাকি',
     khataPdfAttach: 'PDF সেভ হয়েছে — WhatsApp-এ জুড়ে দিন।',
     khataShowSettled: 'শোধ হয়ে গেছে',
     khataHideSettled: 'শোধ হওয়াগুলো লুকান',
@@ -1179,6 +1183,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataOwingDays: '{n} दिन से बाकी',
     khataOwingMonths: '{n} महीने से बाकी',
     khataSettled: 'चुकता',
+    khataSummary: 'किसका कितना बाकी',
     khataPdfAttach: 'PDF सेव हो गया — WhatsApp में जोड़ दीजिए।',
     khataShowSettled: 'चुकता हो गया',
     khataHideSettled: 'चुकता वाले छिपाएँ',

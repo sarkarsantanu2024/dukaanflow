@@ -43,6 +43,8 @@ export type StatementLabels = {
   total: string;
   outstanding: string;
   nobody: string;
+  /** Heading for the first page of a multi-customer book. */
+  summary: string;
 };
 
 /* A4 at roughly 150dpi. Big enough to stay crisp on a phone screen and when
@@ -218,9 +220,68 @@ export async function khataStatementPdf(input: {
     text(layout.ctx, labels.nobody, MARGIN, layout.advance(80), { size: 24, colour: MUTED });
   }
 
+  /**
+   * WHO OWES WHAT, ON THE FIRST PAGE.
+   *
+   * Every customer gets their own sheet, which is what makes the book printable
+   * as a stack of statements to hand out — and it meant page one was one
+   * customer and a shopkeeper who opened the file saw a single name. That reads
+   * as the download having failed, and it was reported as exactly that: "I
+   * downloaded all pending khata and the PDF shows only one".
+   *
+   * The rest of the book was there on the pages behind it. But a document whose
+   * first page answers a narrower question than the button that produced it is
+   * a document that will be mistrusted, and being right underneath is no
+   * defence. So a book of more than one account opens with the list, and the
+   * per-customer sheets follow.
+   */
+  if (accounts.length > 1) {
+    let y = layout.advance(64);
+    text(layout.ctx, labels.summary, MARGIN, y, { size: 30, weight: '700' });
+
+    y = layout.advance(44);
+    text(layout.ctx, labels.total, COL_BALANCE, y, {
+      size: 20,
+      weight: '600',
+      colour: MUTED,
+      align: 'right',
+    });
+    rule(layout.ctx, layout.advance(12), RULE, 2);
+
+    for (const account of accounts) {
+      layout.room(46);
+      const row = layout.advance(38);
+      text(layout.ctx, account.name || '—', MARGIN, row, { size: 24 });
+      if (account.phone) {
+        text(layout.ctx, `+91 ${account.phone}`, MARGIN + 420, row, { size: 20, colour: MUTED });
+      }
+      text(layout.ctx, formatPaise(account.balancePaise), COL_BALANCE, row, {
+        size: 24,
+        weight: '700',
+        align: 'right',
+      });
+      rule(layout.ctx, layout.advance(10), HAIRLINE, 1);
+    }
+
+    const owed = accounts.reduce((sum, account) => sum + account.balancePaise, 0);
+    layout.room(70);
+    rule(layout.ctx, layout.advance(18), INK, 3);
+    const totalRow = layout.advance(38);
+    text(layout.ctx, labels.outstanding, MARGIN, totalRow, { size: 26, weight: '700' });
+    text(layout.ctx, formatPaise(owed), COL_BALANCE, totalRow, {
+      size: 26,
+      weight: '700',
+      align: 'right',
+    });
+
+    // The first account starts the next sheet, not this one.
+    layout.break();
+  }
+
   accounts.forEach((account, index) => {
     // Each person on their own sheet — which is what makes a whole-book
-    // download printable as a stack of individual statements.
+    // download printable as a stack of individual statements. The summary
+    // above has already broken to a fresh sheet for the first of them.
     if (index > 0) layout.break();
 
     let y = layout.advance(64);
@@ -301,6 +362,23 @@ export async function khataStatementPdf(input: {
       align: 'right',
     });
   });
+
+  /**
+   * "2 / 3" at the foot of every sheet.
+   *
+   * Written in a pass at the end, because the total is not known until the last
+   * sheet exists. Without it nothing on page one says there is a page two — and
+   * a statement about money that might be incomplete is one nobody can rely on.
+   */
+  if (layout.sheets.length > 1) {
+    layout.sheets.forEach((sheet, index) => {
+      text(sheet.ctx, `${index + 1} / ${layout.sheets.length}`, PAGE_W / 2, PAGE_H - 40, {
+        size: 20,
+        colour: MUTED,
+        align: 'center',
+      });
+    });
+  }
 
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
