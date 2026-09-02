@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { handledExpiredSession } from './sessionGuard';
-import { PrinterIcon, TrashIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { PrinterIcon, SheetIcon, TrashIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import { reminderMessage } from '@/lib/khata';
@@ -248,11 +248,48 @@ export function KhataScreen({
   return (
     <div className="space-y-4">
       <div className="rounded-2xl bg-white p-4 shadow-card">
-        <p className="text-sm text-slate-500">{t.khataTotal}</p>
-        <p className="text-3xl font-bold tabular-nums text-slate-900">
-          {formatPaise(outstandingPaise)}
-        </p>
-        <p className="mt-0.5 text-sm text-slate-500">{t.khataTitle}</p>
+        {/* THE TWO EXPORTS MOVED UP HERE, AS ICONS.
+            They were a pair of wide labelled buttons and a line of hint text on
+            their own row under the total — which on a 375px phone stacked into
+            two full-width rows and a third of explanation, roughly a fifth of
+            the screen spent on two things a shopkeeper taps once a month. The
+            space beside a three-character total was empty the whole time.
+
+            Labels survive as `title` and `aria-label` rather than being
+            dropped: a bare icon is a guess for a sighted user and nothing at
+            all for a screen reader. */}
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-slate-500">{t.khataTotal}</p>
+            <p className="text-3xl font-bold tabular-nums text-slate-900">
+              {formatPaise(outstandingPaise)}
+            </p>
+            <p className="mt-0.5 text-sm text-slate-500">{t.khataTitle}</p>
+          </div>
+
+          {customers.length > 0 && (
+            <div className="flex shrink-0 items-center gap-1">
+              {/* Plain links, not fetch-and-blob: a download link is the one
+                  thing every Android WebView handles the same way. */}
+              <a
+                href={`/api/owner/${slug}/khata/export`}
+                aria-label={t.khataExportCsv}
+                title={`${t.khataExportCsv} — ${t.khataExportHint}`}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              >
+                <SheetIcon className="h-5 w-5" />
+              </a>
+              <a
+                href={`/owner/${slug}/khata/statement`}
+                aria-label={t.khataExportPdf}
+                title={`${t.khataExportPdf} — ${t.khataExportHint}`}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              >
+                <PrinterIcon className="h-5 w-5" />
+              </a>
+            </div>
+          )}
+        </div>
 
         {/* THE BOOK COMES OUT OF THE APP.
             This is the shopkeeper's own money, and until now the only copy of
@@ -263,26 +300,7 @@ export function KhataScreen({
 
             Two shapes, because they are two different jobs: a spreadsheet for
             anything that has to be added up, and a printable statement for the
-            customer who wants it on paper. Plain links, not fetch-and-blob:
-            a download link is the one thing every Android WebView handles the
-            same way. */}
-        {customers.length > 0 && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-            <a
-              href={`/api/owner/${slug}/khata/export`}
-              className="h-9 rounded-lg border border-slate-300 px-3 text-sm font-semibold leading-9 text-slate-700 transition hover:bg-slate-50"
-            >
-              {t.khataExportCsv}
-            </a>
-            <a
-              href={`/owner/${slug}/khata/statement`}
-              className="h-9 rounded-lg border border-slate-300 px-3 text-sm font-semibold leading-9 text-slate-700 transition hover:bg-slate-50"
-            >
-              {t.khataExportPdf}
-            </a>
-            <span className="w-full text-xs text-slate-500">{t.khataExportHint}</span>
-          </div>
-        )}
+            customer who wants it on paper. Both are the two icons above. */}
       </div>
 
       {customers.length === 0 ? (
