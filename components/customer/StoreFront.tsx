@@ -18,7 +18,7 @@ import { useToast } from '@/components/ui/Toast';
 import { useHtmlLang } from '@/components/ui/useHtmlLang';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
-import { roundQuantity } from '@/lib/units';
+import { MOST_PER_LINE, roundQuantity } from '@/lib/units';
 import { linePaise } from '@/lib/money';
 import { DELIVERY_AVAILABLE, quoteDelivery } from '@/lib/delivery';
 import { rememberShop } from '@/lib/saved-shops';
@@ -259,7 +259,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   function addQuantity(itemId: string, more: number) {
     setCart((current) => ({
       ...current,
-      [itemId]: Math.min(roundQuantity((current[itemId] ?? 0) + more), 99),
+      [itemId]: Math.min(roundQuantity((current[itemId] ?? 0) + more), MOST_PER_LINE),
     }));
   }
 
@@ -270,7 +270,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
       // arrives at the server exactly as it was shown to the shopper — and so
       // no float tail can survive into a price.
       if (next <= 0) delete updated[itemId];
-      else updated[itemId] = Math.min(roundQuantity(next), 99);
+      else updated[itemId] = Math.min(roundQuantity(next), MOST_PER_LINE);
       return updated;
     });
   }
