@@ -827,8 +827,11 @@ export function ItemsManager({
           <div
             className={clsx(
               'grid gap-2',
-              // Name takes the room; price and pack size are short and fixed.
-              'sm:grid-cols-[minmax(0,1fr)_8rem_8rem]',
+              // Name takes the room; price and pack size are short and fixed,
+              // and the last column is the width of the remove button so every
+              // row's boxes line up with the row above whether or not it has
+              // one.
+              'sm:grid-cols-[minmax(0,1fr)_8rem_8rem_2.5rem]',
             )}
           >
             <Input
@@ -860,6 +863,35 @@ export function ItemsManager({
               error={rowErrors[index]?.unit}
               placeholder={units[0]}
             />
+
+            {/* THROWING ONE ROW AWAY.
+                The mic mishears — a scrap of counter conversation lands as a
+                row named "দেশ নাই" — and until now the only cure was emptying
+                its three boxes by hand or clearing the whole sheet and starting
+                the dictation again. Neither is a thing to ask of somebody
+                halfway through listing forty items.
+
+                Aligned with the boxes rather than the labels, so it sits beside
+                the row it removes on the first row too. Never offered on the
+                last remaining row: a sheet with no rows at all has nothing to
+                type into and no way back except reopening it. */}
+            <div className={clsx('flex justify-end', index === 0 && 'sm:pt-[1.875rem]')}>
+              <button
+                type="button"
+                disabled={rows.length <= 1}
+                onClick={() => {
+                  setRows((current) => current.filter((_, i) => i !== index));
+                  // The errors are keyed by position, so everything below the
+                  // removed row would otherwise inherit its neighbour's message.
+                  setRowErrors({});
+                }}
+                aria-label={`${t.delete} — ${row.name || index + 1}`}
+                title={t.delete}
+                className="inline-flex h-11 w-10 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       ))}
