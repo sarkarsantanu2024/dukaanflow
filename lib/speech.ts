@@ -79,11 +79,47 @@ const WORD_UNITS: Record<string, number> = {
   tinte: 3, tinti: 3, tinta: 3,
   charte: 4, charti: 4, charta: 4,
   panchta: 5, panchti: 5,
+
+  // ELEVEN TO NINETEEN, WHICH THIS FILE COULD NOT COUNT TO.
+  //
+  // The table above stopped at ten on the reasoning that a recogniser emits
+  // digits above twenty. It does — for digits. It does NOT for the words, and
+  // Bengali and Hindi have a separate, irregular word for every number up to a
+  // hundred: "ময়দা কুড়ি কেজি" (twenty kilos of maida) came back as the word
+  // কুড়ি, which matched nothing, so the amount fell through to one AND the
+  // unmatched word dragged the item's own confidence below the acting
+  // threshold — the customer asked for 20 kg and was asked "did you mean 1 kg?".
+  এগারো: 11, এগারোটা: 11, বারো: 12, বারোটা: 12, তেরো: 13, চোদ্দো: 14, চৌদ্দ: 14,
+  পনেরো: 15, পনের: 15, ষোলো: 16, ষোল: 16, সতেরো: 17, আঠারো: 18, উনিশ: 19,
+  ग्यारह: 11, बारह: 12, तेरह: 13, चौदह: 14, पंद्रह: 15, पन्द्रह: 15, सोलह: 16,
+  सत्रह: 17, अठारह: 18, उन्नीस: 19,
+  egaro: 11, baro: 12, tero: 13, choddo: 14, ponero: 15, sholo: 16, sotero: 17,
+  atharo: 18, unish: 19,
+  gyarah: 11, barah: 12, terah: 13, chaudah: 14, pandrah: 15, solah: 16,
+  satrah: 17, atharah: 18, unnis: 19,
+
+  // The composites a counter actually hears. Bengali and Hindi do not build
+  // these out of a ten and a unit the way English does — পঁচিশ is one word, not
+  // "twenty five" — so each needs its own entry or it is not a number at all.
+  পঁচিশ: 25, পঁয়ত্রিশ: 35, পঁয়তাল্লিশ: 45, পঞ্চান্ন: 55, পঁয়ষট্টি: 65, পঁচাত্তর: 75,
+  পঁচাশি: 85, পঁচানব্বই: 95,
+  पच्चीस: 25, पैंतीस: 35, पैंतालीस: 45, पचपन: 55, पैंसठ: 65, पचहत्तर: 75,
+  पचासी: 85, पचानवे: 95,
+  ponchish: 25, pochish: 25, pachchis: 25, pachhattar: 75,
 };
 
 const WORD_TENS: Record<string, number> = {
   twenty: 20, thirty: 30, forty: 40, fourty: 40, fifty: 50, sixty: 60,
   seventy: 70, eighty: 80, ninety: 90,
+  // The same gap, for the round tens. These also feed `HUNDRED_SUFFIX`, so
+  // "পঞ্চাশশো" and the like resolve rather than being read as a product name.
+  কুড়ি: 20, বিশ: 20, ত্রিশ: 30, তিরিশ: 30, চল্লিশ: 40, পঞ্চাশ: 50, ষাট: 60,
+  সত্তর: 70, আশি: 80, নব্বই: 90,
+  बीस: 20, तीस: 30, चालीस: 40, पचास: 50, साठ: 60, सत्तर: 70, अस्सी: 80, नब्बे: 90,
+  kuri: 20, bish: 20, tirish: 30, chollish: 40, ponchash: 50, shat: 60,
+  sottor: 70, ashi: 80, nobboi: 90,
+  bees: 20, tees: 30, chalis: 40, pachas: 50, saath: 60, sattar: 70,
+  assi: 80, nabbe: 90,
 };
 
 const WORD_SCALES: Record<string, number> = {
@@ -816,6 +852,17 @@ export type SpokenOrderLine = {
    * by four times.
    */
   exact: boolean;
+  /**
+   * Whether the shopper NAMED an amount — "800 g", "two packets", "20 kg" — as
+   * opposed to just saying the item's name.
+   *
+   * This is what decides whether the basket line is SET to this or ADDED to.
+   * Saying "800 g of suji" is a statement about how much suji is wanted in
+   * total, and adding it to whatever was already there is how a shopper asking
+   * for 800 g ended up with 1.3 kg — the 500 g they had tapped earlier plus the
+   * 800 they said. Saying the bare name is a "one more of these" and still adds.
+   */
+  explicit: boolean;
 };
 
 export type SpokenOrderResult = {
@@ -915,6 +962,7 @@ function resolveOrder(transcript: string, items: MatchableItem[]): SpokenOrderRe
       confidence: match.confidence,
       requested: amount.requested,
       exact: amount.exact,
+      explicit: amount.explicit,
     };
 
     /**
@@ -930,8 +978,14 @@ function resolveOrder(transcript: string, items: MatchableItem[]): SpokenOrderRe
         : unsure;
 
     const existing = bucket.find((candidate) => candidate.id === line.id);
-    if (existing) existing.quantity = Math.min(existing.quantity + line.quantity, MOST_PER_LINE);
-    else bucket.push(line);
+    if (existing) {
+      // Two clauses of ONE sentence naming the same item add up — "500 g rice
+      // and another 500 g rice" is a kilo. What must not add up is a new
+      // sentence against what is already in the basket; that is the caller's
+      // decision and `explicit` is what it turns on.
+      existing.quantity = Math.min(existing.quantity + line.quantity, MOST_PER_LINE);
+      existing.explicit = existing.explicit || line.explicit;
+    } else bucket.push(line);
   }
 
   return { lines, unsure, tooMany };
@@ -952,6 +1006,8 @@ type SpokenAmount = {
    * but the caller must not offer that clamp as a suggestion — see `tooMany`.
    */
   overMax: boolean;
+  /** The clause named an amount or a count, rather than only the item. */
+  explicit: boolean;
 };
 
 /**
@@ -1051,6 +1107,7 @@ function spokenAmount(phrase: string, item: MatchableItem): SpokenAmount {
         requested,
         exact: true,
         overMax: wanted > MOST_PER_LINE,
+        explicit: true,
       };
     }
 
@@ -1063,6 +1120,7 @@ function spokenAmount(phrase: string, item: MatchableItem): SpokenAmount {
       requested,
       exact: Math.abs(packs - capped) < 0.001,
       overMax: rounded > MOST_PER_LINE,
+      explicit: true,
     };
   }
 
@@ -1076,12 +1134,13 @@ function spokenAmount(phrase: string, item: MatchableItem): SpokenAmount {
       requested: divisible ? amountLabel(unit, wanted) : null,
       exact: divisible || Math.abs(bareCount - wanted) < 0.001,
       overMax: wanted > MOST_PER_LINE,
+      explicit: true,
     };
   }
 
   // No number at all. One unit of whatever the shop quotes it in, which is
-  // exactly what tapping the card does.
-  return { quantity: 1, requested: null, exact: true, overMax: false };
+  // exactly what tapping the card does — and, like tapping it, it ADDS.
+  return { quantity: 1, requested: null, exact: true, overMax: false, explicit: false };
 }
 
 /** The same total, expressed in `like`'s unit — 1500 g against a kg is 1.5 kg. */
