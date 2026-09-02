@@ -18,6 +18,22 @@
  * the shop does not have.
  */
 
+/**
+ * WHETHER HOME DELIVERY IS OFFERED AT ALL, ANYWHERE IN THE PRODUCT.
+ *
+ * Off for now, at the product owner's instruction. Every shop's own
+ * `deliveryEnabled` flag, its fee, its free-delivery threshold and its minimum
+ * are all still stored and still honoured by the server — nothing has been
+ * deleted and no shop's settings have been changed. This one constant simply
+ * stops the customer being offered the choice and stops the owner being shown
+ * the settings for something they cannot yet sell.
+ *
+ * Turning it back on is this line, and nothing else: every screen that shows or
+ * hides a delivery control reads it from here rather than deciding for itself,
+ * so there is no second place to remember.
+ */
+export const DELIVERY_AVAILABLE = false;
+
 export type DeliveryTerms = {
   /** PAISE. Zero means the shop delivers free. */
   deliveryFeePaise: number;
