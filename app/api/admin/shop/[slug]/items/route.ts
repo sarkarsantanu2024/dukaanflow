@@ -68,14 +68,43 @@ export async function POST(request: Request, { params }: Context) {
   // Matched case-insensitively, because "rice" typed today must find "Rice"
   // listed last week rather than sit beside it. The existing row keeps its own
   // capitalisation: the owner chose it, and a re-price is not a rename.
-  const existing = await prisma.item.findFirst({
+  let existing = await prisma.item.findFirst({
     where: {
       shopId,
       name: { equals: name, mode: 'insensitive' },
       unit: { equals: unit, mode: 'insensitive' },
     },
-    select: { id: true },
+    select: { id: true, unit: true },
   });
+
+  /**
+   * A NAME WITH NO PACK SIZE IS NOT A SECOND PRODUCT.
+   *
+   * The key is (shop, name, unit), which is right and has to stay right: Dal
+   * 500 g beside Dal 1 kg is a kirana doing its job. But an empty unit is not a
+   * pack size — it is the absence of one — and treating it as a distinct value
+   * meant every path that saves without a unit (the mic, a photographed packet,
+   * a form left blank) created a twin of a row the shop already had. The owner
+   * was promised "same name, and the old one changes"; what they got was মুড়ি
+   * listed twice at two prices, which is exactly what a customer cannot choose
+   * between.
+   *
+   * So a unit-less save lands on the row that already carries that name, and
+   * keeps that row's pack size — the owner chose it, and saying the name again
+   * is not an instruction to forget it. Only when the shop has no row of that
+   * name at all does this create one.
+   *
+   * The reverse is deliberately NOT done: a save that names a pack size means
+   * that pack size, and must be free to open a second shelf beside an existing
+   * unit-less row rather than silently overwriting it.
+   */
+  if (!existing && !unit) {
+    existing = await prisma.item.findFirst({
+      where: { shopId, name: { equals: name, mode: 'insensitive' } },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, unit: true },
+    });
+  }
 
   const refusal = existing
     ? await checkEditAllowance(shopId)
