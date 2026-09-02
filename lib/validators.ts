@@ -397,6 +397,46 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required').max(200),
 });
 
+/**
+ * The Super Admin changing their own sign-in.
+ *
+ * The current password is required even though the caller is already signed in.
+ * A 12-hour session on a laptop somebody walked away from is exactly the
+ * situation where an account takeover happens quietly, and re-typing the
+ * password is the cheapest way to make sure the person at the keyboard is the
+ * person who owns the account.
+ *
+ * Twelve characters, because this one password is the whole console — every
+ * shop, every order, every ledger. An eight-character minimum is a reasonable
+ * default for a product with a thousand accounts and the wrong one for a
+ * product with exactly one.
+ */
+export const adminAccountSchema = z
+  .object({
+    username: z
+      .string()
+      .trim()
+      .min(3, 'Username must be at least 3 characters')
+      .max(60)
+      // Compared case-insensitively at sign-in, so two spellings of one name
+      // must never be storable as two different usernames.
+      .regex(/^[A-Za-z0-9._@-]+$/, 'Letters, numbers, and . _ - @ only'),
+    currentPassword: z.string().min(1, 'Enter your current password'),
+    newPassword: z
+      .string()
+      .min(12, 'New password must be at least 12 characters')
+      .max(200),
+    confirmPassword: z.string(),
+  })
+  .refine((value) => value.newPassword === value.confirmPassword, {
+    path: ['confirmPassword'],
+    message: 'The two passwords do not match',
+  })
+  .refine((value) => value.newPassword !== value.currentPassword, {
+    path: ['newPassword'],
+    message: 'The new password must be different from the current one',
+  });
+
 /** The owner's sign-in: one 6-digit PIN, nothing else to remember. */
 export const ownerLoginSchema = z.object({
   pin: z

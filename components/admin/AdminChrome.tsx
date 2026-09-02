@@ -23,6 +23,7 @@ import {
   BoxIcon,
   CalendarIcon,
   ChartIcon,
+  KeyIcon,
   PhoneIcon,
   PlusIcon,
   RupeeIcon,
@@ -39,6 +40,9 @@ const NAV = [
   { href: '/admin/shops/new', label: 'Add shop', icon: PlusIcon, exact: true, onPhone: true },
   { href: '/admin/reports', label: 'Reports', icon: ChartIcon, exact: false, onPhone: true },
   { href: '/admin/occasions', label: 'Occasions', icon: CalendarIcon, exact: false, onPhone: false },
+  // Last, and desk-only: changing the one password that opens all of this is
+  // not something anybody does from a phone between shops.
+  { href: '/admin/account', label: 'Sign-in', icon: KeyIcon, exact: false, onPhone: false },
 ];
 
 /**
