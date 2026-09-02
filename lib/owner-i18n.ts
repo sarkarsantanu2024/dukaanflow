@@ -86,6 +86,12 @@ type OwnerDictionary = {
   otherLanguagesHint: string;
   saveItem: string;
   upsertHint: string;
+  /** One more blank row on the add sheet, for an owner listing several at once. */
+  addRow: string;
+  /** Said above the rows, so the mic's silence is understood as working. */
+  rowsHint: string;
+  /** Nothing was typed or spoken into any row, so Save had nothing to save. */
+  nothingToSave: string;
 
   searchItems: string;
   allCategories: string;
@@ -405,6 +411,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
       'Filled in automatically for names the app knows. Left blank, customers see the name above.',
     saveItem: 'Save item',
     upsertHint: 'Same name and unit? The existing item is updated, not duplicated.',
+    addRow: 'One more row',
+    rowsHint: 'Speak or type as many as you like — one row each. Save writes them all.',
+    nothingToSave: 'Nothing to save yet — give at least one item a name.',
 
     searchItems: 'Search items',
     allCategories: 'All categories',
@@ -706,6 +715,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
       'চেনা নাম হলে নিজে থেকেই ভরে যায়। খালি রাখলে ক্রেতা উপরের নামটাই দেখবে।',
     saveItem: 'সেভ করুন',
     upsertHint: 'একই নাম আর পরিমাণ? পুরনোটাই বদলে যাবে, নতুন হবে না।',
+    addRow: 'আরও একটা ঘর',
+    rowsHint: 'যত খুশি বলুন বা লিখুন — এক জিনিস এক ঘরে। সেভ করলে সবগুলো এক সঙ্গে যোগ হবে।',
+    nothingToSave: 'এখনও কিছু নেই — অন্তত একটা জিনিসের নাম দিন।',
 
     searchItems: 'জিনিস খুঁজুন',
     allCategories: 'সব ভাগ',
@@ -1003,6 +1015,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
       'जाने-पहचाने नाम खुद भर जाते हैं। खाली छोड़ने पर ग्राहक ऊपर वाला नाम देखेंगे।',
     saveItem: 'सेव करें',
     upsertHint: 'वही नाम और मात्रा? पुराना ही बदलेगा, नया नहीं बनेगा।',
+    addRow: 'एक और खाना',
+    rowsHint: 'जितने चाहें बोलिए या लिखिए — एक सामान एक पंक्ति में। सेव करते ही सब जुड़ जाएंगे।',
+    nothingToSave: 'अभी कुछ नहीं है — कम से कम एक सामान का नाम दीजिए।',
 
     searchItems: 'सामान खोजें',
     allCategories: 'सभी श्रेणी',
