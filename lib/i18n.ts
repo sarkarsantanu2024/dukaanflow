@@ -103,11 +103,19 @@ type Dictionary = {
   /**
    * The amount asked for is past what one line of an order may hold.
    *
-   * Followed by the limit. Said rather than clamped: "300 chini" answered with
-   * "did you mean 99 kg of sugar?" is a question nobody can use, and the number
-   * was far more likely to have been grams or rupees.
+   * A whole sentence, ending in a full stop, with the limits listed AFTER it as
+   * "<item> — <at most> <amount>". It used to trail off in "— at most" and have
+   * the item name appended to that, which built "please say the amount again —
+   * at most Sabudana — 24.75 kg": the ceiling arrived before the thing it was
+   * the ceiling for, in all three languages.
+   *
+   * Said rather than clamped: "300 chini" answered with "did you mean 99 kg of
+   * sugar?" is a question nobody can use, and the number was far more likely to
+   * have been grams or rupees.
    */
   voiceTooMuch: string;
+  /** Joins an item to its ceiling: "Sabudana — at most 24.75 kg". */
+  voiceAtMost: string;
   repeatTitle: string;
   repeatHint: string;
   repeatAdd: string;
@@ -254,7 +262,8 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceSoldIn: 'this shop sells it in',
     amount: 'Amount',
     anyAmount: 'any amount',
-    voiceTooMuch: 'That is more than one order can hold. Please say the amount again — at most',
+    voiceTooMuch: 'That is more than one order can hold. Please say the amount again.',
+    voiceAtMost: 'at most',
 
     onlyLeft: 'Only left:',
     goods: 'Items',
@@ -375,7 +384,8 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceSoldIn: 'এই দোকানে বিক্রি হয়',
     amount: 'পরিমাণ',
     anyAmount: 'যত খুশি',
-    voiceTooMuch: 'একবারে এত নেওয়া যায় না। পরিমাণটা আবার বলুন — সর্বোচ্চ',
+    voiceTooMuch: 'একবারে এত নেওয়া যায় না। পরিমাণটা আবার বলুন।',
+    voiceAtMost: 'সর্বোচ্চ',
 
     onlyLeft: 'আছে মাত্র:',
     goods: 'জিনিসপত্র',
@@ -496,7 +506,8 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceSoldIn: 'यह दुकान बेचती है',
     amount: 'मात्रा',
     anyAmount: 'जितना चाहें',
-    voiceTooMuch: 'एक बार में इतना नहीं लिया जा सकता। मात्रा दोबारा बोलिए — ज़्यादा से ज़्यादा',
+    voiceTooMuch: 'एक बार में इतना नहीं लिया जा सकता। मात्रा दोबारा बोलिए।',
+    voiceAtMost: 'ज़्यादा से ज़्यादा',
 
     onlyLeft: 'सिर्फ़ बचा:',
     goods: 'सामान',

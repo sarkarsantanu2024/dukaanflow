@@ -247,7 +247,11 @@ export function VoiceOrder({
           if (!item) return '';
           const name = itemName(item, localeRef.current);
           const most = amountLabel(item.unit, MOST_PER_LINE);
-          return `${name} — ${most ?? `${MOST_PER_LINE} × ${item.unit}`}`;
+          // The item first, then its ceiling. See `voiceTooMuch`: appending the
+          // name to a sentence that already ended in "at most" produced
+          // "সর্বোচ্চ সাবুদানা — 24.75 kg" — the limit before the thing it
+          // limits, which is not a sentence in any of the three languages.
+          return `${name} — ${words.voiceAtMost} ${most ?? `${MOST_PER_LINE} × ${item.unit}`}`;
         });
 
         const message = `${words.voiceTooMuch} ${limits.filter(Boolean).join(', ')}`;
