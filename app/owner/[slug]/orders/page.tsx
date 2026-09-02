@@ -76,7 +76,17 @@ export default async function OrdersPage({ params }: PageProps) {
   const { slug } = await params;
   const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
 
-  const rows = await prisma.order.findMany({
+  /**
+   * Three questions, asked together.
+   *
+   * These ran one after another — orders, then the item names, then who can be
+   * reached by push — and none of them needs an answer from the one before it,
+   * so the screen was waiting out three round trips to render one page. On a
+   * phone this is the difference between the Orders tab appearing and the
+   * Orders tab seeming not to have registered the tap.
+   */
+  const [rows, current, subscriptions] = await Promise.all([
+    prisma.order.findMany({
     where: { shopId: shop.id },
     // The screen groups by status itself and counts today's takings across the
     // whole set, so it wants a window of history rather than a top-50 slice
@@ -96,13 +106,19 @@ export default async function OrdersPage({ params }: PageProps) {
       createdAt: true,
       itemsJson: true,
     },
-  });
+    }),
+    // Only the names, and only for items still on the list.
+    prisma.item.findMany({
+      where: { shopId: shop.id },
+      select: { id: true, nameBn: true, nameHi: true },
+    }),
+    prisma.pushSubscription.findMany({
+      where: { shopId: shop.id, role: 'CUSTOMER' },
+      select: { customerPhone: true },
+      distinct: ['customerPhone'],
+    }),
+  ]);
 
-  // Only the names, and only for items still on the list.
-  const current = await prisma.item.findMany({
-    where: { shopId: shop.id },
-    select: { id: true, nameBn: true, nameHi: true },
-  });
   const known: Translations = new Map(
     current.map((item) => [item.id, { nameBn: item.nameBn, nameHi: item.nameHi }]),
   );
@@ -120,15 +136,7 @@ export default async function OrdersPage({ params }: PageProps) {
    * order and a subscription carry, and a `Customer` row can be purged and
    * remade underneath both of them.
    */
-  const reachable = new Set(
-    (
-      await prisma.pushSubscription.findMany({
-        where: { shopId: shop.id, role: 'CUSTOMER' },
-        select: { customerPhone: true },
-        distinct: ['customerPhone'],
-      })
-    ).map((row) => row.customerPhone),
-  );
+  const reachable = new Set(subscriptions.map((row) => row.customerPhone));
 
   const orders: OwnerOrder[] = rows.map((row) => ({
     id: row.id,
