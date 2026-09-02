@@ -106,6 +106,31 @@ const EMPTY_NEW_ITEM: NewItem = {
 };
 
 /**
+ * HOW MANY THINGS AN OWNER LISTS AT ONE SITTING: MORE THAN ONE.
+ *
+ * The add sheet held a single set of three boxes, and the mic wrote into them.
+ * So an owner who tapped the mic and said seven items in a row watched each one
+ * overwrite the last, and saved the seventh — the other six were spoken, shown,
+ * and thrown away. The only workaround was save, reopen, speak, save, six more
+ * times, which is not what anybody does with a microphone.
+ *
+ * Three blank rows to start with, more on request, and one Save that writes all
+ * of them. Three because it is enough to make the shape obvious — this is a list
+ * you fill, not a form you submit — without making an owner adding one item
+ * scroll past two empty ones to reach the button.
+ */
+const BLANK_ROWS = 3;
+
+function blankRows(count: number = BLANK_ROWS): NewItem[] {
+  return Array.from({ length: count }, () => ({ ...EMPTY_NEW_ITEM }));
+}
+
+/** A row nobody has touched — neither typed into nor dictated into. */
+function isBlankRow(row: NewItem): boolean {
+  return !row.name.trim() && !row.price.trim() && !row.unit.trim();
+}
+
+/**
  * The API's field names, mapped onto this form's.
  *
  * THIS IS WHY A REJECTED SAVE SAID NOTHING. The route answers 422 with
@@ -165,8 +190,10 @@ export function ItemsManager({
   const [typing, setTyping] = useState(false);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
-  const [draft, setDraft] = useState<NewItem>(EMPTY_NEW_ITEM);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  /** The add sheet's rows. One item each; the mic writes into them too. */
+  const [rows, setRows] = useState<NewItem[]>(() => blankRows());
+  /** Field errors from the last save, by row index. */
+  const [rowErrors, setRowErrors] = useState<Record<number, Record<string, string>>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   /** Which drawer is open, by tool id. `form` is this component's own. */
@@ -372,77 +399,148 @@ export function ItemsManager({
 
     const pricePaise = spoken.pricePaise ?? suggestion?.pricePaise ?? null;
 
-    setDraft({
+    const spokenRow: NewItem = {
       name: spoken.name,
       nameBn: known?.bn ?? '',
       nameHi: known?.hi ?? '',
       price: pricePaise === null ? '' : paiseToInput(pricePaise),
       unit: spoken.unit || suggestion?.unit || '',
       category: suggestion?.category ?? categoryFor(spoken.name, catalogue),
+    };
+
+    /**
+     * Into the first untouched row, never over one the owner has already
+     * spoken or typed into. This is the whole of the "I said seven items and
+     * six vanished" bug: with one set of boxes there was nowhere else for the
+     * second sentence to go.
+     *
+     * And a blank row is always left waiting underneath, so the owner never has
+     * to stop dictating to press "one more row".
+     */
+    setRows((current) => {
+      const next = [...current];
+      const slot = next.findIndex(isBlankRow);
+      if (slot >= 0) next[slot] = spokenRow;
+      else next.push(spokenRow);
+      if (!next.some(isBlankRow)) next.push({ ...EMPTY_NEW_ITEM });
+      return next;
     });
+  }
+
+  function updateRow(index: number, changes: Partial<NewItem>) {
+    setRows((current) => current.map((row, i) => (i === index ? { ...row, ...changes } : row)));
   }
 
   /**
    * Fills the two translations when the typed name is one we know, without
    * ever overwriting something the shopkeeper entered by hand.
    */
-  function nameChanged(name: string) {
+  function nameChanged(index: number, name: string) {
     const known = suggestNames(name);
     // Category is derived, never asked for. A shopkeeper knows they sell rice;
     // whether rice belongs under "Rice & Atta" or "Staples" is a taxonomy
     // question they did not ask to be given, and a field they leave blank -- or
     // fill with something new every time -- is worse than one that fills itself
     // from the catalogue this shop type already has.
-    const knownCategory = categoryFor(name, catalogue);
-    setDraft((current) => ({
-      ...current,
+    updateRow(index, {
       name,
       nameBn: known?.bn ?? '',
       nameHi: known?.hi ?? '',
-      category: knownCategory,
-    }));
+      category: categoryFor(name, catalogue),
+    });
   }
 
+  /**
+   * ONE SAVE, EVERY ROW.
+   *
+   * Rows are written one at a time rather than in parallel, for the same reason
+   * bulk delete is: a phone on a village connection holding twenty simultaneous
+   * requests starts dropping them, and a half-written list with no report of
+   * which half is worse than a slow one.
+   *
+   * Rows that saved are cleared away and rows that failed stay exactly where
+   * they are, with the server's own reason against the field that caused it —
+   * so a mistyped price on the fourth row costs the owner that row and not the
+   * other six. The sheet closes only when everything went in; there is nothing
+   * to look at then, and leaving it open over a list the owner cannot see is
+   * how a save comes to look like it did nothing.
+   */
   async function addItem(event: React.FormEvent) {
     event.preventDefault();
-    setAdding(true);
-    setErrors({});
 
-    try {
-      const response = await fetch(`/api/admin/shop/${slug}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: draft.name,
-          nameBn: draft.nameBn,
-          nameHi: draft.nameHi,
-          pricePaise: parsePaise(draft.price) ?? 0,
-          unit: draft.unit,
-          category: draft.category,
-          inStock: true,
-        }),
-      });
-      const payload = (await response.json()) as { error?: string; errors?: Record<string, string> };
+    const pending = rows
+      .map((row, index) => ({ row, index }))
+      .filter(({ row }) => row.name.trim() !== '');
 
-      if (!response.ok) {
-        const fields = formErrors(payload.errors);
-        setErrors(fields);
-        // The specific reason, not "check the highlighted fields". The server
-        // knows exactly what was wrong with the price; saying so is the whole
-        // difference between a form a shopkeeper can fix and one that ignores
-        // them.
-        push(Object.values(fields)[0] ?? payload.error ?? t.networkError, 'error');
-        return;
-      }
-
-      push(`${draft.name} ✓`, 'success');
-      setDraft(EMPTY_NEW_ITEM);
-      router.refresh();
-    } catch {
-      push(t.networkError, 'error');
-    } finally {
-      setAdding(false);
+    if (pending.length === 0) {
+      push(t.nothingToSave, 'error');
+      return;
     }
+
+    setAdding(true);
+    setRowErrors({});
+
+    const kept: NewItem[] = [];
+    const failures: Record<number, Record<string, string>> = {};
+    let saved = 0;
+    let firstProblem = '';
+
+    for (const { row } of pending) {
+      try {
+        const response = await fetch(`/api/admin/shop/${slug}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: row.name,
+            nameBn: row.nameBn,
+            nameHi: row.nameHi,
+            pricePaise: parsePaise(row.price) ?? 0,
+            unit: row.unit,
+            category: row.category,
+            inStock: true,
+          }),
+        });
+        const payload = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          errors?: Record<string, string>;
+        };
+
+        if (!response.ok) {
+          // The specific reason, not "check the highlighted fields". The server
+          // knows exactly what was wrong with the price; saying so is the whole
+          // difference between a form a shopkeeper can fix and one that ignores
+          // them.
+          const fields = formErrors(payload.errors);
+          const message = Object.values(fields)[0] ?? payload.error ?? t.networkError;
+          failures[kept.length] = Object.keys(fields).length > 0 ? fields : { name: message };
+          firstProblem ||= message;
+          kept.push(row);
+          continue;
+        }
+
+        saved += 1;
+      } catch {
+        failures[kept.length] = { name: t.networkError };
+        firstProblem ||= t.networkError;
+        kept.push(row);
+      }
+    }
+
+    setAdding(false);
+    setRowErrors(failures);
+
+    if (kept.length > 0) {
+      // The failures, still editable, plus one blank row to carry on into.
+      setRows([...kept, { ...EMPTY_NEW_ITEM }]);
+      push(firstProblem || t.networkError, 'error');
+      if (saved > 0) router.refresh();
+      return;
+    }
+
+    push(`${saved} ✓`, 'success');
+    setRows(blankRows());
+    setDrawer(null);
+    router.refresh();
   }
 
   async function patchItem(id: string, changes: Record<string, unknown>) {
@@ -709,38 +807,88 @@ export function ItemsManager({
     }
   }
 
+  /**
+   * The add sheet: a short list of rows, three boxes each, and one Save.
+   *
+   * Deliberately the same on the owner's phone and in the Super Admin console.
+   * They were two different sheets — the console had the mic in a side column
+   * and the boxes behind a separate "type instead" drawer, the phone had both
+   * on one sheet — which meant two layouts to learn, two places for a bug to
+   * live, and an operator on the phone to a shopkeeper working differently from
+   * the shopkeeper. One panel, one shape, both screens.
+   */
   const typedForm = (
-    <form id="add-item-form" onSubmit={addItem} className="rounded-2xl bg-white p-4 shadow-card">
-        <div className={clsx('grid gap-3', wide ? 'grid-cols-2' : 'sm:grid-cols-2')}>
-          <Input
-            label={t.name}
-            required
-            value={draft.name}
-            onChange={(event) => nameChanged(event.target.value)}
-            error={errors.name}
-            placeholder="Rice"
-          />
-          <Input
-            label={t.price}
-            required
-            type="text"
-            inputMode="decimal"
-            value={draft.price}
-            onChange={(event) => setDraft({ ...draft, price: event.target.value })}
-            error={errors.price}
-            placeholder="68 or 68.50"
-          />
-          <Input
-            label={t.unit}
-            list={UNIT_LIST_ID}
-            value={draft.unit}
-            onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
-            error={errors.unit}
-            placeholder={units[0]}
-          />
+    <form id="add-item-form" onSubmit={addItem} className="space-y-2">
+      {rows.map((row, index) => (
+        <div
+          key={index}
+          className="rounded-2xl bg-white p-3 shadow-card"
+        >
+          <div
+            className={clsx(
+              'grid gap-2',
+              // Name takes the room; price and pack size are short and fixed.
+              'sm:grid-cols-[minmax(0,1fr)_8rem_8rem]',
+            )}
+          >
+            <Input
+              // Labelled once, on the first row. Repeating "Name / Price /
+              // Unit" down six rows is a form that reads as six forms.
+              label={index === 0 ? t.name : undefined}
+              aria-label={t.name}
+              value={row.name}
+              onChange={(event) => nameChanged(index, event.target.value)}
+              error={rowErrors[index]?.name}
+              placeholder="Rice"
+            />
+            <Input
+              label={index === 0 ? t.price : undefined}
+              aria-label={t.price}
+              type="text"
+              inputMode="decimal"
+              value={row.price}
+              onChange={(event) => updateRow(index, { price: event.target.value })}
+              error={rowErrors[index]?.price}
+              placeholder="68 or 68.50"
+            />
+            <Input
+              label={index === 0 ? t.unit : undefined}
+              aria-label={t.unit}
+              list={UNIT_LIST_ID}
+              value={row.unit}
+              onChange={(event) => updateRow(index, { unit: event.target.value })}
+              error={rowErrors[index]?.unit}
+              placeholder={units[0]}
+            />
+          </div>
         </div>
+      ))}
 
-        <p className="mt-2 text-xs text-slate-500">{t.upsertHint}</p>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <button
+          type="button"
+          onClick={() => setRows((current) => [...current, { ...EMPTY_NEW_ITEM }])}
+          className="text-sm font-semibold text-brand-700 underline"
+        >
+          + {t.addRow}
+        </button>
+        {/* Only where a row could be lost: with everything blank there is
+            nothing to clear, and the button would be a dead control. */}
+        {rows.some((row) => !isBlankRow(row)) && (
+          <button
+            type="button"
+            onClick={() => {
+              setRows(blankRows());
+              setRowErrors({});
+            }}
+            className="text-sm text-slate-400 underline"
+          >
+            {t.clearLog}
+          </button>
+        )}
+      </div>
+
+      <p className="text-xs text-slate-500">{t.upsertHint}</p>
     </form>
   );
 
@@ -1351,6 +1499,10 @@ export function ItemsManager({
           locale={locale}
           onDraft={applySpokenDraft}
         />
+        {/* Said once, above the rows. The mic no longer answers each item with
+            a line of its own — the row filling itself in is the answer — so
+            something has to tell a first-time owner that they may keep going. */}
+        <p className="text-sm text-slate-600">{t.rowsHint}</p>
         {typedForm}
       </div>
     </Drawer>
@@ -1389,28 +1541,20 @@ export function ItemsManager({
           is sticky and stays roughly one screen high, so the page scrolls with
           the list rather than with the tools. */}
       <div className="space-y-3 max-lg:order-first lg:sticky lg:top-[4.25rem]">
-        {/* The console mic used to save straight to the list, which made it the
-            one place in the app where a misheard word became a product with
-            nobody having read it. It now does what the phone's mic does: puts
-            the word in the Name box and opens the form, where the operator is
-            already going to type a price. One Save covers both, and the item
-            that appears is the one somebody looked at. */}
-        <VoiceItemAdder
-          slug={slug}
-          items={items}
-          locale={locale}
-          onDraft={(spoken) => {
-            applySpokenDraft(spoken);
-            setDrawer('form');
-          }}
-        />
-
+        {/* THE CONSOLE OPENS THE SAME SHEET THE OWNER'S PHONE DOES.
+            It used to have its own arrangement: the mic parked in this column,
+            the boxes behind a second drawer, and a spoken item bouncing between
+            the two. That was a different tool from the one the operator is
+            talking a shopkeeper through on the phone, and it had the same
+            single-row limit — speaking six items saved the sixth. Both screens
+            now open `addDrawer`: mic on top, rows underneath, one Save. */}
         <button
           type="button"
-          onClick={() => setDrawer('form')}
+          onClick={() => setDrawer('add')}
           className="w-full rounded-2xl bg-white px-4 py-3 text-left shadow-card transition hover:bg-slate-50"
         >
-          <span className="block font-semibold text-slate-900">{t.typeInstead}</span>
+          <span className="block font-semibold text-slate-900">{t.addItem}</span>
+          <span className="mt-0.5 block text-sm text-slate-500">{t.typeInstead}</span>
         </button>
 
         {tools?.map((tool) => (
@@ -1428,14 +1572,7 @@ export function ItemsManager({
 
       {photoAdder}
 
-      <Drawer
-        open={drawer === 'form'}
-        title={t.typeInstead}
-        action={saveAction}
-        onClose={() => setDrawer(null)}
-      >
-        {typedForm}
-      </Drawer>
+      {addDrawer}
 
       <Drawer
         open={Boolean(openTool)}
