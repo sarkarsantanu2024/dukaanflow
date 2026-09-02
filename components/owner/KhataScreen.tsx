@@ -17,14 +17,21 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
+import { Spinner } from '@/components/ui/Spinner';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { handledExpiredSession } from './sessionGuard';
-import { PrinterIcon, SheetIcon, TrashIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { PdfIcon, SheetIcon, TrashIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import { reminderMessage } from '@/lib/khata';
+import {
+  khataStatementPdf,
+  saveBlob,
+  statementFilename,
+  type StatementAccount,
+} from '@/lib/khata-pdf';
 import { ItemNotePicker, type PickableItem } from './ItemNotePicker';
 import type { Locale } from '@/lib/i18n';
 
@@ -111,6 +118,116 @@ export function KhataScreen({
    */
   const [showSettled, setShowSettled] = useState(false);
   const [busy, setBusy] = useState(false);
+  /** Which PDF is being drawn — the whole book, or one customer's id. */
+  const [building, setBuilding] = useState<string | null>(null);
+
+  /** The sheet's wording, in the shop's own language. */
+  const pdfLabels = {
+    book: t.khataTitle,
+    statement: t.khataStatement,
+    history: t.khataHistory,
+    gave: t.khataGave,
+    got: t.khataGot,
+    total: t.khataTotal,
+    outstanding: t.khataTotal,
+    nobody: t.khataNobody,
+  };
+
+  function accountFor(customer: KhataCustomer): StatementAccount {
+    return {
+      name: customer.name,
+      phone: customer.phone,
+      area: customer.area,
+      balancePaise: customer.balancePaise,
+      entries: customer.entries,
+    };
+  }
+
+  /** The whole book as one PDF, a page per customer. */
+  async function downloadBook() {
+    setBuilding('all');
+    try {
+      const now = new Date();
+      const blob = await khataStatementPdf({
+        shopName,
+        accounts: customers.map(accountFor),
+        labels: pdfLabels,
+        generatedAt: now,
+      });
+      saveBlob(blob, statementFilename(shopName, now));
+    } catch {
+      push(t.networkError, 'error');
+    } finally {
+      setBuilding(null);
+    }
+  }
+
+  /**
+   * ONE CUSTOMER'S STATEMENT, HANDED TO WHATSAPP AS A FILE.
+   *
+   * `navigator.share` with a `files` array is the only thing in a browser that
+   * can put a document into WhatsApp. A `wa.me` link cannot: it carries text
+   * and nothing else, and no amount of encoding changes that — actually
+   * attaching a PDF to a number without the owner touching it needs the
+   * WhatsApp Business Cloud API, a registered sender and a media upload, which
+   * is a paid integration rather than a link.
+   *
+   * So this is as close as the web gets, and on the Android phones this product
+   * lives on it is genuinely close: the PDF is built, the share sheet opens
+   * with WhatsApp in it, the owner picks the customer, and the file goes with
+   * the message. What it cannot do is pre-address the chat — the sheet has no
+   * way to be told which contact.
+   *
+   * Where files cannot be shared at all — desktop Chrome on Windows, mostly —
+   * the PDF is downloaded and the wa.me chat opens with the account written out
+   * as text, which is what this button did before. The owner attaches the file
+   * they have just been given. Nothing silently does less than it says.
+   */
+  async function sendStatement(customer: KhataCustomer) {
+    setBuilding(customer.id);
+    const now = new Date();
+    const message = reminderMessage(
+      shopName,
+      customer.name,
+      customer.balancePaise,
+      locale,
+      customer.entries,
+    );
+
+    try {
+      const blob = await khataStatementPdf({
+        shopName,
+        accounts: [accountFor(customer)],
+        labels: pdfLabels,
+        generatedAt: now,
+      });
+      const file = new File([blob], statementFilename(shopName, now, customer), {
+        type: 'application/pdf',
+      });
+
+      // `canShare` is checked with the actual file: a browser can support
+      // sharing text and still refuse a PDF, and calling `share` blind throws.
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text: message });
+        return;
+      }
+
+      saveBlob(blob, file.name);
+      window.open(
+        `https://wa.me/91${customer.phone}?text=${encodeURIComponent(message)}`,
+        '_blank',
+        'noopener',
+      );
+      push(t.khataPdfAttach, 'success');
+    } catch (error) {
+      // Dismissing the share sheet rejects with AbortError. That is the owner
+      // changing their mind, not a failure, and must not raise an error toast.
+      if ((error as { name?: string })?.name === 'AbortError') return;
+      push(t.networkError, 'error');
+    } finally {
+      setBuilding(null);
+    }
+  }
   /**
    * `amount` HOLDS RUPEES — what the shopkeeper typed into a box marked ₹.
    *
@@ -279,14 +396,25 @@ export function KhataScreen({
               >
                 <SheetIcon className="h-5 w-5" />
               </a>
-              <a
-                href={`/owner/${slug}/khata/statement`}
+              {/* A real PDF file, not a print dialogue. It used to link to a
+                  printable page and leave the shopkeeper to find "Save as PDF"
+                  in a browser menu — which on an Android phone is three taps
+                  into a sheet most people have never opened. This downloads the
+                  book, a page per customer. */}
+              <button
+                type="button"
+                onClick={downloadBook}
+                disabled={building !== null}
                 aria-label={t.khataExportPdf}
                 title={`${t.khataExportPdf} — ${t.khataExportHint}`}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
               >
-                <PrinterIcon className="h-5 w-5" />
-              </a>
+                {building === 'all' ? (
+                  <Spinner className="h-5 w-5" />
+                ) : (
+                  <PdfIcon className="h-5 w-5" />
+                )}
+              </button>
             </div>
           )}
         </div>
@@ -414,46 +542,35 @@ export function KhataScreen({
                   </span>
                 </button>
 
-                <span className="flex shrink-0 items-center gap-0.5 pr-2">
-                  {/* Only where there is something to ask for. A reminder to
-                      somebody who owes nothing would read "₹0 is pending",
-                      and to somebody holding credit it would be the wrong way
-                      round entirely — the shop owes them. */}
-                  {owes && (
-                    <a
-                      href={`https://wa.me/91${customer.phone}?text=${encodeURIComponent(
-                        reminderMessage(
-                          shopName,
-                          customer.name,
-                          customer.balancePaise,
-                          locale,
-                          customer.entries,
-                        ),
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
+                {/* ONE ACTION ON THE ROW, NOT TWO.
+                    A separate statement icon beside this one was two buttons
+                    for what a shopkeeper thinks of as one job — telling
+                    somebody what they owe. The WhatsApp button now carries the
+                    statement with it, so the row asks one question and answers
+                    it. The book as a whole is still a download at the top.
+
+                    Only where there is something to ask for: a reminder to
+                    somebody who owes nothing would read "₹0 is pending", and to
+                    somebody holding credit it would be the wrong way round
+                    entirely — the shop owes them. */}
+                {owes && (
+                  <span className="flex shrink-0 items-center pr-2">
+                    <button
+                      type="button"
+                      onClick={() => sendStatement(customer)}
+                      disabled={building !== null}
                       aria-label={`${t.khataRemind} — ${customer.name || customer.phone}`}
                       title={t.khataRemind}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#25D366] transition hover:bg-green-50"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#25D366] transition hover:bg-green-50 disabled:opacity-50"
                     >
-                      <WhatsAppIcon className="h-5 w-5" />
-                    </a>
-                  )}
-
-                  {/* This person's account on its own sheet, which is what the
-                      browser's own Save as PDF turns into a file per customer.
-                      Always offered, including once they have paid: the
-                      commonest reason to want a statement is an argument about
-                      whether they did. */}
-                  <a
-                    href={`/owner/${slug}/khata/statement?customerId=${customer.id}`}
-                    aria-label={`${t.khataStatement} — ${customer.name || customer.phone}`}
-                    title={t.khataStatement}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                  >
-                    <PrinterIcon className="h-5 w-5" />
-                  </a>
-                </span>
+                      {building === customer.id ? (
+                        <Spinner className="h-5 w-5" />
+                      ) : (
+                        <WhatsAppIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  </span>
+                )}
                 </div>
 
                 {expanded && (
