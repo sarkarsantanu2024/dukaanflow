@@ -24,13 +24,22 @@ const BILLING_SELECT = {
   currentPeriodEnd: true,
 } as const;
 
-export async function shopEntitlement(shopId: string): Promise<ShopEntitlement | null> {
-  const [shop, itemCount] = await Promise.all([
-    prisma.shop.findUnique({ where: { id: shopId }, select: BILLING_SELECT }),
-    prisma.item.count({ where: { shopId } }),
-  ]);
-  if (!shop) return null;
+/** The billing columns this module reads, for a caller that has them already. */
+export type BillingFields = {
+  plan: string;
+  subscriptionStatus: string;
+  trialEndsAt: Date | null;
+  currentPeriodEnd: Date | null;
+};
 
+/**
+ * The same answer as `shopEntitlement`, without the queries.
+ *
+ * Pure, so a caller that has already read the shop row and counted its items —
+ * every owner page does, on the way to rendering — can work out the plan state
+ * without asking the database for the third time. See `loadOwnerShop`.
+ */
+export function entitlementFrom(shop: BillingFields, itemCount: number): ShopEntitlement {
   const base = entitlement({
     plan: shop.plan as Plan,
     subscriptionStatus: shop.subscriptionStatus as SubStatus,
@@ -40,6 +49,16 @@ export async function shopEntitlement(shopId: string): Promise<ShopEntitlement |
 
   const remaining = Math.max(0, base.itemLimit - itemCount);
   return { ...base, itemCount, remaining, atLimit: remaining === 0 };
+}
+
+export async function shopEntitlement(shopId: string): Promise<ShopEntitlement | null> {
+  const [shop, itemCount] = await Promise.all([
+    prisma.shop.findUnique({ where: { id: shopId }, select: BILLING_SELECT }),
+    prisma.item.count({ where: { shopId } }),
+  ]);
+  if (!shop) return null;
+
+  return entitlementFrom(shop, itemCount);
 }
 
 export type BillingRefusal = { status: 402 | 403; message: string };
