@@ -653,3 +653,28 @@ model AreaPeriodStat {
   @@unique([shopId, year, area])
   @@index([shopId, year])
 }
+
+/// The single Super Admin's own sign-in, once they have changed it themselves.
+///
+/// Until this row exists the credentials come from `ADMIN_USERNAME` and
+/// `ADMIN_PASSWORD_HASH`, exactly as they always did — nothing about a fresh
+/// clone or an existing deployment changes. What the env pair could not do is
+/// let the person holding the account change it: rotating that password meant
+/// generating a bcrypt hash on a laptop, editing a Vercel environment variable
+/// and redeploying the whole site, which is not a thing anybody does at the
+/// moment they need to (a shared password, a laptop lost). So the console now
+/// writes this row instead, and this row wins wherever it exists.
+///
+/// One row, always. `id` is a fixed literal rather than a generated uuid so
+/// there is no way to end up with two rows and no way to ask which is current;
+/// see `ADMIN_CREDENTIAL_ID` in lib/password.ts.
+model AdminCredential {
+  id           String   @id
+  /// An identifier, not a secret — stored as typed and compared lowercased.
+  username     String
+  /// bcrypt. The plain password is never written anywhere.
+  passwordHash String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
