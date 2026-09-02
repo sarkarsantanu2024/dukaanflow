@@ -190,6 +190,18 @@ export function SignOutIcon(props: IconProps) {
   );
 }
 
+/** A document with a turned corner and an arrow down — the khata as a PDF. */
+export function PdfIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M14 3H7a2 2 0 0 0-2 2v9" />
+      <path d="M14 3l5 5v11a2 2 0 0 1-2 2H9" />
+      <path d="M14 3v5h5" />
+      <path d="M5 17v4M3 19l2 2 2-2" />
+    </Svg>
+  );
+}
+
 /** A sheet ruled into cells — the khata as a spreadsheet. */
 export function SheetIcon(props: IconProps) {
   return (
