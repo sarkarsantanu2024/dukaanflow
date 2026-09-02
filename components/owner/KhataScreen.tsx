@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { handledExpiredSession } from './sessionGuard';
-import { TrashIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { PrinterIcon, TrashIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import { reminderMessage } from '@/lib/khata';
@@ -91,6 +91,25 @@ export function KhataScreen({
   const t = ownerDict(locale);
 
   const [open, setOpen] = useState<string | null>(null);
+  /**
+   * ONCE THEY HAVE PAID, THEY LEAVE THE LIST.
+   *
+   * A khata is a list of who owes money. A settled customer sitting in it at
+   * ₹0 is answering a question nobody asked, and on a shop with two hundred
+   * regulars — nearly all of whom are square nearly all of the time — the three
+   * names that matter were buried among them.
+   *
+   * SHOWN AGAIN ON REQUEST rather than deleted, and that difference is the
+   * whole of it. The commonest reason to want a settled customer is an argument
+   * about whether they actually paid, and answering that means reaching their
+   * statement; a row that is gone for good is a statement nobody can reach and
+   * a customer who has to be typed in from scratch the next time they ask for
+   * credit. So they fold away behind a line that says how many there are.
+   *
+   * Somebody holding an advance is NOT settled — the shop owes them, which is
+   * an open account pointing the other way, and it stays on the list.
+   */
+  const [showSettled, setShowSettled] = useState(false);
   const [busy, setBusy] = useState(false);
   /**
    * `amount` HOLDS RUPEES — what the shopkeeper typed into a box marked ₹.
@@ -103,6 +122,11 @@ export function KhataScreen({
    */
   const [form, setForm] = useState({ name: '', phone: '', area: '', amount: '', note: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  /** Anybody with an open account either way — see `showSettled`. */
+  const outstanding = customers.filter((customer) => customer.balancePaise !== 0);
+  const settled = customers.filter((customer) => customer.balancePaise === 0);
+  const listed = showSettled ? customers : outstanding;
 
   async function addEntry(kind: 'DEBIT' | 'CREDIT') {
     const amountPaise = parsePaise(form.amount);
@@ -268,7 +292,7 @@ export function KhataScreen({
         </div>
       ) : (
         <ul className="space-y-2">
-          {customers.map((customer) => {
+          {listed.map((customer) => {
             const expanded = open === customer.id;
             const owes = customer.balancePaise > 0;
             const advance = customer.balancePaise < 0;
@@ -276,11 +300,23 @@ export function KhataScreen({
 
             return (
               <li key={customer.id} className="rounded-2xl bg-white shadow-card">
+                {/* THE TWO THINGS DONE TO A DEBTOR, ON THE ROW ITSELF.
+                    Reminding somebody and handing them their statement were
+                    both a tap inside the expanded row — so chasing five people
+                    meant open, tap, collapse, open, tap, five times, and the
+                    reminder was invisible until you had already opened the one
+                    row you wanted. They live on the row now.
+
+                    A sibling of the toggle rather than inside it: an <a> nested
+                    in a <button> is invalid, and browsers respond by moving or
+                    dropping it, which is a bug that shows up in one browser and
+                    not another. */}
+                <div className="flex items-center">
                 <button
                   type="button"
                   onClick={() => setOpen(expanded ? null : customer.id)}
                   aria-expanded={expanded}
-                  className="flex w-full items-center gap-3 p-4 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-3 p-4 text-left"
                 >
                   <span
                     aria-hidden
@@ -360,40 +396,57 @@ export function KhataScreen({
                   </span>
                 </button>
 
+                <span className="flex shrink-0 items-center gap-0.5 pr-2">
+                  {/* Only where there is something to ask for. A reminder to
+                      somebody who owes nothing would read "₹0 is pending",
+                      and to somebody holding credit it would be the wrong way
+                      round entirely — the shop owes them. */}
+                  {owes && (
+                    <a
+                      href={`https://wa.me/91${customer.phone}?text=${encodeURIComponent(
+                        reminderMessage(
+                          shopName,
+                          customer.name,
+                          customer.balancePaise,
+                          locale,
+                          customer.entries,
+                        ),
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`${t.khataRemind} — ${customer.name || customer.phone}`}
+                      title={t.khataRemind}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#25D366] transition hover:bg-green-50"
+                    >
+                      <WhatsAppIcon className="h-5 w-5" />
+                    </a>
+                  )}
+
+                  {/* This person's account on its own sheet, which is what the
+                      browser's own Save as PDF turns into a file per customer.
+                      Always offered, including once they have paid: the
+                      commonest reason to want a statement is an argument about
+                      whether they did. */}
+                  <a
+                    href={`/owner/${slug}/khata/statement?customerId=${customer.id}`}
+                    aria-label={`${t.khataStatement} — ${customer.name || customer.phone}`}
+                    title={t.khataStatement}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  >
+                    <PrinterIcon className="h-5 w-5" />
+                  </a>
+                </span>
+                </div>
+
                 {expanded && (
                   <div className="border-t border-slate-100 px-4 py-3">
-                    {owes && (
-                      <a
-                        href={`https://wa.me/91${customer.phone}?text=${encodeURIComponent(
-                          reminderMessage(
-                            shopName,
-                            customer.name,
-                            customer.balancePaise,
-                            locale,
-                            customer.entries,
-                          ),
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mb-3 inline-flex h-10 items-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white"
-                      >
-                        <WhatsAppIcon className="h-4 w-4" />
-                        {t.khataRemind}
-                      </a>
-                    )}
-
-                    <p className="mb-1.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    {/* The reminder and the statement used to be here, and are
+                        now on the row itself — see the note above the toggle.
+                        Repeating them inside would be two buttons for one job
+                        sitting a centimetre apart. What is left in here is what
+                        opening a row is actually for: the entries. */}
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
                       {t.khataHistory}
-                      {/* One person's account, on paper. This is the version
-                          that settles an argument at the counter: the customer
-                          who says they paid last Tuesday can be handed their
-                          own statement rather than shown a phone. */}
-                      <a
-                        href={`/owner/${slug}/khata/statement?customerId=${customer.id}`}
-                        className="ml-auto font-semibold normal-case tracking-normal text-brand-700 underline"
-                      >
-                        {t.khataStatement}
-                      </a>
                     </p>
                     <ul className="divide-y divide-slate-100">
                       {customer.entries.map((entry) => (
@@ -453,7 +506,28 @@ export function KhataScreen({
               </li>
             );
           })}
+
+          {/* Everybody is square. Worth saying out loud rather than leaving an
+              empty space where the list was — an empty list reads as data
+              having gone missing, and this is the one state a shopkeeper is
+              actually pleased to see. */}
+          {listed.length === 0 && (
+            <li className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
+              <p className="font-semibold text-slate-800">{t.khataAllSettled}</p>
+            </li>
+          )}
         </ul>
+      )}
+
+      {settled.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowSettled((current) => !current)}
+          aria-expanded={showSettled}
+          className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50"
+        >
+          {showSettled ? t.khataHideSettled : `${t.khataShowSettled} (${settled.length})`}
+        </button>
       )}
 
       <section className="rounded-2xl bg-white p-4 shadow-card">
