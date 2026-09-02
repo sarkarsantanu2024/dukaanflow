@@ -11,7 +11,7 @@
  * is worse than asking.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MicButton } from '@/components/voice/MicButton';
 import { CloseIcon } from '@/components/ui/Icon';
 import { speak, useVoice, type VoiceErrorCode } from '@/components/voice/useVoice';
@@ -37,6 +37,11 @@ type Suggestion = {
   id: string;
   quantity: number;
   label: string;
+  /**
+   * Whether the shopper named an amount. Decides whether the basket line is set
+   * to this or increased by it — see `SpokenOrderLine.explicit`.
+   */
+  explicit: boolean;
   /**
    * Why this is being asked rather than added: "You said 250 g · this shop
    * sells it in 1 kg". Empty when the item itself was what was uncertain.
@@ -64,12 +69,19 @@ function reason(code: VoiceErrorCode, t: ReturnType<typeof dict>): string {
 export function VoiceOrder({
   items,
   locale,
-  onAdd,
+  onApply,
 }: {
   items: CustomerItem[];
   locale: Locale;
-  /** Adds `quantity` more of `id` to the cart. */
-  onAdd: (id: string, quantity: number) => void;
+  /**
+   * Puts `quantity` of `id` in the basket.
+   *
+   * `set` replaces whatever was there, `add` increases it. A spoken AMOUNT is a
+   * statement of how much is wanted in total and must replace: a shopper who
+   * had tapped 500 g and then said "800 g" was given 1.3 kg. A bare item name
+   * is "one more of these" and adds, exactly as tapping the card does.
+   */
+  onApply: (id: string, quantity: number, mode: 'set' | 'add') => void;
 }) {
   const t = dict(locale);
   const lang = RECOGNITION_LANG[locale];
@@ -83,8 +95,8 @@ export function VoiceOrder({
   localeRef.current = locale;
   const suggestionsRef = useRef(suggestions);
   suggestionsRef.current = suggestions;
-  const onAddRef = useRef(onAdd);
-  onAddRef.current = onAdd;
+  const onApplyRef = useRef(onApply);
+  onApplyRef.current = onApply;
 
   const voiceRef = useRef<{ stop: () => void; start: () => void; listening: boolean }>({
     stop: () => {},
@@ -92,6 +104,22 @@ export function VoiceOrder({
     listening: false,
   });
 
+  /**
+   * Says something out loud, and only when it is worth interrupting for.
+   *
+   * SPEAKING COSTS THE MICROPHONE. The recogniser would otherwise hear the
+   * phone's own voice, so the mic is stopped for the length of the sentence and
+   * started again afterwards — and on Android that round trip takes a second or
+   * two, during which everything the shopper says is lost. Reading back every
+   * successful add turned "two kilos of rice, a packet of salt and half a litre
+   * of oil" into one item and two dropped sentences: the shopper had to tap the
+   * mic again after every single thing they ordered.
+   *
+   * So a successful add says nothing aloud — the bubble and the basket count
+   * both already show it, immediately, without taking the mic away. Only a
+   * question the shopper has to answer, or a failure they have to act on, is
+   * worth the pause.
+   */
   const announce = useCallback((text: string) => {
     const wasListening = voiceRef.current.listening;
     if (wasListening) voiceRef.current.stop();
@@ -101,7 +129,9 @@ export function VoiceOrder({
   }, []);
 
   const accept = useCallback((entries: Suggestion[]) => {
-    for (const entry of entries) onAddRef.current(entry.id, entry.quantity);
+    for (const entry of entries) {
+      onApplyRef.current(entry.id, entry.quantity, entry.explicit ? 'set' : 'add');
+    }
   }, []);
 
   const handlePhrase = useCallback(
@@ -117,7 +147,6 @@ export function VoiceOrder({
           setSuggestions([]);
           const summary = outstanding.map((entry) => entry.label).join(', ');
           setFeedback(`${summary} — ${words.voiceAdded}`);
-          announce(`${summary} ${words.voiceAdded}`);
           return;
         }
         if (answer === 'no') {
@@ -152,6 +181,7 @@ export function VoiceOrder({
         return {
           id: line.id,
           quantity: line.quantity,
+          explicit: line.explicit,
           // The whole phrase, count included, because every message below reads
           // this out as it stands: "চিনি 250 g" for something weighed, and
           // "2 × চাউমিন 1 plate" for something counted. A bare quantity in
@@ -176,8 +206,9 @@ export function VoiceOrder({
       if (added.length > 0) {
         accept(added);
         const summary = added.map((entry) => entry.label).join(', ');
+        // Written, not spoken. See `announce`: reading this back would take the
+        // mic away for a second or two and swallow the next thing said.
         setFeedback(`${summary} — ${words.voiceAdded}`);
-        announce(`${summary} ${words.voiceAdded}`);
         return;
       }
 
@@ -207,12 +238,20 @@ export function VoiceOrder({
         return;
       }
 
-      // "not in this shop" and "did not understand you" are different failures
-      // and lead the shopper to different next moves, so they are not merged.
+      /**
+       * "not in this shop" and "did not understand you" are different failures
+       * and lead the shopper to different next moves, so they are not merged.
+       *
+       * NEITHER IS SPOKEN. A shop floor is noisy and the recogniser hands back
+       * a sentence for every scrap of it — a customer at the counter, a radio,
+       * the shopkeeper answering somebody else. Reading "I did not catch that"
+       * out loud for each one both filled the bubble with failures and, worse,
+       * took the mic away every time it did, which is what made the mic look
+       * like it kept switching itself off mid-order.
+       */
       const heard = (alternatives[0] ?? '').trim();
       const message = heard ? words.voiceNotInShop : words.voiceNotHeard;
       setFeedback(heard ? `“${heard}” — ${message}` : message);
-      announce(message);
     },
     [announce, accept],
   );
@@ -222,6 +261,21 @@ export function VoiceOrder({
     onPhrase: handlePhrase,
   });
   voiceRef.current = { stop, start, listening };
+
+  /**
+   * The last thing said clears itself.
+   *
+   * One line, and only while it is still current. Without this every reply the
+   * mic ever gave stayed on screen until something replaced it, so a shopper
+   * who had stopped speaking was left staring at "I did not catch that" over
+   * their menu — and a stale confirmation of an item added a minute ago reads
+   * as the app having just added it again.
+   */
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = window.setTimeout(() => setFeedback(''), 5000);
+    return () => window.clearTimeout(timer);
+  }, [feedback]);
 
   if (!supported) return null;
 

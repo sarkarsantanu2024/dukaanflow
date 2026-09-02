@@ -27,6 +27,8 @@ import {
   MIN_LOOSE_BASE,
   baseFromQuantity,
   baseLabel,
+  comparableMeasures,
+  parseMeasure,
   presetBases,
   quantityFromBase,
   stepBase,
@@ -69,14 +71,38 @@ export function AmountStepper({
     onChange(clamped <= 0 ? 0 : quantityFromBase(unit, clamped));
   }
 
+  /**
+   * WHATEVER THE SHOPPER WRITES, IN WHATEVER UNIT THEY WRITE IT.
+   *
+   * "1.5 kg", "800g", "750 ml", or a bare "800" — all of them are amounts
+   * somebody at a counter would say out loud, and a box that took only a bare
+   * number in whichever unit the label happened to be showing made the shopper
+   * do the conversion. Worse, it made them do it silently: type "2" against a
+   * label reading "g" and you have asked for two grams of rice.
+   *
+   * A unit written here is honoured as long as it measures the same thing the
+   * shop prices in — grams against a kilo, millilitres against a litre. A unit
+   * that does not (typing "kg" against an item sold by the litre) is ignored
+   * rather than guessed at, and the number is read in the unit on screen.
+   */
   function commitTyped() {
-    const typed = Number(draft.replace(/[^\d.]/g, ''));
+    const text = draft.trim();
     setTyping(false);
     setDraft('');
+    if (!text) return;
+
+    const pack = parseMeasure(unit);
+    const said = parseMeasure(text);
+    if (said && pack && comparableMeasures(said, pack)) {
+      setBase(Math.max(said.base, MIN_LOOSE_BASE));
+      return;
+    }
+
+    // No unit written, or one this item cannot be measured in: the number is in
+    // the unit the label is showing — grams for a mass item under a kilo, and
+    // for one over it too, so "1500" is a kilo and a half.
+    const typed = Number(text.replace(/[^\d.]/g, ''));
     if (!Number.isFinite(typed) || typed <= 0) return;
-    // Typed in the unit on screen — grams for a mass item under a kilo, and
-    // for one over it too: "1500" is a kilo and a half, which is what somebody
-    // typing into a box beside "g" means.
     setBase(Math.max(typed, MIN_LOOSE_BASE));
   }
 
@@ -97,8 +123,11 @@ export function AmountStepper({
         {typing ? (
           <input
             autoFocus
-            type="number"
+            // Text, not number: "1.5 kg" is a perfectly good thing to type here
+            // and a number field silently refuses every character after the 5.
+            type="text"
             inputMode="decimal"
+            placeholder={baseLabel(unit, base)}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onBlur={commitTyped}

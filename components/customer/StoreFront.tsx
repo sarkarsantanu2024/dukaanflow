@@ -20,7 +20,7 @@ import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
 import { roundQuantity } from '@/lib/units';
 import { linePaise } from '@/lib/money';
-import { quoteDelivery } from '@/lib/delivery';
+import { DELIVERY_AVAILABLE, quoteDelivery } from '@/lib/delivery';
 import { rememberShop } from '@/lib/saved-shops';
 import { OrderPlaced } from './OrderPlaced';
 import { watchInstallPrompt } from '@/lib/install-prompt';
@@ -203,10 +203,12 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
    * not after it. The checkout re-quotes on the actual choice, and the server
    * quotes again and is the only one that counts.
    */
+  /** Whether this shopper may choose delivery. See `DELIVERY_AVAILABLE`. */
+  const deliveryOffered = DELIVERY_AVAILABLE && shop.deliveryEnabled;
+
   const quote = useMemo(
-    () =>
-      quoteDelivery(shop, totalAmountPaise, shop.deliveryEnabled ? 'DELIVERY' : 'PICKUP'),
-    [shop, totalAmountPaise],
+    () => quoteDelivery(shop, totalAmountPaise, deliveryOffered ? 'DELIVERY' : 'PICKUP'),
+    [shop, totalAmountPaise, deliveryOffered],
   );
 
   const cartLines: CartLine[] = useMemo(
@@ -237,7 +239,23 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
    * on checkout — nothing here opens or shuts it.
    */
 
-  /** Voice adds are relative — saying "rice" twice means two of them. */
+  /**
+   * What the mic just heard, put in the basket.
+   *
+   * `set` REPLACES the line and `add` increases it, and which one is used is
+   * decided by whether the shopper named an amount. That distinction is the
+   * whole of the "I said 800 g and got 1.3 kg" bug: an amount said out loud is
+   * a statement about the total wanted, and adding it to the 500 g already on
+   * the card produced a number the shopper never asked for and could not
+   * account for. Saying a bare item name is still "one more of these", because
+   * that is what saying it twice means.
+   */
+  function applyVoice(itemId: string, quantity: number, mode: 'set' | 'add') {
+    if (mode === 'set') setQuantity(itemId, quantity);
+    else addQuantity(itemId, quantity);
+  }
+
+  /** Relative — saying "rice" twice means two of them. */
   function addQuantity(itemId: string, more: number) {
     setCart((current) => ({
       ...current,
@@ -565,7 +583,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
             : 'z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))]',
         )}
       >
-          <VoiceOrder items={items} locale={locale} onAdd={addQuantity} />
+          <VoiceOrder items={items} locale={locale} onApply={applyVoice} />
 
           {!cartOpen && (
             <CartBar
@@ -597,7 +615,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         totalItems={totalItems}
         totalAmountPaise={totalAmountPaise}
         locale={locale}
-        deliveryEnabled={shop.deliveryEnabled}
+        deliveryEnabled={deliveryOffered}
         terms={shop}
         remembered={remembered}
       />
