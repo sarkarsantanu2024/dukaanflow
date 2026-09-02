@@ -25,6 +25,7 @@ import clsx from 'clsx';
 import { formatPaise, linePaise } from '@/lib/money';
 import {
   MIN_LOOSE_BASE,
+  MOST_PER_LINE,
   baseFromQuantity,
   baseLabel,
   comparableMeasures,
@@ -35,8 +36,6 @@ import {
 } from '@/lib/units';
 import { dict, type Locale } from '@/lib/i18n';
 
-/** The most of one item anybody may order — mirrors the server's cap. */
-const MOST_PACKS = 99;
 
 export function AmountStepper({
   unit,
@@ -62,7 +61,7 @@ export function AmountStepper({
   const base = baseFromQuantity(unit, quantity);
   const presets = presetBases(unit);
   const step = stepBase(unit, base);
-  const most = baseFromQuantity(unit, MOST_PACKS);
+  const most = baseFromQuantity(unit, MOST_PER_LINE);
 
   function setBase(next: number) {
     // Clamped rather than refused: a shopper holding + down has said "more",

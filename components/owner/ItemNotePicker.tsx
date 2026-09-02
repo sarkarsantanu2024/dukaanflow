@@ -23,6 +23,7 @@ import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { SearchIcon } from '@/components/ui/Icon';
 import { formatPaise, paiseToInput } from '@/lib/money';
+import { MOST_PER_LINE } from '@/lib/units';
 import { matchesSearch } from '@/lib/speech';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
@@ -96,7 +97,7 @@ export function ItemNotePicker({
       const next = { ...current };
       const count = (next[id] ?? 0) + delta;
       if (count <= 0) delete next[id];
-      else next[id] = Math.min(count, 99);
+      else next[id] = Math.min(count, MOST_PER_LINE);
       onNoteChange(noteFrom(next));
       return next;
     });

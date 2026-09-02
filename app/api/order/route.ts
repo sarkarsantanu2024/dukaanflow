@@ -7,7 +7,7 @@ import type { OrderLine } from '@/lib/whatsapp';
 import { upsertCustomer } from '@/lib/khata';
 import { quoteDelivery } from '@/lib/delivery';
 import { formatPaise, linePaise } from '@/lib/money';
-import { isLooseUnit, roundQuantity } from '@/lib/units';
+import { isLooseUnit, MOST_PER_LINE, roundQuantity } from '@/lib/units';
 import { sendPush } from '@/lib/push';
 import { newOrderNotification } from '@/lib/push-text';
 import type { Locale } from '@/lib/i18n';
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   for (const entry of items) {
     requested.set(
       entry.itemId,
-      Math.min(99, roundQuantity((requested.get(entry.itemId) ?? 0) + entry.quantity)),
+      Math.min(MOST_PER_LINE, roundQuantity((requested.get(entry.itemId) ?? 0) + entry.quantity)),
     );
   }
 

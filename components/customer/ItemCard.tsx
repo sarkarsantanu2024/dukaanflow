@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { Badge } from '@/components/ui/Badge';
 import { CartIcon } from '@/components/ui/Icon';
 import { formatPaise } from '@/lib/money';
-import { isLooseUnit } from '@/lib/units';
+import { isLooseUnit, MOST_PER_LINE } from '@/lib/units';
 import { AmountStepper } from './AmountStepper';
 import type { Locale } from '@/lib/i18n';
 import { dict } from '@/lib/i18n';
@@ -96,7 +96,7 @@ export function ItemCard({
    * shop has none of, and saying so would send the shopper away from something
    * they have already got.
    */
-  const most = Math.min(99, item.stockQty ?? 99);
+  const most = Math.min(MOST_PER_LINE, item.stockQty ?? MOST_PER_LINE);
   const atMost = quantity >= most;
 
   return (
