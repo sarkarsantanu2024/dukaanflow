@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { ItemsManager, type AdminItem } from '@/components/admin/ItemsManager';
 import { NoticeCard } from './NoticeCard';
 import { DeliveryCard } from './DeliveryCard';
+import { DELIVERY_AVAILABLE } from '@/lib/delivery';
 import type { ShopType } from '@prisma/client';
 import { StarterPicker } from './StarterPicker';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -124,7 +125,7 @@ export function InventoryScreen({
           fields, so a collection-only shop met a card it could read and could
           not act on — a line of screen spent telling the owner that something
           they never asked about does not apply to them. */}
-      {deliveryEnabled && (
+      {DELIVERY_AVAILABLE && deliveryEnabled && (
         <DeliveryCard
           slug={slug}
           locale={locale}
