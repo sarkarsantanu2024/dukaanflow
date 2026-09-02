@@ -298,20 +298,38 @@ export function VoiceItemAdder({
         // anything, and the price on that row is the owner's.
         if (command.kind === 'exists') {
           addEntry({ heard, status: 'done', detail: `${command.label} — ${t.voiceAlready}` });
-          announce(`${command.label} ${t.voiceAlready}`);
+          // Not read aloud while a form is open: it costs the mic, and the
+          // owner is looking at the sheet they are dictating into anyway.
+          if (!onDraftRef.current) announce(`${command.label} ${t.voiceAlready}`);
           return;
         }
 
         const { draft } = command;
 
-        // Handed to the form rather than saved, when there is a form to hand it
-        // to. The word appears in the Name box where the owner can see whether
-        // it was heard correctly before anything is written.
+        /**
+         * Handed to the form rather than saved, when there is a form to hand it
+         * to. The word appears in a Name box where the owner can see whether it
+         * was heard correctly before anything is written.
+         *
+         * SILENTLY. No log line, no spoken readback — and both of those
+         * omissions are the fix rather than an oversight.
+         *
+         * The log turned a minute of dictation into a wall of "হয়েছে ধূপকাঠি —
+         * heard ধূপকাঠি" stacked eight deep, restating in a list what the form
+         * rows underneath were already showing in editable boxes. And the
+         * readback was worse than noise: speaking takes the microphone away for
+         * the length of the sentence (see `announce`), so every item an owner
+         * added stopped the mic and cost them the beginning of the next one.
+         * Between them they made a tool built for dictating fifty items usable
+         * for about one.
+         *
+         * Removals, stock changes and failures still log and still speak. Those
+         * change or fail to change something the owner cannot otherwise see, and
+         * a removal's log line is where its Undo lives.
+         */
         const onDraft = onDraftRef.current;
         if (onDraft) {
           onDraft({ name: draft.name, unit: draft.unit, pricePaise: draft.pricePaise });
-          addEntry({ heard, status: 'done', detail: draftLabel(draft) });
-          announce(draftLabel(draft));
           return;
         }
 
@@ -389,8 +407,20 @@ export function VoiceItemAdder({
 
         const command = resolveSpokenCommand(alternatives, langRef.current, itemsRef.current);
         if (!command) {
-          addEntry({ heard, status: 'rejected', detail: 'No price heard' });
-          announce(phrases.noPrice);
+          /**
+           * Nothing in that sentence was an item — which, in a shop, is most
+           * sentences. A customer at the counter, the radio, the owner
+           * answering somebody: the recogniser hands every one of them over.
+           *
+           * Where there is a form to fill, that is simply not worth saying.
+           * Logging it filled the panel with rejections and speaking it took
+           * the mic away, so half a conversation at the counter was enough to
+           * make the mic look broken.
+           */
+          if (!onDraftRef.current) {
+            addEntry({ heard, status: 'rejected', detail: 'No price heard' });
+            announce(phrases.noPrice);
+          }
           return;
         }
 

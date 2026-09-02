@@ -177,7 +177,20 @@ export function SellScreen({
     0,
   );
 
-  /** Voice adds are relative — saying "rice" twice means two of them. */
+  /**
+   * What the mic just heard, put on the till.
+   *
+   * The same rule the shop page follows: an amount said out loud ("800 g",
+   * "two packets") is a statement of the total wanted and REPLACES the line,
+   * while a bare item name is "one more of these" and adds. Adding an explicit
+   * amount to what was already there is how "800 g" became 1.3 kg.
+   */
+  function applyVoice(id: string, quantity: number, mode: 'set' | 'add') {
+    if (mode === 'set') setQuantity(id, quantity);
+    else addQuantity(id, quantity);
+  }
+
+  /** Relative — saying "rice" twice means two of them. */
   function addQuantity(id: string, more: number) {
     setCart((current) => ({
       ...current,
@@ -524,7 +537,7 @@ export function SellScreen({
             : 'z-30 bottom-[calc(5.5rem+env(safe-area-inset-bottom))]',
         )}
       >
-        <VoiceOrder items={sellable} locale={locale} onAdd={addQuantity} />
+        <VoiceOrder items={sellable} locale={locale} onApply={applyVoice} />
 
         {!cartOpen && (
           <CartBar
