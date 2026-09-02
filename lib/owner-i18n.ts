@@ -255,6 +255,10 @@ type OwnerDictionary = {
   khataOwingDays: string;
   khataOwingMonths: string;
   khataSettled: string;
+  /** The fold-away line for customers who owe nothing. */
+  khataShowSettled: string;
+  khataHideSettled: string;
+  khataAllSettled: string;
   khataGave: string;
   khataGot: string;
   khataCustomer: string;
@@ -565,6 +569,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataOwingDays: 'owing {n} days',
     khataOwingMonths: 'owing {n} months',
     khataSettled: 'settled',
+    khataShowSettled: 'Paid up',
+    khataHideSettled: 'Hide paid up',
+    khataAllSettled: 'Everybody has paid up.',
     khataGave: 'Gave goods',
     khataSettle: 'Mark fully paid',
     khataPartHint: 'Part payment? Change the amount before tapping.',
@@ -865,6 +872,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataOwingDays: '{n} দিন ধরে বাকি',
     khataOwingMonths: '{n} মাস ধরে বাকি',
     khataSettled: 'শোধ',
+    khataShowSettled: 'শোধ হয়ে গেছে',
+    khataHideSettled: 'শোধ হওয়াগুলো লুকান',
+    khataAllSettled: 'সবাই শোধ করে দিয়েছে।',
     khataGave: 'জিনিস দিলাম',
     khataSettle: 'সব শোধ হয়েছে',
     khataPartHint: 'কিছুটা দিলে? টাকার অঙ্কটা বদলে নিন।',
@@ -1165,6 +1175,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataOwingDays: '{n} दिन से बाकी',
     khataOwingMonths: '{n} महीने से बाकी',
     khataSettled: 'चुकता',
+    khataShowSettled: 'चुकता हो गया',
+    khataHideSettled: 'चुकता वाले छिपाएँ',
+    khataAllSettled: 'सबने चुका दिया है।',
     khataGave: 'सामान दिया',
     khataSettle: 'पूरा भुगतान हो गया',
     khataPartHint: 'कुछ हिस्सा दिया? रकम बदल लीजिए।',
