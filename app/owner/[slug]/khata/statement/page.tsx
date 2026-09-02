@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { loadOwnerShop } from '@/lib/owner-page';
 import { formatPaise } from '@/lib/money';
+import { accountsOf } from '@/lib/khata-csv';
 import { formatDayTime } from '@/lib/time';
 import { ownerDict } from '@/lib/owner-i18n';
 import { PrintButton } from '@/components/owner/PrintButton';
@@ -63,14 +64,31 @@ export default async function StatementPage({ params, searchParams }: PageProps)
     },
   });
 
-  // Computed as the rows are laid out, so the number at the foot is provably
-  // the sum of the column above it rather than a second opinion about it.
-  let balancePaise = 0;
-  const rows = entries.map((entry) => {
-    balancePaise += entry.kind === 'DEBIT' ? entry.amountPaise : -entry.amountPaise;
-    return { ...entry, runningPaise: balancePaise };
-  });
+  /**
+   * ONE SECTION PER PERSON, EACH WITH ITS OWN RUNNING BALANCE.
+   *
+   * This walked a single counter down every entry in date order, so on the
+   * whole-shop statement the total beside one customer's row included every
+   * other customer's debt incurred before it — the same fault the CSV had.
+   * A running balance is a fact about one account and nothing else.
+   *
+   * Grouping also makes the printed page useful: each person starts a new sheet
+   * (`break-before-page`), so "print to PDF" gives the shopkeeper one page per
+   * customer to hand over, rather than a ledger they have to point at.
+   */
+  const accounts = accountsOf(
+    entries.map((entry) => ({
+      date: entry.createdAt,
+      customerName: entry.customer.name,
+      customerPhone: entry.customer.phone,
+      customerArea: entry.customer.area,
+      kind: entry.kind,
+      amountPaise: entry.amountPaise,
+      note: entry.note,
+    })),
+  );
 
+  const totalPaise = accounts.reduce((sum, account) => sum + account.balancePaise, 0);
   const who = one ? entries[0]?.customer : null;
 
   return (
@@ -107,55 +125,89 @@ export default async function StatementPage({ params, searchParams }: PageProps)
           <p className="mt-1 text-xs text-slate-500">{formatDayTime(new Date().toISOString())}</p>
         </header>
 
-        <table className="mt-4 w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-300 text-left text-slate-600">
-              <th className="py-1.5 pr-2 font-semibold">{t.khataHistory}</th>
-              {!one && <th className="py-1.5 pr-2 font-semibold">{t.khataCustomer}</th>}
-              <th className="py-1.5 pr-2 font-semibold">{t.khataGave}</th>
-              <th className="py-1.5 pr-2 font-semibold">{t.khataGot}</th>
-              <th className="py-1.5 text-right font-semibold">{t.khataTotal}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((entry) => (
-              <tr key={entry.id} className="border-b border-slate-100 align-top">
-                <td className="py-1.5 pr-2 text-slate-600">
-                  {formatDayTime(entry.createdAt.toISOString())}
-                  {entry.note && <span className="block text-xs text-slate-400">{entry.note}</span>}
-                </td>
-                {!one && (
-                  <td className="py-1.5 pr-2 text-slate-700">
-                    {entry.customer.name || '—'}
-                    <span className="block text-xs text-slate-400">{entry.customer.phone}</span>
-                  </td>
-                )}
-                <td className="py-1.5 pr-2 tabular-nums text-slate-800">
-                  {entry.kind === 'DEBIT' ? formatPaise(entry.amountPaise) : ''}
-                </td>
-                <td className="py-1.5 pr-2 tabular-nums text-slate-800">
-                  {entry.kind === 'CREDIT' ? formatPaise(entry.amountPaise) : ''}
-                </td>
-                <td className="py-1.5 text-right font-semibold tabular-nums text-slate-900">
-                  {formatPaise(entry.runningPaise)}
-                </td>
-              </tr>
-            ))}
+        {accounts.length === 0 && (
+          <p className="py-10 text-center text-slate-500">{t.khataNobody}</p>
+        )}
 
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={5} className="py-6 text-center text-slate-500">
-                  {t.khataNobody}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {accounts.map((account, index) => {
+          // The counter restarts with each person. See the note above.
+          let runningPaise = 0;
+          return (
+            <section
+              key={`${account.phone}-${account.name}`}
+              // Each customer starts a fresh sheet when this is printed, so the
+              // shopkeeper can hand one person their own page. Never before the
+              // first — that would print a blank leading sheet every time.
+              className={index > 0 ? 'break-before-page pt-6 print:pt-0' : ''}
+            >
+              {/* On the single-customer statement the name is already in the
+                  header above; repeating it here would print it twice. */}
+              {!one && (
+                <h2 className="mt-6 border-b border-slate-300 pb-1 text-base font-bold text-slate-900">
+                  {account.name}
+                  <span className="ml-2 font-normal text-slate-500">
+                    {account.phone}
+                    {account.area ? ` · ${account.area}` : ''}
+                  </span>
+                </h2>
+              )}
 
-        <p className="mt-4 flex justify-between border-t-2 border-slate-800 pt-2 text-lg font-bold text-slate-900">
-          <span>{t.khataTotal}</span>
-          <span className="tabular-nums">{formatPaise(balancePaise)}</span>
-        </p>
+              <table className="mt-3 w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-300 text-left text-slate-600">
+                    <th className="py-1.5 pr-2 font-semibold">{t.khataHistory}</th>
+                    <th className="py-1.5 pr-2 font-semibold">{t.khataGave}</th>
+                    <th className="py-1.5 pr-2 font-semibold">{t.khataGot}</th>
+                    <th className="py-1.5 text-right font-semibold">{t.khataTotal}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {account.entries.map((entry, row) => {
+                    runningPaise +=
+                      entry.kind === 'DEBIT' ? entry.amountPaise : -entry.amountPaise;
+                    return (
+                      <tr
+                        key={`${entry.date.toISOString()}-${row}`}
+                        className="border-b border-slate-100 align-top"
+                      >
+                        <td className="py-1.5 pr-2 text-slate-600">
+                          {formatDayTime(entry.date.toISOString())}
+                          {entry.note && (
+                            <span className="block text-xs text-slate-400">{entry.note}</span>
+                          )}
+                        </td>
+                        <td className="py-1.5 pr-2 tabular-nums text-slate-800">
+                          {entry.kind === 'DEBIT' ? formatPaise(entry.amountPaise) : ''}
+                        </td>
+                        <td className="py-1.5 pr-2 tabular-nums text-slate-800">
+                          {entry.kind === 'CREDIT' ? formatPaise(entry.amountPaise) : ''}
+                        </td>
+                        <td className="py-1.5 text-right font-semibold tabular-nums text-slate-900">
+                          {formatPaise(runningPaise)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              <p className="mt-2 flex justify-between border-t-2 border-slate-800 pt-2 text-lg font-bold text-slate-900">
+                <span>{t.khataTotal}</span>
+                <span className="tabular-nums">{formatPaise(account.balancePaise)}</span>
+              </p>
+            </section>
+          );
+        })}
+
+        {/* The shop's whole book only, and only when there is more than one
+            account in it — under a single customer's total it would be the
+            same number printed twice. */}
+        {accounts.length > 1 && (
+          <p className="mt-6 flex justify-between border-t-4 border-double border-slate-800 pt-2 text-lg font-bold text-slate-900">
+            <span>{t.khataTotal}</span>
+            <span className="tabular-nums">{formatPaise(totalPaise)}</span>
+          </p>
+        )}
       </div>
     </div>
   );

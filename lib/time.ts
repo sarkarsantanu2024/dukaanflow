@@ -51,6 +51,33 @@ export function formatDayTime(value: When): string {
 }
 
 /**
+ * "2026-08-27" — the shop's calendar day, for a spreadsheet rather than a
+ * person.
+ *
+ * ISO ORDER ON PURPOSE, and in the shop's timezone rather than UTC. Both halves
+ * of that mattered in the khata export, which wrote a raw
+ * `2026-09-01T20:42:02.612Z`: the Z is 2:12 in the morning of the SECOND in
+ * Kolkata, so every entry made after half past six in the evening was filed
+ * under the previous day. A shopkeeper reconciling their book against their own
+ * memory would find the evening's udhaar on yesterday's line and have no way to
+ * work out why.
+ *
+ * Year-month-day also sorts as text and is the one written order no spreadsheet
+ * mistakes for another: "02/09/2026" is read as September in Kolkata and as
+ * February in half the software that will open this file.
+ */
+export function formatIsoDay(value: When): string {
+  const { year, month, day } = shopClock(value);
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/** "19:30" — the shop's wall clock, 24-hour, for a spreadsheet column. */
+export function formatIsoClock(value: When): string {
+  const shifted = new Date(toDate(value).getTime() + OFFSET_MINUTES * 60_000);
+  return `${String(shifted.getUTCHours()).padStart(2, '0')}:${String(shifted.getUTCMinutes()).padStart(2, '0')}`;
+}
+
+/**
  * Midnight at the start of the shop's day, as a real instant.
  *
  * Used for "today's takings", which is a shopkeeper's day — opening to
