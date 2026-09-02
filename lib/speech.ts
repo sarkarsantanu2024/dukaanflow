@@ -902,8 +902,28 @@ export function parseSpokenOrder(
   let best: SpokenOrderResult = { lines: [], unsure: [], tooMany: [] };
   let bestQuality = -1;
 
+  /**
+   * Items that SOME reading of this sentence asked too much of.
+   *
+   * Collected across every alternative, because of a failure that looked like
+   * the app inventing a number. A shopper said "সাবুদানা ৩০০ কেজি"; one of
+   * Chrome's alternatives dropped the unit and came back as "সাবুদানা ৩০". The
+   * correct reading was over the per-line limit, so it scored 0.05, while the
+   * mishearing produced a confident line worth 1.0 and won — and thirty grams
+   * of sago went into the basket under a message saying it had been added.
+   *
+   * Preferring the reading that fits is exactly backwards when the two readings
+   * disagree about the AMOUNT. A number that lands inside the limit is not more
+   * likely to be what was said; it is just the one this code can act on. So an
+   * item any alternative read as out of range is out of range, and the shopper
+   * is asked to say the amount again rather than handed a hundredth of it.
+   */
+  const overLimit = new Set<string>();
+
   for (const transcript of alternatives) {
     const attempt = resolveOrder(transcript, items);
+    for (const line of attempt.tooMany) overLimit.add(line.id);
+
     // Prefer the reading that lands the most confident items; a reading that
     // only produces guesses never beats one that produces a certainty, and a
     // reading that only found an impossible amount beats nothing at all —
@@ -918,7 +938,24 @@ export function parseSpokenOrder(
     }
   }
 
-  return best;
+  if (overLimit.size === 0) return best;
+
+  // Move anything the winning reading was about to add or offer, but that
+  // another reading put out of range, into the bucket that asks.
+  const kept = { lines: [] as SpokenOrderLine[], unsure: [] as SpokenOrderLine[] };
+  const tooMany = [...best.tooMany];
+
+  for (const [bucket, group] of [
+    ['lines', best.lines],
+    ['unsure', best.unsure],
+  ] as const) {
+    for (const line of group) {
+      if (!overLimit.has(line.id)) kept[bucket].push(line);
+      else if (!tooMany.some((entry) => entry.id === line.id)) tooMany.push(line);
+    }
+  }
+
+  return { lines: kept.lines, unsure: kept.unsure, tooMany };
 }
 
 function resolveOrder(transcript: string, items: MatchableItem[]): SpokenOrderResult {
