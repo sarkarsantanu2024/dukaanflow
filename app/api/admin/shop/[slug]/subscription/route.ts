@@ -2,8 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { subscriptionSchema } from '@/lib/validators';
-import { listingChargePaise, priceForMonths } from '@/lib/plans';
-import { rupeesToPaise } from '@/lib/money';
+import { listingChargePaise } from '@/lib/plans';
+import { grantSubscription } from '@/lib/subscription';
 
 export const runtime = 'nodejs';
 
@@ -64,54 +64,18 @@ export async function POST(request: Request, { params }: Context) {
     return ok({ success: true, amountPaise, itemsListed: listedItems });
   }
 
-  // Paid time is added to whatever is left, never replacing it — renewing a
-  // week early must not cost the shop that week.
-  //
-  // "Whatever is left" includes unused trial. An owner who is convinced on day
-  // three and pays used to lose the other eleven days, which punished exactly
-  // the behaviour we want: deciding early. The two are the same fact — time the
-  // shop has already been given — so the new period starts from whichever of
-  // them runs longest.
-  const now = new Date();
-  const remaining = [shop.currentPeriodEnd, shop.trialEndsAt].filter(
-    (date): date is Date => date !== null && date > now,
-  );
-  const from = remaining.reduce((latest, date) => (date > latest ? date : latest), now);
-  const periodEnd = new Date(from);
-  periodEnd.setMonth(periodEnd.getMonth() + months);
-
-  // Twelve months and up are charged at the yearly rate — two months free —
-  // and the rule lives in lib/plans.ts so the console, the pricing page and
-  // this route can never quote three different numbers for the same year.
-  const amountPaise = rupeesToPaise(priceForMonths(plan, months));
-
-  await prisma.$transaction([
-    prisma.shop.update({
-      where: { id: shop.id },
-      data: {
-        plan,
-        subscriptionStatus: 'ACTIVE',
-        currentPeriodEnd: periodEnd,
-        // Cleared because it has been spent, not discarded: whatever was left
-        // of the trial is inside `periodEnd` above. Leaving it set would make
-        // the same days count twice the next time this runs.
-        trialEndsAt: null,
-      },
-    }),
-    prisma.payment.create({
-      data: {
-        shopId: shop.id,
-        amountPaise,
-        plan,
-        kind: 'SUBSCRIPTION',
-        periodStart: from,
-        periodEnd,
-        method,
-        reference,
-        note,
-      },
-    }),
-  ]);
+  // Adding time to whatever is left, pricing it, and recording the payment all
+  // live in lib/subscription.ts now — the owner's activation-code route has to
+  // do exactly the same thing, and two copies of "when does this shop's month
+  // start" is how one of them quietly starts costing a shop a week.
+  const { periodEnd, amountPaise } = await grantSubscription({
+    shopId: shop.id,
+    plan,
+    months,
+    method,
+    reference,
+    note,
+  });
 
   return ok({ success: true, periodEnd: periodEnd.toISOString(), amountPaise });
 }

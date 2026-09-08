@@ -4,11 +4,10 @@ import { prisma } from './prisma';
 import { requireAdmin } from './guard';
 import { OWNER_COOKIE, readOwnerToken } from './auth';
 import { entitlementFrom, type ShopEntitlement } from './billing';
-import { PLAN_SPECS, planFor, yearPrice, yearSaving } from './plans';
-import { baseUrl } from './qr';
+import { PLAN_SPECS, planFor } from './plans';
 import type { Locale } from './i18n';
 import type { PlanState } from '@/components/owner/PlanBanner';
-import { planPayUrl, type RoadblockState } from '@/components/owner/SubscriptionRoadblock';
+import type { RoadblockState } from '@/components/owner/SubscriptionRoadblock';
 import { BRAND_NAME } from './brand';
 
 /**
@@ -110,7 +109,13 @@ export async function loadOwnerShop(slug: string) {
     itemLimit: billing?.itemLimit ?? 25,
     canEdit: billing?.canEdit ?? true,
     trialDaysLeft: billing?.trialDaysLeft ?? null,
-    renewUrl: renewUrl(shop.name, shop.slug),
+    // The cheapest plan that actually holds this shop's catalogue, so the
+    // payment dialog opens on the right one instead of making an owner work out
+    // which tier they are. Quoting the entry tier to a shop with 180 items and
+    // then refusing those items after they pay is how a first payment becomes a
+    // refund.
+    suggested: planFor(billing.itemCount).id,
+    helpUrl: supportUrl(shop.name, shop.slug),
   };
 
   return {
@@ -135,37 +140,31 @@ function roadblockFor(
 ): RoadblockState | null {
   if (!billing || billing.canEdit) return null;
 
-  const spec = planFor(billing.itemCount);
-  const upiId = process.env.NEXT_PUBLIC_ADMIN_UPI_ID ?? '';
-
   return {
     reason: billing.autoPaused ? 'paused' : 'trial-over',
-    planName: spec.name,
-    planPriceRupees: spec.price,
-    planYearRupees: yearPrice(spec.id),
-    planYearSavingRupees: yearSaving(spec.id),
-    planItemLimit: spec.itemLimit,
+    planName: planFor(billing.itemCount).name,
     itemCount: billing.itemCount,
-    // Two intents, built here rather than in the component: the amount is
-    // inside the QR, so it must come from the same price list the server
-    // charges from and never from arithmetic done in the browser.
-    payUrl: planPayUrl(upiId, spec.name, spec.price),
-    payUrlYear: planPayUrl(upiId, `${spec.name} 1yr`, yearPrice(spec.id)),
-    upiId,
-    helpUrl: renewUrl(shop.name, shop.slug),
+    suggested: planFor(billing.itemCount).id,
+    helpUrl: supportUrl(shop.name, shop.slug),
   };
 }
 
 /**
- * Upgrading is a WhatsApp conversation with the Halkhata operator, not a
- * checkout page. That is deliberate for this market: shopkeepers pay by UPI to
- * a person they have spoken to, and a card form would lose most of them.
+ * A chat with the operator, or nothing at all.
+ *
+ * IT NO LONGER FALLS BACK TO /pricing. It used to, and that was the wrong end
+ * of the product to send a signed-in shopkeeper to: /pricing is a page for
+ * somebody deciding whether to buy, it does not know which shop is reading it,
+ * and it cannot take a payment. An owner who tapped "Upgrade" and landed on a
+ * marketing page had been sent backwards.
+ *
+ * Blank when there is no support number, and every caller hides its WhatsApp
+ * button on blank rather than rendering one that goes nowhere. Paying does not
+ * depend on this — the payment dialog does that on its own.
  */
-function renewUrl(shopName: string, slug: string): string {
+function supportUrl(shopName: string, slug: string): string {
   const support = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '';
-  const message = `${BRAND_NAME} — ${shopName} (${slug}). I want to upgrade my plan.`;
-  const text = encodeURIComponent(message);
-  return support
-    ? `https://wa.me/${support}?text=${text}`
-    : `${baseUrl()}/pricing`;
+  if (!support) return '';
+  const text = encodeURIComponent(`${BRAND_NAME} — ${shopName} (${slug}).`);
+  return `https://wa.me/${support}?text=${text}`;
 }

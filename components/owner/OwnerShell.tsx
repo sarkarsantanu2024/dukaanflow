@@ -142,7 +142,7 @@ export function OwnerShell({
       {/* Last in the tree and fixed over everything, so it covers the tab bar
           too. A roadblock the owner can navigate out of with one thumb is a
           banner with extra steps. */}
-      {roadblock && <SubscriptionRoadblock locale={locale} state={roadblock} />}
+      {roadblock && <SubscriptionRoadblock slug={slug} locale={locale} state={roadblock} />}
     </div>
   );
 }
