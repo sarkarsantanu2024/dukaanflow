@@ -27,7 +27,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { WhatsAppIcon } from '@/components/ui/Icon';
 import { formatPaise } from '@/lib/money';
 import { PLAN_SPECS, type Plan } from '@/lib/plans';
-import { BRAND_NAME } from '@/lib/brand';
+import { LOCALES, LOCALE_LABELS, type Locale } from '@/lib/i18n';
 
 export type AdminPaymentRequest = {
   id: string;
@@ -43,16 +43,41 @@ export type AdminPaymentRequest = {
   status: 'SUBMITTED' | 'CODE_ISSUED' | 'ACTIVATED' | 'REJECTED';
   attempts: number;
   reviewNote: string;
+  /** ISO, for sorting only — never formatted during render. */
   createdAt: string;
+  /**
+   * The date already written out, on the server.
+   *
+   * `toLocaleString` during render is a hydration mismatch waiting to happen:
+   * Node formats in the server's timezone and the browser in the operator's, so
+   * the two produce different text for the same instant and React throws the
+   * whole tree away and re-renders it. Formatting once, server-side, is both
+   * correct and cheaper.
+   */
+  createdLabel: string;
 };
 
-type IssuedCode = { code: string; shopName: string; shopPhone: string; months: number; plan: Plan };
+type IssuedCode = {
+  code: string;
+  shopName: string;
+  shopPhone: string;
+  ownerName: string;
+  planName: string;
+  months: number;
+  renewsOn: string;
+  defaultLocale: Locale;
+  /** The whole message, ready to send, in each language. */
+  messages: Record<Locale, string>;
+};
 
 export function PaymentRequestsPanel({ requests }: { requests: AdminPaymentRequest[] }) {
   const router = useRouter();
   const { push } = useToast();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [issued, setIssued] = useState<IssuedCode | null>(null);
+  // Which language the operator will send in. Seeded from the shop's own.
+  const [lang, setLang] = useState<Locale>('en');
+  const [copied, setCopied] = useState(false);
   const [zoom, setZoom] = useState<AdminPaymentRequest | null>(null);
   const [rejecting, setRejecting] = useState<AdminPaymentRequest | null>(null);
   const [rejectNote, setRejectNote] = useState('');
@@ -73,11 +98,16 @@ export function PaymentRequestsPanel({ requests }: { requests: AdminPaymentReque
       if (result.code) {
         setIssued({
           code: result.code,
-          shopName: row.shopName,
-          shopPhone: row.shopPhone,
-          months: row.months,
-          plan: row.plan,
+          shopName: result.shopName ?? row.shopName,
+          shopPhone: result.shopPhone ?? row.shopPhone,
+          ownerName: result.ownerName ?? '',
+          planName: result.planName ?? '',
+          months: result.months ?? row.months,
+          renewsOn: result.renewsOn ?? '',
+          defaultLocale: result.defaultLocale ?? 'en',
+          messages: result.messages ?? {},
         });
+        setLang(result.defaultLocale ?? 'en');
       } else {
         push('Request refused', 'success');
       }
@@ -146,15 +176,16 @@ export function PaymentRequestsPanel({ requests }: { requests: AdminPaymentReque
                   · <strong className="tabular-nums text-brand-700">{formatPaise(row.amountPaise)}</strong>
                 </p>
 
+                {/* The shop's own number leads, because it is the one that is
+                    always there and the one you will WhatsApp the code to. The
+                    payer fields are only shown when something filled them —
+                    the owner's form stopped asking, since it was making a
+                    shopkeeper retype an identifier the screenshot already
+                    shows, but a gateway could still write them later. */}
                 <p className="mt-1 break-all text-xs text-slate-500">
-                  {row.payerUpiId || '—'}
-                  {row.payerPhone && ` · ${row.payerPhone}`} · shop {row.shopPhone} ·{' '}
-                  {new Date(row.createdAt).toLocaleString('en-IN', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })}
+                  {row.shopPhone}
+                  {row.payerUpiId && ` · ${row.payerUpiId}`}
+                  {row.payerPhone && ` · ${row.payerPhone}`} · {row.createdLabel}
                 </p>
 
                 {row.status === 'CODE_ISSUED' && (
@@ -198,6 +229,7 @@ export function PaymentRequestsPanel({ requests }: { requests: AdminPaymentReque
         open={issued !== null}
         title="Send this code to the shop"
         tone="success"
+        size="md"
         onClose={() => setIssued(null)}
         footer={
           <>
@@ -206,7 +238,9 @@ export function PaymentRequestsPanel({ requests }: { requests: AdminPaymentReque
             </Button>
             {issued && (
               <a
-                href={waLink(issued)}
+                href={`https://wa.me/91${issued.shopPhone}?text=${encodeURIComponent(
+                  issued.messages[lang] ?? '',
+                )}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 text-sm font-semibold text-white"
@@ -223,13 +257,73 @@ export function PaymentRequestsPanel({ requests }: { requests: AdminPaymentReque
             <p className="text-center text-5xl font-bold tracking-[0.3em] tabular-nums text-slate-900">
               {issued.code}
             </p>
-            <p className="mt-3 text-center">
-              {issued.shopName} · {PLAN_SPECS[issued.plan]?.name} ·{' '}
-              {issued.months === 12 ? '1 year' : `${issued.months} month(s)`}
+            <p className="mt-2 text-center text-sm">
+              <strong>{issued.shopName}</strong>
+              {issued.ownerName && <> · {issued.ownerName}</>}
+              <br />
+              {issued.planName} · {issued.months === 12 ? '1 year' : `${issued.months} month(s)`}
+              {issued.renewsOn && <> · until {issued.renewsOn}</>}
             </p>
+
+            {/* WHICH LANGUAGE TO SEND IN. The shop's own is preselected, but the
+                operator knows things the locale column does not — that this
+                shopkeeper reads Hindi, or that the number belongs to a son who
+                reads English. */}
+            <div
+              role="group"
+              aria-label="Message language"
+              className="mt-4 inline-flex rounded-xl bg-slate-100 p-1"
+            >
+              {LOCALES.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={lang === option}
+                  onClick={() => {
+                    setLang(option);
+                    setCopied(false);
+                  }}
+                  className={
+                    'rounded-lg px-3 py-1.5 text-sm font-semibold transition ' +
+                    (lang === option
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900')
+                  }
+                >
+                  {LOCALE_LABELS[option]}
+                  {option === issued.defaultLocale && (
+                    <span className="ml-1 text-xs font-normal text-slate-400">(shop)</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* The exact text that will be sent, not a description of it. An
+                operator about to message a customer should be able to read it
+                first — and on a desktop where WhatsApp Web is not signed in,
+                copying it is the only way to send it at all. */}
+            <pre className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 font-sans text-sm text-slate-700">
+              {issued.messages[lang]}
+            </pre>
+
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(issued.messages[lang] ?? '');
+                  setCopied(true);
+                } catch {
+                  push('Could not copy — select the text instead', 'error');
+                }
+              }}
+              className="mt-2 text-sm font-semibold text-brand-700 underline"
+            >
+              {copied ? 'Copied' : 'Copy message'}
+            </button>
+
             <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-amber-900">
-              This is the only time you will see it. It is stored hashed, exactly like a password,
-              so nothing can read it back — send it before you close this.
+              This is the only time you will see the code. It is stored hashed, exactly like a
+              password, so nothing can read it back — send it before you close this.
             </p>
           </>
         )}
@@ -287,15 +381,19 @@ export function PaymentRequestsPanel({ requests }: { requests: AdminPaymentReque
   );
 }
 
-/** The message already written, so the operator only presses send. */
-function waLink(issued: IssuedCode): string {
-  const period = issued.months === 12 ? '1 year' : `${issued.months} month(s)`;
-  const text = encodeURIComponent(
-    `${BRAND_NAME}: payment received, thank you. Your activation code is ${issued.code} — ` +
-      `open your app, tap Plan, and type it in. This turns on ${PLAN_SPECS[issued.plan]?.name} for ${period}.`,
-  );
-  return `https://wa.me/91${issued.shopPhone}?text=${text}`;
-}
+/*
+ * The message used to be built here, in English, from four facts.
+ *
+ * It named a plan and a code and nothing else — not the shop, not the owner,
+ * not the date the plan runs to. An operator working several shops from one
+ * phone could send it to the wrong number with nothing in the text to give that
+ * away, and the shopkeeper's only receipt for money they had just sent said
+ * neither what they had bought nor until when.
+ *
+ * It is composed on the server now (lib/activation-message.ts), in all three
+ * languages, from the same `periodFor` arithmetic that will grant the time — so
+ * the renewal date quoted here is the one the shop actually gets.
+ */
 
 function StatusPill({ status }: { status: AdminPaymentRequest['status'] }) {
   const look: Record<AdminPaymentRequest['status'], [string, string]> = {
