@@ -27,6 +27,7 @@ export function Modal({
   /** Rendered under the message. Omit for a dialog that only says something. */
   footer,
   tone = 'normal',
+  size = 'sm',
 }: {
   open: boolean;
   title: string;
@@ -35,6 +36,13 @@ export function Modal({
   footer?: React.ReactNode;
   /** `danger` colours the heading for something destructive. */
   tone?: 'normal' | 'danger' | 'success';
+  /**
+   * `sm` is a question. `md` is a dialog somebody works in — a form with fields
+   * and a picture in it — and it scrolls its own body rather than the page, so
+   * a keyboard opening on a small phone cannot push the submit button somewhere
+   * unreachable.
+   */
+  size?: 'sm' | 'md';
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -67,20 +75,31 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative w-full max-w-sm animate-fade-in rounded-2xl bg-white p-5 shadow-sheet"
+        className={clsx(
+          'relative flex w-full max-h-[calc(100dvh-2rem)] animate-fade-in flex-col rounded-2xl bg-white p-5 shadow-sheet',
+          size === 'md' ? 'max-w-md' : 'max-w-sm',
+        )}
       >
         <h2
           className={clsx(
-            'text-lg font-bold leading-snug',
+            'shrink-0 text-lg font-bold leading-snug',
             tone === 'danger' ? 'text-red-700' : tone === 'success' ? 'text-brand-700' : 'text-slate-900',
           )}
         >
           {title}
         </h2>
 
-        {children && <div className="mt-2 text-sm leading-relaxed text-slate-600">{children}</div>}
+        {children && (
+          <div className="-mx-1 mt-2 min-h-0 flex-1 overflow-y-auto px-1 text-sm leading-relaxed text-slate-600">
+            {children}
+          </div>
+        )}
 
-        {footer && <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{footer}</div>}
+        {footer && (
+          <div className="mt-5 flex shrink-0 flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

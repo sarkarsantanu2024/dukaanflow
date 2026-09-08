@@ -26,6 +26,7 @@ import {
   KeyIcon,
   PhoneIcon,
   PlusIcon,
+  QrIcon,
   RupeeIcon,
   UsersIcon,
 } from '@/components/ui/Icon';
@@ -39,6 +40,10 @@ const NAV = [
   { href: '/admin/customers', label: 'Customers', icon: UsersIcon, exact: false, onPhone: false },
   { href: '/admin/shops/new', label: 'Add shop', icon: PlusIcon, exact: true, onPhone: true },
   { href: '/admin/reports', label: 'Reports', icon: ChartIcon, exact: false, onPhone: true },
+  // On the phone list: a shop that has paid is waiting on the operator to press
+  // a button, and making them wait until somebody is back at a desk is the one
+  // delay in this flow that costs a renewal.
+  { href: '/admin/payments', label: 'Payments', icon: QrIcon, exact: false, onPhone: true },
   { href: '/admin/occasions', label: 'Occasions', icon: CalendarIcon, exact: false, onPhone: false },
   // Last, and desk-only: changing the one password that opens all of this is
   // not something anybody does from a phone between shops.
@@ -46,9 +51,9 @@ const NAV = [
 ];
 
 /**
- * The rail can hold every destination; a 375px tab bar cannot. Seven tabs come
- * out at about 50px each — under the tap target both platforms ask for, with
- * labels that truncate to nothing. The four that survive are the ones an
+ * The rail can hold every destination; a 375px tab bar cannot. Eight tabs come
+ * out at about 47px each — under the tap target both platforms ask for, with
+ * labels that truncate to nothing. The five that survive are the ones an
  * operator opens away from a desk; the rest are desk work.
  */
 const PHONE_NAV = NAV.filter((item) => item.onPhone);

@@ -215,15 +215,16 @@ model Shop {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items         Item[]
-  orders        Order[]
-  sales         Sale[]
-  payments      Payment[]
-  customers     Customer[]
-  ledger        LedgerEntry[]
-  itemStats     ItemPeriodStat[]
-  areaStats     AreaPeriodStat[]
-  subscriptions PushSubscription[]
+  items           Item[]
+  orders          Order[]
+  sales           Sale[]
+  payments        Payment[]
+  customers       Customer[]
+  ledger          LedgerEntry[]
+  itemStats       ItemPeriodStat[]
+  areaStats       AreaPeriodStat[]
+  subscriptions   PushSubscription[]
+  paymentRequests PaymentRequest[]
 
   @@index([active])
   @@index([subscriptionStatus])
@@ -668,6 +669,117 @@ model AreaPeriodStat {
 /// One row, always. `id` is a fixed literal rather than a generated uuid so
 /// there is no way to end up with two rows and no way to ask which is current;
 /// see `ADMIN_CREDENTIAL_ID` in lib/password.ts.
+/// Where shops send money, and the QR they scan to do it. One row, always.
+///
+/// This was three environment variables and a generated `upi://pay` QR. Both
+/// were wrong for how this business actually collects. A PhonePe or Google Pay
+/// merchant QR carries details a plain intent link cannot reproduce, and it is
+/// the code the operator already has printed and stuck to a wall — so the image
+/// itself has to be storable. And an operator who changes their UPI id should
+/// not need a developer, a Vercel dashboard and a redeploy to do it, which is
+/// exactly what an env variable demanded.
+///
+/// `id` is a fixed literal for the same reason `AdminCredential`'s is: there is
+/// one operator, so there is one row, and a generated key would make it possible
+/// to write a second and then have to decide which is real.
+model PaymentSetting {
+  id String @id
+
+  /// The operator's own UPI id, shown as text under the QR so it can be typed
+  /// by hand when a scan fails.
+  upiId       String @default("")
+  /// Whose name a payer should see. Blank falls back to the brand name.
+  payeeName   String @default("")
+  /// The Google Pay / PhonePe mobile a shop can send to instead of scanning.
+  phone       String @default("")
+  /// The operator's printed QR as a data URL — the image at the top of this
+  /// model's reason for existing. Blank falls back to a generated intent QR.
+  qrImageData String @default("")
+  /// Anything the operator wants shops to read before paying.
+  note        String @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// SUBMITTED   — the owner has paid and sent proof; the operator has not looked.
+/// CODE_ISSUED — the operator checked the money and generated an activation code.
+/// ACTIVATED   — the owner typed the code; the plan is on and time was added.
+/// REJECTED    — the operator refused it, with a reason the owner can read.
+enum PaymentRequestStatus {
+  SUBMITTED
+  CODE_ISSUED
+  ACTIVATED
+  REJECTED
+}
+
+/// One shop saying "I have paid you, here is the proof, for this plan".
+///
+/// THIS ROW IS THE ANSWER TO "HOW DOES THE OPERATOR KNOW WHICH PLAN THEY BOUGHT".
+/// The owner declares the plan and the number of months when they submit, and
+/// the amount is priced by the server from `lib/plans.ts` at that moment — so
+/// what arrives in the console is not a bare payment to reconcile against a
+/// WhatsApp conversation, it is a named shop asking for a named plan at a figure
+/// the operator can compare against their bank feed in one glance.
+///
+/// The activation code is then bound to THIS ROW, not to the shop and not to a
+/// plan chosen later. That is the safety property: a code issued for a ₹149
+/// Starter month can only ever activate a ₹149 Starter month, whatever the owner
+/// types or selects afterwards. Nothing about redemption re-reads the owner's
+/// choice, because by then the choice has already been paid for and checked.
+///
+/// Nothing here grants anything on its own. A shop can submit a request with a
+/// screenshot of somebody else's payment and it changes nothing at all until a
+/// human has looked at the money and issued a code.
+model PaymentRequest {
+  id     String @id @default(uuid()) @db.Uuid
+  shopId String @db.Uuid
+
+  /// What the owner says they are buying. Priced by the server, never by the
+  /// client — a browser that could name its own amount could buy a year for ₹1.
+  plan        Plan
+  months      Int  @default(1)
+  amountPaise Int
+
+  /// Who paid, as they gave it: the UPI id the money left, and the Google Pay
+  /// or PhonePe mobile behind it. Both are how the operator finds the credit in
+  /// a bank feed that knows nothing about shops.
+  payerUpiId String @default("")
+  payerPhone String @default("")
+  /// The payment screenshot, resized in the browser, as a data URL — the same
+  /// storage decision every other image in this schema makes.
+  screenshotData String @default("")
+
+  status PaymentRequestStatus @default(SUBMITTED)
+
+  /// bcrypt of the 4-digit code. Never the code itself: the console shows the
+  /// plaintext once, at the moment it is generated, and then it exists only on
+  /// the operator's WhatsApp and the owner's phone.
+  codeHash      String?
+  codeIssuedAt  DateTime?
+  codeExpiresAt DateTime?
+
+  /// Wrong codes tried against this row.
+  ///
+  /// ON THE ROW, not in the rate limiter. `lib/rate-limit.ts` is an in-memory
+  /// map per serverless instance, so a four-digit secret guarded only by it
+  /// would be guessable by anyone willing to spread their attempts across
+  /// instances. A counter in Postgres is the same counter for every instance.
+  attempts Int @default(0)
+
+  activatedAt DateTime?
+  /// Why the operator refused, in words the owner will read on their phone.
+  reviewNote  String    @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([shopId, createdAt])
+}
+
 model AdminCredential {
   id           String   @id
   /// An identifier, not a secret — stored as typed and compared lowercased.

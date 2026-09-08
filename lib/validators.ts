@@ -601,6 +601,70 @@ export const shopImagesSchema = z.object({
   upiQrData: imageDataSchema.optional(),
 });
 
+/* ------------------------------------------------------------------ */
+/* Paying the operator                                                 */
+/* ------------------------------------------------------------------ */
+
+/** A 10-digit Indian mobile, or blank. The same shape shops and customers use. */
+const optionalMobile = z
+  .string()
+  .trim()
+  .refine((value) => value === '' || /^[6-9]\d{9}$/.test(value), 'Enter a 10-digit mobile number');
+
+/** The operator's own payment details, set from the console. */
+export const paymentSettingsSchema = z.object({
+  upiId: z
+    .string()
+    .trim()
+    .max(80)
+    .refine(
+      (value) => value === '' || /^[\w.\-]{2,64}@[a-zA-Z]{2,32}$/.test(value),
+      'That does not look like a UPI id (name@bank)',
+    ),
+  payeeName: z.string().trim().max(60).default(''),
+  phone: optionalMobile.default(''),
+  qrImageData: imageDataSchema.default(''),
+  note: z.string().trim().max(300).default(''),
+});
+
+/**
+ * A shop telling us it has paid.
+ *
+ * Note what is NOT here: an amount. The server prices the plan and months from
+ * `lib/plans.ts`, so a browser cannot name its own figure — a request that
+ * carried a price would let anybody buy a year for a rupee and hand the
+ * operator a number that looks checked because it came from the system.
+ */
+export const paymentRequestSchema = z.object({
+  plan: z.enum(['FREE', 'STARTER', 'PRO', 'EX']),
+  months: z.number().int().min(1).max(24),
+  payerUpiId: z
+    .string()
+    .trim()
+    .max(80)
+    .refine(
+      (value) => value === '' || /^[\w.\-]{2,64}@[a-zA-Z]{2,32}$/.test(value),
+      'That does not look like a UPI id (name@bank)',
+    )
+    .default(''),
+  payerPhone: optionalMobile.default(''),
+  screenshotData: imageDataSchema.default(''),
+});
+
+/** The 4 digits the operator sent on WhatsApp. */
+export const activationSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/, 'Enter the 4-digit code'),
+});
+
+/** What the operator does with a request they are looking at. */
+export const paymentReviewSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('issue') }),
+  z.object({ action: z.literal('reject'), reviewNote: z.string().trim().max(200).default('') }),
+]);
+
 /** Flattens a ZodError into `{ field: message }` for the client. */
 export function fieldErrors(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};
