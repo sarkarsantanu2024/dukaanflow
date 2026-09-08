@@ -1,6 +1,7 @@
 import { prisma } from './prisma';
 import { priceForMonths, type Plan } from './plans';
 import { rupeesToPaise } from './money';
+import { periodFor } from './period';
 
 /**
  * Putting a shop on a plan, in one place.
@@ -29,6 +30,13 @@ export type Grant = {
 export type GrantResult = { periodEnd: Date; amountPaise: number };
 
 /**
+ * Re-exported so server callers have one import for "granting a subscription",
+ * while the console can reach the same arithmetic from `lib/period` without
+ * pulling Prisma into a browser bundle. One implementation, two doors.
+ */
+export { periodFor, type ExistingTime } from './period';
+
+/**
  * Adds paid time to whatever the shop already has, and records the payment.
  *
  * Time is ADDED, never replaced — renewing a week early must not cost the shop
@@ -51,14 +59,7 @@ export async function grantSubscription(grant: Grant): Promise<GrantResult> {
   });
   if (!shop) throw new Error(`No shop ${shopId}`);
 
-  const now = new Date();
-  const remaining = [shop.currentPeriodEnd, shop.trialEndsAt].filter(
-    (date): date is Date => date !== null && date > now,
-  );
-  const from = remaining.reduce((latest, date) => (date > latest ? date : latest), now);
-
-  const periodEnd = new Date(from);
-  periodEnd.setMonth(periodEnd.getMonth() + months);
+  const { from, periodEnd } = periodFor(shop, months);
 
   // Twelve months and up are charged at the yearly rate — two months free — and
   // that rule lives in lib/plans.ts so the console, the pricing page and this
