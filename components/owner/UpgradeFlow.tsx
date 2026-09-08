@@ -89,8 +89,6 @@ export function UpgradeFlow({
 
   const [plan, setPlan] = useState<Plan>(suggested);
   const [months, setMonths] = useState<number>(1);
-  const [payerUpiId, setPayerUpiId] = useState('');
-  const [payerPhone, setPayerPhone] = useState('');
   const [screenshot, setScreenshot] = useState('');
 
   const [code, setCode] = useState('');
@@ -141,12 +139,24 @@ export function UpgradeFlow({
       const response = await fetch(`/api/owner/${slug}/upgrade`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, months, payerUpiId, payerPhone, screenshotData: screenshot }),
+        body: JSON.stringify({ plan, months, screenshotData: screenshot }),
       });
       const body = await response.json();
       if (!response.ok) {
-        setErrors(body.errors ?? {});
-        push(body.error ?? t.networkError, 'error');
+        const fields: Record<string, string> = body.errors ?? {};
+        setErrors(fields);
+        /**
+         * SAY THE FIELD'S OWN MESSAGE, not "check the highlighted fields".
+         *
+         * The generic sentence is only true when every failing field is on the
+         * screen with a message under it, and that is an assumption a form
+         * cannot keep — the picture was rejected for its size once, and since
+         * nothing renders an error against a picker, the shopkeeper was told to
+         * check fields that were all perfectly fine. Showing the first real
+         * message is right even in the case the generic one was written for.
+         */
+        const first = Object.values(fields).find(Boolean);
+        push(first || body.error || t.networkError, 'error');
         return;
       }
       // Straight on to the code step, in this same dialog. Closing and
@@ -377,41 +387,42 @@ export function UpgradeFlow({
         )}
       </div>
 
-      {/* PROVE. Everything here helps a human find one credit in a bank feed. */}
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700">{t.upgradeYourUpi}</span>
-        <input
-          value={payerUpiId}
-          onChange={(event) => setPayerUpiId(event.target.value.trim())}
-          placeholder="name@bank"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          className="h-12 w-full rounded-xl border border-slate-300 px-3 text-base"
+      {/**
+       * PROVE — the screenshot, and nothing else.
+       *
+       * There were two typed fields here: the UPI id the money left, and the
+       * Google Pay / PhonePe number behind it. Both are gone. They asked a
+       * shopkeeper to copy an identifier off one app into another, on a phone,
+       * to tell us something the screenshot already shows and the shop row
+       * already knows — the operator's queue carries the shop's name, its
+       * registered phone, the plan, the exact amount and the minute it was
+       * sent, which is more than enough to find one credit in a bank feed.
+       *
+       * They were also the two most likely things to be typed wrong, and a
+       * mistyped UPI id is worse than a blank one: it sends the operator
+       * looking for a payment that does not exist under that name.
+       *
+       * The columns stay on PaymentRequest. A gateway would fill them, and
+       * dropping a column to remove a form field is a migration for nothing.
+       */}
+      <div>
+        <ImagePicker
+          label={t.upgradeScreenshot}
+          shape="proof"
+          value={screenshot}
+          busy={busy}
+          onChange={(value) => {
+            setScreenshot(value);
+            setErrors((current) => ({ ...current, screenshotData: '' }));
+          }}
+          onError={(message) => push(message, 'error')}
         />
-        {errors.payerUpiId && <span className="mt-1 block text-sm text-red-600">{errors.payerUpiId}</span>}
-      </label>
-
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700">{t.upgradeYourPhone}</span>
-        <input
-          value={payerPhone}
-          onChange={(event) => setPayerPhone(event.target.value.replace(/\D/g, '').slice(0, 10))}
-          inputMode="numeric"
-          placeholder="9876543210"
-          className="h-12 w-full rounded-xl border border-slate-300 px-3 text-base"
-        />
-        {errors.payerPhone && <span className="mt-1 block text-sm text-red-600">{errors.payerPhone}</span>}
-      </label>
-
-      <ImagePicker
-        label={t.upgradeScreenshot}
-        shape="square"
-        value={screenshot}
-        busy={busy}
-        onChange={setScreenshot}
-        onError={(message) => push(message, 'error')}
-      />
+        {/* A picker had nowhere to show a rejection, which is how a picture too
+            large became a form that said nothing was wrong with it. */}
+        {errors.screenshotData && (
+          <p className="mt-1.5 text-sm text-red-600">{errors.screenshotData}</p>
+        )}
+      </div>
 
       <Button type="submit" fullWidth size="lg" loading={busy} disabled={!payTo?.configured}>
         {t.upgradeSubmit}

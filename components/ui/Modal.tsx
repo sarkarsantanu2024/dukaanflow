@@ -41,9 +41,16 @@ export function Modal({
    * and a picture in it — and it scrolls its own body rather than the page, so
    * a keyboard opening on a small phone cannot push the submit button somewhere
    * unreachable.
+   *
+   * `full` takes the whole screen bar a 10px margin. For a dialog that is not
+   * an interruption but a task: paying runs to a dozen controls and a photograph,
+   * and squeezing that into a centred card left it scrolling inside a window
+   * inside a page, with the shopkeeper's own shop visible around the edges as a
+   * distraction from the one thing they came to do.
    */
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'full';
 }) {
+  const full = size === 'full';
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,7 +74,12 @@ export function Modal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div
+      className={clsx(
+        'fixed inset-0 z-50 flex items-center justify-center',
+        full ? 'p-[10px]' : 'p-4',
+      )}
+    >
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
 
       <div
@@ -76,8 +88,14 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         className={clsx(
-          'relative flex w-full max-h-[calc(100dvh-2rem)] animate-fade-in flex-col rounded-2xl bg-white p-5 shadow-sheet',
-          size === 'md' ? 'max-w-md' : 'max-w-sm',
+          'relative flex w-full animate-fade-in flex-col rounded-2xl bg-white p-5 shadow-sheet',
+          full
+            ? // h-full rather than min-h: the panel is a flex column whose body
+              // scrolls, and that only works if the panel itself has a fixed
+              // height to divide up. Left to grow it would push the footer off
+              // the bottom of the screen.
+              'h-full max-w-none'
+            : clsx('max-h-[calc(100dvh-2rem)]', size === 'md' ? 'max-w-md' : 'max-w-sm'),
         )}
       >
         <h2

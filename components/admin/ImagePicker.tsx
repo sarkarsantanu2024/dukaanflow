@@ -24,8 +24,27 @@ const QR_MAX_EDGE = 700;
  */
 const THUMB_MAX_EDGE = 320;
 const THUMB_QUALITY = 0.7;
+/**
+ * The ceiling `imageDataSchema` in lib/validators.ts enforces, minus a margin.
+ *
+ * Duplicated deliberately rather than imported: this file runs in the browser
+ * and the validator is the server's word on the matter. The margin is so the
+ * two can never disagree by a byte and produce a rejection nobody can explain.
+ */
+const MAX_DATA_URL = 380_000;
 
-export type ImageShape = 'wide' | 'square' | 'circle' | 'thumb';
+/**
+ * `proof` is a photograph of a screen — a payment confirmation. It is upright
+ * rather than wide, and crucially it is JPEG.
+ *
+ * It exists because it was briefly `square`, and `square` means QR: lossless
+ * PNG. A PNG of a photograph is enormous — a 700px screenshot came out over a
+ * megabyte, sailed past the 400 KB limit in the validator, and every shopkeeper
+ * who attached one was told to "check the highlighted fields" with nothing on
+ * the screen highlighted, because the field that failed was the picture. The
+ * lesson is that the shape is not a frame size, it is an encoding decision.
+ */
+export type ImageShape = 'wide' | 'square' | 'circle' | 'thumb' | 'proof';
 
 async function resize(file: File, shape: ImageShape): Promise<string> {
   const bitmap = await createImageBitmap(file);
@@ -51,7 +70,41 @@ async function resize(file: File, shape: ImageShape): Promise<string> {
 
   // JPEG artefacts round off the corners of QR modules, so those stay PNG.
   if (isQr) return canvas.toDataURL('image/png');
-  return canvas.toDataURL('image/jpeg', shape === 'thumb' ? THUMB_QUALITY : QUALITY);
+
+  let quality = shape === 'thumb' ? THUMB_QUALITY : QUALITY;
+  let out = canvas.toDataURL('image/jpeg', quality);
+
+  /**
+   * ENCODE UNTIL IT FITS, rather than hoping.
+   *
+   * The server refuses anything over 400 KB, and one fixed quality setting
+   * cannot promise to stay under that: a dense screenshot full of text
+   * compresses far worse than a photograph of a shopfront. Hoping meant the
+   * shopkeeper found out by being told to check fields that were all fine.
+   *
+   * Quality first, because dropping it is invisible on a screenshot long
+   * before the size stops falling; only then the dimensions, which is what
+   * actually costs legibility for the operator reading the amount off it.
+   */
+  while (out.length > MAX_DATA_URL && quality > 0.4) {
+    quality -= 0.12;
+    out = canvas.toDataURL('image/jpeg', quality);
+  }
+
+  if (out.length > MAX_DATA_URL) {
+    const shrunk = document.createElement('canvas');
+    shrunk.width = Math.round(width * 0.6);
+    shrunk.height = Math.round(height * 0.6);
+    const smaller = shrunk.getContext('2d');
+    if (smaller) {
+      smaller.fillStyle = '#ffffff';
+      smaller.fillRect(0, 0, shrunk.width, shrunk.height);
+      smaller.drawImage(canvas, 0, 0, shrunk.width, shrunk.height);
+      out = shrunk.toDataURL('image/jpeg', 0.6);
+    }
+  }
+
+  return out;
 }
 
 const FRAME: Record<ImageShape, string> = {
@@ -59,6 +112,8 @@ const FRAME: Record<ImageShape, string> = {
   square: 'h-28 w-28',
   circle: 'h-24 w-24 rounded-full',
   thumb: 'h-16 w-16',
+  // Upright, because a payment screenshot is a phone screen.
+  proof: 'h-32 w-24',
 };
 
 export function ImagePicker({
