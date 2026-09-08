@@ -9,7 +9,9 @@ import {
   yearSaving,
 } from '@/lib/plans';
 import { ShopArt, VoiceArt } from '@/components/ui/ShopArt';
-import { CheckIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { CheckIcon } from '@/components/ui/Icon';
+import { LangTabs } from '@/components/marketing/LangTabs';
+import { PROBLEMS, STEPS } from '@/lib/marketing-copy';
 import { BRAND_NAME } from '@/lib/brand';
 
 export const metadata: Metadata = {
@@ -50,23 +52,52 @@ const COMPARISON: { feature: string; free: boolean; starter: boolean; pro: boole
   { feature: 'Priority support on WhatsApp', free: false, starter: false, pro: true },
 ];
 
-const STEPS = [
-  'We set up your shop and print your QR — send us the name, number and address.',
-  'You get a link on WhatsApp. Open it, and your shop app is ready. Nothing to download from a store.',
-  'Add your items by speaking, in your own language. Your phone reads each one back.',
-  // The real lifecycle, in the order it happens. WhatsApp appears where it
-  // actually belongs — telling the customer their order is ready — and not as
-  // the channel orders arrive on, which it is not.
-  'Customers scan the QR and choose. The order lands in your app and your phone buzzes.',
-  'Mark it ready, WhatsApp the customer, take the money, and tick it paid. You keep every rupee.',
-];
+/** The numbered list, in one language. Rendered twice, behind the tabs. */
+function StepList({ lang }: { lang: 'en' | 'bn' }) {
+  return (
+    <ol className="mt-6 space-y-5">
+      {STEPS.map((step, index) => (
+        <li key={step.en} className="flex gap-4">
+          <span
+            aria-hidden
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white"
+          >
+            {index + 1}
+          </span>
+          <p className="text-slate-700">{step[lang]}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** The problem/answer pairs, in one language. */
+function ProblemList({ lang }: { lang: 'en' | 'bn' }) {
+  return (
+    <ul className="mt-6 grid gap-4 md:grid-cols-2">
+      {PROBLEMS.map((row) => (
+        <li
+          key={row.problem.en}
+          // Tinted, not white: this section sits on white between two others,
+          // and a white card on a white ground is a border pretending to be a
+          // card.
+          className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+        >
+          {/* The complaint is the heading and the fix is the smaller line under
+              it, not the other way round. A shopkeeper scanning this page has to
+              find themselves in it before any feature means anything. */}
+          <p className="font-semibold leading-snug text-slate-900">{row.problem[lang]}</p>
+          <p className="mt-2.5 flex gap-2.5 text-sm leading-relaxed text-slate-600">
+            <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+            <span>{row.answer[lang]}</span>
+          </p>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export default function PricingPage() {
-  const support = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '';
-  const startUrl = support
-    ? `https://wa.me/${support}?text=${encodeURIComponent('I want a ${BRAND_NAME} shop.')}`
-    : '#plans';
-
   return (
     <main className="min-h-dvh bg-white">
       <header className="bg-gradient-to-br from-brand-700 via-brand-700 to-brand-600 px-4 pb-16 pt-14 text-white">
@@ -83,21 +114,24 @@ export default function PricingPage() {
               unlimited on every plan, because charging a shop more for selling more is not a
               partnership.
             </p>
+            {/* There was a green "Start on WhatsApp" button here. It pointed at
+                nothing — NEXT_PUBLIC_SUPPORT_PHONE is unset, so it silently
+                fell back to scrolling down this same page, which is worse than
+                no button: a reader who presses the biggest thing on the screen
+                and lands where they already were assumes the product is broken.
+                The page now sends people to the two places that exist. */}
             <div className="mt-7 flex flex-wrap gap-3">
               <a
-                href={startUrl}
-                target={support ? '_blank' : undefined}
-                rel="noreferrer"
-                className="inline-flex h-12 items-center gap-2 rounded-xl bg-[#25D366] px-6 font-semibold text-white transition hover:bg-[#1eb457]"
-              >
-                <WhatsAppIcon className="h-5 w-5" />
-                Start on WhatsApp
-              </a>
-              <a
                 href="#plans"
-                className="inline-flex h-12 items-center rounded-xl bg-white/15 px-6 font-semibold backdrop-blur transition hover:bg-white/25"
+                className="inline-flex h-12 items-center rounded-xl bg-white px-6 font-semibold text-brand-700 transition hover:bg-white/90"
               >
                 See the plans
+              </a>
+              <a
+                href="#problems"
+                className="inline-flex h-12 items-center rounded-xl bg-white/15 px-6 font-semibold backdrop-blur transition hover:bg-white/25"
+              >
+                What it fixes
               </a>
             </div>
           </div>
@@ -236,23 +270,32 @@ export default function PricingPage() {
         </div>
       </section>
 
+      <section id="problems" className="border-t border-slate-100 px-4 py-16">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-3xl font-bold text-slate-900">
+            What a shop is actually up against
+          </h2>
+          <p className="mt-2 max-w-2xl text-slate-600">
+            Not a feature list. These are the things that go wrong in a kirana on
+            an ordinary Tuesday, and what this does about each one.
+          </p>
+          <LangTabs
+            className="mt-7"
+            en={<ProblemList lang="en" />}
+            bn={<ProblemList lang="bn" />}
+          />
+        </div>
+      </section>
+
       <section className="border-t border-slate-100 bg-slate-50 px-4 py-16">
         <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
           <div>
             <h2 className="text-3xl font-bold text-slate-900">How it works</h2>
-            <ol className="mt-6 space-y-5">
-              {STEPS.map((step, index) => (
-                <li key={step} className="flex gap-4">
-                  <span
-                    aria-hidden
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white"
-                  >
-                    {index + 1}
-                  </span>
-                  <p className="text-slate-700">{step}</p>
-                </li>
-              ))}
-            </ol>
+            <LangTabs
+              className="mt-5"
+              en={<StepList lang="en" />}
+              bn={<StepList lang="bn" />}
+            />
           </div>
 
           <div className="rounded-3xl bg-white p-6 shadow-card">
@@ -273,15 +316,13 @@ export default function PricingPage() {
             like. A year costs two months less than paying monthly. If you stop, your shop page and
             QR keep working; you simply cannot change items until you come back.
           </p>
-          <a
-            href={startUrl}
-            target={support ? '_blank' : undefined}
-            rel="noreferrer"
-            className="mt-6 inline-flex h-12 items-center gap-2 rounded-xl bg-[#25D366] px-6 font-semibold text-white transition hover:bg-[#1eb457]"
-          >
-            <WhatsAppIcon className="h-5 w-5" />
-            Start on WhatsApp
-          </a>
+          {/* Pay from inside the app, where the UPI QR already carries the
+              right amount and your shop's name — not from a marketing page
+              that does not know which shop is reading it. */}
+          <p className="mx-auto mt-5 max-w-lg text-sm text-white/70">
+            Already have a shop? Open your app and tap <strong>Plan</strong> in the top bar to pay
+            or renew.
+          </p>
         </div>
 
         <p className="mt-10 text-center text-xs text-slate-400">
