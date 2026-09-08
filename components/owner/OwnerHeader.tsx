@@ -15,6 +15,7 @@
  */
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
 import { SignOutIcon } from '@/components/ui/Icon';
@@ -86,6 +87,21 @@ export function OwnerHeader({ slug, locale }: { slug: string; locale: Locale }) 
         </select>
 
         <OwnerInstallButton slug={slug} label={t.installNow} />
+
+        {/* THE ONLY PERMANENT WAY TO PAY US.
+            PlanBanner covers the last week of a trial and a catalogue near its
+            limit, and the roadblock covers an owner already locked out — but a
+            shop comfortably inside its plan sees neither, and until this button
+            existed such an owner had no route to a payment screen at all. It is
+            a word rather than an icon because "where do I pay" is a question
+            somebody asks in words, and a rupee glyph on a green bar reads as a
+            price, not a link. */}
+        <Link
+          href={`/owner/${slug}/renew`}
+          className="inline-flex h-9 shrink-0 items-center rounded-lg px-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+        >
+          {t.renewOpen}
+        </Link>
 
         <button
           type="button"

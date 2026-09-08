@@ -97,6 +97,9 @@ export const config = {
     '/api/admin/shop/:path*',
     '/api/admin/reports/:path*',
     '/api/admin/occasions/:path*',
+    // Where every shop sends its money, and the queue that issues activation
+    // codes. Super Admin only, with no owner exception.
+    '/api/admin/payments/:path*',
     // Changing the Super Admin's own sign-in. The handler re-checks, but this
     // is the last endpoint that should depend on a single check.
     '/api/admin/account/:path*',

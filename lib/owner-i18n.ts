@@ -195,6 +195,42 @@ type OwnerDictionary = {
   blockHelp: string;
   blockItems: string;
 
+  /** The always-reachable plan-and-payment screen, /owner/<slug>/renew. */
+  renewTitle: string;
+  renewOpen: string;
+  renewPaidUntil: string;
+  renewTrialUntil: string;
+  renewEarlyHint: string;
+  renewChoosePlan: string;
+  renewFits: string;
+  renewNoUpi: string;
+
+  /** Paying the operator: choose a plan, send proof, type the code back. */
+  close: string;
+  payNow: string;
+  perMonth: string;
+  perYear: string;
+  perMonthShort: string;
+  twoMonthsFree: string;
+  planTooSmall: string;
+  upgradeTitle: string;
+  upgradeToPay: string;
+  upgradeShowQr: string;
+  upgradeUpiLabel: string;
+  upgradePhoneLabel: string;
+  upgradeYourUpi: string;
+  upgradeYourPhone: string;
+  upgradeScreenshot: string;
+  upgradeSubmit: string;
+  upgradeSubmitHint: string;
+  upgradeWaiting: string;
+  upgradeCodeSent: string;
+  upgradeCodeLabel: string;
+  upgradeActivate: string;
+  upgradeDone: string;
+  upgradeDoneHint: string;
+  upgradeRefused: string;
+
   starterTitle: string;
   starterHint: string;
   starterAdd: string;
@@ -489,7 +525,20 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     messageCustomer: 'WhatsApp',
 
     planLabel: 'Plan',
-    trialDaysLeft: 'days left in your free trial',
+    /**
+     * Reads as "7 days left, then pay".
+     *
+     * It used to say "days left in your free trial", which was three problems
+     * in five words: "free trial" is a software word a shopkeeper has no reason
+     * to know, the sentence never said what happens at the end of it, and in
+     * Bengali it ran long enough to wrap the banner onto a second line and eat
+     * a row of a screen that has real work on it.
+     *
+     * Each language now says the plain thing in its own way rather than
+     * translating the English one — the Bengali and Hindi are literally "after
+     * 7 days you will have to pay", which is the fact the owner needs.
+     */
+    trialDaysLeft: 'days left, then pay',
     planFull: 'Your plan is full',
     planUpgrade: 'Upgrade',
     planExpired: 'Your subscription has ended. Your shop and QR still work — renew to change items.',
@@ -511,6 +560,43 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     blockPerMonth: 'Monthly',
     blockPerYear: 'Yearly',
     blockHelp: 'Talk to us on WhatsApp',
+
+    renewTitle: 'Your plan',
+    renewOpen: 'Plan',
+    renewPaidUntil: 'Paid until',
+    renewTrialUntil: 'Free trial until',
+    renewEarlyHint:
+      'Paying early costs you nothing — the days you have left are added on top of the time you buy.',
+    renewChoosePlan: 'Choose a plan',
+    renewFits: 'Fits your shop',
+    renewNoUpi:
+      'Payment is not set up yet. Please call us and we will take it another way.',
+
+    close: 'Close',
+    payNow: 'Pay',
+    perMonth: 'For a month',
+    perYear: 'For a year',
+    perMonthShort: '/month',
+    twoMonthsFree: '2 months free',
+    planTooSmall: 'too small for your items',
+    upgradeTitle: 'Pay for your shop',
+    upgradeToPay: 'To pay',
+    upgradeShowQr: 'Show the QR to scan',
+    upgradeUpiLabel: 'UPI id',
+    upgradePhoneLabel: 'Phone',
+    upgradeYourUpi: 'The UPI id you paid from',
+    upgradeYourPhone: 'Your Google Pay / PhonePe number',
+    upgradeScreenshot: 'Payment screenshot',
+    upgradeSubmit: 'I have paid — send for checking',
+    upgradeSubmitHint:
+      'We check the payment and send you a 4-digit code on WhatsApp. Type it here and your plan turns on.',
+    upgradeWaiting: 'We are checking your payment. Your code comes on WhatsApp.',
+    upgradeCodeSent: 'We have sent your 4-digit code on WhatsApp.',
+    upgradeCodeLabel: '4-digit code',
+    upgradeActivate: 'Turn on my plan',
+    upgradeDone: 'Your plan is on',
+    upgradeDoneHint: 'Thank you. Everything is open again.',
+    upgradeRefused: 'We could not confirm your last payment',
 
     starterTitle: 'Add common items in one tap',
     starterHint: 'Pick what you sell, then say or type the prices.',
@@ -798,7 +884,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     messageCustomer: 'WhatsApp',
 
     planLabel: 'প্ল্যান',
-    trialDaysLeft: 'দিন ফ্রি ট্রায়াল বাকি',
+    trialDaysLeft: 'দিন পর টাকা দিতে হবে',
     planFull: 'আপনার প্ল্যান ভরে গেছে',
     planUpgrade: 'বাড়ান',
     planExpired: 'সাবস্ক্রিপশন শেষ। দোকান আর QR চলছে — জিনিস বদলাতে রিনিউ করুন।',
@@ -820,6 +906,43 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     blockPerMonth: 'মাসে',
     blockPerYear: 'বছরে',
     blockHelp: 'হোয়াটসঅ্যাপে কথা বলুন',
+
+    renewTitle: 'আপনার প্ল্যান',
+    renewOpen: 'প্ল্যান',
+    renewPaidUntil: 'টাকা দেওয়া আছে',
+    renewTrialUntil: 'ফ্রি ট্রায়াল চলবে',
+    renewEarlyHint:
+      'আগে টাকা দিলে কিছু নষ্ট হয় না — আপনার হাতে যে দিনগুলো আছে, সেগুলো নতুন সময়ের সঙ্গে যোগ হয়ে যায়।',
+    renewChoosePlan: 'প্ল্যান বাছুন',
+    renewFits: 'আপনার দোকানের মাপে',
+    renewNoUpi:
+      'টাকা নেওয়ার ব্যবস্থা এখনো চালু হয়নি। আমাদের ফোন করুন, অন্যভাবে নিয়ে নেব।',
+
+    close: 'বন্ধ করুন',
+    payNow: 'টাকা দিন',
+    perMonth: 'এক মাসের জন্য',
+    perYear: 'এক বছরের জন্য',
+    perMonthShort: '/মাস',
+    twoMonthsFree: '২ মাস ফ্রি',
+    planTooSmall: 'আপনার জিনিস বেশি',
+    upgradeTitle: 'দোকানের টাকা দিন',
+    upgradeToPay: 'দিতে হবে',
+    upgradeShowQr: 'QR দেখুন, স্ক্যান করুন',
+    upgradeUpiLabel: 'UPI আইডি',
+    upgradePhoneLabel: 'ফোন',
+    upgradeYourUpi: 'যে UPI আইডি থেকে টাকা দিলেন',
+    upgradeYourPhone: 'আপনার Google Pay / PhonePe নম্বর',
+    upgradeScreenshot: 'টাকা দেওয়ার স্ক্রিনশট',
+    upgradeSubmit: 'টাকা দিয়েছি — দেখতে পাঠান',
+    upgradeSubmitHint:
+      'আমরা টাকা দেখে হোয়াটসঅ্যাপে ৪ সংখ্যার কোড পাঠাব। এখানে লিখলেই প্ল্যান চালু হয়ে যাবে।',
+    upgradeWaiting: 'আপনার টাকা আমরা দেখছি। কোড হোয়াটসঅ্যাপে আসবে।',
+    upgradeCodeSent: 'হোয়াটসঅ্যাপে ৪ সংখ্যার কোড পাঠিয়ে দিয়েছি।',
+    upgradeCodeLabel: '৪ সংখ্যার কোড',
+    upgradeActivate: 'প্ল্যান চালু করুন',
+    upgradeDone: 'প্ল্যান চালু হয়ে গেছে',
+    upgradeDoneHint: 'ধন্যবাদ। সব আবার খুলে গেছে।',
+    upgradeRefused: 'আপনার আগের টাকা আমরা মেলাতে পারিনি',
 
     starterTitle: 'এক চাপে সাধারণ জিনিস যোগ করুন',
     starterHint: 'আপনি যা বিক্রি করেন বেছে নিন, তারপর দাম বলুন বা লিখুন।',
@@ -1103,7 +1226,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     messageCustomer: 'WhatsApp',
 
     planLabel: 'प्लान',
-    trialDaysLeft: 'दिन का फ्री ट्रायल बाकी',
+    trialDaysLeft: 'दिन बाद पैसे देने होंगे',
     planFull: 'आपका प्लान भर गया',
     planUpgrade: 'बढ़ाएँ',
     planExpired: 'सदस्यता खत्म। दुकान और QR चालू हैं — सामान बदलने के लिए रिन्यू करें।',
@@ -1125,6 +1248,43 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     blockPerMonth: 'माहवारी',
     blockPerYear: 'सालाना',
     blockHelp: 'व्हाट्सएप पर बात करें',
+
+    renewTitle: 'आपका प्लान',
+    renewOpen: 'प्लान',
+    renewPaidUntil: 'भुगतान इस तारीख तक',
+    renewTrialUntil: 'फ्री ट्रायल इस तारीख तक',
+    renewEarlyHint:
+      'पहले भुगतान करने से कुछ नहीं जाता — आपके बचे हुए दिन नए समय में जुड़ जाते हैं।',
+    renewChoosePlan: 'प्लान चुनिए',
+    renewFits: 'आपकी दुकान के हिसाब से',
+    renewNoUpi:
+      'भुगतान की व्यवस्था अभी चालू नहीं है। हमें फोन कीजिए, हम दूसरे तरीके से ले लेंगे।',
+
+    close: 'बंद करें',
+    payNow: 'पैसे दें',
+    perMonth: 'एक महीने के लिए',
+    perYear: 'एक साल के लिए',
+    perMonthShort: '/महीना',
+    twoMonthsFree: '२ महीने फ्री',
+    planTooSmall: 'आपका सामान ज़्यादा है',
+    upgradeTitle: 'दुकान के पैसे दें',
+    upgradeToPay: 'देने हैं',
+    upgradeShowQr: 'QR देखिए, स्कैन कीजिए',
+    upgradeUpiLabel: 'UPI आईडी',
+    upgradePhoneLabel: 'फोन',
+    upgradeYourUpi: 'जिस UPI आईडी से पैसे दिए',
+    upgradeYourPhone: 'आपका Google Pay / PhonePe नंबर',
+    upgradeScreenshot: 'पैसे देने का स्क्रीनशॉट',
+    upgradeSubmit: 'पैसे दे दिए — जाँचने भेजें',
+    upgradeSubmitHint:
+      'हम पैसे देखकर व्हाट्सएप पर ४ अंकों का कोड भेजेंगे। यहाँ लिखते ही प्लान चालू हो जाएगा।',
+    upgradeWaiting: 'हम आपके पैसे देख रहे हैं। कोड व्हाट्सएप पर आएगा।',
+    upgradeCodeSent: 'व्हाट्सएप पर ४ अंकों का कोड भेज दिया है।',
+    upgradeCodeLabel: '४ अंकों का कोड',
+    upgradeActivate: 'प्लान चालू करें',
+    upgradeDone: 'प्लान चालू हो गया',
+    upgradeDoneHint: 'धन्यवाद। सब फिर से खुल गया है।',
+    upgradeRefused: 'आपके पिछले भुगतान का मिलान नहीं हो सका',
 
     starterTitle: 'एक टैप में आम सामान जोड़ें',
     starterHint: 'जो आप बेचते हैं चुनिए, फिर दाम बोलिए या लिखिए।',
