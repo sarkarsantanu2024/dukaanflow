@@ -59,7 +59,10 @@ export function UpgradeModal({
       <Modal
         open={open}
         title={t.upgradeTitle}
-        size="md"
+        // Full screen, bar a 10px margin. Paying is a task, not an
+        // interruption — a centred card left the flow scrolling inside a window
+        // inside a page, with the shop's own screen showing round the edges.
+        size="full"
         onClose={() => setOpen(false)}
         footer={
           <Button variant="secondary" onClick={() => setOpen(false)}>

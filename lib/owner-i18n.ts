@@ -218,8 +218,6 @@ type OwnerDictionary = {
   upgradeShowQr: string;
   upgradeUpiLabel: string;
   upgradePhoneLabel: string;
-  upgradeYourUpi: string;
-  upgradeYourPhone: string;
   upgradeScreenshot: string;
   upgradeSubmit: string;
   upgradeSubmitHint: string;
@@ -584,8 +582,6 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     upgradeShowQr: 'Show the QR to scan',
     upgradeUpiLabel: 'UPI id',
     upgradePhoneLabel: 'Phone',
-    upgradeYourUpi: 'The UPI id you paid from',
-    upgradeYourPhone: 'Your Google Pay / PhonePe number',
     upgradeScreenshot: 'Payment screenshot',
     upgradeSubmit: 'I have paid — send for checking',
     upgradeSubmitHint:
@@ -930,8 +926,6 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     upgradeShowQr: 'QR দেখুন, স্ক্যান করুন',
     upgradeUpiLabel: 'UPI আইডি',
     upgradePhoneLabel: 'ফোন',
-    upgradeYourUpi: 'যে UPI আইডি থেকে টাকা দিলেন',
-    upgradeYourPhone: 'আপনার Google Pay / PhonePe নম্বর',
     upgradeScreenshot: 'টাকা দেওয়ার স্ক্রিনশট',
     upgradeSubmit: 'টাকা দিয়েছি — দেখতে পাঠান',
     upgradeSubmitHint:
@@ -1272,8 +1266,6 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     upgradeShowQr: 'QR देखिए, स्कैन कीजिए',
     upgradeUpiLabel: 'UPI आईडी',
     upgradePhoneLabel: 'फोन',
-    upgradeYourUpi: 'जिस UPI आईडी से पैसे दिए',
-    upgradeYourPhone: 'आपका Google Pay / PhonePe नंबर',
     upgradeScreenshot: 'पैसे देने का स्क्रीनशॉट',
     upgradeSubmit: 'पैसे दे दिए — जाँचने भेजें',
     upgradeSubmitHint:
