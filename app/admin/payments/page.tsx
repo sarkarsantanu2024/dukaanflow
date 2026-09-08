@@ -67,6 +67,15 @@ export default async function PaymentsPage() {
       attempts: row.attempts,
       reviewNote: row.reviewNote,
       createdAt: row.createdAt.toISOString(),
+      // Written out here rather than in the browser: the two would disagree
+      // about the timezone and React would discard the tree over it.
+      createdLabel: row.createdAt.toLocaleString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: 'Asia/Kolkata',
+      }),
     }))
     .sort((a, b) => {
       const byStatus = (RANK[a.status] ?? 9) - (RANK[b.status] ?? 9);

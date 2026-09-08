@@ -7,6 +7,10 @@ import {
   generateActivationCode,
   hashActivationCode,
 } from '@/lib/activation-code';
+import { activationMessage } from '@/lib/activation-message';
+import { periodFor } from '@/lib/subscription';
+import { PLAN_SPECS, type Plan } from '@/lib/plans';
+import { LOCALES, type Locale } from '@/lib/i18n';
 
 export const runtime = 'nodejs';
 
@@ -35,7 +39,24 @@ export async function POST(request: Request, { params }: Context) {
 
   const found = await prisma.paymentRequest.findUnique({
     where: { id },
-    select: { id: true, status: true, shop: { select: { name: true, phone: true, slug: true } } },
+    select: {
+      id: true,
+      status: true,
+      plan: true,
+      months: true,
+      amountPaise: true,
+      shop: {
+        select: {
+          name: true,
+          phone: true,
+          slug: true,
+          ownerName: true,
+          locale: true,
+          currentPeriodEnd: true,
+          trialEndsAt: true,
+        },
+      },
+    },
   });
   if (!found) return fail('Request not found', 404);
 
@@ -74,6 +95,37 @@ export async function POST(request: Request, { params }: Context) {
     },
   });
 
+  /**
+   * The message, written out in all three languages.
+   *
+   * All three rather than only the shop's, because the operator is the one
+   * pressing send and knows things the `locale` column does not: that this
+   * particular shopkeeper reads Hindi despite a Bengali shopfront, or that the
+   * number belongs to a son who will read English. The shop's own language is
+   * what the console opens on, which is right far more often than not — it is a
+   * default, not a decision made for them.
+   *
+   * Composed here rather than in the console's browser so the renewal date is
+   * formatted once, in Indian time, whatever clock the operator is on.
+   */
+  const { periodEnd } = periodFor(found.shop, found.months);
+  const spec = PLAN_SPECS[found.plan as Plan];
+
+  const common = {
+    shopName: found.shop.name,
+    ownerName: found.shop.ownerName,
+    planName: spec?.name ?? found.plan,
+    planItemLimit: spec?.itemLimit ?? 0,
+    months: found.months,
+    amountPaise: found.amountPaise,
+    renewsOn: periodEnd,
+    code,
+  };
+
+  const messages = Object.fromEntries(
+    LOCALES.map((locale) => [locale, activationMessage({ locale, ...common })]),
+  ) as Record<Locale, string>;
+
   return ok({
     success: true,
     status: 'CODE_ISSUED',
@@ -81,5 +133,19 @@ export async function POST(request: Request, { params }: Context) {
     code,
     shopName: found.shop.name,
     shopPhone: found.shop.phone,
+    ownerName: found.shop.ownerName,
+    planName: common.planName,
+    months: found.months,
+    // For the console's own summary line, which is read by the operator and so
+    // stays in English whatever the shop reads.
+    renewsOn: periodEnd.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Kolkata',
+    }),
+    /** What the console opens on — overridable by the operator. */
+    defaultLocale: (found.shop.locale as Locale) ?? 'en',
+    messages,
   });
 }
