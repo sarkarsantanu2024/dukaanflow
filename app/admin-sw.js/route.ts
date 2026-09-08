@@ -36,16 +36,36 @@ import { BRAND_GREEN, BRAND_GROUND, BRAND_LOGO, BRAND_NAME } from '@/lib/brand';
 
 export const runtime = 'nodejs';
 
+const DEV = process.env.NODE_ENV !== 'production';
+
 /**
  * Bumped by the deployment, so a release cannot leave old shells behind.
  *
- * On Vercel this is the commit; locally it is a constant, which is right —
- * a developer wants the worker to stop reinstalling itself on every save.
+ * On Vercel this is the commit. Locally it used to be the constant `'dev'`,
+ * with the reasoning that a developer wants the worker to stop reinstalling
+ * itself on every save. That reasoning was right about the worker and wrong
+ * about the cache, and the difference cost most of an afternoon:
+ *
+ * `isBuildAsset` caches /_next/static/ CACHE-FIRST AND FOREVER, which is only
+ * safe because Next content-hashes those URLs in a production build — the URL
+ * changes whenever the bytes do, so a stale entry is unreachable rather than
+ * wrong. In development there are no hashes. The chunk for a page keeps the
+ * same URL across every edit, so the first visit's JavaScript was pinned in a
+ * cache named `halkhata-dev` that nothing would ever invalidate, and the
+ * browser went on running it no matter what the server sent. A shopkeeper-
+ * facing bug fix would be verified as served, correctly, and still not appear
+ * on screen.
+ *
+ * Module scope, so it is stable within one dev server run and different across
+ * restarts: restarting is the developer's own "start again", and it should
+ * mean it.
  */
-const VERSION = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ?? 'dev';
+const VERSION = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ?? `dev-${Date.now()}`;
 
 const SOURCE = `
 const CACHE = 'halkhata-${VERSION}';
+/** True only when this was served by \`next dev\`. */
+const DEV = ${DEV};
 
 // What a page falls back to when it was never visited and there is no network.
 // Inline, because fetching an offline page while offline is the joke it sounds
@@ -100,6 +120,11 @@ self.addEventListener('fetch', (event) => {
   // NEVER an API. A price, a stock count or an order status served from a
   // cache is worse than an error, because the shopkeeper believes it.
   if (url.pathname.startsWith('/api/')) return;
+
+  // IN DEVELOPMENT, CACHE NOTHING. Dev chunk URLs are stable names rather than
+  // content hashes, so anything kept here is a lie the moment the file is
+  // edited — and an invisible one, because the browser stops asking.
+  if (DEV) return;
 
   if (isBuildAsset(url)) {
     event.respondWith((async () => {
