@@ -40,6 +40,31 @@ export function SiteFooter() {
             </a>
           </p>
         )}
+
+        {/* THE POLICIES HAVE TO BE REACHABLE FROM ANY PAGE, and this footer is
+            the only thing on every page. Four quiet links rather than a block:
+            they are read once, usually by somebody deciding whether to trust
+            this with money, and a shopper buying rice should not have to scroll
+            past them.
+
+            Plain anchors, not `next/link` — this is a server component on a
+            page that may be nothing but a footer, and a prefetch each for four
+            documents nobody is about to open is bandwidth spent on a phone that
+            has little of it. */}
+        <p className="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <a href="/privacy" className="hover:text-slate-700">
+            Privacy
+          </a>
+          <a href="/terms" className="hover:text-slate-700">
+            Terms
+          </a>
+          <a href="/refund" className="hover:text-slate-700">
+            Refunds
+          </a>
+          <a href="/contact" className="hover:text-slate-700">
+            Contact
+          </a>
+        </p>
       </div>
     </footer>
   );
