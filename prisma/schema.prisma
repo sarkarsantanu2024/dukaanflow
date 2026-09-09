@@ -225,6 +225,7 @@ model Shop {
   areaStats       AreaPeriodStat[]
   subscriptions   PushSubscription[]
   paymentRequests PaymentRequest[]
+  cashDays        CashDay[]
 
   @@index([active])
   @@index([subscriptionStatus])
@@ -329,6 +330,14 @@ model LedgerEntry {
   kind        LedgerKind
   amountPaise Int // always positive; the kind decides the direction
   note        String     @default("")
+  /// How a repayment came in: "CASH", "UPI", or "" where it was not recorded.
+  ///
+  /// Only meaningful on a CREDIT. It exists for one reason: a repayment is cash
+  /// walking into the drawer without being a sale, so the day's drawer cannot be
+  /// reconciled without knowing which repayments were cash. Blank on every entry
+  /// written before this column existed, and the reckoning says so rather than
+  /// assuming.
+  paymentMode String     @default("")
   /// Set when the entry came from a counter sale rung up on credit.
   saleId      String?    @db.Uuid
   /// Set when it came from a WhatsApp order the owner completed unpaid.
@@ -342,6 +351,37 @@ model LedgerEntry {
 
   @@index([shopId, createdAt])
   @@index([customerId, createdAt])
+}
+
+/// One day's cash drawer, as the shopkeeper counts it.
+///
+/// THE OPENING FLOAT IS THE MISSING NUMBER. A shop starts the morning with
+/// change already in the drawer — a few hundred rupees of tens and twenties, so
+/// the first customer with a five-hundred note can be served — and no amount of
+/// reading sales can tell us what that was. Without it "what should be in the
+/// drawer" is unanswerable, so the owner types it once before opening.
+///
+/// One row per shop per day, keyed on the day as the shop's own calendar reads
+/// it (YYYY-MM-DD, IST). A timestamp would be ambiguous at exactly the moment
+/// it matters: a shop closing at half past midnight is still on yesterday.
+model CashDay {
+  id     String @id @default(uuid()) @db.Uuid
+  shopId String @db.Uuid
+  /// "YYYY-MM-DD" on the shop's own clock. See `lib/time.ts`.
+  day    String
+
+  /// What was in the drawer before the shop opened, in PAISE.
+  openingPaise Int @default(0)
+  /// What was counted at closing, in PAISE, or null while nobody has counted.
+  countedPaise Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, day])
+  @@index([shopId, day])
 }
 
 model Item {

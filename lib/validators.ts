@@ -477,9 +477,46 @@ export const ledgerSchema = z.object({
     .min(1, 'Enter an amount')
     .max(100_000_000, 'That looks too large'),
   note: z.string().trim().max(120).default(''),
+  /**
+   * How a repayment came in. Only meaningful on a CREDIT, and blank is allowed.
+   *
+   * It exists for the cash drawer: a repayment is money walking in without
+   * being a sale, so a day cannot be reconciled without knowing which
+   * repayments were cash. Blank stays legal because the owner must never be
+   * blocked from writing down that somebody paid.
+   */
+  paymentMode: z.enum(['', 'CASH', 'UPI']).default(''),
 });
 
 export const ledgerDeleteSchema = z.object({ id: z.string().uuid('Unknown entry') });
+
+/**
+ * The day's cash drawer: what it opened with, and what was counted in it.
+ *
+ * Both are optional, because they are typed at opposite ends of the day — the
+ * float before the shutter goes up, the count after it comes down — and a
+ * request carrying one must not blank the other.
+ */
+export const cashDaySchema = z.object({
+  /** PAISE. Zero is a real answer: a drawer can genuinely start empty. */
+  openingPaise: z
+    .number()
+    .int('Whole paise only')
+    .min(0, 'Cannot be less than zero')
+    .max(100_000_000, 'That looks too large')
+    .optional(),
+  /** PAISE, or null to undo a count that was typed wrong. */
+  countedPaise: z
+    .number()
+    .int('Whole paise only')
+    .min(0, 'Cannot be less than zero')
+    .max(100_000_000, 'That looks too large')
+    .nullable()
+    .optional(),
+});
+
+/** Turning an order away removes it — see the DELETE handler on the order route. */
+export const orderDeleteSchema = z.object({ id: z.string().uuid('Unknown order') });
 
 export const orderStatusSchema = z.object({
   id: z.string().uuid('Unknown order'),

@@ -4,16 +4,77 @@ import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { SellScreen } from '@/components/owner/SellScreen';
 import { MenuBroadcast } from '@/components/owner/MenuBroadcast';
-import type { ShopType } from '@prisma/client';
+import type { OrderStatus, ShopType } from '@prisma/client';
 import { baseUrl } from '@/lib/qr';
 import { BRAND_NAME } from '@/lib/brand';
+import { readOrderLines, type SnapshotNames } from '@/lib/order-snapshot';
 
 export const dynamic = 'force-dynamic';
 
 /** Shop kinds whose offer changes day to day, and only those. */
 const DAILY_OFFER_SHOPS: ShopType[] = ['HOME_KITCHEN', 'RESTAURANT', 'BAKERY', 'TEA_STALL'];
 
-type PageProps = { params: Promise<{ slug: string }> };
+type PageProps = {
+  params: Promise<{ slug: string }>;
+  /** `?order=` — an order carried over from the queue. See `loadTillOrder`. */
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+/** Which states an order can still be worked in. A finished one is a record. */
+const WORKABLE: OrderStatus[] = ['NEW', 'CONFIRMED', 'READY'];
+
+/**
+ * The order the owner asked to bring to the till, if it is still theirs to do.
+ *
+ * READ HERE, ON THE SERVER, FROM THE ID ALONE — never handed across from the
+ * card that was tapped. The queue screen can be twenty minutes stale, and an
+ * order that has since been cut down, paid or cancelled must not reappear at
+ * the till at its old total. Scoped by `shopId`, so no id from anywhere can
+ * reach another shop's orders.
+ *
+ * A missing or finished order is not an error: the till simply opens as a till.
+ */
+async function loadTillOrder(shopId: string, raw: string | string[] | undefined) {
+  const id = Array.isArray(raw) ? raw[0] : raw;
+  if (!id) return null;
+
+  const order = await prisma.order.findFirst({
+    where: { id, shopId, status: { in: WORKABLE } },
+    select: {
+      id: true,
+      customerName: true,
+      customerPhone: true,
+      customerAddress: true,
+      orderType: true,
+      status: true,
+      totalAmountPaise: true,
+      deliveryFeePaise: true,
+      itemsJson: true,
+    },
+  });
+  if (!order) return null;
+
+  // The names the items go by now, for orders taken before snapshots carried
+  // translations — the same gap the queue fills, filled the same way.
+  const known: SnapshotNames = new Map(
+    (
+      await prisma.item.findMany({
+        where: { shopId },
+        select: { id: true, nameBn: true, nameHi: true },
+      })
+    ).map((item) => [item.id, { nameBn: item.nameBn, nameHi: item.nameHi }]),
+  );
+
+  return {
+    id: order.id,
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    orderType: order.orderType,
+    totalAmountPaise: order.totalAmountPaise,
+    deliveryFeePaise: order.deliveryFeePaise,
+    lines: readOrderLines(order.itemsJson, known),
+  };
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -24,9 +85,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function SellPage({ params }: PageProps) {
+export default async function SellPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
+  const tillOrder = await loadTillOrder(shop.id, (await searchParams).order);
 
   // The day's takings and the list of sales rung up today used to load here and
   // sit above the till. They are gone from the screen — an owner selling with a
@@ -71,6 +133,7 @@ export default async function SellPage({ params }: PageProps) {
         items={items}
         locale={locale}
         customers={customers}
+        tillOrder={tillOrder}
       />
 
       {/* A kirana's list is the same today as yesterday — "today's menu" is
