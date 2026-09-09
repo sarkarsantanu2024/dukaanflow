@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { SiteFooter } from '@/components/ui/SiteFooter';
 import {
   PLAN_ORDER,
   PLAN_SPECS,
@@ -332,6 +333,10 @@ export default function PricingPage() {
           · Scan → Select → Order
         </p>
       </section>
+
+      {/* The page somebody reads while deciding to pay is the page that has to
+          carry the refund policy and the terms. */}
+      <SiteFooter />
     </main>
   );
 }
