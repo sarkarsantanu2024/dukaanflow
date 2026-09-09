@@ -1,7 +1,23 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { SavedShops } from '@/components/customer/SavedShops';
 import { MicIcon } from '@/components/ui/Icon';
+import { SiteFooter } from '@/components/ui/SiteFooter';
+
+/**
+ * THE ONE PAGE THIS BUSINESS WANTS FOUND, and until now the only one it had
+ * shut out.
+ *
+ * The root layout marks everything `noindex` so that shops, orders and the
+ * console cannot leak into search — a sound default — and each public page opts
+ * itself back in. `/pricing` already did. This one never did, so the landing
+ * page, the headline the whole positioning rests on, could not appear on Google
+ * at all while the page listing the prices could.
+ */
+export const metadata: Metadata = {
+  robots: { index: true, follow: true },
+};
 
 /**
  * The landing page, and the one line of copy this business has to get right.
@@ -23,7 +39,12 @@ import { MicIcon } from '@/components/ui/Icon';
  */
 export default function LandingPage() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col items-center justify-center px-6 py-16 text-center">
+    /* `min-h-dvh` moved off the <main> and onto this column so the footer has
+       somewhere to be. Before, the main filled the viewport on its own and
+       anything after it began below the fold on every screen — which for the
+       policy links is the same as not being there. */
+    <div className="flex min-h-dvh flex-col">
+    <main className="mx-auto flex flex-1 max-w-2xl flex-col items-center justify-center px-6 py-16 text-center">
       <BrandMark href="/" className="text-lg" />
 
       {/* THE BENGALI IS MARKED AS BENGALI, here and on every line below it.
@@ -86,5 +107,10 @@ export default function LandingPage() {
           visitor to this page except the customers it is for. */}
       <SavedShops />
     </main>
+
+    {/* Who built it, who to ring, and the four policy pages. It is the only
+        thing on every page, which is what makes it the right place for them. */}
+    <SiteFooter />
+    </div>
   );
 }
