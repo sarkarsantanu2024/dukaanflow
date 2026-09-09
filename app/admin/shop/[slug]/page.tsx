@@ -3,7 +3,7 @@ import { formatDay, formatDayTime } from '@/lib/time';
 import { prisma } from '@/lib/prisma';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { HeaderAction } from '@/components/admin/HeaderAction';
-import { BoxIcon, PrinterIcon } from '@/components/ui/Icon';
+import { BoxIcon, ChartIcon, PrinterIcon } from '@/components/ui/Icon';
 import { ShopForm } from '@/components/admin/ShopForm';
 import { QrPanel } from '@/components/admin/QrPanel';
 import { DeleteShopButton } from '@/components/admin/DeleteShopButton';
@@ -89,6 +89,21 @@ export default async function ShopDetailPage({ params }: PageProps) {
           label={`Items (${shop._count.items})`}
           icon={BoxIcon}
           variant="primary"
+        />
+        {/* WHEN AN OWNER RINGS UP AND ASKS FOR THEIR FIGURES.
+            Everything needed to answer that already existed — the report reads
+            one shop, splits cash from UPI from credit, prints, and downloads as
+            a CSV — but it lived behind a shop picker on another page, so
+            answering meant leaving this shop, finding it again in a list, and
+            hoping it was the right one.
+
+            The month in progress is the report's own default, which is the
+            question owners actually ask; the period controls are on the page
+            for the rarer ones. */}
+        <HeaderAction
+          href={`/admin/reports?shop=${shop.slug}`}
+          label="Report"
+          icon={ChartIcon}
         />
         <HeaderAction
           href={`/admin/shop/${shop.slug}/poster`}

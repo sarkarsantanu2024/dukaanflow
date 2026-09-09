@@ -33,6 +33,8 @@ import {
   type StatementAccount,
 } from '@/lib/khata-pdf';
 import { ItemNotePicker, type PickableItem } from './ItemNotePicker';
+import { TakingsPanel } from './TakingsPanel';
+import type { Drawer, Takings } from '@/lib/takings';
 import type { Locale } from '@/lib/i18n';
 
 export type KhataCustomer = {
@@ -83,6 +85,9 @@ export function KhataScreen({
   items,
   outstandingPaise,
   locale,
+  today,
+  month,
+  drawer,
 }: {
   slug: string;
   shopName: string;
@@ -91,6 +96,17 @@ export function KhataScreen({
   items: PickableItem[];
   outstandingPaise: number;
   locale: Locale;
+  /**
+   * What the shop took, split by how it was taken — see `TakingsPanel`.
+   *
+   * It lives behind this tab rather than in a fifth one along the bottom: this
+   * is the tab an owner already opens to read the shop's money, and five tabs
+   * on a 375px phone is four targets nobody can hit.
+   */
+  today: Takings;
+  month: Takings;
+  /** Today's cash drawer, or null before the owner has typed the opening float. */
+  drawer: Drawer | null;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -117,6 +133,16 @@ export function KhataScreen({
    * an open account pointing the other way, and it stays on the list.
    */
   const [showSettled, setShowSettled] = useState(false);
+
+  /**
+   * Which of this tab's two jobs is on screen.
+   *
+   * The credit book opens first, always. It is what the tab is called and what
+   * an owner comes here to do twenty times a day; the day's reckoning is read
+   * once, at closing, and a screen that opened on it would put a summary in
+   * front of the name somebody is standing at the counter asking about.
+   */
+  const [view, setView] = useState<'khata' | 'takings'>('khata');
   const [busy, setBusy] = useState(false);
   /** Which PDF is being drawn — the whole book, or one customer's id. */
   const [building, setBuilding] = useState<string | null>(null);
@@ -251,7 +277,7 @@ export function KhataScreen({
   const settled = customers.filter((customer) => customer.balancePaise === 0);
   const listed = showSettled ? customers : outstanding;
 
-  async function addEntry(kind: 'DEBIT' | 'CREDIT') {
+  async function addEntry(kind: 'DEBIT' | 'CREDIT', paymentMode: '' | 'CASH' | 'UPI' = '') {
     const amountPaise = parsePaise(form.amount);
     if (amountPaise === null || amountPaise < 1) {
       setErrors({ amountPaise: t.khataAmount });
@@ -271,6 +297,7 @@ export function KhataScreen({
           kind,
           amountPaise,
           note: form.note,
+          paymentMode,
         }),
       });
       const payload = (await response.json().catch(() => ({}))) as {
@@ -306,6 +333,15 @@ export function KhataScreen({
     kind: 'DEBIT' | 'CREDIT',
     amountPaise: number,
     note = '',
+    /**
+     * How a repayment arrived. Only meaningful on a CREDIT, and the server
+     * blanks it on anything else.
+     *
+     * It exists for the cash drawer: money repaid in cash walks into the till
+     * without being a sale, and the day cannot be reconciled without knowing
+     * which repayments did that. See `lib/takings.ts`.
+     */
+    paymentMode: '' | 'CASH' | 'UPI' = '',
   ) {
     if (!Number.isFinite(amountPaise) || amountPaise < 1) {
       push(t.khataAmount, 'error');
@@ -323,6 +359,7 @@ export function KhataScreen({
           kind,
           amountPaise,
           note,
+          paymentMode,
         }),
       });
       if (handledExpiredSession({ response, slug, t, push })) return;
@@ -370,6 +407,46 @@ export function KhataScreen({
 
   return (
     <div className="space-y-4">
+      {/* TWO JOBS ON ONE TAB, and they are genuinely the same subject: who owes
+          the shop, and what the shop took. Named rather than iconed, because
+          "Money" and "Credit book" are the two words a shopkeeper would use and
+          neither has a picture everyone reads the same way. */}
+      <div className="flex gap-2">
+        {(
+          [
+            { id: 'khata' as const, label: t.khataView },
+            { id: 'takings' as const, label: t.takingsView },
+          ]
+        ).map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => setView(option.id)}
+            aria-pressed={view === option.id}
+            className={clsx(
+              'h-10 flex-1 rounded-xl text-sm font-semibold transition',
+              view === option.id
+                ? 'bg-slate-900 text-white'
+                : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50',
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      {view === 'takings' && (
+        <TakingsPanel
+          slug={slug}
+          today={today}
+          month={month}
+          drawer={drawer}
+          locale={locale}
+        />
+      )}
+
+      {view === 'khata' && (
+      <>
       <div className="rounded-2xl bg-white p-4 shadow-card">
         {/* THE TWO EXPORTS MOVED UP HERE, AS ICONS.
             They were a pair of wide labelled buttons and a line of hint text on
@@ -638,8 +715,8 @@ export function KhataScreen({
                       locale={locale}
                       t={t}
                       busy={busy}
-                      onSettle={(kind, amountPaise, note) =>
-                        addFor(customer, kind, amountPaise, note)
+                      onSettle={(kind, amountPaise, note, paymentMode) =>
+                        addFor(customer, kind, amountPaise, note, paymentMode)
                       }
                     />
                   </div>
@@ -740,12 +817,14 @@ export function KhataScreen({
           <Button
             loading={busy}
             disabled={!form.phone || !form.amount}
-            onClick={() => addEntry('CREDIT')}
+            onClick={() => addEntry('CREDIT', 'CASH')}
           >
             {t.khataGot}
           </Button>
         </div>
       </section>
+      </>
+      )}
 
       {confirmDialog}
     </div>
@@ -774,7 +853,12 @@ function SettleRow({
   locale: Locale;
   t: ReturnType<typeof ownerDict>;
   busy: boolean;
-  onSettle: (kind: 'DEBIT' | 'CREDIT', amountPaise: number, note: string) => void;
+  onSettle: (
+    kind: 'DEBIT' | 'CREDIT',
+    amountPaise: number,
+    note: string,
+    paymentMode: '' | 'CASH' | 'UPI',
+  ) => void;
 }) {
   const owed = Math.max(0, customer.balancePaise);
 
@@ -805,6 +889,20 @@ function SettleRow({
    */
   const [note, setNote] = useState('');
 
+  /**
+   * Cash or UPI, asked on the row where the money is recorded.
+   *
+   * WITHOUT IT THE DRAWER CANNOT BE RECONCILED. A repayment is cash walking
+   * into the till without being a sale, so "what should be in the drawer"
+   * cannot be worked out unless somebody says which repayments were cash.
+   *
+   * Defaults to cash because at a kirana counter that is what a repayment
+   * nearly always is — a default that is usually wrong is a default nobody
+   * reads. It applies only to "Got payment"; goods handed over on credit move
+   * no money and the server blanks it there.
+   */
+  const [mode, setMode] = useState<'CASH' | 'UPI'>('CASH');
+
   const value = parsePaise(amount);
   const valid = value !== null && value >= 1;
   const settlesInFull = valid && value === owed && owed > 0;
@@ -823,10 +921,33 @@ function SettleRow({
           />
         </label>
 
+        {/* Two chips, not a dropdown: it is one tap on the rare day the
+            answer is UPI, and nothing at all on every other day. */}
+        <span
+          role="group"
+          aria-label={t.khataHowPaid}
+          className="flex shrink-0 overflow-hidden rounded-lg ring-1 ring-slate-300"
+        >
+          {(['CASH', 'UPI'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setMode(option)}
+              aria-pressed={mode === option}
+              className={clsx(
+                'h-10 px-2.5 text-xs font-semibold transition',
+                mode === option ? 'bg-slate-900 text-white' : 'bg-white text-slate-600',
+              )}
+            >
+              {option === 'CASH' ? t.takingsCash : t.takingsUpi}
+            </button>
+          ))}
+        </span>
+
         <Button
           size="sm"
           disabled={busy || !valid}
-          onClick={() => value !== null && onSettle('CREDIT', value, note)}
+          onClick={() => value !== null && onSettle('CREDIT', value, note, mode)}
         >
           {settlesInFull ? t.khataSettle : t.khataGot}
         </Button>
@@ -835,7 +956,7 @@ function SettleRow({
           size="sm"
           variant="secondary"
           disabled={busy || !valid}
-          onClick={() => value !== null && onSettle('DEBIT', value, note)}
+          onClick={() => value !== null && onSettle('DEBIT', value, note, '')}
         >
           {t.khataGave}
         </Button>

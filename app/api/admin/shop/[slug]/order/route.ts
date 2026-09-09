@@ -2,7 +2,7 @@ import { after } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
-import { orderReviseSchema, orderStatusSchema } from '@/lib/validators';
+import { orderDeleteSchema, orderReviseSchema, orderStatusSchema } from '@/lib/validators';
 import { upsertCustomer } from '@/lib/khata';
 import { sendPush } from '@/lib/push';
 import { orderRevisedNotification, orderStatusNotification } from '@/lib/push-text';
@@ -74,6 +74,27 @@ export async function PATCH(request: Request, { params }: Context) {
   });
   if (!order) return fail('Order not found', 404);
 
+  /**
+   * AN ORDER IS SETTLED ONCE.
+   *
+   * There are now two screens that can finish one — its card in the queue, and
+   * the till it was carried over to — which means two tabs, or two phones, can
+   * be looking at the same order. Without this, the second one to be tapped
+   * would re-run everything below: another completion, another push, and on a
+   * cancelled order a completion that quietly contradicts stock already put
+   * back on the shelf.
+   *
+   * The khata itself was already safe (`LedgerEntry.orderId` is unique). This
+   * is about everything else, and about the owner being told rather than left
+   * to wonder which tap counted.
+   */
+  if (
+    status === 'COMPLETED' &&
+    (order.status === 'COMPLETED' || order.status === 'CANCELLED')
+  ) {
+    return fail('This order is already finished.', 409);
+  }
+
   await prisma.order.update({
     where: { id: order.id },
     // Payment only means anything on a completed order. Recording it on a
@@ -82,10 +103,25 @@ export async function PATCH(request: Request, { params }: Context) {
     data: {
       status,
       paymentReceived: status === 'COMPLETED' ? paymentReceived : false,
-      // Only a completed, paid order has a payment mode. Keeping one on an
-      // order that moved back to preparing would leave a stale "paid by UPI"
-      // behind it.
-      paymentMode: status === 'COMPLETED' && paymentReceived ? paymentMode : '',
+      /**
+       * How the money came in, INCLUDING when it did not.
+       *
+       * A completed unpaid order used to record a blank here, so an order that
+       * went out on credit was the one transaction in the shop that named no
+       * payment mode at all. Every reckoning of cash-versus-UPI-versus-khata
+       * reads this column, and a blank is skipped — so a counter sale rung up
+       * on credit landed in "khata" while an ORDER given on credit landed
+       * nowhere, and the day's three figures did not add up to the day.
+       *
+       * "KHATA" is written by the server and never accepted from the client:
+       * whether a debt exists is decided here, alongside the ledger entry that
+       * records it, and not by whoever sent the request.
+       *
+       * Still blank on anything not completed. Keeping a mode on an order that
+       * moved back to preparing would leave a stale "paid by UPI" behind it.
+       */
+      paymentMode:
+        status !== 'COMPLETED' ? '' : paymentReceived ? paymentMode : 'KHATA',
     },
   });
 
@@ -319,6 +355,101 @@ export async function PUT(request: Request, { params }: Context) {
     lines: after_,
     removed,
   });
+}
+
+/**
+ * DELETE — the owner turned an order away, and it leaves for good.
+ *
+ * A cancelled order used to stay on the queue as a greyed-out card forever. By
+ * the evening the list an owner works is mostly orders that are not happening,
+ * and the shop's own screen reads as busier than the shop is.
+ *
+ * SO IT IS DELETED, NOT ARCHIVED — the owner asked for exactly that, and this
+ * note is here so the cost is not rediscovered later as a bug:
+ *
+ *  - The customer's tracking page for it stops existing. They are pushed and
+ *    messaged first (see below), so they learn from the shop rather than from
+ *    a dead link.
+ *  - Reporting loses cancellations entirely. `orderStatuses` and the completion
+ *    rate in `lib/analytics.ts` can only count orders that still exist, so a
+ *    shop that turns away five orders a day now looks like a shop that turns
+ *    away none. Rolled-up history already written keeps what it recorded.
+ *
+ * The goods go back on the shelf BEFORE the row goes, because the snapshot is
+ * the only record of what was taken off it.
+ */
+export async function DELETE(request: Request, { params }: Context) {
+  if (!sameOrigin(request)) return fail('Bad request', 403);
+  const { slug } = await params;
+  if (!(await requireShopWrite(slug))) return fail('Not authenticated', 401);
+
+  const shop = await prisma.shop.findUnique({
+    where: { slug },
+    select: { id: true, name: true, locale: true },
+  });
+  if (!shop) return fail('Shop not found', 404);
+
+  const parsed = orderDeleteSchema.safeParse(await readJson(request));
+  if (!parsed.success) return invalid(parsed.error);
+
+  const order = await prisma.order.findFirst({
+    where: { id: parsed.data.id, shopId: shop.id },
+    select: {
+      id: true,
+      status: true,
+      orderType: true,
+      itemsJson: true,
+      customerPhone: true,
+    },
+  });
+  if (!order) return fail('Order not found', 404);
+
+  // A finished order is a record of goods that left the shop and money that
+  // changed hands. Deleting it would delete that, and the khata entry pointing
+  // at it — so this refuses, and the screen offers it on nothing else.
+  if (order.status === 'COMPLETED') {
+    return fail('A completed order cannot be removed.', 409);
+  }
+
+  await restoreStock(shop.id, readSnapshot(order.itemsJson));
+
+  /**
+   * Told BEFORE the row goes, and told first.
+   *
+   * `sendPush` reads nothing from the order except the phone and the id, but
+   * the customer's notification links to a tracking page that is about to stop
+   * existing — so the message has to be the one that carries the news, and the
+   * link is a courtesy that may 404. The owner's WhatsApp message, which the
+   * screen puts in their hand straight after this, is what actually lands.
+   */
+  after(async () => {
+    const notification = orderStatusNotification({
+      locale: shop.locale as Locale,
+      shopName: shop.name,
+      status: 'CANCELLED',
+      orderType: order.orderType,
+    });
+    if (!notification) return;
+    await sendPush(
+      { shopId: shop.id, role: 'CUSTOMER', customerPhone: order.customerPhone },
+      // NOT the tracking page: that page is about to stop existing, and a
+      // notification whose tap lands on "not found" is worse than one that
+      // lands nowhere. The shop's own page is the useful destination — the
+      // commonest thing to want after "we cannot do your order" is to see what
+      // the shop does have.
+      { ...notification, url: `/shop/${slug}`, tag: `order-${order.id}` },
+    );
+  });
+
+  // `LedgerEntry.orderId` is a plain column, not a relation, so nothing
+  // cascades it. An order can only carry one if it was completed unpaid, which
+  // is refused above — this is belt and braces against a future path.
+  await prisma.$transaction([
+    prisma.ledgerEntry.deleteMany({ where: { orderId: order.id } }),
+    prisma.order.delete({ where: { id: order.id } }),
+  ]);
+
+  return ok({ success: true });
 }
 
 /**

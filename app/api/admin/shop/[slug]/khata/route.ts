@@ -27,11 +27,21 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = ledgerSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { customerPhone, customerName, customerArea, kind, amountPaise, note } = parsed.data;
+  const { customerPhone, customerName, customerArea, kind, amountPaise, note, paymentMode } =
+    parsed.data;
   const customer = await upsertCustomer(shop.id, customerPhone, customerName, customerArea);
 
   const entry = await prisma.ledgerEntry.create({
-    data: { shopId: shop.id, customerId: customer.id, kind, amountPaise, note },
+    data: {
+      shopId: shop.id,
+      customerId: customer.id,
+      kind,
+      amountPaise,
+      note,
+      // Only a repayment has a form. Goods handed over on credit are the debt
+      // itself — no money moved, so there is nothing to have been cash or UPI.
+      paymentMode: kind === 'CREDIT' ? paymentMode : '',
+    },
     select: { id: true, createdAt: true },
   });
 

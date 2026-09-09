@@ -17,6 +17,26 @@
  * What is genuinely different stays different: only stock the shop actually has
  * is offered, and the last step takes money — cash, a UPI QR carrying the exact
  * amount, or the khata.
+ *
+ * ORDER MODE — THE SHOPKEEPER WHO IS ALSO THE PACKER.
+ *
+ * A shop with nobody to help had to read an order on the Orders tab and pick
+ * the goods off this grid, which is a tab switch per line: over to remember the
+ * next item, back to find it, over again. So an order can be carried here, and
+ * while one is loaded this screen packs and settles that order instead of
+ * ringing up a new sale.
+ *
+ * IT DOES NOT WRITE A `Sale`, AND THAT IS THE WHOLE SAFETY ARGUMENT. An order
+ * already took its stock when it was placed (`app/api/order/route.ts`), and the
+ * reports add `Order` and `Sale` rows together (`lib/analytics.ts`), so a till
+ * that recorded a counter sale for an order would count the money twice, take
+ * the stock twice, and — unpaid — owe it to the khata twice. One order is one
+ * record, and that record is always the `Order` row: the payment buttons below
+ * PATCH the order, exactly as the buttons on its card do.
+ *
+ * For the same reason the grid is inert while an order is loaded. Two baskets
+ * on one screen, one of which must not be sold, is the mistake waiting to
+ * happen; the owner leaves the order first, which is one tap.
  */
 
 import { SearchIcon } from '@/components/ui/Icon';
@@ -25,7 +45,7 @@ import { ItemCard, itemName, sellsAnyAmount } from '@/components/customer/ItemCa
 import { VoiceOrder } from '@/components/customer/VoiceOrder';
 import { CartBar } from '@/components/customer/CartBar';
 import { CartDrawer, type CartLine } from '@/components/customer/CartDrawer';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { handledExpiredSession } from './sessionGuard';
 import clsx from 'clsx';
@@ -33,7 +53,9 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
 import { useToast } from '@/components/ui/Toast';
 import { formatPaise, linePaise } from '@/lib/money';
-import { MOST_PER_LINE, roundQuantity } from '@/lib/units';
+import { amountLabel, isLooseUnit, MOST_PER_LINE, roundQuantity } from '@/lib/units';
+import { CheckIcon, PinIcon } from '@/components/ui/Icon';
+import type { SnapshotLine } from '@/lib/order-snapshot';
 import { ownerDict } from '@/lib/owner-i18n';
 import { dict } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
@@ -61,7 +83,54 @@ export type SellItem = {
   stockQty: number | null;
 };
 
+/**
+ * An order carried over from the queue, already checked on the server: it
+ * belongs to this shop and is still one of NEW, CONFIRMED or READY.
+ */
+export type TillOrder = {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  orderType: 'DELIVERY' | 'PICKUP';
+  /** Goods plus delivery — what the customer owes, and what the QR will carry. */
+  totalAmountPaise: number;
+  deliveryFeePaise: number;
+  lines: SnapshotLine[];
+};
+
 type Cart = Record<string, number>;
+
+/** An order line in the owner's language, falling back to the primary name. */
+function lineName(line: SnapshotLine, locale: Locale): string {
+  if (locale === 'bn') return line.nameBn || line.name;
+  if (locale === 'hi') return line.nameHi || line.name;
+  return line.name;
+}
+
+/**
+ * How much of a line, as the person weighing it out needs to read it.
+ *
+ * "× 0.05" cannot be put on a scale. Only counted goods keep a multiplier —
+ * the same rule the orders queue follows.
+ */
+function packAmount(line: SnapshotLine): string {
+  return amountLabel(line.unit, line.quantity) ?? `× ${line.quantity}`;
+}
+
+/**
+ * A stable key for one line of an order.
+ *
+ * The index is in it because `itemId` is blank on orders taken before the
+ * snapshot carried one, and two such lines would otherwise share a tick.
+ */
+function lineKey(line: SnapshotLine, index: number): string {
+  return `${line.itemId}#${index}`;
+}
+
+/** Where a half-packed order's ticks live between reloads. */
+function packedStorageKey(orderId: string): string {
+  return `halkhata:packed:${orderId}`;
+}
 
 /**
  * How many items before a search box earns its place — the same threshold the
@@ -79,6 +148,7 @@ export function SellScreen({
   items,
   locale,
   customers,
+  tillOrder = null,
 }: {
   slug: string;
   shopName: string;
@@ -88,6 +158,13 @@ export function SellScreen({
   locale: Locale;
   /** Regulars already in the khata, so udhaar is a tap not a typing job. */
   customers: { id: string; name: string; phone: string; area: string }[];
+  /**
+   * The order being packed at the till, or null for an ordinary counter sale.
+   *
+   * Null is the normal state and the one everything below still behaves as it
+   * always did — see ORDER MODE at the top of this file.
+   */
+  tillOrder?: TillOrder | null;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -103,6 +180,136 @@ export function SellScreen({
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
   const [khata, setKhata] = useState<{ name: string; phone: string; area: string } | null>(null);
+
+  /**
+   * Which lines of the loaded order are already in the bag.
+   *
+   * Kept in the browser, not the database. It is a note to the one person
+   * holding the phone for the two minutes a packing job lasts, nobody else ever
+   * needs to read it, and a column for it would be a column to purge later.
+   *
+   * It does survive a reload, though, because this screen reloads itself: the
+   * PWA can be killed by the phone mid-pack, and an owner four items into seven
+   * who came back to seven empty boxes would simply stop ticking them.
+   */
+  const [packed, setPacked] = useState<Record<string, boolean>>({});
+
+  // Keyed on the id, not the order object: this screen re-renders from the
+  // server on every refresh, and reloading the ticks each time would undo one
+  // the owner had just made on a phone that cannot write to storage.
+  const tillOrderId = tillOrder?.id ?? null;
+  useEffect(() => {
+    if (!tillOrderId) return;
+    try {
+      const saved = window.localStorage.getItem(packedStorageKey(tillOrderId));
+      setPacked(saved ? (JSON.parse(saved) as Record<string, boolean>) : {});
+    } catch {
+      // A phone with storage blocked packs without ticks rather than not at all.
+      setPacked({});
+    }
+  }, [tillOrderId]);
+
+  function togglePacked(key: string) {
+    setPacked((current) => {
+      const next = { ...current, [key]: !current[key] };
+      if (!next[key]) delete next[key];
+      if (tillOrder) {
+        try {
+          window.localStorage.setItem(packedStorageKey(tillOrder.id), JSON.stringify(next));
+        } catch {
+          // See above — the tick still works for this visit.
+        }
+      }
+      return next;
+    });
+  }
+
+  const packedCount = tillOrder
+    ? tillOrder.lines.filter((line, index) => packed[lineKey(line, index)]).length
+    : 0;
+  const allPacked = tillOrder !== null && packedCount === tillOrder.lines.length;
+
+  /** Back to an ordinary till, leaving the order exactly where it was. */
+  function leaveOrder() {
+    setPaying(false);
+    router.replace(`/owner/${slug}/sell`);
+  }
+
+  /**
+   * A tap on the grid while an order is loaded.
+   *
+   * It says why rather than doing nothing: a button that ignores you is a
+   * broken button, and the owner's next move is to tap it harder.
+   */
+  function lockedByOrder(): boolean {
+    if (!tillOrder) return false;
+    push(t.orderTillLocked, 'error');
+    return true;
+  }
+
+  /**
+   * Move the loaded order along — packed, or done and paid.
+   *
+   * THIS IS THE ONLY WAY MONEY LEAVES THIS SCREEN IN ORDER MODE, and it is the
+   * order's own route, the same one its card on the Orders tab calls. Nothing
+   * here writes a `Sale`; see ORDER MODE at the top of this file for why that
+   * would count the order twice over.
+   *
+   * The khata needs no name and no phone number: an order already knows whose
+   * it is, and the server posts the debt against that customer itself.
+   */
+  async function settleOrder(
+    status: 'READY' | 'COMPLETED',
+    paymentReceived = false,
+    paymentMode: '' | 'CASH' | 'UPI' = '',
+  ) {
+    if (!tillOrder) return;
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/admin/shop/${slug}/order`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: tillOrder.id, status, paymentReceived, paymentMode }),
+      });
+      if (handledExpiredSession({ response, slug, t, push })) return;
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        khataAmountPaise?: number;
+      };
+
+      if (!response.ok) {
+        // 409 is the order having been finished somewhere else — another tab,
+        // or the owner's own second phone — between opening this and paying.
+        push(response.status === 409 ? t.orderTillGone : (payload.error ?? t.networkError), 'error');
+        if (response.status === 409) leaveOrder();
+        return;
+      }
+
+      if (payload.khataAmountPaise && payload.khataAmountPaise > 0) {
+        push(`${t.paymentKhataDone} · ${formatPaise(payload.khataAmountPaise)}`, 'success');
+      } else {
+        push(status === 'COMPLETED' ? t.orderTillDone : t.markReady, 'success');
+      }
+
+      if (status === 'COMPLETED') {
+        // The ticks are about a bag that has now gone out of the door.
+        try {
+          window.localStorage.removeItem(packedStorageKey(tillOrder.id));
+        } catch {
+          // Nothing to clean up on a phone that never stored them.
+        }
+        leaveOrder();
+      } else {
+        setPaying(false);
+        router.refresh();
+      }
+    } catch {
+      push(t.networkError, 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   /**
    * What the shop can actually sell: in stock, and priced by a human.
@@ -178,6 +385,16 @@ export function SellScreen({
   );
 
   /**
+   * What the customer standing here owes.
+   *
+   * The order's own total in order mode — goods plus whatever was quoted for
+   * delivery, worked out by the server when the order was placed or last cut
+   * down. The till must never re-price an order from its current shelf prices:
+   * the snapshot is what the customer agreed to.
+   */
+  const payablePaise = tillOrder ? tillOrder.totalAmountPaise : totalPaise;
+
+  /**
    * What the mic just heard, put on the till.
    *
    * The same rule the shop page follows: an amount said out loud ("800 g",
@@ -192,6 +409,7 @@ export function SellScreen({
 
   /** Relative — saying "rice" twice means two of them. */
   function addQuantity(id: string, more: number) {
+    if (lockedByOrder()) return;
     setCart((current) => ({
       ...current,
       [id]: Math.min(roundQuantity((current[id] ?? 0) + more), MOST_PER_LINE),
@@ -199,6 +417,7 @@ export function SellScreen({
   }
 
   function setQuantity(id: string, next: number) {
+    if (lockedByOrder()) return;
     setCart((current) => {
       const updated = { ...current };
       // Thousandths, so a weighed amount survives the round trip exactly as
@@ -281,6 +500,98 @@ export function SellScreen({
        came to press, on the one screen used with a customer waiting. Takings
        are read at closing, on Orders; the till is for selling. */
     <div className="space-y-4 pb-24">
+      {/* THE ORDER, ON THE SCREEN THE GOODS ARE ON.
+          Sticky, because the whole point is that it is still there ten items
+          down the grid — the scrolling and the reading used to be on two
+          different tabs.
+
+          A tick per line, and they are the reason this is not just the order
+          card moved across: the owner is holding a phone in one hand and a
+          scoop in the other, and "which one was I on" is the question that
+          sends them back to the beginning. Tapping a line is the whole
+          gesture; the box is a target, not a control of its own. */}
+      {tillOrder && (
+        <section
+          className={clsx(
+            'sticky top-[3.25rem] z-20 -mx-4 border-b px-4 py-3 backdrop-blur',
+            allPacked ? 'border-brand-300 bg-brand-50/95' : 'border-amber-200 bg-amber-50/95',
+          )}
+        >
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold text-slate-900">
+                {tillOrder.customerName || tillOrder.customerPhone}
+              </p>
+              <p className="flex items-center gap-1 text-xs text-slate-500">
+                <PinIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                {tillOrder.orderType === 'DELIVERY' ? t.delivery : t.pickup} ·{' '}
+                <span className="tabular-nums">
+                  {packedCount}/{tillOrder.lines.length}
+                </span>{' '}
+                {t.orderTillProgress}
+              </p>
+            </div>
+            {/* Leaving must be as cheap as arriving: an owner who brought the
+                wrong order over is otherwise stuck with a locked grid. */}
+            <button
+              type="button"
+              onClick={leaveOrder}
+              className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600"
+            >
+              {t.orderTillLeave}
+            </button>
+          </div>
+
+          <ul className="mt-2 max-h-56 space-y-1 overflow-y-auto">
+            {tillOrder.lines.map((line, index) => {
+              const key = lineKey(line, index);
+              const done = Boolean(packed[key]);
+              return (
+                <li key={key}>
+                  <button
+                    type="button"
+                    onClick={() => togglePacked(key)}
+                    aria-pressed={done}
+                    className={clsx(
+                      'flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition',
+                      done ? 'border-brand-200 bg-brand-50' : 'border-slate-200 bg-white',
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2',
+                        done ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300',
+                      )}
+                    >
+                      {done && <CheckIcon className="h-4 w-4" />}
+                    </span>
+                    <span
+                      className={clsx(
+                        'min-w-0 flex-1 truncate text-sm font-medium',
+                        done ? 'text-slate-400 line-through' : 'text-slate-900',
+                      )}
+                    >
+                      {lineName(line, locale)}
+                      {/* No pack size beside a weighed amount — the amount is
+                          the instruction, and "500 g · 50 g" is two of them. */}
+                      {line.unit && !isLooseUnit(line.unit) ? ` · ${line.unit}` : ''}
+                    </span>
+                    <span
+                      className={clsx(
+                        'shrink-0 text-sm font-semibold tabular-nums',
+                        done ? 'text-slate-400' : 'text-slate-700',
+                      )}
+                    >
+                      {packAmount(line)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       {sellable.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-center text-sm text-slate-500">
           {t.sellMissingItem}
@@ -294,7 +605,15 @@ export function SellScreen({
 
               Sticky, so both are still reachable ten items down a rush. */}
           {(sellable.length >= SEARCH_FROM || categories.length > 1) && (
-            <div className="sticky top-[3.25rem] z-10 -mx-4 bg-slate-100/95 px-4 pb-2 pt-3 backdrop-blur">
+            <div
+              className={clsx(
+                '-mx-4 bg-slate-100/95 px-4 pb-2 pt-3 backdrop-blur',
+                // Two things cannot be stuck to the same edge. While an order
+                // is being packed IT is the thing that must stay on screen, so
+                // the filters go back to scrolling with the grid.
+                !tillOrder && 'sticky top-[3.25rem] z-10',
+              )}
+            >
               {sellable.length >= SEARCH_FROM && (
                 <div className="relative">
                   <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -376,9 +695,17 @@ export function SellScreen({
             <div className="flex items-baseline justify-between">
               <h3 className="text-lg font-bold text-slate-900">{t.sellTakePayment}</h3>
               <p className="text-2xl font-bold tabular-nums text-brand-700">
-                {formatPaise(totalPaise)}
+                {formatPaise(payablePaise)}
               </p>
             </div>
+
+            {/* Whose money this is, when it is an order's. The name is the
+                check the owner makes before taking it. */}
+            {tillOrder && (
+              <p className="mt-1 truncate text-sm text-slate-500">
+                {tillOrder.customerName || tillOrder.customerPhone}
+              </p>
+            )}
 
             {/* A generated QR carries the amount, so the customer confirms
                 rather than types — that beats the shop's static printed code,
@@ -386,7 +713,7 @@ export function SellScreen({
             {upiId ? (
               <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-slate-50 p-4">
                 <QRCodeCanvas
-                  value={upiPayUrlWithAmount(upiId, shopName, totalPaise)}
+                  value={upiPayUrlWithAmount(upiId, shopName, payablePaise)}
                   size={168}
                   includeMargin
                   level="M"
@@ -405,7 +732,7 @@ export function SellScreen({
               <button
                 type="button"
                 disabled={saving}
-                onClick={() => record('CASH')}
+                onClick={() => (tillOrder ? settleOrder('COMPLETED', true, 'CASH') : record('CASH'))}
                 className="h-12 rounded-xl border border-slate-300 font-semibold text-slate-800 disabled:opacity-50"
               >
                 {t.sellCash}
@@ -413,18 +740,26 @@ export function SellScreen({
               <button
                 type="button"
                 disabled={saving}
-                onClick={() => record('UPI')}
+                onClick={() => (tillOrder ? settleOrder('COMPLETED', true, 'UPI') : record('UPI'))}
                 className="h-12 rounded-xl bg-brand-600 font-semibold text-white disabled:opacity-50"
               >
                 {t.sellUpi}
               </button>
               {/* Goods leaving on credit is a payment mode here, because at the
                   counter that is exactly what it is — the third thing that can
-                  happen when the customer is ready to go. */}
+                  happen when the customer is ready to go.
+
+                  An order needs no form behind this button: it already knows
+                  whose it is, and the server posts the debt against that
+                  customer itself. */}
               <button
                 type="button"
                 disabled={saving}
-                onClick={() => setKhata(khata ?? { name: '', phone: '', area: '' })}
+                onClick={() =>
+                  tillOrder
+                    ? settleOrder('COMPLETED', false)
+                    : setKhata(khata ?? { name: '', phone: '', area: '' })
+                }
                 className={clsx(
                   'h-12 rounded-xl border font-semibold disabled:opacity-50',
                   khata
@@ -537,20 +872,53 @@ export function SellScreen({
             : 'z-30 bottom-[calc(5.5rem+env(safe-area-inset-bottom))]',
         )}
       >
-        <VoiceOrder items={sellable} locale={locale} onApply={applyVoice} />
+        {/* The mic fills a basket, and in order mode there is no basket to
+            fill — an order is what the customer asked for, not what the shop
+            decides to put in the bag. */}
+        {!tillOrder && <VoiceOrder items={sellable} locale={locale} onApply={applyVoice} />}
 
-        {!cartOpen && (
-          <CartBar
-            // One per line: "0.05 items" is not a count anybody wants to read.
-            totalItems={lines.length}
-            totalAmountPaise={totalPaise}
-            onReview={() => setCartOpen(true)}
-            locale={locale}
-          />
+        {tillOrder ? (
+          /* WHERE THE BASKET WOULD BE, AND DOING THE ORDER'S JOB.
+             Same corner, same two actions in the same order — pack it, then
+             take the money — so an owner reaches for it without looking.
+             Ready is offered until everything is ticked, because that is the
+             tap that tells the customer to come; once it is all in the bag,
+             money is the only thing left. */
+          <div className="pointer-events-auto flex w-full max-w-md items-center gap-2">
+            {!allPacked && (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => void settleOrder('READY')}
+                className="h-12 shrink-0 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-white shadow-lg transition hover:bg-amber-600 disabled:opacity-50"
+              >
+                {t.markReady}
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => setPaying(true)}
+              className="flex h-12 flex-1 items-center justify-between gap-3 rounded-xl bg-brand-600 px-4 font-semibold text-white shadow-lg disabled:opacity-50"
+            >
+              <span>{t.sellTakePayment}</span>
+              <span className="tabular-nums">{formatPaise(payablePaise)}</span>
+            </button>
+          </div>
+        ) : (
+          !cartOpen && (
+            <CartBar
+              // One per line: "0.05 items" is not a count anybody wants to read.
+              totalItems={lines.length}
+              totalAmountPaise={totalPaise}
+              onReview={() => setCartOpen(true)}
+              locale={locale}
+            />
+          )
         )}
       </div>
 
-      {cartDrawer}
+      {!tillOrder && cartDrawer}
     </div>
   );
 }
