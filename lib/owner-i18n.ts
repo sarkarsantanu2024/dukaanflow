@@ -361,6 +361,29 @@ type OwnerDictionary = {
   reviseWas: string;
   revisedBadge: string;
 
+  /**
+   * Working one order at the till, instead of flipping between two tabs.
+   *
+   * An owner with nobody to help reads the order on Orders and picks the goods
+   * off the Sell grid, so the order has to be visible on the screen the items
+   * are on — see the note at the head of `SellScreen`.
+   */
+  orderToTill: string;
+  orderTillHeading: string;
+  /** Rendered as "3/7 <this>", so it is the word after the count. */
+  orderTillProgress: string;
+  orderTillLeave: string;
+  /** Why a tap on the grid did nothing while an order is loaded. */
+  orderTillLocked: string;
+  /** The order finished somewhere else between the tap and the screen. */
+  orderTillGone: string;
+  orderTillDone: string;
+
+  /** Turning an order away removes it from the queue for good. */
+  orderRemoved: string;
+  /** "{name}" is substituted — the customer who must still be told. */
+  orderRemovedTell: string;
+
   /** What the shop charges to send an order out. */
   deliveryTitle: string;
   deliveryOpen: string;
@@ -373,6 +396,57 @@ type OwnerDictionary = {
   deliverySaved: string;
   deliveryOff: string;
   save: string;
+
+  /**
+   * What came in today, and in what form — the closing question.
+   *
+   * Lives inside the Khata tab because that tab is already where the shop's
+   * money is read, and a fifth tab on a 375px phone is four tabs nobody can
+   * hit.
+   */
+  takingsView: string;
+  khataView: string;
+  takingsToday: string;
+  takingsMonth: string;
+  takingsCash: string;
+  takingsUpi: string;
+  takingsKhata: string;
+  takingsTotal: string;
+  /** Orders accepted but not yet settled, held out of the total on purpose. */
+  takingsPending: string;
+  takingsPendingHint: string;
+  /** Old credit repaid in the window — money in, but not a sale. */
+  takingsCollected: string;
+  takingsNothing: string;
+
+  /**
+   * The cash drawer, counted.
+   *
+   * The opening float is the one figure nothing in the database can derive —
+   * see `CashDay` — so the day starts by asking for it.
+   */
+  drawerStartTitle: string;
+  drawerStartHint: string;
+  drawerStartSave: string;
+  drawerStarted: string;
+  drawerTitle: string;
+  drawerOpening: string;
+  drawerCashSales: string;
+  drawerCollected: string;
+  drawerExpected: string;
+  drawerCount: string;
+  drawerCountSave: string;
+  drawerMatches: string;
+  /** "{n} short" / "{n} over" — the amount is substituted. */
+  drawerShort: string;
+  drawerOver: string;
+  /** Why a difference is usually not a mistake. */
+  drawerSpentHint: string;
+  /** Repayments with no form recorded, so the expected figure is understated. */
+  drawerUnknownHint: string;
+  drawerEdit: string;
+  /** Asked when a repayment is recorded: did it come in cash or by UPI? */
+  khataHowPaid: string;
 
   /** Taking the khata out of Halkhata. */
   khataExport: string;
@@ -722,6 +796,48 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     reviseWas: 'was',
     revisedBadge: 'Changed',
 
+    orderToTill: 'Take to till',
+    orderTillHeading: 'Packing this order',
+    orderTillProgress: 'packed',
+    orderTillLeave: 'Leave this order',
+    orderTillLocked: 'Finish or leave this order before ringing up anything else.',
+    orderTillGone: 'That order is already finished.',
+    orderTillDone: 'Order completed',
+    orderRemoved: 'Order removed',
+    orderRemovedTell: 'Tell {name} it is cancelled.',
+
+    takingsView: 'Money',
+    khataView: 'Credit book',
+    takingsToday: 'Today',
+    takingsMonth: 'This month',
+    takingsCash: 'Cash',
+    takingsUpi: 'UPI',
+    takingsKhata: 'On credit',
+    takingsTotal: 'Total business',
+    takingsPending: 'Not settled yet',
+    takingsPendingHint: 'Orders taken but not finished. Not counted above.',
+    takingsCollected: 'Old credit repaid',
+    takingsNothing: 'Nothing yet.',
+
+    drawerStartTitle: 'Starting cash in the drawer',
+    drawerStartHint: 'Type it once, before you open. Without it the drawer cannot be checked.',
+    drawerStartSave: 'Start the day',
+    drawerStarted: 'Day started',
+    drawerTitle: 'The cash drawer',
+    drawerOpening: 'Started with',
+    drawerCashSales: 'Cash sales',
+    drawerCollected: 'Repaid in cash',
+    drawerExpected: 'Should be in the drawer',
+    drawerCount: 'Count it and type what you found',
+    drawerCountSave: 'Save the count',
+    drawerMatches: 'It matches.',
+    drawerShort: '{n} short',
+    drawerOver: '{n} over',
+    drawerSpentHint: 'Money you spent from the drawer is not counted here, so short by that much is normal.',
+    drawerUnknownHint: '{n} was repaid without saying cash or UPI, so this figure may be low.',
+    drawerEdit: 'Change',
+    khataHowPaid: 'How did it come in?',
+
     deliveryTitle: 'Delivery charge',
     deliveryOpen: 'Delivery charge and minimum order',
     deliveryFee: 'Delivery charge (₹)',
@@ -1062,6 +1178,48 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     reviseWas: 'ছিল',
     revisedBadge: 'বদলেছে',
 
+    orderToTill: 'টিল-এ তুলুন',
+    orderTillHeading: 'এই অর্ডারটা গোছাচ্ছি',
+    orderTillProgress: 'গোছানো হয়েছে',
+    orderTillLeave: 'এই অর্ডার ছেড়ে দিন',
+    orderTillLocked: 'আগে এই অর্ডারটা শেষ করুন বা ছেড়ে দিন, তারপর অন্য কিছু বিক্রি করুন।',
+    orderTillGone: 'ওই অর্ডারটা আগেই শেষ হয়ে গেছে।',
+    orderTillDone: 'অর্ডার সম্পূর্ণ হল',
+    orderRemoved: 'অর্ডার সরানো হল',
+    orderRemovedTell: '{name}-কে জানিয়ে দিন যে অর্ডারটা বাতিল।',
+
+    takingsView: 'হিসাব',
+    khataView: 'বাকির খাতা',
+    takingsToday: 'আজ',
+    takingsMonth: 'এই মাস',
+    takingsCash: 'নগদ',
+    takingsUpi: 'UPI',
+    takingsKhata: 'বাকিতে',
+    takingsTotal: 'মোট বিক্রি',
+    takingsPending: 'এখনও মেটেনি',
+    takingsPendingHint: 'অর্ডার নেওয়া হয়েছে, শেষ হয়নি। উপরের হিসাবে ধরা নেই।',
+    takingsCollected: 'পুরনো বাকি আদায়',
+    takingsNothing: 'এখনও কিছু হয়নি।',
+
+    drawerStartTitle: 'গল্লায় শুরুর নগদ',
+    drawerStartHint: 'দোকান খোলার আগে একবার লিখুন। এটা না থাকলে গল্লা মেলানো যায় না।',
+    drawerStartSave: 'দিন শুরু করুন',
+    drawerStarted: 'দিন শুরু হল',
+    drawerTitle: 'গল্লার হিসাব',
+    drawerOpening: 'শুরুতে ছিল',
+    drawerCashSales: 'নগদ বিক্রি',
+    drawerCollected: 'নগদে আদায়',
+    drawerExpected: 'গল্লায় থাকার কথা',
+    drawerCount: 'গুনে দেখুন, কত পেলেন লিখুন',
+    drawerCountSave: 'গোনা টাকা লিখুন',
+    drawerMatches: 'মিলে গেছে।',
+    drawerShort: '{n} কম',
+    drawerOver: '{n} বেশি',
+    drawerSpentHint: 'গল্লা থেকে যা খরচ করেছেন তা এখানে ধরা নেই, তাই ততটা কম হওয়া স্বাভাবিক।',
+    drawerUnknownHint: '{n} আদায়ে নগদ না UPI বলা হয়নি, তাই এই অঙ্কটা কম হতে পারে।',
+    drawerEdit: 'বদলান',
+    khataHowPaid: 'কীভাবে পেলেন?',
+
     deliveryTitle: 'ডেলিভারি চার্জ',
     deliveryOpen: 'ডেলিভারি চার্জ আর সর্বনিম্ন অর্ডার',
     deliveryFee: 'ডেলিভারি চার্জ (₹)',
@@ -1401,6 +1559,48 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     reviseSendAnyway: 'फिर भी भेजें',
     reviseWas: 'था',
     revisedBadge: 'बदला',
+
+    orderToTill: 'टिल पर लें',
+    orderTillHeading: 'यह ऑर्डर पैक कर रहे हैं',
+    orderTillProgress: 'पैक हुआ',
+    orderTillLeave: 'यह ऑर्डर छोड़ें',
+    orderTillLocked: 'पहले यह ऑर्डर पूरा करें या छोड़ें, फिर कुछ और बेचें।',
+    orderTillGone: 'वह ऑर्डर पहले ही पूरा हो चुका है।',
+    orderTillDone: 'ऑर्डर पूरा हुआ',
+    orderRemoved: 'ऑर्डर हटाया गया',
+    orderRemovedTell: '{name} को बता दें कि ऑर्डर रद्द है।',
+
+    takingsView: 'हिसाब',
+    khataView: 'उधार खाता',
+    takingsToday: 'आज',
+    takingsMonth: 'इस महीने',
+    takingsCash: 'नकद',
+    takingsUpi: 'UPI',
+    takingsKhata: 'उधार में',
+    takingsTotal: 'कुल बिक्री',
+    takingsPending: 'अभी बाकी है',
+    takingsPendingHint: 'ऑर्डर लिए गए हैं, पूरे नहीं हुए। ऊपर के हिसाब में नहीं हैं।',
+    takingsCollected: 'पुराना उधार वसूल',
+    takingsNothing: 'अभी कुछ नहीं हुआ।',
+
+    drawerStartTitle: 'गल्ले में शुरू का नकद',
+    drawerStartHint: 'दुकान खोलने से पहले एक बार लिखें। इसके बिना गल्ला मिलाया नहीं जा सकता।',
+    drawerStartSave: 'दिन शुरू करें',
+    drawerStarted: 'दिन शुरू हुआ',
+    drawerTitle: 'गल्ले का हिसाब',
+    drawerOpening: 'शुरू में था',
+    drawerCashSales: 'नकद बिक्री',
+    drawerCollected: 'नकद में वसूल',
+    drawerExpected: 'गल्ले में होना चाहिए',
+    drawerCount: 'गिनकर देखें, कितना मिला लिखें',
+    drawerCountSave: 'गिनती दर्ज करें',
+    drawerMatches: 'मिल गया।',
+    drawerShort: '{n} कम',
+    drawerOver: '{n} ज़्यादा',
+    drawerSpentHint: 'गल्ले से किया गया खर्च यहाँ नहीं गिना जाता, इसलिए उतना कम होना सामान्य है।',
+    drawerUnknownHint: '{n} की वसूली में नकद या UPI नहीं बताया गया, इसलिए यह आँकड़ा कम हो सकता है।',
+    drawerEdit: 'बदलें',
+    khataHowPaid: 'कैसे मिला?',
 
     deliveryTitle: 'डिलीवरी चार्ज',
     deliveryOpen: 'डिलीवरी चार्ज और कम से कम ऑर्डर',

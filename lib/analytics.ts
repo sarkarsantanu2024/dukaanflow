@@ -351,6 +351,7 @@ type OrderRow = {
   orderType: string;
   status: string;
   paymentMode: string;
+  paymentReceived: boolean;
   customerPhone: string;
   customerArea: string;
   itemsJson: unknown;
@@ -426,6 +427,7 @@ export async function loadReport(
             orderType: true,
             status: true,
             paymentMode: true,
+            paymentReceived: true,
             customerPhone: true,
             customerArea: true,
             itemsJson: true,
@@ -905,9 +907,21 @@ function assemble(input: Ingredients): Report {
 
     orderRevenue += amount;
     tick(orderTypes, order.orderType, amount);
-    // Orders can be paid on the Orders page now, so cash-versus-UPI finally
-    // covers the whole shop rather than only what crossed the till.
-    if (order.paymentMode) tick(paymentModes, order.paymentMode, amount);
+    /**
+     * Orders can be paid on the Orders page now, so cash-versus-UPI finally
+     * covers the whole shop rather than only what crossed the till.
+     *
+     * AN ORDER GIVEN ON CREDIT IS A PAYMENT MODE TOO. It used to record a blank
+     * and be skipped here, so a counter sale rung up on credit appeared under
+     * "khata" while an order handed over on credit appeared nowhere, and this
+     * breakdown did not add up to the revenue beside it. Completed orders now
+     * write "KHATA" themselves; rows completed before that still hold the blank,
+     * and an unpaid completed order can only have been credit.
+     */
+    const mode =
+      order.paymentMode ||
+      (order.status === 'COMPLETED' && !order.paymentReceived ? 'KHATA' : '');
+    if (mode) tick(paymentModes, mode, amount);
     bucket(order.createdAt, amount);
     credit(order.shopId, amount);
     countLines(order.itemsJson, order.shopId);

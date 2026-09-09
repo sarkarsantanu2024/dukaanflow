@@ -4,6 +4,7 @@ import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { OrdersScreen, type OwnerOrder } from '@/components/owner/OrdersScreen';
 import { BRAND_NAME } from '@/lib/brand';
+import { readOrderLines, type SnapshotNames } from '@/lib/order-snapshot';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,60 +17,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     manifest: `/owner.webmanifest?slug=${encodeURIComponent(slug)}`,
     appleWebApp: { capable: true, statusBarStyle: 'default' },
   };
-}
-
-type Translations = Map<string, { nameBn: string; nameHi: string }>;
-
-/**
- * What one snapshot line came to, in paise.
- *
- * The same two-unit problem the reports have (see `linePaise` in
- * lib/analytics.ts): rows written since money moved to paise use `amountPaise`,
- * older ones use `amount` or `lineTotal` and hold RUPEES. Reading an old row as
- * paise would show a ₹130 order as ₹1.30 on the owner's own screen.
- */
-function snapshotPaise(line: Record<string, unknown>): number {
-  const num = (value: unknown) => {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
-  if (line.amountPaise !== undefined) return num(line.amountPaise);
-  const legacyRupees = line.lineTotal ?? line.amount;
-  return legacyRupees === undefined ? 0 : Math.round(num(legacyRupees) * 100);
-}
-
-/**
- * The order snapshot is JSON, so it is narrowed here rather than trusted.
- *
- * Snapshots only began carrying translations recently, so orders taken before
- * that hold one name and would read in English on a Bengali screen. Where the
- * item is still listed, its current names fill the gap — the snapshot stays the
- * authority on price and quantity, which are the parts that must never move,
- * and borrows only the wording.
- */
-function toLines(itemsJson: unknown, known: Translations): OwnerOrder['lines'] {
-  if (!Array.isArray(itemsJson)) return [];
-  return itemsJson.flatMap((row) => {
-    if (!row || typeof row !== 'object') return [];
-    const line = row as Record<string, unknown>;
-    const fallback = known.get(String(line.itemId ?? ''));
-    return [
-      {
-        // Carried through so a line can be named in a revision. Old snapshots
-        // that predate it hand over a blank, and the screen simply cannot
-        // offer to change those — which is right: without an id there is no
-        // way to say which item is being cut.
-        itemId: String(line.itemId ?? ''),
-        name: String(line.name ?? ''),
-        nameBn: String(line.nameBn ?? fallback?.nameBn ?? ''),
-        nameHi: String(line.nameHi ?? fallback?.nameHi ?? ''),
-        unit: String(line.unit ?? ''),
-        quantity: Number(line.quantity ?? 0),
-        // Paise, decoded defensively — see `snapshotPaise` above.
-        amountPaise: snapshotPaise(line),
-      },
-    ];
-  });
 }
 
 export default async function OrdersPage({ params }: PageProps) {
@@ -87,7 +34,17 @@ export default async function OrdersPage({ params }: PageProps) {
    */
   const [rows, current, subscriptions] = await Promise.all([
     prisma.order.findMany({
-    where: { shopId: shop.id },
+    /**
+     * Cancelled orders are not on this screen at all.
+     *
+     * Turning one away deletes it now, so nothing new can be cancelled and
+     * survive — but rows cancelled before that change are still in the
+     * database, and they were the whole complaint: by the evening the list an
+     * owner works was mostly orders that were not happening. They are hidden
+     * rather than deleted behind the owner's back; a cleanup, if it is wanted,
+     * is a decision to take deliberately and not a side effect of a query.
+     */
+    where: { shopId: shop.id, status: { not: 'CANCELLED' } },
     // The screen groups by status itself and counts today's takings across the
     // whole set, so it wants a window of history rather than a top-50 slice
     // that could cut today's own orders in half on a busy day.
@@ -119,7 +76,7 @@ export default async function OrdersPage({ params }: PageProps) {
     }),
   ]);
 
-  const known: Translations = new Map(
+  const known: SnapshotNames = new Map(
     current.map((item) => [item.id, { nameBn: item.nameBn, nameHi: item.nameHi }]),
   );
 
@@ -150,7 +107,7 @@ export default async function OrdersPage({ params }: PageProps) {
     revised: row.revisedAt !== null,
     reachable: reachable.has(row.customerPhone),
     createdAt: row.createdAt.toISOString(),
-    lines: toLines(row.itemsJson, known),
+    lines: readOrderLines(row.itemsJson, known),
   }));
 
   return (

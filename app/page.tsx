@@ -26,7 +26,17 @@ export default function LandingPage() {
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col items-center justify-center px-6 py-16 text-center">
       <BrandMark href="/" className="text-lg" />
 
-      <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">
+      {/* THE BENGALI IS MARKED AS BENGALI, here and on every line below it.
+          The document is `lang="en"` because most of this site, and all of the
+          console, is English — but the headline, the promise under it and the
+          call to action are Bengali, and a screen reader handed Bengali script
+          under an English `lang` reads it out in English phonemes, which is
+          unintelligible. It is also what tells a search engine, and a browser's
+          own translate prompt, that this page is not only English. */}
+      <p
+        lang="bn"
+        className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-brand-700"
+      >
         দোকান সাজান মুখে বলে
       </p>
 
@@ -37,10 +47,10 @@ export default function LandingPage() {
         <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white sm:h-12 sm:w-12">
           <MicIcon className="h-6 w-6 sm:h-7 sm:w-7" />
         </span>
-        <span>&ldquo;চাল ১ কেজি ১০০&rdquo;</span>
+        <span lang="bn">&ldquo;চাল ১ কেজি ১০০&rdquo;</span>
       </h1>
 
-      <p className="mt-5 max-w-md text-lg text-slate-700">
+      <p lang="bn" className="mt-5 max-w-md text-lg text-slate-700">
         বলুন — জিনিসটা দামসহ তালিকায় উঠে গেল, খদ্দের দেখতে পেল।
         <span className="mt-1 block text-base text-slate-500">
           বাংলা, হিন্দি বা ইংরেজিতে। টাইপ করতে হবে না।
@@ -61,7 +71,7 @@ export default function LandingPage() {
           href="/pricing"
           className="rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white transition hover:bg-brand-700"
         >
-          দাম দেখুন · See pricing
+          <span lang="bn">দাম দেখুন</span> · See pricing
         </Link>
         <Link
           href="/admin"
