@@ -7,7 +7,6 @@ import { ProductGuide } from '@/components/admin/ProductGuide';
 import {
   AUTO_PAUSE_DAYS,
   GRACE_DAYS,
-  LISTING_MINIMUM_PAISE,
   LISTING_PAISE_PER_ITEM,
   PLAN_ORDER,
   planItems,
@@ -175,7 +174,7 @@ export default async function DashboardPage() {
             />
             <Rule
               title="Listing service"
-              body={`${formatPaise(LISTING_PAISE_PER_ITEM)} per item we catalogue, minimum ${formatPaise(LISTING_MINIMUM_PAISE)}. Buys no subscription time.`}
+              body={`${formatPaise(LISTING_PAISE_PER_ITEM)} per item we catalogue. Buys no subscription time.`}
             />
           </div>
         </section>

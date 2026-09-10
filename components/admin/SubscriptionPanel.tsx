@@ -37,8 +37,6 @@ import { useConfirm } from '@/components/ui/useConfirm';
 import { formatPaise, paiseToInput, parsePaise, rupeesToPaise } from '@/lib/money';
 import { periodFor } from '@/lib/period';
 import {
-  LISTING_MINIMUM_ITEMS,
-  LISTING_MINIMUM_PAISE,
   LISTING_PAISE_PER_ITEM,
   PLAN_ORDER,
   PLAN_SPECS,
@@ -132,7 +130,6 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
   const amountPaise = rupeesToPaise(priceForMonths(plan, monthCount));
   const listedCount = Math.max(0, Math.trunc(Number(listedItems) || 0));
   const listingPaise = listingChargePaise(listedCount);
-  const atListingFloor = listedCount > 0 && listedCount < LISTING_MINIMUM_ITEMS;
   const usage = state.itemLimit > 0 ? Math.min(1, state.itemCount / state.itemLimit) : 0;
 
   /**
@@ -361,9 +358,9 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
       <Block
         tone="quiet"
         title="Listing service"
-        hint={`Charged when we catalogue the shop's items for them. 50 paise per item, minimum ${formatPaise(
-          LISTING_MINIMUM_PAISE,
-        )}. Buys no subscription time.`}
+        hint={`Charged when we catalogue the shop's items for them. ${formatPaise(
+          LISTING_PAISE_PER_ITEM,
+        )} per item, no minimum. Buys no subscription time.`}
       >
         <div className="flex flex-wrap items-end gap-2">
           <label className="block">
@@ -391,12 +388,6 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             Charge {formatPaise(listingPaise)}
           </Button>
 
-          {atListingFloor && (
-            <p className="text-xs text-slate-800">
-              {listedCount} × 50p is {formatPaise(listedCount * LISTING_PAISE_PER_ITEM)} — the{' '}
-              {formatPaise(LISTING_MINIMUM_PAISE)} minimum applies.
-            </p>
-          )}
         </div>
       </Block>
 
