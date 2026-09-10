@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { VoiceLang } from '@/lib/speech';
+import { cueStart, cueStop } from './cue';
 
 // The DOM lib has no SpeechRecognition types; only the bits we use are declared.
 type RecognitionResult = { transcript: string; isFinal: boolean };
@@ -339,9 +340,24 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
     launch();
   }, [launch]);
 
+  /**
+   * The user's own tap — and the ONLY place the beeps belong.
+   *
+   * Not in `start`/`stop`: those are also the read-back cycle. Every spoken
+   * reply stops recognition, speaks, and starts it again (see `speak`), and a
+   * beep on each side of that would put two chirps around every sentence the
+   * app says back. The recogniser also restarts itself constantly on silence.
+   * A cue that fires when the machine changes its own mind teaches nothing;
+   * one that fires when the person presses the button teaches everything.
+   */
   const toggle = useCallback(() => {
-    if (state === 'listening') stop();
-    else void start();
+    if (state === 'listening') {
+      cueStop();
+      stop();
+    } else {
+      cueStart();
+      void start();
+    }
   }, [state, start, stop]);
 
   /**

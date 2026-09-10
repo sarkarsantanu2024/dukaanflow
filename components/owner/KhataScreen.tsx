@@ -33,9 +33,20 @@ import {
   type StatementAccount,
 } from '@/lib/khata-pdf';
 import { ItemNotePicker, type PickableItem } from './ItemNotePicker';
+import { KhataVoice } from './KhataVoice';
 import { TakingsPanel } from './TakingsPanel';
+import { speak } from '@/components/voice/useVoice';
+import { spokenKhataEntry } from '@/lib/spoken-money';
+import type { VoiceLang } from '@/lib/speech';
 import type { Drawer, Takings } from '@/lib/takings';
 import type { Locale } from '@/lib/i18n';
+
+/** The shop's language, as the synthesiser names it. */
+const RECOGNITION_LANG: Record<Locale, VoiceLang> = {
+  en: 'en-IN',
+  hi: 'hi-IN',
+  bn: 'bn-IN',
+};
 
 export type KhataCustomer = {
   id: string;
@@ -311,6 +322,26 @@ export function KhataScreen({
         return;
       }
 
+      /**
+       * Say it, even though this one was typed.
+       *
+       * The spoken confirmation is not a feature of the microphone — it is how
+       * anybody who cannot read this screen checks that the right money went
+       * against the right name, and the typed form is the path a helper uses
+       * while the owner watches. Hearing "রেখা, একশো টাকা বাকি লেখা হল" is the
+       * owner's only way to catch a helper's slip.
+       *
+       * A name typed fresh has no row yet, so their balance is simply what was
+       * just written.
+       */
+      const existing = customers.find((customer) => customer.phone === form.phone);
+      const balancePaise =
+        (existing?.balancePaise ?? 0) + (kind === 'DEBIT' ? amountPaise : -amountPaise);
+      speak(
+        spokenKhataEntry(locale, form.name || existing?.name || '', amountPaise, kind, balancePaise),
+        RECOGNITION_LANG[locale],
+      );
+
       setForm({ name: '', phone: '', area: '', amount: '', note: '' });
       router.refresh();
     } catch {
@@ -342,10 +373,18 @@ export function KhataScreen({
      * which repayments did that. See `lib/takings.ts`.
      */
     paymentMode: '' | 'CASH' | 'UPI' = '',
-  ) {
+    /**
+     * Whether the entry actually reached the server.
+     *
+     * The voice card speaks the new balance out loud on the strength of this,
+     * and to an owner who cannot read the screen a spoken balance IS the
+     * confirmation — so a failed write that still said "মোট বাকি ছশো" would be
+     * worse than one that said nothing at all.
+     */
+  ): Promise<boolean> {
     if (!Number.isFinite(amountPaise) || amountPaise < 1) {
       push(t.khataAmount, 'error');
-      return;
+      return false;
     }
     setBusy(true);
     try {
@@ -362,14 +401,16 @@ export function KhataScreen({
           paymentMode,
         }),
       });
-      if (handledExpiredSession({ response, slug, t, push })) return;
+      if (handledExpiredSession({ response, slug, t, push })) return false;
       if (!response.ok) {
         push(t.networkError, 'error');
-        return;
+        return false;
       }
       router.refresh();
+      return true;
     } catch {
       push(t.networkError, 'error');
+      return false;
     } finally {
       setBusy(false);
     }
@@ -513,6 +554,26 @@ export function KhataScreen({
             anything that has to be added up, and a printable statement for the
             customer who wants it on paper. Both are the two icons above. */}
       </div>
+
+      {/* THE MICROPHONE, DIRECTLY UNDER THE TOTAL AND ABOVE THE NAMES.
+          This is the screen an owner who cannot write opens most often, and it
+          was the only one in the app with no way in but the keyboard — the item
+          list has a mic and a camera, the till has a mic, and the credit book,
+          which is the one thing nobody can do on their behalf, had a form.
+
+          It needs names to match against, so it is absent on an empty book:
+          the first customer is always typed, because a new one needs a phone
+          number and that is not something to take from a recogniser. */}
+      {customers.length > 0 && (
+        <KhataVoice
+          customers={customers}
+          locale={locale}
+          busy={busy}
+          onCommit={(customer, kind, amountPaise) =>
+            addFor(customer as KhataCustomer, kind, amountPaise)
+          }
+        />
+      )}
 
       {customers.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
