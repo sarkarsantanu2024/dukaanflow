@@ -75,7 +75,7 @@ export default async function ReportsPage({
             {report.topProducts.length > 0 && (
               <p className="mt-3 text-sm text-slate-500">
                 {report.topProducts[0].label} led with {report.topProducts[0].revenueShare}% of all
-                revenuePaise
+                revenue
                 {report.singleShop
                   ? ''
                   : `, across ${report.topProducts[0].shops} ${report.topProducts[0].shops === 1 ? 'shop' : 'shops'}`}

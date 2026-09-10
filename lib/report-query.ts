@@ -80,15 +80,30 @@ export function parseReportQuery(source: Source, now: Date = new Date()): Report
   const granularity: Granularity =
     asked === 'year' ? 'year' : asked === 'day' ? 'day' : 'month';
 
-  const year = clamp(Number(read(source, 'year')), FIRST_YEAR, latestYear, fallback.year);
+  const year = clamp(num(source, 'year'), FIRST_YEAR, latestYear, fallback.year);
   const month =
-    granularity === 'year' ? null : clamp(Number(read(source, 'month')), 1, 12, fallback.month);
+    granularity === 'year' ? null : clamp(num(source, 'month'), 1, 12, fallback.month);
   // Clamped to 31 rather than to the length of the month: a 31st asked of
   // February simply reports an empty day, which is honest, where silently
   // moving it to the 28th would report a different day than the one requested.
-  const day = granularity === 'day' ? clamp(Number(read(source, 'day')), 1, 31, fallback.day) : null;
+  const day = granularity === 'day' ? clamp(num(source, 'day'), 1, 31, fallback.day) : null;
 
   return { shopSlug, typeFilter, granularity, year, month, day };
+}
+
+/**
+ * A numeric parameter, or NaN where it was not given.
+ *
+ * NOT `Number(read(...))`. An absent parameter reads as `''`, and `Number('')`
+ * is `0` — a perfectly finite number, so it sailed past the `Number.isFinite`
+ * guard in `clamp` and was pulled up to the minimum instead of falling back.
+ * The effect was that a bare `/admin/reports` always opened on January of the
+ * first year rather than on the month in progress, which is the exact opposite
+ * of what the fallback above is for.
+ */
+function num(source: Source, key: string): number {
+  const raw = read(source, key).trim();
+  return raw === '' ? Number.NaN : Number(raw);
 }
 
 function clamp(value: number, min: number, max: number, fallback: number): number {
