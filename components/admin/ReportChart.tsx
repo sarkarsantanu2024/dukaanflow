@@ -44,8 +44,21 @@ export function ColumnChart({
   const peak = Math.max(...rows.map((row) => row.transactions), 0);
   if (peak === 0) return <ChartEmpty>{empty}</ChartEmpty>;
 
+  /**
+   * `items-stretch`, NOT `items-end`.
+   *
+   * Each bar is sized as a percentage of its column, so the column has to have
+   * a height for that percentage to resolve against. `items-end` sized every
+   * column to its own content — the axis label, 14px — and each bar then
+   * computed to 0. The chart drew its labels, its tooltips and its aria
+   * summary correctly, and not one visible bar.
+   *
+   * The column already carries `justify-end`, and that is what actually sits
+   * the bars on the axis; aligning the columns themselves was never what did
+   * it.
+   */
   return (
-    <div className="flex h-40 items-end gap-[2px]" role="img" aria-label={summarise(rows)}>
+    <div className="flex h-40 items-stretch gap-[2px]" role="img" aria-label={summarise(rows)}>
       {rows.map((row, index) => {
         const share = row.transactions / peak;
         const isPeak = row.transactions === peak;
