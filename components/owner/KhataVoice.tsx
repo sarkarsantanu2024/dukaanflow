@@ -5,6 +5,14 @@
  *
  * "রেখা দি একশো টাকা বাকি" — a name, a number, and which way the money went.
  *
+ * THE SHAPE IS THE STOREFRONT'S AND THE TILL'S, NOT A NEW ONE. A floating mic
+ * in the bottom-right corner above the tab bar, and a bubble that appears over
+ * it only when there is something to read. This was built once as a card sitting
+ * in the page flow, which put a fifth thing between the shopkeeper and their
+ * list of names and looked like nothing else in the product. An owner who has
+ * learned the mic on the items screen has already learned this one; a second
+ * arrangement for the same tool is a second thing to learn for no reason.
+ *
  * THE TAP IS NOT NEGOTIABLE. Nothing here writes on the strength of a
  * recogniser's guess: the reading is shown, said out loud, and waits. A
  * mis-heard name posts one customer's debt onto another's account, and that is
@@ -12,8 +20,8 @@
  * a far worse outcome than one extra tap.
  *
  * WHY SPEAKING IT BACK MATTERS MORE THAN SHOWING IT. The owner this is for
- * cannot read the card. They can hear "রেখা, একশো টাকা বাকি? ঠিক আছে?" and
- * answer it. The card is for everybody else, and for the tick.
+ * cannot read the bubble. They can hear "রেখা, একশো টাকা বাকি? ঠিক আছে?" and
+ * answer it. The bubble is for everybody else, and for the tick.
  *
  * Only names already in the book can be spoken. A new customer needs a phone
  * number, and dictating ten digits across a counter to a browser recogniser is
@@ -24,7 +32,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { MicButton } from '@/components/voice/MicButton';
 import { speak, useVoice } from '@/components/voice/useVoice';
-import { Button } from '@/components/ui/Button';
+import { VOICE_ERRORS } from '@/components/voice/errors';
+import { CloseIcon } from '@/components/ui/Icon';
 import { ownerDict } from '@/lib/owner-i18n';
 import { formatPaise } from '@/lib/money';
 import type { Locale } from '@/lib/i18n';
@@ -37,11 +46,7 @@ import {
   type KhataKind,
   type MatchableCustomer,
 } from '@/lib/khata-speech';
-import {
-  spokenKhataAsk,
-  spokenKhataEntry,
-  spokenKhataNoMatch,
-} from '@/lib/spoken-money';
+import { spokenKhataAsk, spokenKhataEntry, spokenKhataNoMatch } from '@/lib/spoken-money';
 
 const RECOGNITION_LANG: Record<Locale, VoiceLang> = {
   en: 'en-IN',
@@ -54,9 +59,9 @@ export type VoiceCustomer = MatchableCustomer & { balancePaise: number };
 type Pending = {
   customer: VoiceCustomer;
   amountPaise: number;
-  /** Null when the sentence never said which way — the card asks. */
+  /** Null when the sentence never said which way — the bubble asks. */
   kind: KhataKind | null;
-  /** Below `KHATA_CONFIDENT` the card says the name louder. */
+  /** Below `KHATA_CONFIDENT` the name is the thing to check, and it is coloured. */
   sure: boolean;
 };
 
@@ -77,10 +82,9 @@ export function KhataVoice({
 
   const [pending, setPending] = useState<Pending | null>(null);
   const [missed, setMissed] = useState<string | null>(null);
+  /** Closing the bubble, exactly as the storefront's mic allows. */
+  const [dismissed, setDismissed] = useState(false);
 
-  // The handler is rebuilt on every render as the customer list changes, and
-  // `useVoice` holds it in a ref — but the mic controls have to be reachable
-  // from inside the handler too, which is the one direction a ref is needed in.
   const voiceRef = useRef<{ stop: () => void } | null>(null);
 
   /**
@@ -116,8 +120,8 @@ export function KhataVoice({
 
   const onPhrase = useCallback(
     (alternatives: string[]) => {
-      // One reading at a time. Anything said while a card is waiting is noise
-      // as far as this screen is concerned — the owner is being asked a
+      // One reading at a time. Anything said while the bubble is waiting is
+      // noise as far as this screen is concerned — the owner is being asked a
       // question, not dictating a second entry.
       if (pendingRef.current || busyRef.current) return;
 
@@ -131,6 +135,7 @@ export function KhataVoice({
           sure: resolved.match.confidence >= KHATA_CONFIDENT,
         };
         setMissed(null);
+        setDismissed(false);
         setPending(next);
         say(spokenKhataAsk(locale, next.customer.name, next.amountPaise, next.kind));
         return;
@@ -150,6 +155,7 @@ export function KhataVoice({
         .find((entry) => entry !== null);
 
       if (attempted && matchCustomer(attempted.name, customersRef.current) === null) {
+        setDismissed(false);
         setMissed(attempted.name);
         say(spokenKhataNoMatch(locale, attempted.name));
       }
@@ -160,8 +166,6 @@ export function KhataVoice({
   const voice = useVoice({ lang, onPhrase });
   voiceRef.current = { stop: voice.stop };
 
-  // A card left on screen when the owner walks away should not be waiting to
-  // write money the next time the tab is opened.
   useEffect(() => {
     return () => {
       if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
@@ -186,87 +190,150 @@ export function KhataVoice({
     say(spokenKhataEntry(locale, entry.customer.name, entry.amountPaise, kind, balancePaise));
   }
 
+  /**
+   * Is there anything to show above the mic?
+   *
+   * Same test the storefront's mic makes: the bubble exists only while it has
+   * something to say and gets out of the way again afterwards, because there is
+   * no card standing permanently open to hold it.
+   */
+  const hasSomethingToSay =
+    voice.listening || Boolean(pending) || Boolean(missed) || Boolean(voice.errorCode);
+  const speaking = hasSomethingToSay && !dismissed;
+
+  /** The inline buttons in the bubble, matching the storefront's suggestion box. */
+  const yes =
+    'h-10 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60';
+  const no =
+    'h-10 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50';
+
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-card">
-      <div className="flex items-center gap-4">
+    <div className="no-print pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-3xl flex-col items-end gap-3 px-4">
+      <div className="pointer-events-auto relative">
+        {/* Anchored above the mic rather than stacked with it in the flow —
+            as a sibling it would be 20rem wide and shove the mic across the
+            screen every time it had something to say. */}
+        {speaking && (
+          <div className="absolute bottom-full right-0 mb-3 w-[min(20rem,calc(100vw-2rem))] rounded-2xl bg-white p-3 shadow-lg ring-1 ring-slate-200">
+            <div className="flex items-start gap-2">
+              <p className="min-w-0 flex-1 text-sm font-semibold text-slate-900">
+                {voice.listening ? t.khataVoiceListening : t.khataVoiceTap}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setDismissed(true);
+                  setPending(null);
+                  setMissed(null);
+                  if (voice.listening) voice.stop();
+                }}
+                aria-label={t.khataVoiceNo}
+                className="-m-1 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <CloseIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* The worked sentence, replaced by whatever is being heard. It is
+                the only instruction that ever taught anybody how to talk to
+                this, so it stays up until there is something better to show. */}
+            <p className="mt-0.5 text-sm text-slate-500">
+              {voice.interim || t.khataVoiceExample}
+            </p>
+
+            {voice.errorCode && (
+              <p className="mt-1 text-sm text-red-600">{VOICE_ERRORS[voice.errorCode]}</p>
+            )}
+
+            {missed && (
+              <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
+                <p className="text-sm text-amber-900">{t.khataVoiceNoMatch}</p>
+              </div>
+            )}
+
+            {pending && (
+              <div
+                className={clsx(
+                  'mt-3 rounded-xl border p-3',
+                  // An unsure match is the one case worth colouring, because
+                  // the thing to check is the NAME and nothing else says so.
+                  pending.sure ? 'border-slate-200 bg-slate-50' : 'border-amber-300 bg-amber-50',
+                )}
+              >
+                <p className="text-base font-bold text-slate-900">{pending.customer.name}</p>
+                <p className="text-2xl font-bold tabular-nums text-slate-900">
+                  {formatPaise(pending.amountPaise)}
+                </p>
+
+                {pending.kind === null ? (
+                  <>
+                    <p className="mt-1 text-sm font-semibold text-slate-700">
+                      {t.khataVoiceWhichWay}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void commit('DEBIT')}
+                        className={yes}
+                      >
+                        {t.khataVoiceOwes}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void commit('CREDIT')}
+                        className={yes}
+                      >
+                        {t.khataVoicePaid}
+                      </button>
+                      <button type="button" onClick={() => setPending(null)} className={no}>
+                        {t.khataVoiceNo}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-1 text-sm font-semibold text-slate-700">
+                      {pending.kind === 'DEBIT' ? t.khataVoiceOwes : t.khataVoicePaid}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void commit(pending.kind as KhataKind)}
+                        className={yes}
+                      >
+                        {t.khataVoiceYes}
+                      </button>
+                      <button type="button" onClick={() => setPending(null)} className={no}>
+                        {t.khataVoiceNo}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Green, and the same 14×14 as the items screen's add button: in the
+            owner's app the floating primary action is brand-coloured, and the
+            khata's own rows carry no green button for this to be confused
+            with. The storefront's mic is dark for the opposite reason. */}
         <MicButton
           listening={voice.listening}
+          tone="brand"
           onClick={() => {
+            setDismissed(false);
             setMissed(null);
             setPending(null);
             voice.toggle();
           }}
           label={voice.listening ? t.khataVoiceListening : t.khataVoiceTap}
+          className="shadow-xl"
         />
-        <div className="min-w-0">
-          <p className="font-semibold text-slate-900">
-            {voice.listening ? t.khataVoiceListening : t.khataVoiceTap}
-          </p>
-          {/* The worked sentence stays up while listening. It is the only
-              instruction that ever taught anybody how to talk to this. */}
-          <p className="mt-0.5 text-sm text-slate-500">{t.khataVoiceExample}</p>
-          {voice.interim && (
-            <p className="mt-1 truncate text-sm italic text-slate-400">{voice.interim}</p>
-          )}
-        </div>
       </div>
-
-      {missed && (
-        <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          {t.khataVoiceNoMatch}
-        </p>
-      )}
-
-      {pending && (
-        <div
-          className={clsx(
-            'mt-4 rounded-xl border-2 p-4',
-            // An unsure match is the one case worth colouring, because the
-            // thing to check is the NAME and nothing else on the card says so.
-            pending.sure ? 'border-brand-200 bg-brand-50' : 'border-amber-300 bg-amber-50',
-          )}
-        >
-          <p className="text-lg font-bold text-slate-900">{pending.customer.name}</p>
-          <p className="text-3xl font-bold tabular-nums text-slate-900">
-            {formatPaise(pending.amountPaise)}
-          </p>
-
-          {pending.kind === null ? (
-            <>
-              <p className="mt-2 text-sm font-semibold text-slate-700">{t.khataVoiceWhichWay}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Button size="lg" disabled={busy} onClick={() => void commit('DEBIT')}>
-                  {t.khataVoiceOwes}
-                </Button>
-                <Button size="lg" variant="secondary" disabled={busy} onClick={() => void commit('CREDIT')}>
-                  {t.khataVoicePaid}
-                </Button>
-                <Button size="lg" variant="ghost" onClick={() => setPending(null)}>
-                  {t.khataVoiceNo}
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="mt-1 text-sm font-semibold text-slate-700">
-                {pending.kind === 'DEBIT' ? t.khataVoiceOwes : t.khataVoicePaid}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  size="lg"
-                  disabled={busy}
-                  onClick={() => void commit(pending.kind as KhataKind)}
-                >
-                  {t.khataVoiceYes}
-                </Button>
-                <Button size="lg" variant="ghost" onClick={() => setPending(null)}>
-                  {t.khataVoiceNo}
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-    </section>
+    </div>
   );
 }

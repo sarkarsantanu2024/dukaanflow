@@ -3,7 +3,12 @@
  *
  *   npm i -D playwright                           # once, if not already there
  *   npm run dev                                   # in another terminal
- *   ADMIN_PASSWORD=... npm run tour:shots
+ *   OWNER_PIN=... ADMIN_PASSWORD=... npm run tour:shots
+ *
+ * OWNER_PIN alone is enough for five of the eight. Only the three console
+ * screens need ADMIN_PASSWORD, and without it they are skipped rather than the
+ * whole run failing — refreshing the owner's screens should not require the one
+ * password that opens every shop in the business.
  *
  * PLAYWRIGHT IS NOT A DEPENDENCY OF THIS PROJECT, deliberately — see the same
  * note in `social-cards.ts`. `scripts/` is excluded from `tsconfig.json` so
@@ -59,16 +64,27 @@ type Shot = {
   fullPage?: boolean;
   /** Extra settling time where a screen animates or draws a canvas. */
   settleMs?: number;
+  /**
+   * Needs the Super Admin, rather than the demo shop's owner PIN.
+   *
+   * Only the three console screens do. Everything else is an owner or customer
+   * screen and signs in with a six-digit PIN for one demo shop — so refreshing
+   * most of this deck does not mean typing the one password that opens every
+   * shop in the business. Without ADMIN_PASSWORD these three are skipped and
+   * the rest are still taken.
+   */
+  admin?: boolean;
 };
 
 const SHOTS: Shot[] = [
-  { file: '01-add-shop.png', url: '/admin/shops/new', viewport: DESKTOP_TALL },
+  { file: '01-add-shop.png', url: '/admin/shops/new', viewport: DESKTOP_TALL, admin: true },
   { file: '02-items.png', url: `/owner/${SHOP}/inventory`, viewport: PHONE },
   {
     file: '03-poster.png',
     url: `/admin/shop/${SHOP}/poster`,
     viewport: DESKTOP,
     fullPage: true,
+    admin: true,
     // The QR is drawn to a canvas; catching it mid-draw gives a white square.
     settleMs: 1200,
   },
@@ -86,20 +102,15 @@ const SHOTS: Shot[] = [
     // shrunk to unreadable.
     viewport: { width: 1280, height: 1750 },
     settleMs: 800,
+    admin: true,
   },
 ];
 
-async function signIn(browser: Browser) {
+/** The Super Admin, for the three console screens. Null when not configured. */
+async function adminState(browser: Browser) {
   const username = process.env.ADMIN_USERNAME || 'admin';
   const password = process.env.ADMIN_PASSWORD;
-
-  if (!password) {
-    throw new Error(
-      'Set ADMIN_PASSWORD to the console password for this environment.\n' +
-        'It is never read from a file here on purpose — this script signs in as\n' +
-        'the one account that can see every shop.',
-    );
-  }
+  if (!password) return null;
 
   // A throwaway context purely to collect the session cookie. `context.request`
   // shares a cookie jar with the pages opened from it, so signing in through
@@ -110,11 +121,27 @@ async function signIn(browser: Browser) {
     headers: { Origin: BASE, 'Content-Type': 'application/json' },
     data: { username, password },
   });
+  if (!response.ok()) throw new Error(`Admin sign-in failed (${response.status()}).`);
+  return context.storageState();
+}
 
-  if (!response.ok()) {
-    throw new Error(`Sign-in failed (${response.status()}). Check ADMIN_PASSWORD.`);
+/** The demo shop's own owner, for everything else. */
+async function ownerState(browser: Browser) {
+  const pin = process.env.OWNER_PIN;
+  if (!pin) {
+    throw new Error(
+      `Set OWNER_PIN to the demo shop's owner PIN.
+` +
+        `Issue one at /admin -> Shops -> Demo Grocery -> Owner access.`,
+    );
   }
 
+  const context = await browser.newContext();
+  const response = await context.request.post(`${BASE}/api/owner/${SHOP}/login`, {
+    headers: { Origin: BASE, 'Content-Type': 'application/json' },
+    data: { pin },
+  });
+  if (!response.ok()) throw new Error(`Owner sign-in failed (${response.status()}). Check OWNER_PIN.`);
   return context.storageState();
 }
 
@@ -122,7 +149,12 @@ async function main() {
   await mkdir(OUT, { recursive: true });
 
   const browser = await chromium.launch();
-  const storageState = await signIn(browser);
+  const owner = await ownerState(browser);
+  const admin = await adminState(browser);
+
+  if (!admin) {
+    console.log('  (no ADMIN_PASSWORD — the three console screens are left as they are)');
+  }
 
   /**
    * Show demo shops in the console.
@@ -131,7 +163,7 @@ async function main() {
    * the demo shop rendered under a dropdown reading "Every shop" — the picture
    * disagreeing with the page. This is the same toggle the shops page offers.
    */
-  storageState.cookies.push({
+  admin?.cookies.push({
     name: 'df_show_demo',
     value: '1',
     domain: new URL(BASE).hostname,
@@ -143,8 +175,10 @@ async function main() {
   });
 
   for (const shot of SHOTS) {
+    if (shot.admin && !admin) continue;
+
     const context = await browser.newContext({
-      storageState,
+      storageState: shot.admin ? admin! : owner,
       viewport: shot.viewport,
       // Retina, so the image still looks sharp projected or on a laptop.
       deviceScaleFactor: 2,

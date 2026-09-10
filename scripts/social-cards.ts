@@ -3,7 +3,7 @@
  *
  *   npm i -D playwright                            # once, if not already there
  *   npm run dev                                    # in another terminal
- *   ADMIN_PASSWORD=... npm run social:cards
+ *   OWNER_PIN=... npm run social:cards
  *
  * PLAYWRIGHT IS NOT A DEPENDENCY OF THIS PROJECT, deliberately. It is a browser
  * automation tool for making pictures on a laptop, and the deployed app has no
@@ -89,17 +89,35 @@ const CARDS: Card[] = [
   },
 ];
 
+/**
+ * Signs in as the DEMO SHOP'S OWNER, not as the Super Admin.
+ *
+ * Every screen photographed here is an owner or customer screen, so the
+ * console password — the one credential that opens every shop in the business —
+ * has no business being typed to make marketing pictures. A six-digit PIN for
+ * one demo shop is the whole access this needs.
+ *
+ *   OWNER_PIN=246810 npm run social:cards
+ *
+ * Issue or re-issue the PIN from /admin → Shops → Demo Grocery → Owner access.
+ */
 async function signIn(browser: Browser) {
-  const username = process.env.ADMIN_USERNAME || 'admin';
-  const password = process.env.ADMIN_PASSWORD;
-  if (!password) throw new Error('Set ADMIN_PASSWORD to this environment’s console password.');
+  const pin = process.env.OWNER_PIN;
+  if (!pin) {
+    throw new Error(
+      `Set OWNER_PIN to the demo shop's owner PIN.\n` +
+        `Issue one at /admin → Shops → Demo Grocery → Owner access.`,
+    );
+  }
 
   const context = await browser.newContext();
-  const response = await context.request.post(`${BASE}/api/admin/login`, {
+  const response = await context.request.post(`${BASE}/api/owner/${SHOP}/login`, {
     headers: { Origin: BASE, 'Content-Type': 'application/json' },
-    data: { username, password },
+    data: { pin },
   });
-  if (!response.ok()) throw new Error(`Sign-in failed (${response.status()}).`);
+  if (!response.ok()) {
+    throw new Error(`Owner sign-in failed (${response.status()}). Check OWNER_PIN.`);
+  }
   return context.storageState();
 }
 
