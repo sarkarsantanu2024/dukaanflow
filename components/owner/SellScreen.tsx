@@ -59,7 +59,17 @@ import type { SnapshotLine } from '@/lib/order-snapshot';
 import { ownerDict } from '@/lib/owner-i18n';
 import { dict } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
+import type { VoiceLang } from '@/lib/speech';
+import { speak } from '@/components/voice/useVoice';
+import { spokenSaleTotal } from '@/lib/spoken-money';
 import type { Locale } from '@/lib/i18n';
+
+/** The shop's language, as the synthesiser names it. */
+const RECOGNITION_LANG: Record<Locale, VoiceLang> = {
+  en: 'en-IN',
+  hi: 'hi-IN',
+  bn: 'bn-IN',
+};
 
 export type SellItem = {
   id: string;
@@ -455,10 +465,24 @@ export function SellScreen({
         return;
       }
 
+      /**
+       * SAY THE TOTAL, BEFORE THE BASKET IS EMPTIED.
+       *
+       * `totalPaise` is derived from the cart, and the next line clears it — so
+       * the number has to be taken now or the phone announces zero.
+       *
+       * A toast says the sale was recorded; it does not say how much, and an
+       * owner who cannot read it learns nothing from a green bar. The one thing
+       * they need at this moment is the figure to ask the customer for, and it
+       * is the same figure whether or not they can read.
+       */
+      const settled = totalPaise;
+
       setCart({});
       setPaying(false);
       setKhata(null);
       push(t.sellRecorded, 'success');
+      speak(spokenSaleTotal(locale, settled), RECOGNITION_LANG[locale]);
       router.refresh();
     } catch {
       push(t.networkError, 'error');

@@ -303,6 +303,23 @@ type OwnerDictionary = {
   khataPhone: string;
   khataArea: string;
   khataAmount: string;
+  /**
+   * Writing the khata by voice, for an owner who cannot write it by hand.
+   *
+   * Every one of these is also said out loud somewhere nearby, so they are kept
+   * short: a label a non-reader never reads still has to fit under a button for
+   * everybody else.
+   */
+  khataVoiceTap: string;
+  khataVoiceListening: string;
+  /** A worked sentence. The single most useful thing on the card. */
+  khataVoiceExample: string;
+  khataVoiceWhichWay: string;
+  khataVoiceOwes: string;
+  khataVoicePaid: string;
+  khataVoiceYes: string;
+  khataVoiceNo: string;
+  khataVoiceNoMatch: string;
   /** Picking what was handed over, from the shop's own list. */
   khataItems: string;
   khataItemsPick: string;
@@ -744,6 +761,15 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataPhone: 'Phone',
     khataArea: 'Area',
     khataAmount: 'Amount (₹)',
+    khataVoiceTap: 'Say a name and an amount',
+    khataVoiceListening: 'Listening…',
+    khataVoiceExample: 'Say: “Rekha, one hundred rupees, due”',
+    khataVoiceWhichWay: 'Which way?',
+    khataVoiceOwes: 'Took on credit',
+    khataVoicePaid: 'Paid back',
+    khataVoiceYes: 'Yes, write it',
+    khataVoiceNo: 'No',
+    khataVoiceNoMatch: 'Nobody in the book by that name. Say the name on its own, or type it below.',
     khataItems: 'What did they take?',
     khataItemsPick: 'Pick items',
     khataItemsClose: 'Close',
@@ -1126,6 +1152,15 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataPhone: 'ফোন',
     khataArea: 'পাড়া',
     khataAmount: 'টাকা (₹)',
+    khataVoiceTap: 'নাম আর টাকা বলুন',
+    khataVoiceListening: 'শুনছি…',
+    khataVoiceExample: 'বলুন: “রেখা দি একশো টাকা বাকি”',
+    khataVoiceWhichWay: 'কোনটা?',
+    khataVoiceOwes: 'বাকি নিল',
+    khataVoicePaid: 'টাকা দিল',
+    khataVoiceYes: 'হ্যাঁ, লিখুন',
+    khataVoiceNo: 'না',
+    khataVoiceNoMatch: 'খাতায় এই নামে কেউ নেই। শুধু নামটা বলুন, বা নিচে লিখুন।',
     khataItems: 'কী কী নিল?',
     khataItemsPick: 'জিনিস বাছুন',
     khataItemsClose: 'বন্ধ করুন',
@@ -1508,6 +1543,15 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataPhone: 'फ़ोन',
     khataArea: 'इलाक़ा',
     khataAmount: 'रकम (₹)',
+    khataVoiceTap: 'नाम और रकम बोलिए',
+    khataVoiceListening: 'सुन रहे हैं…',
+    khataVoiceExample: 'बोलिए: “रेखा जी सौ रुपये बाकी”',
+    khataVoiceWhichWay: 'कौन सा?',
+    khataVoiceOwes: 'उधार लिया',
+    khataVoicePaid: 'पैसे दिए',
+    khataVoiceYes: 'हाँ, लिखिए',
+    khataVoiceNo: 'नहीं',
+    khataVoiceNoMatch: 'खाते में इस नाम से कोई नहीं। सिर्फ़ नाम बोलिए, या नीचे लिखिए।',
     khataItems: 'क्या-क्या लिया?',
     khataItemsPick: 'सामान चुनें',
     khataItemsClose: 'बंद करें',
