@@ -1,8 +1,15 @@
 /**
  * Facebook cards — one square image per screen a shopkeeper actually uses.
  *
+ *   npm i -D playwright                            # once, if not already there
  *   npm run dev                                    # in another terminal
  *   ADMIN_PASSWORD=... npm run social:cards
+ *
+ * PLAYWRIGHT IS NOT A DEPENDENCY OF THIS PROJECT, deliberately. It is a browser
+ * automation tool for making pictures on a laptop, and the deployed app has no
+ * use for it — so `scripts/` is excluded from `tsconfig.json` and typechecked by
+ * `tsconfig.scripts.json` instead. It is not an oversight; putting it back into
+ * the build is what broke a production deploy on 2026-09-10.
  *
  * SEPARATE FROM `npm run tour:shots`, AND FOR A DIFFERENT AUDIENCE. The tour
  * images in `public/tour/` are raw screens, shown by an operator sitting beside
