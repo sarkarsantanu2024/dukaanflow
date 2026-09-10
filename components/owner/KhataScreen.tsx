@@ -555,9 +555,12 @@ export function KhataScreen({
             customer who wants it on paper. Both are the two icons above. */}
       </div>
 
-      {/* THE MICROPHONE, DIRECTLY UNDER THE TOTAL AND ABOVE THE NAMES.
+      {/* THE MICROPHONE. Fixed to the bottom-right corner, so where it sits in
+          this tree does not decide where it appears — it floats over the list
+          exactly as the mic does on the items screen and the till.
+
           This is the screen an owner who cannot write opens most often, and it
-          was the only one in the app with no way in but the keyboard — the item
+          was the only one in the app with no way in but the keyboard: the item
           list has a mic and a camera, the till has a mic, and the credit book,
           which is the one thing nobody can do on their behalf, had a form.
 

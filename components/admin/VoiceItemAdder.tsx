@@ -22,7 +22,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { MicButton } from '@/components/voice/MicButton';
-import { speak, useVoice, type VoiceErrorCode } from '@/components/voice/useVoice';
+import { speak, useVoice } from '@/components/voice/useVoice';
+import { VOICE_ERRORS } from '@/components/voice/errors';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import {
@@ -56,22 +57,9 @@ type LogEntry = {
   undo?: Undo;
 };
 
-/**
- * The admin screen is English-only, and the shopkeeper is the person who can
- * actually fix these, so each message names the cause and the remedy.
- */
-const VOICE_ERRORS: Record<VoiceErrorCode, string> = {
-  'insecure-context':
-    'Voice needs HTTPS. It works on localhost, but an http:// address like 192.168.x.x is blocked by the browser — open the site over https instead.',
-  'not-allowed':
-    'Microphone blocked. Allow mic access for this site in the browser, and check Windows Settings → Privacy → Microphone lets your browser use it.',
-  'service-not-allowed':
-    'The browser refused speech recognition even though the mic is allowed. This is usually a managed/work Chrome profile blocking it — try a personal profile, or Edge.',
-  'no-microphone': 'No microphone found. Plug one in, or use a phone.',
-  network:
-    'Speech recognition needs an internet connection — Chrome sends the audio to Google to transcribe it.',
-  unknown: 'Voice input stopped unexpectedly. Tap the mic to try again.',
-};
+// Shared with the khata's microphone — see `components/voice/errors.ts`. One
+// dead microphone should not have two different explanations depending on which
+// screen the shopkeeper happened to be on.
 
 /** Spoken feedback, in the language the shopkeeper is dictating in. */
 const PHRASES: Record<
