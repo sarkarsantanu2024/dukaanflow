@@ -151,3 +151,117 @@ function ChartEmpty({ children }: { children: React.ReactNode }) {
 function summarise(rows: ChartRow[]): string {
   return rows.map((row) => `${row.label}: ${row.transactions}`).join(', ');
 }
+
+/**
+ * The period's shape, as an area under a line.
+ *
+ * WHY A LINE AND NOT MORE COLUMNS. Columns are for comparing buckets that have
+ * no order — weekdays, payment methods, items. Time has an order, and the thing
+ * a reader wants from a trend is the SHAPE: climbing, falling, one spike. A row
+ * of separate bars makes them read thirty heights and assemble the shape
+ * themselves; a line hands it to them.
+ *
+ * Measured in money, not transactions. Two hundred rupees of rice and two
+ * hundred rupees of biscuits are the same day to a shopkeeper deciding whether
+ * this month beat last, and a count would show the biscuits winning.
+ *
+ * Hand-drawn SVG rather than a charting library: this is one polyline and a
+ * fill, the page must print, and the alternative is 60KB of JavaScript plus a
+ * CDN the artifact CSP would have to allow.
+ */
+export function TrendArea({
+  rows,
+  empty,
+  labelEvery = 1,
+}: {
+  rows: ChartRow[];
+  empty: string;
+  labelEvery?: number;
+}) {
+  const peak = Math.max(...rows.map((row) => row.revenuePaise), 0);
+  if (rows.length === 0 || peak === 0) return <ChartEmpty>{empty}</ChartEmpty>;
+
+  // A fixed viewBox with `preserveAspectRatio="none"`: the chart stretches to
+  // whatever width the card gives it, and the maths below stays in round
+  // numbers instead of chasing a measured pixel width.
+  const W = 1000;
+  const H = 260;
+  // Room under the line for the axis labels, and a little over it so the peak
+  // never touches the top edge and read as clipped.
+  const TOP = 12;
+  const BOTTOM = 28;
+
+  const step = rows.length === 1 ? 0 : W / (rows.length - 1);
+  const y = (paise: number) => TOP + (1 - paise / peak) * (H - TOP - BOTTOM);
+  const x = (index: number) => (rows.length === 1 ? W / 2 : index * step);
+
+  const points = rows.map((row, index) => `${x(index)},${y(row.revenuePaise)}`).join(' ');
+  // The fill is the same path closed along the baseline.
+  const area = `${x(0)},${H - BOTTOM} ${points} ${x(rows.length - 1)},${H - BOTTOM}`;
+
+  const peakIndex = rows.findIndex((row) => row.revenuePaise === peak);
+
+  return (
+    <figure className="w-full" role="img" aria-label={summarise(rows)}>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-52 w-full">
+        <defs>
+          <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgb(47 122 94)" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="rgb(47 122 94)" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+
+        {/* Three rules, so a height can be read rather than only compared. */}
+        {[0.25, 0.5, 0.75].map((fraction) => (
+          <line
+            key={fraction}
+            x1={0}
+            x2={W}
+            y1={TOP + fraction * (H - TOP - BOTTOM)}
+            y2={TOP + fraction * (H - TOP - BOTTOM)}
+            stroke="rgb(226 232 240)"
+            strokeWidth={1}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+
+        <polygon points={area} fill="url(#trend-fill)" />
+        <polyline
+          points={points}
+          fill="none"
+          stroke="rgb(47 122 94)"
+          strokeWidth={2}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          // Without this the stroke stretches with the viewBox and the line is
+          // fat on a wide screen and hairline on a narrow one.
+          vectorEffect="non-scaling-stroke"
+        />
+
+        {peakIndex >= 0 && (
+          <circle
+            cx={x(peakIndex)}
+            cy={y(peak)}
+            r={3.5}
+            fill="rgb(47 122 94)"
+            stroke="white"
+            strokeWidth={2}
+            vectorEffect="non-scaling-stroke"
+          />
+        )}
+      </svg>
+
+      {/* The axis as text under the drawing, not inside it — labels inside a
+          stretched viewBox stretch with it. */}
+      <div className="mt-1 flex justify-between text-[10px] tabular-nums text-slate-400">
+        {rows.map((row, index) =>
+          index % labelEvery === 0 || index === rows.length - 1 ? (
+            <span key={row.label} className="truncate">
+              {row.label}
+            </span>
+          ) : null,
+        )}
+      </div>
+    </figure>
+  );
+}

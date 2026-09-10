@@ -1,6 +1,6 @@
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { ReportControls } from '@/components/admin/ReportControls';
-import { BarList, ColumnChart } from '@/components/admin/ReportChart';
+import { BarList, ColumnChart, TrendArea } from '@/components/admin/ReportChart';
 import { buildPeriod, loadReport, peakOf, type BucketRow, type Report } from '@/lib/analytics';
 import { parseReportQuery } from '@/lib/report-query';
 import { prisma } from '@/lib/prisma';
@@ -59,6 +59,107 @@ export default async function ReportsPage({
           <ReportTitle report={report} />
           <Headline report={report} />
 
+          <Band title="The money">
+          <Section
+            title={
+              report.period.granularity === 'year'
+                ? 'Month by month'
+                : report.period.granularity === 'day'
+                  ? 'Hour by hour'
+                  : 'Day by day'
+            }
+            note="What the period did, in money. A single spike is usually a festival or a market day — worth naming before next year."
+          >
+            <TrendArea
+              rows={report.overTime}
+              labelEvery={report.period.granularity === 'month' ? 3 : 1}
+              empty="Nothing was recorded in this period."
+            />
+          </Section>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Section title="Where the money came from">
+              <Table
+                head={['Channel', 'Sales', 'Revenue']}
+                rows={[
+                  [
+                    // Orders arrive from the shop's own QR page, into the
+                    // owner's app. WhatsApp carries the "your order is ready"
+                    // message to the customer afterwards and has never been the
+                    // channel an order comes in on — labelling the column that
+                    // way told the operator the product works like a
+                    // competitor's.
+                    'Ordered by the customer',
+                    report.channels.orders.transactions,
+                    formatPaise(report.channels.orders.revenuePaise),
+                  ],
+                  [
+                    'Rung up at the counter',
+                    report.channels.counter.transactions,
+                    formatPaise(report.channels.counter.revenuePaise),
+                  ],
+                ]}
+              />
+            </Section>
+
+            <Section title="How it was paid and taken">
+              <Table
+                head={['Split', 'Count', 'Value']}
+                rows={[
+                  ...report.paymentModes.map((row) => [
+                    prettyLabel(row.label),
+                    row.transactions,
+                    formatPaise(row.revenuePaise),
+                  ]),
+                  ...report.orderTypes.map((row) => [
+                    prettyLabel(row.label),
+                    row.transactions,
+                    formatPaise(row.revenuePaise),
+                  ]),
+                ]}
+              />
+            </Section>
+          </div>
+
+          {/* The credit book, beside the takings rather than on a page of its
+              own: for a kirana the udhaar IS working capital, and a month that
+              looks strong on revenue while ₹40,000 sits unpaid is not a strong
+              month. Balances are current, not as at the period's end — the
+              caveats say so, because the two read identically otherwise. */}
+          <Section
+            title="Khata — owed today"
+            note={`${formatPaise(report.khata.outstandingPaise)} outstanding now · ${formatPaise(
+              report.khata.periodDebitPaise,
+            )} went out on credit this period · ${formatPaise(
+              report.khata.periodCreditPaise,
+            )} came back.`}
+          >
+            {report.khata.customers.length === 0 ? (
+              <Nothing>Nothing is on the khata.</Nothing>
+            ) : (
+              <Table
+                head={[
+                  ...(report.singleShop ? [] : ['Shop']),
+                  'Customer',
+                  'Area',
+                  'Owed now',
+                  'On credit',
+                  'Repaid',
+                ]}
+                rows={report.khata.customers.slice(0, 25).map((row) => [
+                  ...(report.singleShop ? [] : [row.shop]),
+                  row.name || row.phone,
+                  row.area,
+                  formatPaise(row.balancePaise),
+                  formatPaise(row.periodDebitPaise),
+                  formatPaise(row.periodCreditPaise),
+                ])}
+              />
+            )}
+          </Section>
+          </Band>
+
+          <Band title="What sold">
           <Section
             title="What sells"
             note="Ranked by what it took, not by how many left the shelf — a hundred rupees is a hundred rupees whether that was one sack or fifty cups."
@@ -83,6 +184,40 @@ export default async function ReportsPage({
               </p>
             )}
           </Section>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Section
+              title="Proven sellers, currently out of stock"
+              note="Money being lost right now, not last month."
+            >
+              {report.outOfStockSellers.length === 0 ? (
+                <Nothing>Every strong seller is in stock.</Nothing>
+              ) : (
+                <Table
+                  head={['Item', 'Shop', 'Took this period']}
+                  rows={report.outOfStockSellers.map((entry) => [
+                    entry.label,
+                    entry.shop,
+                    formatPaise(entry.revenuePaise),
+                  ])}
+                />
+              )}
+            </Section>
+
+            <Section
+              title="Listed, but sold nothing"
+              note="Dead shelf space in the catalogue — and a plan the shop may be paying for by item count."
+            >
+              {report.deadProducts.length === 0 ? (
+                <Nothing>Everything listed sold at least once.</Nothing>
+              ) : (
+                <Table
+                  head={['Item', 'Shops holding it']}
+                  rows={report.deadProducts.map((entry) => [entry.label, entry.shops])}
+                />
+              )}
+            </Section>
+          </div>
 
           <Section
             title="Occasions"
@@ -145,7 +280,9 @@ export default async function ReportsPage({
               </div>
             )}
           </Section>
+          </Band>
 
+          <Band title="Who bought it">
           <Section
             title="Where customers come from"
             note={
@@ -191,68 +328,9 @@ export default async function ReportsPage({
               <Peak rows={report.byWeekday} noun="day" />
             </Section>
           </div>
+          </Band>
 
-          <Section
-            title={
-              report.period.granularity === 'year'
-                ? 'Month by month'
-                : report.period.granularity === 'day'
-                  ? 'Hour by hour'
-                  : 'Day by day'
-            }
-            note="The shape of the period. A single tall bar is usually a festival or a market day — worth naming before next year."
-          >
-            <ColumnChart
-              rows={report.overTime}
-              labelEvery={report.period.granularity === 'month' ? 3 : 1}
-              empty="Nothing was recorded in this period."
-            />
-          </Section>
-
-          <div className="grid gap-5 lg:grid-cols-2">
-            <Section title="Where the money came from">
-              <Table
-                head={['Channel', 'Sales', 'Revenue']}
-                rows={[
-                  [
-                    // Orders arrive from the shop's own QR page, into the
-                    // owner's app. WhatsApp carries the "your order is ready"
-                    // message to the customer afterwards and has never been the
-                    // channel an order comes in on — labelling the column that
-                    // way told the operator the product works like a
-                    // competitor's.
-                    'Ordered by the customer',
-                    report.channels.orders.transactions,
-                    formatPaise(report.channels.orders.revenuePaise),
-                  ],
-                  [
-                    'Rung up at the counter',
-                    report.channels.counter.transactions,
-                    formatPaise(report.channels.counter.revenuePaise),
-                  ],
-                ]}
-              />
-            </Section>
-
-            <Section title="How it was paid and taken">
-              <Table
-                head={['Split', 'Count', 'Value']}
-                rows={[
-                  ...report.paymentModes.map((row) => [
-                    prettyLabel(row.label),
-                    row.transactions,
-                    formatPaise(row.revenuePaise),
-                  ]),
-                  ...report.orderTypes.map((row) => [
-                    prettyLabel(row.label),
-                    row.transactions,
-                    formatPaise(row.revenuePaise),
-                  ]),
-                ]}
-              />
-            </Section>
-          </div>
-
+          <Band title="How it ran">
           <Section
             title="What happened to the orders"
             note={`${report.completionRate}% completed, ${report.cancellationRate}% cancelled. A cancellation rate climbing is usually stock, not demand.`}
@@ -272,7 +350,7 @@ export default async function ReportsPage({
           {!report.singleShop && (
             <Section
               title="Shop by shop"
-              note="Sorted by revenuePaise. A shop with items listed and nothing sold is the one to call."
+              note="Sorted by revenue. A shop with items listed and nothing sold is the one to call."
             >
               <Table
                 head={['Shop', 'Type', 'Revenue', 'Sales', 'Avg basket', 'Items', 'Sold nothing']}
@@ -288,77 +366,7 @@ export default async function ReportsPage({
               />
             </Section>
           )}
-
-          {/* The credit book, beside the takings rather than on a page of its
-              own: for a kirana the udhaar IS working capital, and a month that
-              looks strong on revenue while ₹40,000 sits unpaid is not a strong
-              month. Balances are current, not as at the period's end — the
-              caveats say so, because the two read identically otherwise. */}
-          <Section
-            title="Khata — owed today"
-            note={`${formatPaise(report.khata.outstandingPaise)} outstanding now · ${formatPaise(
-              report.khata.periodDebitPaise,
-            )} went out on credit this period · ${formatPaise(
-              report.khata.periodCreditPaise,
-            )} came back.`}
-          >
-            {report.khata.customers.length === 0 ? (
-              <Nothing>Nothing is on the khata.</Nothing>
-            ) : (
-              <Table
-                head={[
-                  ...(report.singleShop ? [] : ['Shop']),
-                  'Customer',
-                  'Area',
-                  'Owed now',
-                  'On credit',
-                  'Repaid',
-                ]}
-                rows={report.khata.customers.slice(0, 25).map((row) => [
-                  ...(report.singleShop ? [] : [row.shop]),
-                  row.name || row.phone,
-                  row.area,
-                  formatPaise(row.balancePaise),
-                  formatPaise(row.periodDebitPaise),
-                  formatPaise(row.periodCreditPaise),
-                ])}
-              />
-            )}
-          </Section>
-
-          <div className="grid gap-5 lg:grid-cols-2">
-            <Section
-              title="Proven sellers, currently out of stock"
-              note="Money being lost right now, not last month."
-            >
-              {report.outOfStockSellers.length === 0 ? (
-                <Nothing>Every strong seller is in stock.</Nothing>
-              ) : (
-                <Table
-                  head={['Item', 'Shop', 'Took this period']}
-                  rows={report.outOfStockSellers.map((entry) => [
-                    entry.label,
-                    entry.shop,
-                    formatPaise(entry.revenuePaise),
-                  ])}
-                />
-              )}
-            </Section>
-
-            <Section
-              title="Listed, but sold nothing"
-              note="Dead shelf space in the catalogue — and a plan the shop may be paying for by item count."
-            >
-              {report.deadProducts.length === 0 ? (
-                <Nothing>Everything listed sold at least once.</Nothing>
-              ) : (
-                <Table
-                  head={['Item', 'Shops holding it']}
-                  rows={report.deadProducts.map((entry) => [entry.label, entry.shops])}
-                />
-              )}
-            </Section>
-          </div>
+          </Band>
 
           <section className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
             <h2 className="text-sm font-bold text-amber-900">Read this alongside the numbers</h2>
@@ -395,27 +403,68 @@ function ReportTitle({ report }: { report: Report }) {
 
 function Headline({ report }: { report: Report }) {
   const h = report.headline;
+
+  /**
+   * A GRID OF CARDS, NOT A WRAPPED LINE OF NUMBERS.
+   *
+   * These eight figures were a single flex row that wrapped wherever the window
+   * happened to end, so the same report broke differently on every screen and
+   * no two numbers lined up under each other. A fixed grid gives every figure
+   * the same box in the same place, which is what lets somebody compare this
+   * month's sheet against last month's without reading the labels twice.
+   *
+   * Revenue is deliberately bigger than the rest. Everything else on this page
+   * exists to explain it.
+   */
   return (
-    <dl className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl bg-white px-5 py-4 shadow-card">
-      <Stat label="Revenue" value={formatPaise(h.revenuePaise)} />
-      <Stat label="Sales" value={h.transactions} />
-      <Stat label="Avg basket" value={formatPaise(h.averageBasketPaise)} />
-      {report.singleShop ? (
-        <Stat label="Items listed" value={report.shops[0]?.items ?? 0} />
-      ) : (
-        <>
-          <Stat label="Shops" value={h.shops} />
-          <Stat
-            label="No trade"
-            value={h.silentShops}
-            tone={h.silentShops > 0 ? 'warn' : undefined}
-          />
-        </>
-      )}
-      <Stat label="Customers" value={h.customers} />
-      <Stat label="Repeat" value={`${h.repeatRate}%`} />
-      <Stat label="First-timers" value={h.newCustomers} />
-    </dl>
+    <section className="rounded-2xl bg-white p-5 shadow-card">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="col-span-2 sm:col-span-1">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Revenue</dt>
+          <dd className="mt-0.5 text-3xl font-bold tabular-nums leading-tight text-slate-900">
+            {formatPaise(h.revenuePaise)}
+          </dd>
+        </div>
+        <Stat label="Sales" value={h.transactions} />
+        <Stat label="Avg basket" value={formatPaise(h.averageBasketPaise)} />
+        <Stat label="Customers" value={h.customers} />
+        <Stat label="Repeat" value={`${h.repeatRate}%`} />
+        <Stat label="First-timers" value={h.newCustomers} />
+        {report.singleShop ? (
+          <Stat label="Items listed" value={report.shops[0]?.items ?? 0} />
+        ) : (
+          <>
+            <Stat label="Shops" value={h.shops} />
+            <Stat
+              label="No trade"
+              value={h.silentShops}
+              tone={h.silentShops > 0 ? 'warn' : undefined}
+            />
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * A named group of sections.
+ *
+ * The report was thirteen white cards in a column, every one the same size and
+ * weight, so a reader looking for "what did we take" had to scan titles until
+ * they hit it. Four bands — the money, what sold, who bought it, how it ran —
+ * turn that into four decisions instead of thirteen, and each band puts its
+ * most-asked question first.
+ */
+function Band({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-5">
+      <h2 className="flex items-center gap-3 pt-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+        {title}
+        <span aria-hidden className="h-px flex-1 bg-slate-200" />
+      </h2>
+      {children}
+    </section>
   );
 }
 
@@ -429,17 +478,17 @@ function Stat({
   tone?: 'warn';
 }) {
   return (
-    <div className="flex items-baseline gap-2">
+    <div>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
       <dd
         className={
           tone === 'warn'
-            ? 'text-2xl font-bold tabular-nums text-amber-600'
-            : 'text-2xl font-bold tabular-nums text-slate-900'
+            ? 'mt-0.5 text-xl font-bold tabular-nums text-amber-700'
+            : 'mt-0.5 text-xl font-bold tabular-nums text-slate-900'
         }
       >
         {value}
       </dd>
-      <dt className="text-sm text-slate-500">{label}</dt>
     </div>
   );
 }
