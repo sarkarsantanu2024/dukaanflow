@@ -25,15 +25,14 @@ export async function PATCH(request: Request, { params }: Context) {
   const parsed = shopImagesSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { imageData, ownerImageData, upiQrData } = parsed.data;
-  if (imageData === undefined && ownerImageData === undefined && upiQrData === undefined) {
+  const { ownerImageData, upiQrData } = parsed.data;
+  if (ownerImageData === undefined && upiQrData === undefined) {
     return fail('Nothing to update', 400);
   }
 
   await prisma.shop.update({
     where: { id: shop.id },
     data: {
-      ...(imageData === undefined ? {} : { imageData }),
       ...(ownerImageData === undefined ? {} : { ownerImageData }),
       ...(upiQrData === undefined ? {} : { upiQrData }),
     },

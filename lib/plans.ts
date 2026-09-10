@@ -77,6 +77,44 @@ export function priceForMonths(plan: Plan, months: number): number {
   return years * monthly * MONTHS_PER_YEAR_PAID + rest * monthly;
 }
 
+/**
+ * WHAT EVERY PLAN INCLUDES, WHICH IS EVERYTHING.
+ *
+ * The plans used to differ by feature as well as by size — order history on
+ * Starter, photos on Pro, priority support on Business. That was the wrong
+ * shape for this product. A shopkeeper with thirty items needs the khata and
+ * the voice listing exactly as much as one with a thousand does; withholding
+ * them does not sell an upgrade, it just makes the cheap plan feel like a
+ * crippled demo and gives a shop on Basic a worse reason to stay.
+ *
+ * So the ONLY thing a plan buys is catalogue size, which is the one dimension
+ * that genuinely tracks how big the shop is — and the one a shopkeeper can
+ * check for themselves. Everything else is ticked on every row.
+ */
+export const EVERY_PLAN_INCLUDES: string[] = [
+  'QR shop page and printable poster',
+  'Voice listing in English, Hindi and Bengali',
+  // NOT "orders on WhatsApp". Orders do not arrive on WhatsApp and never
+  // have on this product: a customer scans the QR, orders on the shop's own
+  // page, and the order lands in the owner's app with a notification. The
+  // old line described a competitor's workflow and set up every new shop to
+  // sit watching the wrong screen — and to think the app had lost an order
+  // when nothing appeared in WhatsApp.
+  'Unlimited QR orders, straight into your app',
+  'A notification on your phone for every new order',
+  'Udhaar khata with WhatsApp reminders',
+  'Counter sales and the day’s cash drawer',
+  'Order history in the app',
+  'Bulk price and stock updates',
+  'Storefront and owner photos',
+  'Support on WhatsApp',
+];
+
+/** "Up to 300 items", the one line that differs between plans. */
+function catalogueLine(itemLimit: number): string {
+  return `Up to ${itemLimit.toLocaleString('en-IN')} items`;
+}
+
 export const PLAN_SPECS: Record<Plan, PlanSpec> = {
   // The enum value stays FREE because it is written into every existing row and
   // renaming it would need a migration for no gain — but nothing is free any
@@ -86,47 +124,29 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
     id: 'FREE',
     name: 'Basic',
     price: 99,
-    itemLimit: 50,
+    // Twenty, not fifty. A tea stall or a paan counter genuinely sells twenty
+    // things; a kirana does not, and at fifty a real kirana could sit on the
+    // cheapest plan indefinitely with a catalogue that fits. The limit is the
+    // only thing a plan sells now, so it has to mean something.
+    itemLimit: 20,
     tagline: 'Enough for a tea stall or a small counter.',
-    features: [
-      'Up to 50 items',
-      'QR shop page and printable poster',
-      'Voice listing in English, Hindi and Bengali',
-      // NOT "orders on WhatsApp". Orders do not arrive on WhatsApp and never
-      // have on this product: a customer scans the QR, orders on the shop's own
-      // page, and the order lands in the owner's app with a notification. The
-      // old line described a competitor's workflow and set up every new shop to
-      // sit watching the wrong screen — and to think the app had lost an order
-      // when nothing appeared in WhatsApp.
-      'Unlimited QR orders, straight into your app',
-      'A notification on your phone for every new order',
-    ],
+    features: [catalogueLine(20), ...EVERY_PLAN_INCLUDES],
   },
   STARTER: {
     id: 'STARTER',
     name: 'Starter',
     price: 149,
-    itemLimit: 150,
+    itemLimit: 100,
     tagline: 'The everyday kirana plan.',
-    features: [
-      'Up to 150 items',
-      'Everything in Basic',
-      'Order history in the app',
-      'Bulk price and stock updates',
-    ],
+    features: [catalogueLine(100), ...EVERY_PLAN_INCLUDES],
   },
   PRO: {
     id: 'PRO',
     name: 'Pro',
     price: 249,
-    itemLimit: 500,
+    itemLimit: 300,
     tagline: 'A full kirana counter.',
-    features: [
-      'Up to 500 items',
-      'Everything in Starter',
-      'Storefront and owner photos',
-      'Priority support on WhatsApp',
-    ],
+    features: [catalogueLine(300), ...EVERY_PLAN_INCLUDES],
   },
   EX: {
     id: 'EX',
@@ -137,15 +157,10 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
     price: 449,
     // A ceiling rather than true "unlimited": a catalogue past this is a
     // different kind of business, and should be a conversation with the
-    // operator, not a silent bill.
-    itemLimit: 2000,
+    // operator — which is what the per-shop custom plan below is for.
+    itemLimit: 1500,
     tagline: 'Full grocery stores and restaurants.',
-    features: [
-      'Up to 2,000 items',
-      'Everything in Pro',
-      'Bulk listing service available',
-      'Priority support on WhatsApp',
-    ],
+    features: [catalogueLine(1500), ...EVERY_PLAN_INCLUDES],
   },
 };
 
@@ -209,7 +224,43 @@ export type ShopBilling = {
   subscriptionStatus: SubStatus;
   trialEndsAt: Date | null;
   currentPeriodEnd: Date | null;
+  /**
+   * A price agreed with this one shop, overriding the ladder. See the columns
+   * on `Shop`. Optional so every existing caller keeps compiling and simply
+   * gets the standard plan, which is what it had before.
+   */
+  customPricePaise?: number | null;
+  customItemLimit?: number | null;
+  customPlanName?: string | null;
 };
+
+/**
+ * The shop's own plan, when one has been negotiated.
+ *
+ * Built as a `PlanSpec` rather than as a fifth thing for the rest of the app to
+ * handle: every screen already knows how to render a plan's name, price, limit
+ * and feature list, and a custom deal is not a different KIND of plan — it is
+ * the same plan shape with different numbers in it. Returning null when there
+ * is no custom price is what keeps this invisible to every shop without one.
+ *
+ * It carries the same feature list as everything else, because every plan
+ * includes everything — see `EVERY_PLAN_INCLUDES`.
+ */
+export function customSpec(shop: ShopBilling, fallback: PlanSpec): PlanSpec | null {
+  if (shop.customPricePaise === null || shop.customPricePaise === undefined) return null;
+
+  const itemLimit = shop.customItemLimit ?? fallback.itemLimit;
+  return {
+    id: fallback.id,
+    name: shop.customPlanName?.trim() || fallback.name,
+    // Whole rupees, to match `PlanSpec.price`. The paise figure is what is
+    // charged and what the console edits; this is only what gets displayed.
+    price: Math.round(shop.customPricePaise / 100),
+    itemLimit,
+    tagline: fallback.tagline,
+    features: [catalogueLine(itemLimit), ...EVERY_PLAN_INCLUDES],
+  };
+}
 
 export type Entitlement = {
   plan: PlanSpec;
@@ -275,7 +326,21 @@ export function entitlement(shop: ShopBilling, now = new Date()): Entitlement {
     };
   }
 
-  const spec = PLAN_SPECS[shop.plan] ?? PLAN_SPECS.FREE;
+  /**
+   * THE ONE PLACE A NEGOTIATED PLAN REPLACES A STANDARD ONE.
+   *
+   * Everything downstream — the roadblock, the item allowance, the console, the
+   * owner's plan banner, the upgrade dialog — reads `entitlement().plan` and
+   * `.itemLimit`, so swapping the spec here is the whole feature. Not one of
+   * those screens has to learn that custom plans exist, and none of them can
+   * disagree with another about what this shop is paying.
+   *
+   * Deliberately AFTER the trial branch: a shop still inside its fourteen days
+   * gets the trial plan as before. Taking a trial away because a price was
+   * agreed for afterwards would be a strange reward for signing early.
+   */
+  const standard = PLAN_SPECS[shop.plan] ?? PLAN_SPECS.FREE;
+  const spec = customSpec(shop, standard) ?? standard;
 
   // The free plan has no period to expire — it simply is what it is.
   if (spec.price === 0 && shop.subscriptionStatus !== 'PAST_DUE') {

@@ -228,6 +228,23 @@ export type ShopCreateInput = z.input<typeof shopCreateSchema>;
 
 export const shopUpdateSchema = shopCreateSchema.partial().extend({
   slug: slugSchema.optional(),
+
+  /**
+   * A price agreed with this one shop, instead of one of the four plans.
+   *
+   * NULLABLE ON PURPOSE, and null is not the same as absent: leaving the field
+   * out changes nothing, while sending null is how the console takes a shop OFF
+   * a negotiated price and puts it back on the ladder. A schema that could only
+   * set a custom price and never clear one would make every special deal
+   * permanent.
+   *
+   * Paise, because a negotiated figure is exactly the kind that turns out to be
+   * ₹174.50. Capped at ₹1,00,000/month — far past any real deal, and low enough
+   * that a slipped decimal point is refused rather than billed.
+   */
+  customPricePaise: z.number().int().min(0).max(10_000_000).nullable().optional(),
+  customItemLimit: z.number().int().min(1).max(100_000).nullable().optional(),
+  customPlanName: z.string().trim().max(40).optional(),
 });
 
 /** Optional per-language name. Empty means "fall back to `name`". */
@@ -654,7 +671,10 @@ const imageDataSchema = z
   );
 
 export const shopImagesSchema = z.object({
-  imageData: imageDataSchema.optional(),
+  // The storefront photo was removed in 2026-09. It cost ~100KB of Postgres
+  // per shop to say something the shop's own name already said, and the owner's
+  // face does the job of "this is the right shop" far better than a picture of
+  // a shutter does. `ownerImageData` stays; nothing accepts a storefront one.
   ownerImageData: imageDataSchema.optional(),
   upiQrData: imageDataSchema.optional(),
 });

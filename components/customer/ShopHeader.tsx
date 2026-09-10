@@ -44,7 +44,6 @@ export type ShopSummary = {
   address: string;
   upiId: string;
   ownerName: string;
-  imageData: string;
   ownerImageData: string;
   /** Off means collection only — the checkout never offers delivery. */
   deliveryEnabled: boolean;
@@ -119,10 +118,10 @@ export function ShopHeader({
                 as tile and badge keeps the pair inside 64px — a row each, as
                 it was before, cost a third of the screen. */}
             <span className="relative shrink-0">
-              {shop.imageData || shop.ownerImageData ? (
+              {shop.ownerImageData ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={shop.imageData || shop.ownerImageData}
+                  src={shop.ownerImageData}
                   alt=""
                   className="h-16 w-16 rounded-xl object-cover ring-1 ring-slate-200"
                 />
@@ -135,17 +134,6 @@ export function ShopHeader({
                 </span>
               )}
 
-              {/* Only when it is a second picture. With no shopfront photo the
-                  owner's face is already the tile, and a badge of the same
-                  photo over itself reads as a rendering fault. */}
-              {shop.imageData && shop.ownerImageData && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={shop.ownerImageData}
-                  alt=""
-                  className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full object-cover ring-2 ring-white"
-                />
-              )}
             </span>
 
             <div className="min-w-0 flex-1">

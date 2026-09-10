@@ -22,6 +22,12 @@ const BILLING_SELECT = {
   subscriptionStatus: true,
   trialEndsAt: true,
   currentPeriodEnd: true,
+  // A price agreed with this one shop, if there is one. Selected here rather
+  // than at each call site so no screen can accidentally read the ladder price
+  // for a shop that is not on the ladder.
+  customPricePaise: true,
+  customItemLimit: true,
+  customPlanName: true,
 } as const;
 
 /** The billing columns this module reads, for a caller that has them already. */
@@ -30,6 +36,9 @@ export type BillingFields = {
   subscriptionStatus: string;
   trialEndsAt: Date | null;
   currentPeriodEnd: Date | null;
+  customPricePaise?: number | null;
+  customItemLimit?: number | null;
+  customPlanName?: string | null;
 };
 
 /**
@@ -45,6 +54,9 @@ export function entitlementFrom(shop: BillingFields, itemCount: number): ShopEnt
     subscriptionStatus: shop.subscriptionStatus as SubStatus,
     trialEndsAt: shop.trialEndsAt,
     currentPeriodEnd: shop.currentPeriodEnd,
+    customPricePaise: shop.customPricePaise,
+    customItemLimit: shop.customItemLimit,
+    customPlanName: shop.customPlanName,
   });
 
   const remaining = Math.max(0, base.itemLimit - itemCount);

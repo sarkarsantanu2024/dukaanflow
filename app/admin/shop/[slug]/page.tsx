@@ -38,9 +38,11 @@ export default async function ShopDetailPage({ params }: PageProps) {
       id: true,
       ownerPinHash: true,
       ownerPinSetAt: true,
+      customPricePaise: true,
+      customItemLimit: true,
+      customPlanName: true,
       ownerName: true,
       locale: true,
-      imageData: true,
       ownerImageData: true,
       upiQrData: true,
       plan: true,
@@ -124,7 +126,6 @@ export default async function ShopDetailPage({ params }: PageProps) {
         <div className="min-w-0 space-y-6">
           <ShopForm
             initialImages={{
-              imageData: shop.imageData,
               ownerImageData: shop.ownerImageData,
               upiQrData: shop.upiQrData,
             }}
@@ -179,6 +180,9 @@ export default async function ShopDetailPage({ params }: PageProps) {
             itemLimit: billing?.itemLimit ?? 25,
             trialEndsAt: shop.trialEndsAt?.toISOString() ?? null,
             currentPeriodEnd: shop.currentPeriodEnd?.toISOString() ?? null,
+            customPricePaise: shop.customPricePaise,
+            customItemLimit: shop.customItemLimit,
+            customPlanName: shop.customPlanName,
             payments: shop.payments.map((payment) => ({
               id: payment.id,
               amountPaise: payment.amountPaise,

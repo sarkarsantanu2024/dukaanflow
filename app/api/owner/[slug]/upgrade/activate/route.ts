@@ -87,7 +87,26 @@ export async function POST(request: Request, { params }: Context) {
    */
   const claimed = await prisma.paymentRequest.updateMany({
     where: { id: found.id, status: 'CODE_ISSUED' },
-    data: { status: 'ACTIVATED', activatedAt: new Date(), codeHash: null },
+    data: {
+      status: 'ACTIVATED',
+      activatedAt: new Date(),
+      codeHash: null,
+      /**
+       * THE SCREENSHOT HAS DONE ITS JOB, SO IT GOES.
+       *
+       * It exists for one moment: the operator holding it against their bank
+       * feed before issuing a code. Past activation nobody looks at it again,
+       * and it is a base64 image sitting in a Postgres column — the single
+       * fastest-growing thing in this database, on a free tier measured in
+       * hundreds of megabytes, accumulating with every upgrade forever.
+       *
+       * The audit trail is untouched: who paid, from which UPI id, on which
+       * phone, for which plan, how many months, and when it was activated are
+       * all separate columns and all still here. What is dropped is the
+       * picture, which proves none of them.
+       */
+      screenshotData: '',
+    },
   });
   if (claimed.count === 0) return fail('That code has already been used.', 409);
 

@@ -62,8 +62,16 @@ export function ColumnChart({
       {rows.map((row, index) => {
         const share = row.transactions / peak;
         const isPeak = row.transactions === peak;
+        // A CEILING ON HOW WIDE ONE BAR MAY GET. `flex-1` alone divides the
+        // full width between however many columns there are — so a period with
+        // a single day of trade drew one bar 1,200px wide and 160px tall, which
+        // reads as a solid green rectangle rather than as a chart. A bar chart
+        // with two bars in it should look like a chart with two bars in it.
         return (
-          <div key={row.label} className="group relative flex min-w-0 flex-1 flex-col justify-end">
+          <div
+            key={row.label}
+            className="group relative flex min-w-0 max-w-[3.5rem] flex-1 flex-col justify-end"
+          >
             <div
               title={tooltip(row)}
               style={{ height: `${Math.max(share * 100, row.transactions > 0 ? 3 : 0)}%` }}
