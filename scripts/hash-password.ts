@@ -14,9 +14,27 @@ if (!password) {
   process.exit(1);
 }
 
-if (password.length < 10) {
-  console.error('Use at least 10 characters — this is the only credential for the whole platform.');
+/**
+ * The same rule the Sign-in screen applies — at least one letter and one
+ * number, no length floor (see `adminAccountSchema`).
+ *
+ * Kept in step deliberately. This script and that screen set the SAME
+ * credential by two different routes, and a script that refused a password the
+ * form had just accepted would read as a bug in the password rather than a
+ * disagreement between two files.
+ */
+if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+  console.error('Use at least one letter and one number.');
   process.exit(1);
+}
+
+// Not a refusal — this is the only credential for the whole console, and a
+// short one is worth a word even when it is allowed.
+if (password.length < 12) {
+  console.warn(
+    `\n  Note: ${password.length} characters. Login attempts are rate-limited per\n` +
+      '  serverless instance only, so length is the real defence here.\n',
+  );
 }
 
 // Cost 12: ~250ms per verification, which is fine for a once-a-day login and

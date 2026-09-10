@@ -110,7 +110,7 @@ export function AccountForm() {
 
       <Input
         label="New password"
-        hint="12 characters or more"
+        hint="Letters and numbers"
         required
         type="password"
         autoComplete="new-password"
