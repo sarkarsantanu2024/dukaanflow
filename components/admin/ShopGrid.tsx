@@ -49,6 +49,7 @@ export type ShopRow = {
   /** Set when this shop wants the operator's attention. */
   attention: string | null;
   itemCount: number;
+  ownerImageData: string;
   itemLimit: number;
   orderCount: number;
   /** Whether the owner can sign in at all. The PIN itself is a hash — see ShopPinBadge. */
@@ -178,14 +179,26 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
               )}
             >
               <div className="flex items-start gap-3 p-4 pb-3">
-                {/* One mark for every shop, rather than a photograph for the
-                    few that had one. The storefront picture is gone. */}
-                <span
-                  aria-hidden
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100"
-                >
-                  <BoxIcon className="h-6 w-6" />
-                </span>
+{/* THE OWNER'S FACE, not the shopfront. The storefront photo is
+                    gone, and an operator scanning this list recognises a shop by
+                    the person they deal with far quicker than by a shutter — or
+                    by reading the name. The box mark stands in where no photo
+                    has been added yet. */}
+                {shop.ownerImageData ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={shop.ownerImageData}
+                    alt=""
+                    className="h-14 w-14 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+                  />
+                ) : (
+                  <span
+                    aria-hidden
+                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100"
+                  >
+                    <BoxIcon className="h-6 w-6" />
+                  </span>
+                )}
 
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 truncate font-semibold leading-tight text-slate-900">

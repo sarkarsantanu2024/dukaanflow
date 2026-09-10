@@ -2,13 +2,18 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteFooter } from '@/components/ui/SiteFooter';
 import {
+  EVERY_PLAN_INCLUDES,
   PLAN_ORDER,
   PLAN_SPECS,
   TRIAL_DAYS,
   formatPlanPrice,
+  LISTING_PAISE_PER_ITEM,
+  planItems,
+  planListingPaise,
   yearPrice,
   yearSaving,
 } from '@/lib/plans';
+import { formatPaise } from '@/lib/money';
 import { ShopArt, VoiceArt } from '@/components/ui/ShopArt';
 import { CheckIcon } from '@/components/ui/Icon';
 import { LangTabs } from '@/components/marketing/LangTabs';
@@ -40,18 +45,11 @@ const HEADLINE_STATS = [
 ];
 
 /** Rows are what a shopkeeper actually asks about, in the order they ask. */
-const COMPARISON: { feature: string; free: boolean; starter: boolean; pro: boolean }[] = [
-  { feature: 'QR shop page and printable poster', free: true, starter: true, pro: true },
-  { feature: 'Unlimited QR orders, in your app', free: true, starter: true, pro: true },
-  { feature: 'New-order notification on your phone', free: true, starter: true, pro: true },
-  { feature: 'WhatsApp the customer when it is ready', free: true, starter: true, pro: true },
-  { feature: 'Add items by speaking', free: true, starter: true, pro: true },
-  { feature: 'Counter till with UPI QR', free: true, starter: true, pro: true },
-  { feature: 'Order history in the app', free: false, starter: true, pro: true },
-  { feature: 'Bulk price and stock updates', free: false, starter: true, pro: true },
-  { feature: 'Storefront and owner photos', free: false, starter: false, pro: true },
-  { feature: 'Priority support on WhatsApp', free: false, starter: false, pro: true },
-];
+/** "Up to 300 items", or "Unlimited" where there is no ceiling. */
+function catalogueSize(id: (typeof PLAN_ORDER)[number]): string {
+  const spec = PLAN_SPECS[id];
+  return spec.unlimited ? 'Unlimited items' : `Up to ${planItems(id)} items`;
+}
 
 /** The numbered list, in one language. Rendered twice, behind the tabs. */
 function StepList({ lang }: { lang: 'en' | 'bn' }) {
@@ -162,7 +160,11 @@ export default function PricingPage() {
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {PLAN_ORDER.map((id) => {
             const spec = PLAN_SPECS[id];
-            const featured = id === 'STARTER';
+            // Pro, not Starter. Three hundred items is the shape of a full
+            // kirana counter — the shop we actually want — and the badge should
+            // point at the plan most of them will end up on rather than at the
+            // cheapest one that could hold them.
+            const featured = id === 'PRO';
             return (
               <div
                 key={id}
@@ -206,11 +208,32 @@ export default function PricingPage() {
                 <p className="mt-1 text-sm text-slate-500">{spec.tagline}</p>
 
                 <p className="mt-5 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
-                  Up to {spec.itemLimit.toLocaleString('en-IN')} items
+                  {catalogueSize(spec.id)}
                 </p>
 
+                {/* WHAT IT COSTS TO HAVE US FILL IT.
+                    The allowance is what the shop MAY list; this is what it
+                    costs not to have to. Cataloguing is the step at which shops
+                    give up, so the price of skipping it belongs on the plan
+                    rather than in a conversation nobody starts. */}
+                <p className="mt-2 px-3 text-xs leading-relaxed text-slate-500">
+                  Don’t want to type them in?{' '}
+                  <strong className="font-semibold text-slate-700">
+                    {formatPaise(LISTING_PAISE_PER_ITEM)} an item
+                  </strong>{' '}
+                  and we list them for you
+                  {planListingPaise(spec.id) === null ? (
+                    '.'
+                  ) : (
+                    <> — {formatPaise(planListingPaise(spec.id)!)} for a full {planItems(spec.id)}.</>
+                  )}
+                </p>
+
+                {/* EVERY_PLAN_INCLUDES, not `spec.features`. The catalogue
+                    size is already the grey box above; `features` leads with it
+                    too, so the card printed "Up to 20 items" twice. */}
                 <ul className="mt-5 space-y-2.5 text-sm text-slate-700">
-                  {spec.features.map((feature) => (
+                  {EVERY_PLAN_INCLUDES.map((feature) => (
                     <li key={feature} className="flex gap-2.5">
                       <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
                       <span>{feature}</span>
@@ -223,7 +246,9 @@ export default function PricingPage() {
         </div>
 
         {/* The table answers the question the cards raise: what exactly is
-            different? Ticks and dashes read faster than three feature lists. */}
+            different? Only the catalogue size — every row below it is ticked on
+            every plan, which is faster to see in a table than to argue in
+            prose. */}
         <div className="mt-12 overflow-x-auto">
           <table className="w-full min-w-[560px] border-collapse text-sm">
             <thead>
@@ -242,26 +267,36 @@ export default function PricingPage() {
               </tr>
             </thead>
             <tbody>
-              {COMPARISON.map((row) => (
-                <tr key={row.feature}>
-                  <td className="border-b border-slate-100 py-3 pr-4 text-slate-700">
-                    {row.feature}
+              {/* A CATALOGUE ROW FIRST, BECAUSE IT IS THE ONLY ROW THAT DIFFERS.
+                  Everything under it is ticked on every plan — that is the
+                  point of the section's title — so the table's real job is to
+                  show that the plans are the same product at four sizes, and
+                  the sizes belong at the top where the question is asked. */}
+              <tr>
+                <td className="border-b border-slate-100 py-3 pr-4 font-semibold text-slate-900">
+                  Items in your catalogue
+                </td>
+                {PLAN_ORDER.map((id) => (
+                  <td
+                    key={id}
+                    className="border-b border-slate-100 py-3 text-center font-semibold tabular-nums text-slate-900"
+                  >
+                    {PLAN_SPECS[id].unlimited
+                      ? 'Unlimited'
+                      : planItems(id)}
                   </td>
-                  {([row.free, row.starter, row.pro] as const).map((included, index) => (
-                    <td
-                      key={PLAN_ORDER[index]}
-                      className="border-b border-slate-100 py-3 text-center"
-                    >
-                      {included ? (
-                        <CheckIcon
-                          className="mx-auto h-4 w-4 text-brand-600"
-                          label={`Included in ${PLAN_SPECS[PLAN_ORDER[index]!].name}`}
-                        />
-                      ) : (
-                        <span className="text-slate-300" aria-label="Not included">
-                          —
-                        </span>
-                      )}
+                ))}
+              </tr>
+
+              {EVERY_PLAN_INCLUDES.map((feature) => (
+                <tr key={feature}>
+                  <td className="border-b border-slate-100 py-3 pr-4 text-slate-700">{feature}</td>
+                  {PLAN_ORDER.map((id) => (
+                    <td key={id} className="border-b border-slate-100 py-3 text-center">
+                      <CheckIcon
+                        className="mx-auto h-4 w-4 text-brand-600"
+                        label={`Included in ${PLAN_SPECS[id].name}`}
+                      />
                     </td>
                   ))}
                 </tr>

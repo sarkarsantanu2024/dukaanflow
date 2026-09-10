@@ -49,6 +49,9 @@ type Dictionary = {
   delivery: string;
   pickup: string;
   placeOrder: string;
+  /** The returning shopper's saved details, shown instead of the empty form. */
+  orderingAs: string;
+  changeDetails: string;
   sending: string;
   back: string;
   emptyShop: string;
@@ -225,6 +228,8 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     delivery: 'Delivery',
     pickup: 'Pickup',
     placeOrder: 'Place order',
+    orderingAs: 'Ordering as',
+    changeDetails: 'Change',
     sending: 'Sending…',
     back: 'Back',
     emptyShop: 'No items yet',
@@ -347,6 +352,8 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     delivery: 'ডেলিভারি',
     pickup: 'দোকান থেকে নেব',
     placeOrder: 'অর্ডার দিন',
+    orderingAs: 'অর্ডার করছেন',
+    changeDetails: 'বদলান',
     sending: 'পাঠানো হচ্ছে…',
     back: 'পিছনে',
     emptyShop: 'এখনও কোনো জিনিস নেই',
@@ -469,6 +476,8 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     delivery: 'डिलीवरी',
     pickup: 'दुकान से लेंगे',
     placeOrder: 'ऑर्डर करें',
+    orderingAs: 'ऑर्डर कर रहे हैं',
+    changeDetails: 'बदलें',
     sending: 'भेजा जा रहा है…',
     back: 'वापस',
     emptyShop: 'अभी कोई सामान नहीं',

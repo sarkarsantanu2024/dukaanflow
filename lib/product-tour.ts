@@ -43,7 +43,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'The items go in',
     point: 'This is where shops give up, so there are four ways through it.',
     detail:
-      'One tap from the starter catalogue of things a shop of that kind always carries, already named in Bengali, Hindi and English. Or speak them. Or photograph a written list. Or we catalogue it for them for 50 paise an item. Prices are the only thing the owner must set — nothing reaches a customer unpriced.',
+      'One tap from the starter catalogue of things a shop of that kind always carries, already named in Bengali, Hindi and English. Or speak them. Or photograph a written list. Or we catalogue it for them at ₹1 an item. Prices are the only thing the owner must set — nothing reaches a customer unpriced.',
     screenshot: '02-items.png',
   },
   {
