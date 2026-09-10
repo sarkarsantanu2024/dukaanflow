@@ -18,6 +18,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import {
   BoxIcon,
   ClockIcon,
+  CopyIcon,
   ExternalIcon,
   PinIcon,
   PlusIcon,
@@ -27,6 +28,8 @@ import { SHOP_TYPE_LABELS, SHOP_TYPES } from '@/lib/validators';
 import { ShopRowActions } from './ShopRowActions';
 import { ShopReportMenu } from './ShopReportMenu';
 import { ShopPinBadge } from './ShopPinBadge';
+import { useToast } from '@/components/ui/Toast';
+import { shopUrl } from '@/lib/qr';
 
 export type ShopRow = {
   id: string;
@@ -39,7 +42,6 @@ export type ShopRow = {
   /** Already formatted for reading — "9 am – 9 pm" — or blank when unset. */
   hours: string;
   active: boolean;
-  imageData: string;
   isDemo: boolean;
   planName: string;
   /** Short state word: Trial, Paid, Due, Cancelled. */
@@ -74,6 +76,7 @@ type Filter = 'all' | 'attention' | 'paused';
 const CARD_GRID = 'grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(380px,1fr))]';
 
 export function ShopGrid({ shops }: { shops: ShopRow[] }) {
+  const { push: toast } = useToast();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
 
@@ -175,21 +178,14 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
               )}
             >
               <div className="flex items-start gap-3 p-4 pb-3">
-                {shop.imageData ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={shop.imageData}
-                    alt=""
-                    className="h-14 w-14 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
-                  />
-                ) : (
-                  <span
-                    aria-hidden
-                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100"
-                  >
-                    <BoxIcon className="h-6 w-6" />
-                  </span>
-                )}
+                {/* One mark for every shop, rather than a photograph for the
+                    few that had one. The storefront picture is gone. */}
+                <span
+                  aria-hidden
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100"
+                >
+                  <BoxIcon className="h-6 w-6" />
+                </span>
 
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 truncate font-semibold leading-tight text-slate-900">
@@ -257,7 +253,36 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                   {shop.itemLimit} items
                 </span>
                 <span className="tabular-nums">{shop.orderCount} orders</span>
-                <span className="truncate font-mono text-slate-400">/{shop.slug}</span>
+                {/* THE SLUG IS THE LINK, SO IT IS THE BUTTON.
+                    "Send me the shop link" is what an operator is asked for all
+                    day — on WhatsApp, to a printer, to the owner — and the only
+                    place it existed was inside the QR panel two clicks away, or
+                    as this greyed-out path that looked like a caption and could
+                    not be copied without selecting it by hand.
+
+                    The full URL is copied, not the slug: nobody can do anything
+                    with "/sree-gure-vander". */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const url = shopUrl(shop.slug);
+                    try {
+                      await navigator.clipboard.writeText(url);
+                      toast('Shop link copied', 'success');
+                    } catch {
+                      // A clipboard write can be refused — an insecure origin,
+                      // or a browser that wants a permission first. Showing the
+                      // link is still better than a silent failure: it can be
+                      // selected by hand from the message.
+                      toast(url, 'info');
+                    }
+                  }}
+                  title={`Copy ${shopUrl(shop.slug)}`}
+                  className="inline-flex min-w-0 items-center gap-1 rounded-md px-1 py-0.5 font-mono text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <CopyIcon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">/{shop.slug}</span>
+                </button>
               </div>
 
               {/* Owner access, on the card. "What is their PIN?" is the most

@@ -42,7 +42,6 @@ async function loadShop(slug: string) {
       trialEndsAt: true,
       currentPeriodEnd: true,
       ownerName: true,
-      imageData: true,
       ownerImageData: true,
       items: {
         // An unpriced row is not a product yet, whatever its stock says.
