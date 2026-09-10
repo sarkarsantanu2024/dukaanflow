@@ -19,6 +19,7 @@
     "demo": "tsx scripts/seed-demo-shop.ts",
     "tour:shots": "tsx scripts/tour-screenshots.ts",
     "khata:check": "tsx scripts/khata-voice-check.ts",
+    "social:cards": "tsx scripts/social-cards.ts",
     "vercel:env": "tsx scripts/vercel-env.ts",
     "postinstall": "prisma generate",
     "db:target": "tsx scripts/db-target.ts"
