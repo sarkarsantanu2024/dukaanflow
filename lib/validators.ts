@@ -407,10 +407,23 @@ export const loginSchema = z.object({
  * password is the cheapest way to make sure the person at the keyboard is the
  * person who owns the account.
  *
- * Twelve characters, because this one password is the whole console — every
- * shop, every order, every ledger. An eight-character minimum is a reasonable
- * default for a product with a thousand accounts and the wrong one for a
- * product with exactly one.
+ * THE LENGTH FLOOR WAS REMOVED ON REQUEST (2026-09-10), and replaced with a
+ * composition rule: at least one letter and at least one number.
+ *
+ * Be clear-eyed about what that costs. This one password is the whole console —
+ * every shop, every customer's phone number, every ledger, and the power to
+ * issue subscription codes — and the only thing between it and a guesser is
+ * `rateLimit` on the login route, which lives in ONE serverless instance's
+ * memory. An attacker spreading attempts across instances walks past it, so the
+ * password's own length is doing more of the work here than the limiter is.
+ *
+ * A composition rule is also weaker than it looks: "abc123" satisfies it, and
+ * is among the first things any dictionary tries. It rules out the accidental
+ * all-letters password, nothing more.
+ *
+ * If this is ever revisited, the fix is not a longer regex — it is to move the
+ * attempt counter into Postgres, the way `PaymentRequest.attempts` already does
+ * for the four-digit activation codes, and only then relax the password rule.
  */
 export const adminAccountSchema = z
   .object({
@@ -425,8 +438,13 @@ export const adminAccountSchema = z
     currentPassword: z.string().min(1, 'Enter your current password'),
     newPassword: z
       .string()
-      .min(12, 'New password must be at least 12 characters')
-      .max(200),
+      .min(1, 'Enter a new password')
+      .max(200)
+      // Two separate checks rather than one combined regex, so the message can
+      // say which half is missing instead of restating the rule at somebody who
+      // has already read it once.
+      .regex(/[A-Za-z]/, 'Use at least one letter')
+      .regex(/[0-9]/, 'Use at least one number'),
     confirmPassword: z.string(),
   })
   .refine((value) => value.newPassword === value.confirmPassword, {
