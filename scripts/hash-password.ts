@@ -15,14 +15,19 @@ if (!password) {
 }
 
 /**
- * The same rule the Sign-in screen applies — at least one letter and one
- * number, no length floor (see `adminAccountSchema`).
+ * The same rule the Sign-in screen applies — four characters or more, with at
+ * least one letter and one number (see `adminAccountSchema`).
  *
  * Kept in step deliberately. This script and that screen set the SAME
  * credential by two different routes, and a script that refused a password the
  * form had just accepted would read as a bug in the password rather than a
  * disagreement between two files.
  */
+if (password.length < 4) {
+  console.error('Use at least 4 characters.');
+  process.exit(1);
+}
+
 if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
   console.error('Use at least one letter and one number.');
   process.exit(1);
