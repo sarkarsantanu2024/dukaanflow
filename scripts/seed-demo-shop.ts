@@ -84,8 +84,17 @@ async function main() {
         ...rest,
         pricePaise: rupeesToPaise(price),
         inStock: true,
+        // A HUMAN CHOSE THESE PRICES — they are written out in the list above.
+        // Without this the rows default to `priced: false`, the storefront
+        // filters them out (`where: { priced: true }`), and the demo shop's own
+        // QR opens on "no items yet". A demo shop that cannot be shopped is the
+        // one thing a demo shop must never be.
+        priced: true,
       }))(item),
-      update: {},
+      // Prices and stock touched by hand are still left alone; this only
+      // repairs the flag on rows seeded before it was set, which are invisible
+      // to customers until it is.
+      update: { priced: true },
       select: { createdAt: true, updatedAt: true },
     });
     if (result.createdAt.getTime() === result.updatedAt.getTime()) created += 1;
@@ -93,9 +102,112 @@ async function main() {
 
   console.log(`${shop.name} (/${SLUG}) — ${created} item(s) added, ${ITEMS.length} listed.`);
 
-  if (process.argv.includes('--orders')) await seedTrade(shop.id);
+  if (process.argv.includes('--orders')) {
+    await seedTrade(shop.id);
+    await seedKhata(shop.id);
+  }
 
   console.log('\nMarked as a demo shop. Toggle "Show demo shops" on /admin to see or hide it.');
+}
+
+/**
+ * Four regulars and their credit book.
+ *
+ * The khata is the screen the pitch leans on hardest — it is the one thing a
+ * shopkeeper already keeps on paper — and a demo shop that showed an empty one
+ * demonstrated the opposite of the point. So it is seeded alongside the trade
+ * rather than left to whoever is giving the demo to type in by hand.
+ *
+ * Balances are deliberately unlike each other: one large and old, one small and
+ * fresh, one settled to zero, one part-paid. A column of similar numbers proves
+ * nothing, and "who has been owing the longest" needs somebody to be longest.
+ *
+ * Nothing here is stored as a balance — every rupee is a `LedgerEntry` and the
+ * screen sums them, which is the behaviour being demonstrated.
+ */
+async function seedKhata(shopId: string) {
+  const existing = await prisma.customer.count({ where: { shopId } });
+  if (existing > 0) {
+    console.log(`${existing} khata customer(s) already here — leaving the book alone.`);
+    return;
+  }
+
+  /** `daysAgo` so the ageing is real, and the oldest debt reads as the oldest. */
+  const REGULARS: {
+    name: string;
+    // Documentation numbers, as above: 98000000xx reaches nobody.
+    phone: string;
+    area: string;
+    entries: { daysAgo: number; kind: 'DEBIT' | 'CREDIT'; rupees: number; note: string }[];
+  }[] = [
+    {
+      name: 'Rekha Das',
+      phone: '9800000011',
+      area: 'Bazaar side',
+      entries: [
+        { daysAgo: 47, kind: 'DEBIT', rupees: 420, note: 'চাল, ডাল' },
+        { daysAgo: 33, kind: 'DEBIT', rupees: 285, note: 'তেল, চিনি' },
+        { daysAgo: 21, kind: 'CREDIT', rupees: 300, note: '' },
+        { daysAgo: 6, kind: 'DEBIT', rupees: 190, note: 'আলু, পেঁয়াজ' },
+      ],
+    },
+    {
+      name: 'Sujit Mondal',
+      phone: '9800000022',
+      area: 'Station road',
+      entries: [
+        { daysAgo: 12, kind: 'DEBIT', rupees: 260, note: 'আটা, নুন' },
+        { daysAgo: 2, kind: 'DEBIT', rupees: 145, note: 'চা, বিস্কুট' },
+      ],
+    },
+    {
+      name: 'Anjali Ghosh',
+      phone: '9800000033',
+      area: 'School lane',
+      entries: [
+        { daysAgo: 18, kind: 'DEBIT', rupees: 530, note: 'মাসের বাজার' },
+        { daysAgo: 4, kind: 'CREDIT', rupees: 530, note: '' },
+      ],
+    },
+    {
+      name: 'Bikash Pal',
+      phone: '9800000044',
+      area: 'Bazaar side',
+      entries: [
+        { daysAgo: 9, kind: 'DEBIT', rupees: 610, note: 'সরিষার তেল, চাল' },
+        { daysAgo: 3, kind: 'CREDIT', rupees: 200, note: '' },
+      ],
+    },
+  ];
+
+  let people = 0;
+  let lines = 0;
+
+  for (const regular of REGULARS) {
+    const customer = await prisma.customer.create({
+      data: { shopId, name: regular.name, phone: regular.phone, area: regular.area },
+      select: { id: true },
+    });
+    people += 1;
+
+    for (const entry of regular.entries) {
+      await prisma.ledgerEntry.create({
+        data: {
+          shopId,
+          customerId: customer.id,
+          kind: entry.kind,
+          amountPaise: rupeesToPaise(entry.rupees),
+          note: entry.note,
+          // Only a repayment carries one, and only cash needs reconciling.
+          paymentMode: entry.kind === 'CREDIT' ? 'CASH' : '',
+          createdAt: new Date(Date.now() - entry.daysAgo * 86_400_000),
+        },
+      });
+      lines += 1;
+    }
+  }
+
+  console.log(`${people} khata customer(s) and ${lines} ledger line(s).`);
 }
 
 /**
