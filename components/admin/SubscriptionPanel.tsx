@@ -34,7 +34,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
-import { formatPaise, rupeesToPaise } from '@/lib/money';
+import { formatPaise, paiseToInput, parsePaise, rupeesToPaise } from '@/lib/money';
 import { periodFor } from '@/lib/period';
 import {
   LISTING_MINIMUM_ITEMS,
@@ -56,6 +56,10 @@ export type SubscriptionState = {
   itemLimit: number;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
+  /** A price agreed with this one shop, or nulls when it is on the ladder. */
+  customPricePaise: number | null;
+  customItemLimit: number | null;
+  customPlanName: string;
   payments: {
     id: string;
     amountPaise: number;
@@ -108,6 +112,15 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
   const [months, setMonths] = useState(1);
   const [reference, setReference] = useState('');
   const [busy, setBusy] = useState(false);
+  // Seeded from the shop's stored deal, so the boxes read back what is in force
+  // rather than starting blank over a live custom price.
+  const [customPrice, setCustomPrice] = useState(
+    state.customPricePaise === null ? '' : paiseToInput(state.customPricePaise),
+  );
+  const [customLimit, setCustomLimit] = useState(
+    state.customItemLimit === null ? '' : String(state.customItemLimit),
+  );
+  const [customName, setCustomName] = useState(state.customPlanName);
   // Pre-filled with what the shop already holds, because that is the job in
   // almost every case: the operator has just finished listing this catalogue.
   const [listedItems, setListedItems] = useState(String(state.itemCount || ''));
@@ -154,6 +167,33 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
       }
       push(done, 'success');
       setReference('');
+      router.refresh();
+    } catch {
+      push('Network error. Please try again.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * The custom plan is a property of the SHOP, not a payment, so it goes to the
+   * shop endpoint rather than the subscription one. `post` above records money
+   * and moves periods; nothing here does either.
+   */
+  async function patchShop(body: Record<string, unknown>, done: string) {
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/admin/shop/${slug}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        push(payload.error ?? 'Could not save the custom price', 'error');
+        return;
+      }
+      push(done, 'success');
       router.refresh();
     } catch {
       push('Network error. Please try again.', 'error');
@@ -406,6 +446,96 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
         <p className="mt-2 text-xs text-slate-600">
           A lapsed shop keeps its QR and its customers; only item editing stops.
         </p>
+      </Block>
+
+      {/* ---- A price agreed with this shop alone ---- */}
+      <Block
+        title="Custom price for this shop"
+        tone="quiet"
+        hint="A rupee amount and an item limit agreed with this shop, instead of one of the four plans. Leave blank to put the shop back on the standard ladder. It takes effect when the trial ends."
+      >
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="text-xs font-semibold text-slate-700">
+            Name
+            <input
+              value={customName}
+              onChange={(event) => setCustomName(event.target.value)}
+              placeholder={PLAN_SPECS[plan].name}
+              className="mt-1 block h-10 w-32 rounded-lg border border-slate-300 px-2 text-sm font-normal"
+            />
+          </label>
+          <label className="text-xs font-semibold text-slate-700">
+            ₹ / month
+            <input
+              value={customPrice}
+              onChange={(event) => setCustomPrice(event.target.value)}
+              inputMode="decimal"
+              placeholder={String(PLAN_SPECS[plan].price)}
+              className="mt-1 block h-10 w-24 rounded-lg border border-slate-300 px-2 text-sm font-normal tabular-nums"
+            />
+          </label>
+          <label className="text-xs font-semibold text-slate-700">
+            Items
+            <input
+              value={customLimit}
+              onChange={(event) => setCustomLimit(event.target.value)}
+              inputMode="numeric"
+              placeholder={String(PLAN_SPECS[plan].itemLimit)}
+              className="mt-1 block h-10 w-24 rounded-lg border border-slate-300 px-2 text-sm font-normal tabular-nums"
+            />
+          </label>
+
+          <Button
+            size="sm"
+            disabled={busy}
+            onClick={() => {
+              const rupees = parsePaise(customPrice);
+              if (rupees === null) {
+                push('Give a price in rupees, or clear it to use the plan', 'error');
+                return;
+              }
+              const limit = Number(customLimit.trim());
+              patchShop(
+                {
+                  customPricePaise: rupees,
+                  // Blank means "keep the plan's limit", which is what null says
+                  // to `customSpec`.
+                  customItemLimit: Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : null,
+                  customPlanName: customName.trim(),
+                },
+                'Custom price saved',
+              );
+            }}
+          >
+            Save
+          </Button>
+
+          {state.customPricePaise !== null && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              onClick={() => {
+                setCustomPrice('');
+                setCustomLimit('');
+                setCustomName('');
+                patchShop(
+                  { customPricePaise: null, customItemLimit: null, customPlanName: '' },
+                  'Back on the standard plan',
+                );
+              }}
+            >
+              Remove
+            </Button>
+          )}
+        </div>
+
+        {state.customPricePaise !== null && (
+          <p className="mt-2 text-xs font-semibold text-brand-700">
+            On a custom plan: {formatPaise(state.customPricePaise)}/month
+            {state.customItemLimit ? ` · ${state.customItemLimit} items` : ''}
+          </p>
+        )}
       </Block>
 
       {state.payments.length > 0 && (

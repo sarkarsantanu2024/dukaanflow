@@ -45,7 +45,6 @@ export type ShopFormValues = {
 };
 
 export type ShopFormImages = {
-  imageData: string;
   ownerImageData: string;
   upiQrData: string;
 };
@@ -68,7 +67,7 @@ const EMPTY: ShopFormValues = {
   active: true,
 };
 
-const NO_IMAGES: ShopFormImages = { imageData: '', ownerImageData: '', upiQrData: '' };
+const NO_IMAGES: ShopFormImages = { ownerImageData: '', upiQrData: '' };
 
 function Section({
   title,
@@ -128,7 +127,7 @@ export function ShopForm({
   async function saveImages(slug: string) {
     const before = initialImages ?? NO_IMAGES;
     const changed: Partial<ShopFormImages> = {};
-    for (const key of ['imageData', 'ownerImageData', 'upiQrData'] as const) {
+    for (const key of ['ownerImageData', 'upiQrData'] as const) {
       if (images[key] !== before[key]) changed[key] = images[key];
     }
     if (Object.keys(changed).length === 0) return true;
@@ -279,17 +278,6 @@ export function ShopForm({
               </Select>
             </div>
 
-            <div className="sm:col-span-2">
-              <ImagePicker
-                label="Storefront photo"
-                hint="how the shop looks from the street"
-                value={images.imageData}
-                shape="wide"
-                busy={submitting}
-                onChange={(data) => setImage('imageData', data)}
-                onError={(message) => push(message, 'error')}
-              />
-            </div>
           </div>
         </Section>
 

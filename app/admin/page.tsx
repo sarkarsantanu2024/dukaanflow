@@ -60,8 +60,7 @@ export default async function AdminDashboard() {
         openTime: true,
         closeTime: true,
         active: true,
-        imageData: true,
-        isDemo: true,
+          isDemo: true,
         plan: true,
         subscriptionStatus: true,
         trialEndsAt: true,
@@ -103,7 +102,6 @@ export default async function AdminDashboard() {
       address: shop.address,
       hours: formatClockRange(shop.openTime, shop.closeTime),
       active: shop.active,
-      imageData: shop.imageData,
       isDemo: shop.isDemo,
       planName:
         state.status === 'TRIALING' && state.trialDaysLeft !== null

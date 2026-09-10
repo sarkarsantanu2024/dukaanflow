@@ -209,6 +209,27 @@ model Shop {
   subscriptionStatus SubStatus @default(TRIALING)
   trialEndsAt        DateTime?
   currentPeriodEnd   DateTime?
+
+  /// A price agreed with THIS shop, instead of one of the four standard plans.
+  ///
+  /// Every real reseller ends up with them: the first shop in a new bazaar who
+  /// came in at half price, the one who took a hundred extra items instead of a
+  /// discount, the relative. Without somewhere to put it, that deal lives in a
+  /// WhatsApp thread and the console quietly shows the wrong plan and the wrong
+  /// money for the life of the shop.
+  ///
+  /// All three move together and are read only when `customPricePaise` is set —
+  /// see `entitlement()`, which is the one place the standard plan is swapped
+  /// out, so nothing downstream has to learn that custom plans exist.
+  ///
+  /// PAISE, unlike `PlanSpec.price` which is whole rupees: a negotiated figure
+  /// is exactly the kind that turns out to be ₹174.50, and the plan ladder's
+  /// round numbers are a property of the ladder rather than of money.
+  customPricePaise   Int?
+  /// What this shop may hold. Null falls back to the standard plan's limit.
+  customItemLimit    Int?
+  /// What the owner sees this called. Blank shows the standard plan's name.
+  customPlanName     String    @default("")
   /// When this shop first listed an item — the activation metric.
   activatedAt        DateTime?
 

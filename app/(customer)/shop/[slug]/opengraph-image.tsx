@@ -35,7 +35,6 @@ export default async function ShopCard({ params }: { params: Promise<{ slug: str
       phone: true,
       address: true,
       ownerName: true,
-      imageData: true,
       ownerImageData: true,
     },
   });
@@ -56,20 +55,10 @@ export default async function ShopCard({ params }: { params: Promise<{ slug: str
           background: '#ffffff',
         }}
       >
-        {/* The shopfront across the top, if there is one. It is the half of
-            this card that says "yes, this is the shop you are standing in". */}
-        {shop?.imageData ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={shop.imageData}
-            alt=""
-            width={1200}
-            height={300}
-            style={{ width: '1200px', height: '300px', objectFit: 'cover' }}
-          />
-        ) : (
-          <div style={{ width: '1200px', height: '300px', background: BRAND_GREEN }} />
-        )}
+        {/* A brand band across the top. This used to be the storefront
+            photograph; that is gone, and the owner's face below it says "yes,
+            this is the shop you are standing in" better than a shutter did. */}
+        <div style={{ width: '1200px', height: '300px', background: BRAND_GREEN }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '36px', padding: '40px 56px' }}>
           {shop?.ownerImageData ? (
