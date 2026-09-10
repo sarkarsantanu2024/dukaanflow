@@ -407,23 +407,26 @@ export const loginSchema = z.object({
  * password is the cheapest way to make sure the person at the keyboard is the
  * person who owns the account.
  *
- * THE LENGTH FLOOR WAS REMOVED ON REQUEST (2026-09-10), and replaced with a
- * composition rule: at least one letter and at least one number.
+ * THE RULE WAS SET ON REQUEST (2026-09-10): four characters, at least one
+ * letter and at least one number. It was twelve characters before.
  *
- * Be clear-eyed about what that costs. This one password is the whole console —
- * every shop, every customer's phone number, every ledger, and the power to
- * issue subscription codes — and the only thing between it and a guesser is
- * `rateLimit` on the login route, which lives in ONE serverless instance's
- * memory. An attacker spreading attempts across instances walks past it, so the
- * password's own length is doing more of the work here than the limiter is.
+ * WHAT THAT LEAVES, WRITTEN DOWN SO NOBODY HAS TO REDERIVE IT. Four characters
+ * of letters and digits is on the order of a million combinations, and the only
+ * thing standing in front of them is `rateLimit` on the login route — which
+ * keeps its counter in ONE serverless instance's memory. Attempts spread across
+ * instances walk straight past it. This password opens every shop, every
+ * customer's phone number, every ledger, and the queue that issues subscription
+ * codes.
  *
- * A composition rule is also weaker than it looks: "abc123" satisfies it, and
- * is among the first things any dictionary tries. It rules out the accidental
- * all-letters password, nothing more.
+ * Compare the four-digit activation codes, which are genuinely safe at that
+ * length: each is bound to one payment request, only exists after a human saw
+ * the money, is redeemed behind that shop's own PIN session, and counts its
+ * attempts in POSTGRES, on the row. Four guards, not one — and the comment on
+ * `verifyActivationCode` says to lengthen the code if any of them is removed.
  *
- * If this is ever revisited, the fix is not a longer regex — it is to move the
- * attempt counter into Postgres, the way `PaymentRequest.attempts` already does
- * for the four-digit activation codes, and only then relax the password rule.
+ * So the repair here is not a longer regex. It is to move the login attempt
+ * counter into Postgres the same way, at which point a short password is a
+ * defensible choice rather than a bet on nobody looking.
  */
 export const adminAccountSchema = z
   .object({
@@ -438,7 +441,7 @@ export const adminAccountSchema = z
     currentPassword: z.string().min(1, 'Enter your current password'),
     newPassword: z
       .string()
-      .min(1, 'Enter a new password')
+      .min(4, 'Use at least 4 characters')
       .max(200)
       // Two separate checks rather than one combined regex, so the message can
       // say which half is missing instead of restating the rule at somebody who
