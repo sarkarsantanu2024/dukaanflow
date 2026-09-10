@@ -1,0 +1,14 @@
+{
+  "//": "The operator tools in scripts/, typechecked separately from the app. They are excluded from tsconfig.json because `next build` typechecks whatever that file includes, and two of them import `playwright` — a tool for taking screenshots on a laptop, not something the deployed app should carry. Keeping them out of the build and checked here means a broken script is still caught by `npm run typecheck`, without a browser automation library becoming a production dependency. Needs playwright present: `npm i -D playwright`.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": false,
+    // The scripts are plain Node, run through tsx — not bundled by Next, so
+    // they resolve modules the way Node does rather than the way a bundler does.
+    "module": "esnext",
+    "moduleResolution": "bundler"
+  },
+  "include": ["scripts/**/*.ts"],
+  "exclude": ["node_modules"]
+}

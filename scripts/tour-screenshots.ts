@@ -1,8 +1,13 @@
 /**
  * Takes the eight screenshots the product guide expects in `public/tour/`.
  *
+ *   npm i -D playwright                           # once, if not already there
  *   npm run dev                                   # in another terminal
  *   ADMIN_PASSWORD=... npm run tour:shots
+ *
+ * PLAYWRIGHT IS NOT A DEPENDENCY OF THIS PROJECT, deliberately — see the same
+ * note in `social-cards.ts`. `scripts/` is excluded from `tsconfig.json` so
+ * `next build` never tries to typecheck it.
  *
  * WHY THIS IS A SCRIPT AND NOT EIGHT MANUAL SCREENSHOTS. The guide at
  * `/admin/dashboard` is the deck an operator shows a shopkeeper, and a deck
