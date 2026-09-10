@@ -205,22 +205,24 @@ export const PLAN_ORDER: Plan[] = ['FREE', 'STARTER', 'PRO', 'EX', 'ENTERPRISE']
  *
  * This sells against the onboarding failure the console already flags: a shop
  * onboarded, QR printed, and nothing ever listed. The operator does the
- * cataloguing and charges for it — ₹1 an item, never less than ₹99.
+ * cataloguing and charges for it — ₹1 an item, and nothing else.
  *
- * The floor is the point. Listing twenty items earns ₹20, which is less than
- * the phone call that arranges it — so without a minimum the smallest jobs cost
- * more to sell than they bring in, and those are exactly the shops that need
- * the service most. A shop under 99 items pays the floor.
+ * NO MINIMUM. There used to be a ₹99 floor, on the argument that a twenty-item
+ * job earns less than the phone call that arranges it. True, and beside the
+ * point: the twenty-item shop is the one on the cheapest plan, the one most
+ * likely to give up during cataloguing, and the one for whom "₹99 to list your
+ * twenty things" reads as a penalty for being small. One rupee an item is a
+ * price a shopkeeper can do in their head and check against the shelf. Losing a
+ * few rupees on the smallest jobs is cheaper than losing the shop.
  */
 export const LISTING_PAISE_PER_ITEM = 100;
-export const LISTING_MINIMUM_PAISE = 9_900;
 
 /**
  * What it costs to have us fill a plan's catalogue, in paise.
  *
  * Shown on each plan so the shopkeeper can see the whole job priced, not just
  * the software. "Up to 300 items" is an allowance; "we will list all 300 for
- * ₹150" is an offer — and cataloguing is the step at which shops give up, so it
+ * ₹300" is an offer — and cataloguing is the step at which shops give up, so it
  * is the one worth pricing in front of them.
  *
  * Unlimited plans have no item count to quote against, so they get null and the
@@ -234,12 +236,8 @@ export function planListingPaise(plan: Plan): number | null {
 /** What listing `items` items costs, in paise. */
 export function listingChargePaise(items: number): number {
   const counted = Math.max(0, Math.trunc(items));
-  if (counted === 0) return 0;
-  return Math.max(LISTING_MINIMUM_PAISE, counted * LISTING_PAISE_PER_ITEM);
+  return counted * LISTING_PAISE_PER_ITEM;
 }
-
-/** The item count at which per-item pricing overtakes the floor — 198. */
-export const LISTING_MINIMUM_ITEMS = LISTING_MINIMUM_PAISE / LISTING_PAISE_PER_ITEM;
 
 /**
  * Free days when a shop is created, so onboarding is never blocked.
