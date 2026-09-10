@@ -10,6 +10,7 @@ import {
   LISTING_MINIMUM_PAISE,
   LISTING_PAISE_PER_ITEM,
   PLAN_ORDER,
+  planItems,
   PLAN_SPECS,
   TRIAL_DAYS,
 } from '@/lib/plans';
@@ -108,7 +109,7 @@ export default async function DashboardPage() {
                     <span className="min-w-0 truncate text-slate-700">
                       {spec.name}
                       <span className="ml-1.5 text-xs text-slate-400">
-                        {spec.itemLimit.toLocaleString('en-IN')} items
+                        {planItems(spec.id)} items
                       </span>
                     </span>
                     <span className="shrink-0 tabular-nums text-slate-600">
@@ -144,13 +145,18 @@ export default async function DashboardPage() {
                     <tr key={id}>
                       <td className="py-2 pr-3 font-semibold text-slate-900">{spec.name}</td>
                       <td className="py-2 pr-3 tabular-nums text-slate-600">
-                        up to {spec.itemLimit.toLocaleString('en-IN')}
+                        {spec.unlimited ? 'unlimited' : `up to ${planItems(spec.id)}`}
                       </td>
                       <td className="py-2 pr-3 font-semibold tabular-nums text-brand-700">
                         {formatPaise(rupeesToPaise(spec.price))}
                       </td>
                       <td className="py-2 pr-3 tabular-nums text-slate-500">
-                        {formatPaise(Math.round(rupeesToPaise(spec.price) / spec.itemLimit))}
+                        {/* Cost per item is meaningless without a ceiling to
+                            divide by — an unlimited plan's is zero and says so
+                            about nothing. */}
+                        {spec.unlimited
+                          ? '—'
+                          : formatPaise(Math.round(rupeesToPaise(spec.price) / spec.itemLimit))}
                       </td>
                       <td className="py-2 text-slate-600">{spec.tagline}</td>
                     </tr>
@@ -169,7 +175,7 @@ export default async function DashboardPage() {
             />
             <Rule
               title="Listing service"
-              body={`${LISTING_PAISE_PER_ITEM} paise per item we catalogue, minimum ${formatPaise(LISTING_MINIMUM_PAISE)}. Buys no subscription time.`}
+              body={`${formatPaise(LISTING_PAISE_PER_ITEM)} per item we catalogue, minimum ${formatPaise(LISTING_MINIMUM_PAISE)}. Buys no subscription time.`}
             />
           </div>
         </section>

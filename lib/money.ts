@@ -8,7 +8,7 @@
  *  - **Rupees** — what a shop charges for what it sells. Item prices, order
  *    totals, the khata: whole rupees, as they have been throughout.
  *  - **Paise** — what Halkhata charges the shop. Billing needs finer grain
- *    than a rupee because the listing service is priced at 50 paise an item,
+ *    than a rupee because a kirana really does sell a toffee at fifty paise,
  *    and rounding every line would either lose money or overcharge.
  *
  * Anything holding paise says so in its name (`amountPaise`, `PAISE_PER_ITEM`).

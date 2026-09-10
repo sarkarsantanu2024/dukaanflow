@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
+import { startOfBusinessDay } from '@/lib/time';
 import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { OrdersScreen, type OwnerOrder } from '@/components/owner/OrdersScreen';
@@ -44,7 +45,28 @@ export default async function OrdersPage({ params }: PageProps) {
      * rather than deleted behind the owner's back; a cleanup, if it is wanted,
      * is a decision to take deliberately and not a side effect of a query.
      */
-    where: { shopId: shop.id, status: { not: 'CANCELLED' } },
+    /**
+     * THE SCREEN IS TODAY'S WORK, NOT AN ARCHIVE.
+     *
+     * A completed order is finished business, and by the end of a busy week the
+     * list an owner scrolls to find the one order they still owe somebody was
+     * mostly orders they had already handed over. So a COMPLETED order falls off
+     * this screen when the day rolls over. It is not deleted — it is in the
+     * reports, the takings and the khata exactly as before.
+     *
+     * BUT AN UNFINISHED ORDER NEVER FALLS OFF, however old. A NEW order from
+     * three days ago is a customer still waiting, and hiding it because of its
+     * age would be the app quietly losing the one thing this screen exists to
+     * prevent. Only the finished ones age out.
+     */
+    where: {
+      shopId: shop.id,
+      status: { not: 'CANCELLED' },
+      OR: [
+        { status: { not: 'COMPLETED' } },
+        { createdAt: { gte: startOfBusinessDay() } },
+      ],
+    },
     // The screen groups by status itself and counts today's takings across the
     // whole set, so it wants a window of history rather than a top-50 slice
     // that could cut today's own orders in half on a busy day.

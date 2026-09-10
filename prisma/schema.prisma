@@ -67,6 +67,10 @@ enum Plan {
   STARTER
   PRO
   EX
+  /// Appended, never inserted. Postgres appends a new enum value at the end
+  /// whatever this file says, so the order here is cosmetic — read the ladder
+  /// from `PLAN_ORDER` in lib/plans.ts, never from this declaration.
+  ENTERPRISE
 }
 
 enum SubStatus {
