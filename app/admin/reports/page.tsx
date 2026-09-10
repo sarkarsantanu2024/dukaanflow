@@ -221,12 +221,12 @@ export default async function ReportsPage({
                     // channel an order comes in on — labelling the column that
                     // way told the operator the product works like a
                     // competitor's.
-                    'QR orders',
+                    'Ordered by the customer',
                     report.channels.orders.transactions,
                     formatPaise(report.channels.orders.revenuePaise),
                   ],
                   [
-                    'Counter sales',
+                    'Rung up at the counter',
                     report.channels.counter.transactions,
                     formatPaise(report.channels.counter.revenuePaise),
                   ],

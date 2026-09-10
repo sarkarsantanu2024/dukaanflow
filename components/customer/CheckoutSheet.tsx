@@ -107,6 +107,13 @@ export function CheckoutSheet({
     });
   }, [open, remembered, reset]);
 
+  // Reopening the sheet starts from the summary again: having changed an
+  // address once is not a standing instruction to be asked forever.
+  const [editingDetails, setEditingDetails] = useState(false);
+  useEffect(() => {
+    if (open) setEditingDetails(false);
+  }, [open]);
+
   // Lock background scroll and move focus into the sheet while it is open.
   useEffect(() => {
     if (!open) return;
@@ -123,6 +130,27 @@ export function CheckoutSheet({
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [open, onClose]);
+
+  /**
+   * A RETURNING SHOPPER SHOULD NOT MEET AN EMPTY FORM.
+   *
+   * Their details were already prefilled — that much worked — but four filled
+   * boxes still read as four questions, and re-reading your own address off a
+   * form before every order is the friction that makes people phone the shop
+   * instead. So when we know who this is, the form collapses to a line naming
+   * them and a way to change it.
+   *
+   * A delivery order with no saved address is NOT enough to skip: the address
+   * is the whole order for that shop, and confirming one that is not there
+   * would send the goods nowhere.
+   */
+  const knowsCustomer = Boolean(
+    remembered?.customerName?.trim() &&
+      remembered?.customerPhone?.trim() &&
+      remembered?.customerArea?.trim() &&
+      (orderType !== 'DELIVERY' || remembered?.customerAddress?.trim()),
+  );
+  const showForm = editingDetails || !knowsCustomer;
 
   if (!open) return null;
 
@@ -199,6 +227,35 @@ export function CheckoutSheet({
             </p>
           )}
 
+          {!showForm && (
+            <div className="flex items-start gap-3 rounded-xl bg-slate-50 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t.orderingAs}
+                </p>
+                <p className="mt-0.5 truncate font-semibold text-slate-900">
+                  {remembered?.customerName}
+                </p>
+                <p className="truncate text-sm tabular-nums text-slate-600">
+                  {remembered?.customerPhone}
+                </p>
+                <p className="mt-0.5 text-sm leading-snug text-slate-600">
+                  {orderType === 'DELIVERY' && remembered?.customerAddress
+                    ? `${remembered.customerAddress}, ${remembered?.customerArea}`
+                    : remembered?.customerArea}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingDetails(true)}
+                className="shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-brand-700 underline hover:bg-white"
+              >
+                {t.changeDetails}
+              </button>
+            </div>
+          )}
+
+          <div className={showForm ? 'contents' : 'hidden'}>
           <Input
             label={t.name}
             hint={t.required}
@@ -240,6 +297,7 @@ export function CheckoutSheet({
             error={errors.customerArea?.message}
             {...register('customerArea')}
           />
+          </div>
 
           {/* Refused here rather than by the server after the form is filled
               in. The wording is an amount and a way out — "₹55 more, or choose

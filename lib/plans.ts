@@ -9,11 +9,11 @@
  * a shop is never punished for selling well.
  *
  * Plan prices are whole rupees per month. The listing service below is priced
- * in paise, because 50 paise an item is not expressible in rupees — see
- * lib/money.ts for which unit a given number is in.
+ * in paise like every other money column here — see lib/money.ts for which unit
+ * a given number is in.
  */
 
-export const PLANS = ['FREE', 'STARTER', 'PRO', 'EX'] as const;
+export const PLANS = ['FREE', 'STARTER', 'PRO', 'EX', 'ENTERPRISE'] as const;
 export type Plan = (typeof PLANS)[number];
 
 export const SUB_STATUSES = ['TRIALING', 'ACTIVE', 'PAST_DUE', 'CANCELLED'] as const;
@@ -24,8 +24,17 @@ export type PlanSpec = {
   name: string;
   /** Whole rupees per month. */
   price: number;
-  /** Maximum items in the catalogue. */
+  /**
+   * Maximum items in the catalogue.
+   *
+   * Still a real number on the unlimited plan — every allowance check compares
+   * against it, and a null would mean teaching each of those to handle "no
+   * ceiling" separately. `unlimited` says how to DISPLAY it; the arithmetic is
+   * the same everywhere.
+   */
   itemLimit: number;
+  /** Show "Unlimited items" instead of the number. See `itemLimit`. */
+  unlimited?: boolean;
   tagline: string;
   features: string[];
 };
@@ -110,10 +119,26 @@ export const EVERY_PLAN_INCLUDES: string[] = [
   'Support on WhatsApp',
 ];
 
+/**
+ * How big this plan's catalogue is, in words — "300" or "Unlimited".
+ *
+ * Exported because four screens show it and every one of them was formatting
+ * `itemLimit` itself. On the unlimited plan that number is a sentinel, so a
+ * screen doing its own `toLocaleString` prints "1,000,000 items" and makes the
+ * top plan look like a joke.
+ */
+export function planItems(plan: Plan): string {
+  const spec = PLAN_SPECS[plan];
+  return spec.unlimited ? 'Unlimited' : spec.itemLimit.toLocaleString('en-IN');
+}
+
 /** "Up to 300 items", the one line that differs between plans. */
 function catalogueLine(itemLimit: number): string {
   return `Up to ${itemLimit.toLocaleString('en-IN')} items`;
 }
+
+/** A ceiling high enough that no shop reaches it, for the unlimited plan. */
+const NO_CEILING = 1_000_000;
 
 export const PLAN_SPECS: Record<Plan, PlanSpec> = {
   // The enum value stays FREE because it is written into every existing row and
@@ -135,7 +160,7 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
   STARTER: {
     id: 'STARTER',
     name: 'Starter',
-    price: 149,
+    price: 299,
     itemLimit: 100,
     tagline: 'The everyday kirana plan.',
     features: [catalogueLine(100), ...EVERY_PLAN_INCLUDES],
@@ -143,7 +168,7 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
   PRO: {
     id: 'PRO',
     name: 'Pro',
-    price: 249,
+    price: 399,
     itemLimit: 300,
     tagline: 'A full kirana counter.',
     features: [catalogueLine(300), ...EVERY_PLAN_INCLUDES],
@@ -154,32 +179,57 @@ export const PLAN_SPECS: Record<Plan, PlanSpec> = {
     // name a shopkeeper reads is "Business", because "EX" told them nothing
     // about what they were buying.
     name: 'Business',
-    price: 449,
-    // A ceiling rather than true "unlimited": a catalogue past this is a
-    // different kind of business, and should be a conversation with the
-    // operator — which is what the per-shop custom plan below is for.
-    itemLimit: 1500,
+    price: 599,
+    itemLimit: 1000,
     tagline: 'Full grocery stores and restaurants.',
-    features: [catalogueLine(1500), ...EVERY_PLAN_INCLUDES],
+    features: [catalogueLine(1000), ...EVERY_PLAN_INCLUDES],
+  },
+  ENTERPRISE: {
+    id: 'ENTERPRISE',
+    name: 'Enterprise',
+    price: 799,
+    // Genuinely no ceiling. A catalogue this big is a wholesaler or a chain,
+    // and counting their items to refuse the next one would be the wrong
+    // conversation to have with the largest customer on the book.
+    itemLimit: NO_CEILING,
+    unlimited: true,
+    tagline: 'Wholesalers, chains and anyone past a thousand lines.',
+    features: ['Unlimited items', ...EVERY_PLAN_INCLUDES],
   },
 };
 
-export const PLAN_ORDER: Plan[] = ['FREE', 'STARTER', 'PRO', 'EX'];
+export const PLAN_ORDER: Plan[] = ['FREE', 'STARTER', 'PRO', 'EX', 'ENTERPRISE'];
 
 /**
  * What Halkhata charges to catalogue a shop's items for them.
  *
  * This sells against the onboarding failure the console already flags: a shop
  * onboarded, QR printed, and nothing ever listed. The operator does the
- * cataloguing and charges for it — 50 paise an item, never less than ₹99.
+ * cataloguing and charges for it — ₹1 an item, never less than ₹99.
  *
- * The floor is the point. At 50 paise, listing 25 items earns ₹12.50, which is
- * less than the phone call that arranges it — so without a minimum the smallest
- * jobs cost more to sell than they bring in, and those are exactly the shops
- * that need the service most.
+ * The floor is the point. Listing twenty items earns ₹20, which is less than
+ * the phone call that arranges it — so without a minimum the smallest jobs cost
+ * more to sell than they bring in, and those are exactly the shops that need
+ * the service most. A shop under 99 items pays the floor.
  */
-export const LISTING_PAISE_PER_ITEM = 50;
+export const LISTING_PAISE_PER_ITEM = 100;
 export const LISTING_MINIMUM_PAISE = 9_900;
+
+/**
+ * What it costs to have us fill a plan's catalogue, in paise.
+ *
+ * Shown on each plan so the shopkeeper can see the whole job priced, not just
+ * the software. "Up to 300 items" is an allowance; "we will list all 300 for
+ * ₹150" is an offer — and cataloguing is the step at which shops give up, so it
+ * is the one worth pricing in front of them.
+ *
+ * Unlimited plans have no item count to quote against, so they get null and the
+ * page says to ask instead.
+ */
+export function planListingPaise(plan: Plan): number | null {
+  const spec = PLAN_SPECS[plan];
+  return spec.unlimited ? null : listingChargePaise(spec.itemLimit);
+}
 
 /** What listing `items` items costs, in paise. */
 export function listingChargePaise(items: number): number {
