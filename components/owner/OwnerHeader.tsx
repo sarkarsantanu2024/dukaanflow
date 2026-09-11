@@ -138,32 +138,52 @@ export function OwnerHeader({
         </button>
       </div>
 
-      {/* WHOSE SHOP THIS IS. One line, under the controls rather than beside
-          them, so the name may run the full width of the phone and the buttons
-          above keep every pixel they had.
+      {/* WHOSE SHOP THIS IS.
+          Its own band under the controls rather than a squeeze beside them, so
+          the name may run the full width of a 375px phone and the buttons above
+          keep every pixel they had.
 
-          A hairline above it rather than a background of its own: this is the
-          bottom of the header, not a card floating in the page, and a second
-          filled band under a white bar reads as a banner the owner should be
-          doing something about. */}
-      <div className="border-t border-slate-100">
-        <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-1.5 sm:px-4">
+          THE PROPORTIONS ARE THE DESIGN HERE, and the first attempt got them
+          wrong: a 28px circle and a small grey name on a white row, which read
+          as a stray caption somebody had forgotten to delete rather than as the
+          title of the app you are in. The fixes are all one idea — make it look
+          deliberate:
+
+          - A tinted ground. White under white is not a band, it is a gap. The
+            slate tint says the header is two parts of one block and ends here.
+          - A SQUARE tile, not a circle. This photo is a shopfront as often as
+            it is a face, and a circle crops a shutter and a signboard into a
+            meaningless dot. It is the same rounded tile the customer sees on
+            the storefront card — one shop, one picture, one shape.
+          - Big enough to see: 36px, the size at which a face is a face.
+          - The name in the weight a title is set in, not the weight a footnote
+            is. It is the most important word on the screen for anybody holding
+            this phone who is not its owner. */}
+      <div className="border-t border-slate-200/70 bg-slate-50">
+        <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-3 py-2 sm:px-4">
           {ownerImageData ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={ownerImageData}
               alt=""
-              className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-slate-200"
+              className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-slate-200"
             />
           ) : (
             <span
               aria-hidden
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-800"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-base font-bold text-brand-800"
             >
               {shopName.trim().charAt(0).toUpperCase()}
             </span>
           )}
-          <span className="truncate text-sm font-semibold text-slate-800">{shopName}</span>
+          {/* A size ABOVE the wordmark sitting directly over it. Set level with
+              "Halkhata" the two read as a pair of competing titles and the eye
+              picks neither; a step up settles it, and the right one wins — in
+              the owner's own app the shop is the subject and the product is the
+              stationery it is printed on. */}
+          <span className="truncate text-base font-bold leading-tight text-slate-900">
+            {shopName}
+          </span>
         </div>
       </div>
     </header>
