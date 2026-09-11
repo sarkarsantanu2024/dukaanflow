@@ -410,7 +410,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     notifyYes: 'হ্যাঁ, জানাবেন',
     notifyLater: 'দরকার নেই',
     notifyOn: 'জানিয়ে দেব',
-    notifyDenied: 'আপনার ব্রাউজার এই সাইটের নোটিফিকেশন বন্ধ করে রেখেছে।',
+    notifyDenied: 'আপনার ব্রাউজার এই সাইটের খবর পাঠানো বন্ধ করে রেখেছে।',
 
     trackTitle: 'আপনার অর্ডার',
     trackHint: 'পাতাটা রেখে দিন। দোকান আপনার অর্ডার নিয়ে কী করছে এখানে দেখা যাবে।',
@@ -534,7 +534,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     notifyYes: 'हाँ, बताइए',
     notifyLater: 'रहने दीजिए',
     notifyOn: 'बता देंगे',
-    notifyDenied: 'आपके ब्राउज़र ने इस साइट की सूचनाएँ रोक रखी हैं।',
+    notifyDenied: 'आपके ब्राउज़र ने इस साइट की खबर भेजना रोक रखा है।',
 
     trackTitle: 'आपका ऑर्डर',
     trackHint: 'यह पेज रखिए। दुकान आपके ऑर्डर का क्या कर रही है, यहाँ दिखेगा।',

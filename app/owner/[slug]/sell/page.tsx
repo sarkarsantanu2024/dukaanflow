@@ -121,6 +121,8 @@ export default async function SellPage({ params, searchParams }: PageProps) {
   return (
     <OwnerShell
       slug={shop.slug}
+      shopName={shop.name}
+      ownerImageData={shop.ownerImageData}
       roadblock={roadblock}
       locale={locale}
       plan={plan}

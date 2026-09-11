@@ -1,17 +1,24 @@
 'use client';
 
 /**
- * The owner app's top bar — the same bar the shop page has.
+ * The owner app's top bar — the same bar the shop page has, with the shop's own
+ * name and picture under it.
  *
- * It used to be a green chrome strip carrying the owner's photo and their
- * shop's name. Both were decoration by the second visit: an owner knows whose
- * shop they are in, and the name was already on every screen they had just come
- * from. What they actually reach for up here is the language switch, the
- * install button and the way out, and those were being squeezed by a name.
+ * THE CONTROLS AND THE IDENTITY ARE TWO ROWS, NOT ONE, and that is the whole
+ * design here. They were one row once: a green chrome strip carrying the photo,
+ * the name, the language switch, the install button and the way out, all
+ * fighting for the width of a cheap phone. The name was dropped to make room —
+ * on the reasoning that an owner knows whose shop they are in, which is true of
+ * the owner and false of everybody else who holds that phone. A shopkeeper hands
+ * it to a son, a helper, an operator on a support call; a demo phone carries
+ * four shops; and an owner with two shops has no way at all to tell which one
+ * they just signed into.
  *
- * So it is now the product's bar: white, sticky, hairline under it, the mark on
- * the left and the controls on the right — identical to what a customer sees on
- * the shop page. One product, one header.
+ * So both are here and neither is squeezed. The top row is the product's bar,
+ * unchanged: white, sticky, hairline under it, the mark on the left and the
+ * controls on the right. Underneath it, on the same sticky block, one short
+ * strip with the owner's picture and the shop's name — the same pairing the
+ * customer sees on the storefront, at the size of a line rather than a card.
  */
 
 import { useState } from 'react';
@@ -25,7 +32,23 @@ import { OwnerInstallButton } from './OwnerInstallButton';
 import { ownerDict } from '@/lib/owner-i18n';
 import { LOCALE_LABELS, LOCALES, type Locale } from '@/lib/i18n';
 
-export function OwnerHeader({ slug, locale }: { slug: string; locale: Locale }) {
+export function OwnerHeader({
+  slug,
+  locale,
+  shopName,
+  ownerImageData,
+}: {
+  slug: string;
+  locale: Locale;
+  /** The shop this owner is signed into, shown on every screen. */
+  shopName: string;
+  /**
+   * The owner's photo as a data URL, or '' when they have not set one. Blank
+   * falls back to the shop's initial on a brand tile — the same stand-in the
+   * storefront uses, so one shop does not have two different faces.
+   */
+  ownerImageData: string;
+}) {
   const router = useRouter();
   const { push } = useToast();
   const t = ownerDict(locale);
@@ -113,6 +136,35 @@ export function OwnerHeader({ slug, locale }: { slug: string; locale: Locale }) 
         >
           {busy ? <Spinner className="h-4 w-4" /> : <SignOutIcon className="h-5 w-5" />}
         </button>
+      </div>
+
+      {/* WHOSE SHOP THIS IS. One line, under the controls rather than beside
+          them, so the name may run the full width of the phone and the buttons
+          above keep every pixel they had.
+
+          A hairline above it rather than a background of its own: this is the
+          bottom of the header, not a card floating in the page, and a second
+          filled band under a white bar reads as a banner the owner should be
+          doing something about. */}
+      <div className="border-t border-slate-100">
+        <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-1.5 sm:px-4">
+          {ownerImageData ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={ownerImageData}
+              alt=""
+              className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-slate-200"
+            />
+          ) : (
+            <span
+              aria-hidden
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-800"
+            >
+              {shopName.trim().charAt(0).toUpperCase()}
+            </span>
+          )}
+          <span className="truncate text-sm font-semibold text-slate-800">{shopName}</span>
+        </div>
       </div>
     </header>
   );
