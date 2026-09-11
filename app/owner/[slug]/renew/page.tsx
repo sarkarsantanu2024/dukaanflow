@@ -55,7 +55,14 @@ export default async function RenewPage({ params }: PageProps) {
     // that overlay would cover the very thing it exists to send people to. A
     // lapsed owner must be able to reach this page and pay; it carries the same
     // flow the roadblock does.
-    <OwnerShell slug={shop.slug} roadblock={null} locale={locale} plan={plan}>
+    <OwnerShell
+      slug={shop.slug}
+      shopName={shop.name}
+      ownerImageData={shop.ownerImageData}
+      roadblock={null}
+      locale={locale}
+      plan={plan}
+    >
       <RenewScreen
         slug={shop.slug}
         locale={locale}

@@ -379,11 +379,18 @@ type OwnerDictionary = {
   revisedBadge: string;
 
   /**
-   * Working one order at the till, instead of flipping between two tabs.
+   * Working one order on the Sell screen, instead of flipping between two tabs.
    *
    * An owner with nobody to help reads the order on Orders and picks the goods
    * off the Sell grid, so the order has to be visible on the screen the items
    * are on — see the note at the head of `SellScreen`.
+   *
+   * NOT "till", in any of the three languages. That is the English word for the
+   * cash drawer, it is what this codebase calls the Sell screen internally, and
+   * it leaked out onto a button as "Take to till" — then into Bengali and Hindi
+   * as the sound of the English word spelled out, টিল and टिल, which mean
+   * nothing whatsoever to the person reading them. A shopkeeper does not "take
+   * an order to the till"; they pack it. The button says that now.
    */
   orderToTill: string;
   orderTillHeading: string;
@@ -822,7 +829,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     reviseWas: 'was',
     revisedBadge: 'Changed',
 
-    orderToTill: 'Take to till',
+    orderToTill: 'Pack this order',
     orderTillHeading: 'Packing this order',
     orderTillProgress: 'packed',
     orderTillLeave: 'Leave this order',
@@ -1025,12 +1032,12 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     trialDaysLeft: 'দিন পর টাকা দিতে হবে',
     planFull: 'আপনার প্ল্যান ভরে গেছে',
     planUpgrade: 'বাড়ান',
-    planExpired: 'সাবস্ক্রিপশন শেষ। দোকান আর QR চলছে — জিনিস বদলাতে রিনিউ করুন।',
+    planExpired: 'আপনার মেয়াদ শেষ। দোকান আর QR চলছে — জিনিস বদলাতে টাকা দিন।',
     renewOnWhatsApp: 'হোয়াটসঅ্যাপে রিনিউ',
 
     blockTitle: 'আপনার ফ্রি ট্রায়াল শেষ',
     blockTrialOver:
-      'আপনার দোকানের পাতা আর QR এখনো চলছে, খদ্দের অর্ডার দিতে পারছেন। জিনিস যোগ বা বদল করতে সাবস্ক্রিপশন শুরু করুন।',
+      'আপনার দোকানের পাতা আর QR এখনো চলছে, খদ্দের অর্ডার দিতে পারছেন। জিনিস যোগ বা বদল করতে মাসের টাকা দেওয়া শুরু করুন।',
     blockPausedTitle: 'আপনার দোকান বন্ধ আছে',
     blockPaused:
       'তিন মাস কোনো টাকা আসেনি, তাই দোকানের পাতা আর অর্ডার নিচ্ছে না। টাকা দিলেই আবার চালু — আপনার জিনিস, খদ্দের আর খাতা সব রয়ে গেছে।',
@@ -1193,11 +1200,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     pushEnabled: 'এই ফোনে আওয়াজ চালু',
     pushDisabled: 'আওয়াজ বন্ধ',
     pushDenied:
-      'আপনার ব্রাউজার এই সাইটের নোটিফিকেশন বন্ধ করে রেখেছে। ব্রাউজারের সাইট সেটিংসে গিয়ে চালু করে আবার চেষ্টা করুন।',
-    pushUnsupported: 'এই ব্রাউজারে নোটিফিকেশন হয় না। অর্ডারের পাতা আগের মতোই চলবে।',
+      'আপনার ব্রাউজার এই সাইটের আওয়াজ বন্ধ করে রেখেছে। ব্রাউজারের সাইট সেটিংসে গিয়ে চালু করে আবার চেষ্টা করুন।',
+    pushUnsupported: 'এই ব্রাউজারে আওয়াজ আসে না। অর্ডারের পাতা আগের মতোই চলবে।',
     pushFailed: 'চালু করা গেল না। আবার চেষ্টা করুন।',
     pushNotAPromise:
-      'কিছু ফোন ব্যাটারি বাঁচাতে নোটিফিকেশন আটকে রাখে। “অর্ডার” পাতাটা দেখতে থাকুন — সব অর্ডার সবসময় ওখানেই থাকে।',
+      'কিছু ফোন ব্যাটারি বাঁচাতে এই আওয়াজ আটকে রাখে। “অর্ডার” পাতাটা দেখতে থাকুন — সব অর্ডার সবসময় ওখানেই থাকে।',
 
     reviseOpen: 'পরিমাণ বদলান',
     reviseTitle: 'আসলে কতটা দিতে পারবেন?',
@@ -1213,7 +1220,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     reviseWas: 'ছিল',
     revisedBadge: 'বদলেছে',
 
-    orderToTill: 'টিল-এ তুলুন',
+    orderToTill: 'অর্ডারটা গোছান',
     orderTillHeading: 'এই অর্ডারটা গোছাচ্ছি',
     orderTillProgress: 'গোছানো হয়েছে',
     orderTillLeave: 'এই অর্ডার ছেড়ে দিন',
@@ -1416,12 +1423,12 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     trialDaysLeft: 'दिन बाद पैसे देने होंगे',
     planFull: 'आपका प्लान भर गया',
     planUpgrade: 'बढ़ाएँ',
-    planExpired: 'सदस्यता खत्म। दुकान और QR चालू हैं — सामान बदलने के लिए रिन्यू करें।',
+    planExpired: 'आपकी मियाद खत्म। दुकान और QR चालू हैं — सामान बदलने के लिए पैसे भरें।',
     renewOnWhatsApp: 'व्हाट्सएप पर रिन्यू',
 
     blockTitle: 'आपका फ्री ट्रायल खत्म हो गया',
     blockTrialOver:
-      'आपकी दुकान का पेज और QR अभी भी चालू हैं, ग्राहक ऑर्डर दे सकते हैं। सामान जोड़ने या बदलने के लिए सदस्यता शुरू करें।',
+      'आपकी दुकान का पेज और QR अभी भी चालू हैं, ग्राहक ऑर्डर दे सकते हैं। सामान जोड़ने या बदलने के लिए महीने के पैसे भरना शुरू कीजिए।',
     blockPausedTitle: 'आपकी दुकान बंद है',
     blockPaused:
       'तीन महीने से कोई भुगतान नहीं आया, इसलिए दुकान का पेज अब ऑर्डर नहीं ले रहा। भुगतान करते ही वापस चालू — आपका सामान, ग्राहक और खाता सब मौजूद है।',
@@ -1584,11 +1591,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     pushEnabled: 'इस फोन पर आवाज़ चालू',
     pushDisabled: 'आवाज़ बंद',
     pushDenied:
-      'आपके ब्राउज़र ने इस साइट की सूचनाएँ रोक रखी हैं। ब्राउज़र की साइट सेटिंग में जाकर चालू कीजिए, फिर दोबारा कोशिश कीजिए।',
-    pushUnsupported: 'इस ब्राउज़र में सूचनाएँ नहीं चलतीं। ऑर्डर पेज पहले की तरह चलता रहेगा।',
+      'आपके ब्राउज़र ने इस साइट की आवाज़ रोक रखी है। ब्राउज़र की साइट सेटिंग में जाकर चालू कीजिए, फिर दोबारा कोशिश कीजिए।',
+    pushUnsupported: 'इस ब्राउज़र में आवाज़ नहीं आती। ऑर्डर पेज पहले की तरह चलता रहेगा।',
     pushFailed: 'चालू नहीं हो सका। दोबारा कोशिश कीजिए।',
     pushNotAPromise:
-      'कुछ फोन बैटरी बचाने के लिए सूचनाएँ रोक लेते हैं। “ऑर्डर” पेज देखते रहिए — हर ऑर्डर हमेशा वहीं रहता है।',
+      'कुछ फोन बैटरी बचाने के लिए यह आवाज़ रोक लेते हैं। “ऑर्डर” पेज देखते रहिए — हर ऑर्डर हमेशा वहीं रहता है।',
 
     reviseOpen: 'मात्रा बदलें',
     reviseTitle: 'असल में कितना दे सकते हैं?',
@@ -1604,7 +1611,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     reviseWas: 'था',
     revisedBadge: 'बदला',
 
-    orderToTill: 'टिल पर लें',
+    orderToTill: 'यह ऑर्डर पैक करें',
     orderTillHeading: 'यह ऑर्डर पैक कर रहे हैं',
     orderTillProgress: 'पैक हुआ',
     orderTillLeave: 'यह ऑर्डर छोड़ें',
