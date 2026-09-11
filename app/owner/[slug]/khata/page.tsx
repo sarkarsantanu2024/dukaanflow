@@ -84,6 +84,8 @@ export default async function KhataPage({ params }: PageProps) {
   return (
     <OwnerShell
       slug={shop.slug}
+      shopName={shop.name}
+      ownerImageData={shop.ownerImageData}
       roadblock={roadblock}
       locale={locale}
       plan={plan}

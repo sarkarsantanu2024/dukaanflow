@@ -69,6 +69,8 @@ function TabIcon({ tab }: { tab: OwnerTab }) {
 
 export function OwnerShell({
   slug,
+  shopName,
+  ownerImageData = '',
   locale,
   plan,
   roadblock,
@@ -76,11 +78,15 @@ export function OwnerShell({
 }: {
   slug: string;
   /**
-   * The shop's name and the owner's photo used to be passed through to the
-   * header. They are gone from it: an owner knows whose shop they are in, and
-   * the two of them were taking the width the language switch and the way out
-   * actually needed.
+   * The shop's name and the owner's photo, for the header's identity strip.
+   *
+   * They were dropped from the header once, to buy width for the language
+   * switch and the way out. They are back because those two now sit on a row of
+   * their own — and because the phone running this app is handed around, so
+   * "which shop am I in" is a question somebody actually asks.
    */
+  shopName: string;
+  ownerImageData?: string;
   locale: Locale;
   plan: PlanState;
   /** Set when the subscription has lapsed; null while the owner may work. */
@@ -103,7 +109,12 @@ export function OwnerShell({
 
   return (
     <div className="min-h-dvh pb-24">
-      <OwnerHeader slug={slug} locale={locale} />
+      <OwnerHeader
+        slug={slug}
+        locale={locale}
+        shopName={shopName}
+        ownerImageData={ownerImageData}
+      />
 
       <main className="mx-auto max-w-3xl space-y-4 px-4 py-4">
         {/* First thing under the header, because everything below it may be a

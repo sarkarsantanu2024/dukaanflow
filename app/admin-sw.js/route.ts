@@ -183,9 +183,31 @@ self.addEventListener('push', (event) => {
   // BRAND_NAME here threw ReferenceError on any push that arrived without a
   // title, which is the fallback's only job.
   const title = payload.title || '${BRAND_NAME}';
+
+  /**
+   * THE SECOND NOTIFICATION ABOUT ONE ORDER ARRIVED IN SILENCE.
+   *
+   * Every status push for an order carries the same tag — \`order-<id>\` — so
+   * that "ready" replaces "received" rather than stacking up. That is right, and
+   * on its own it is also why nobody heard anything: a notification that
+   * replaces one with the same tag is delivered SILENTLY by default. No sound,
+   * no vibration, no heads-up banner. It simply swaps the text of something
+   * already sitting in the shade, which a shopkeeper serving a customer — or a
+   * customer waiting on their rice — never looks at.
+   *
+   * \`renotify\` is the flag that says "replace it, but alert me again", and it
+   * is only legal alongside a tag; passing it without one throws and the
+   * notification is never shown at all. So it is computed from the tag.
+   */
+  const tag = payload.tag || undefined;
+
   event.waitUntil(
     self.registration.showNotification(title, {
       body: payload.body || '',
+      // Said out loud rather than left to the default. A notification is the
+      // whole point of this worker; nothing here may ever arrive muted.
+      silent: false,
+      renotify: Boolean(tag),
       icon: '${BRAND_LOGO.icon192}',
       // The badge is the small mark in the status bar, and Android renders it
       // as a flat silhouette — every colour in the logo is thrown away and
@@ -196,7 +218,7 @@ self.addEventListener('push', (event) => {
       // Vibration matters more than sound here: this phone is on a counter in a
       // shop with a television on.
       vibrate: [200, 100, 200],
-      tag: payload.tag || undefined,
+      tag,
       // A shopkeeper serving somebody must be able to come back to it. Left to
       // itself a notification disappears after a few seconds, which is exactly
       // the few seconds they were busy.

@@ -48,6 +48,8 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
   return (
     <OwnerShell
       slug={shop.slug}
+      shopName={shop.name}
+      ownerImageData={shop.ownerImageData}
       roadblock={roadblock}
       locale={locale}
       plan={plan}
