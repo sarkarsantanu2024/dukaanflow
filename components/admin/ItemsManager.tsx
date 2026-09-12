@@ -130,6 +130,43 @@ function isBlankRow(row: NewItem): boolean {
   return !row.name.trim() && !row.price.trim() && !row.unit.trim();
 }
 
+/** The spelling two rows are compared on. Case and stray spaces are not a product. */
+function nameKey(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function unitKey(unit: string): string {
+  return unit.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+/**
+ * TWO ROWS FOR ONE SHELF.
+ *
+ * The add sheet let an owner build "Sugar / 48", "Sugar / 500" and "Sugar / 500"
+ * one under the other and press Save, and what came back was a single item at
+ * whichever price happened to go last — because the server's key is
+ * (shop, name, unit) and upserts, so rows two and three overwrote row one in
+ * silence. The owner was shown three rows, told "3 ✓", and got one item at a
+ * price they had already corrected away from. Every repeat of a name while
+ * dictating produced it: say "চিনি", think better of the price, say "চিনি"
+ * again, and the sheet grew instead of changing.
+ *
+ * So rows are compared here, the same way the server compares them, BEFORE
+ * anything is sent.
+ *
+ * A blank unit matches any unit, which is the server's rule and not a shortcut:
+ * an empty pack-size box is the absence of a pack size, not a second one, and a
+ * save without a unit lands on the row that already carries the name. Two real
+ * and different pack sizes — Dal 500 g beside Dal 1 kg — are a kirana doing its
+ * job and are left alone.
+ */
+function sameShelf(a: NewItem, b: NewItem): boolean {
+  if (!a.name.trim() || nameKey(a.name) !== nameKey(b.name)) return false;
+  const unitA = unitKey(a.unit);
+  const unitB = unitKey(b.unit);
+  return !unitA || !unitB || unitA === unitB;
+}
+
 /**
  * The API's field names, mapped onto this form's.
  *
@@ -317,6 +354,27 @@ export function ItemsManager({
       }));
   }, [visible, items, catalogue, locale, t.categoryNone]);
 
+  /**
+   * Add-sheet rows that name a shelf an EARLIER row already named.
+   *
+   * Only the later one is flagged. The first row is the one the owner filled
+   * first and the one they are being sent back to; painting both red asks them
+   * which of two identical complaints to fix.
+   *
+   * The mic can no longer produce these — it merges onto the matching row (see
+   * `applySpokenDraft`) — so what is left is a name typed twice, and there the
+   * two prices are both deliberate and only the owner knows which they meant.
+   * Guessing would throw away a price they typed on purpose.
+   */
+  const duplicateRows = useMemo(() => {
+    const flagged = new Set<number>();
+    rows.forEach((row, index) => {
+      if (!row.name.trim()) return;
+      if (rows.slice(0, index).some((earlier) => sameShelf(earlier, row))) flagged.add(index);
+    });
+    return flagged;
+  }, [rows]);
+
   /** A search or a category filter is a request to see matches, not headings. */
   const filtering = query.trim() !== '' || category !== '';
 
@@ -416,9 +474,39 @@ export function ItemsManager({
      *
      * And a blank row is always left waiting underneath, so the owner never has
      * to stop dictating to press "one more row".
+     *
+     * SAYING A NAME TWICE CORRECTS THE ROW; IT DOES NOT ADD A SECOND ONE.
+     * A shopkeeper who says "চিনি ৪৮" and then "চিনি ৫০০" has changed their
+     * mind about the price, and nothing else could sensibly be meant by it —
+     * one shelf cannot hold two prices, and the server would have merged them
+     * anyway, silently and in whatever order the requests finished. Merging
+     * here instead means the owner watches it happen in the box, with the
+     * number they actually said in it, before anything is saved. See
+     * `sameShelf`.
      */
     setRows((current) => {
       const next = [...current];
+
+      const existing = next.findIndex((row) => sameShelf(row, spokenRow));
+      if (existing >= 0) {
+        const was = next[existing]!;
+        // Only what was heard this time wins. A sentence with no price in it
+        // ("চিনি শেষ হয়ে গেছে, চিনি") must not blank a price the owner gave a
+        // moment ago, and a name said without its pack size keeps the one
+        // already on the row.
+        next[existing] = {
+          ...was,
+          name: spokenRow.name,
+          nameBn: spokenRow.nameBn || was.nameBn,
+          nameHi: spokenRow.nameHi || was.nameHi,
+          price: spokenRow.price || was.price,
+          unit: spokenRow.unit || was.unit,
+          category: spokenRow.category || was.category,
+        };
+        if (!next.some(isBlankRow)) next.push({ ...EMPTY_NEW_ITEM });
+        return next;
+      }
+
       const slot = next.findIndex(isBlankRow);
       if (slot >= 0) next[slot] = spokenRow;
       else next.push(spokenRow);
@@ -474,6 +562,24 @@ export function ItemsManager({
 
     if (pending.length === 0) {
       push(t.nothingToSave, 'error');
+      return;
+    }
+
+    /**
+     * A SHEET WITH ONE ITEM ON TWO ROWS DOES NOT GO.
+     *
+     * Refused rather than merged, and refused before a single request leaves
+     * the phone. The server upserts on (shop, name, unit), so sending both rows
+     * would write one item at whichever price finished last and then report
+     * "2 ✓" — an owner told their correction saved when what saved was the
+     * thing they were correcting. Two prices typed by hand are two deliberate
+     * acts; which one survives is the owner's call and nobody else's.
+     */
+    if (duplicateRows.size > 0) {
+      setRowErrors(
+        Object.fromEntries([...duplicateRows].map((index) => [index, { name: t.duplicateRow }])),
+      );
+      push(t.duplicateRowsHint, 'error');
       return;
     }
 
@@ -841,7 +947,11 @@ export function ItemsManager({
               aria-label={t.name}
               value={row.name}
               onChange={(event) => nameChanged(index, event.target.value)}
-              error={rowErrors[index]?.name}
+              // Said while the second name is being typed, not held back until
+              // Save. An owner who finishes a row, fills its price and only
+              // then learns the row was never going to go has done that work
+              // for nothing.
+              error={duplicateRows.has(index) ? t.duplicateRow : rowErrors[index]?.name}
               placeholder="Rice"
             />
             <Input
