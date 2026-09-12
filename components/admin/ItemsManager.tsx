@@ -18,6 +18,7 @@ import { suggestNames, translateCategory } from '@/lib/speech';
 import { unitsFor, UNIT_LIST_ID } from '@/lib/units';
 import { Drawer } from '@/components/ui/Drawer';
 import { FloatingTools } from './FloatingTools';
+import { useSimpleMode } from '@/components/owner/SimpleMode';
 import type { ShopType } from '@prisma/client';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
@@ -256,6 +257,25 @@ export function ItemsManager({
   /** The suggestion chip currently being added, keyed name|unit. */
   const [addingSuggestion, setAddingSuggestion] = useState<string | null>(null);
   const units = unitsFor(shopType);
+
+  /**
+   * THE PARED-BACK LIST.
+   *
+   * `wide` is the Super Admin console, and the console is never leaned out: an
+   * operator at a desk setting up somebody else's shop by telephone wants every
+   * control on the screen at once, and they are not the person who found this
+   * screen bewildering. Gating on it also means the console keeps working
+   * correctly outside the owner app's provider, where `useSimpleMode` answers
+   * with its default rather than with a real preference.
+   *
+   * What `lean` puts away is listed at each site below. The rule in every case
+   * is the same one: it goes only if it is something an owner does rarely,
+   * cannot undo a mistake in, or would not miss on the morning they list their
+   * first item. A price, a name, the mic and the in/out switch are none of
+   * those and never move.
+   */
+  const { simple } = useSimpleMode();
+  const lean = !wide && simple;
 
   function toggleSelected(id: string) {
     setSelected((current) => {
@@ -936,8 +956,11 @@ export function ItemsManager({
               // Name takes the room; price and pack size are short and fixed,
               // and the last column is the width of the remove button so every
               // row's boxes line up with the row above whether or not it has
-              // one.
-              'sm:grid-cols-[minmax(0,1fr)_8rem_8rem_2.5rem]',
+              // one. In simple mode the pack size is not asked for, so its
+              // column goes with it rather than being left as a gap.
+              lean
+                ? 'sm:grid-cols-[minmax(0,1fr)_8rem_2.5rem]'
+                : 'sm:grid-cols-[minmax(0,1fr)_8rem_8rem_2.5rem]',
             )}
           >
             <Input
@@ -964,15 +987,25 @@ export function ItemsManager({
               error={rowErrors[index]?.price}
               placeholder="68 or 68.50"
             />
-            <Input
-              label={index === 0 ? t.unit : undefined}
-              aria-label={t.unit}
-              list={UNIT_LIST_ID}
-              value={row.unit}
-              onChange={(event) => updateRow(index, { unit: event.target.value })}
-              error={rowErrors[index]?.unit}
-              placeholder={units[0]}
-            />
+            {/* LEAN: the name and the price, and nothing else.
+                "চাল · ৬৮ · কী?" is where a first-time owner stops, because a
+                pack size is the one box of the three whose question they have
+                not been asked before — and leaving it empty is already the
+                right answer for everything sold loose off a scale. The item
+                saves without it, the row on the list has a pack-size box that
+                can be filled in later, and an owner who wants it on the way in
+                taps Show everything. */}
+            {!lean && (
+              <Input
+                label={index === 0 ? t.unit : undefined}
+                aria-label={t.unit}
+                list={UNIT_LIST_ID}
+                value={row.unit}
+                onChange={(event) => updateRow(index, { unit: event.target.value })}
+                error={rowErrors[index]?.unit}
+                placeholder={units[0]}
+              />
+            )}
 
             {/* THROWING ONE ROW AWAY.
                 The mic mishears — a scrap of counter conversation lands as a
@@ -1096,7 +1129,15 @@ export function ItemsManager({
    * `wide` is the console's layout, which makes it the honest test of which of
    * the two is rendering this.
    */
-  const photoAvailable = !wide && catalogue.length > 0;
+  /**
+   * LEAN: one button, not two. Reading a packet with the camera is the
+   * cleverest thing on this screen and the least likely to work first time —
+   * it depends on the light, the wrapper and the print — so a beginner who
+   * tries it before the mic is a beginner whose first impression of the product
+   * is a scan that came back wrong. The mic is the route that works, and in
+   * simple mode it is the only one offered.
+   */
+  const photoAvailable = !wide && !lean && catalogue.length > 0;
 
   // Only offered when there is a catalogue to match against — without one the
   // scan can do no better than the largest text on the wrapper.
@@ -1150,13 +1191,20 @@ export function ItemsManager({
               behind a "select" mode: a mode has to be discovered, and
               the owner who needs this is the one staring at sixty
               starter items they did not want. */}
-          <input
-            type="checkbox"
-            checked={selected.has(item.id)}
-            onChange={() => toggleSelected(item.id)}
-            aria-label={`${t.delete} — ${displayName(item, locale)}`}
-            className="mt-1 h-4 w-4 shrink-0 accent-brand-600"
-          />
+          {/* LEAN: no tick box. Ticking rows exists to delete sixty starter
+              items in one go, which is a job an owner does once if ever — and
+              a column of empty boxes down the left of the list is the single
+              loudest way to make a list of prices look like a form. The trash
+              can on each row still removes one. */}
+          {!lean && (
+            <input
+              type="checkbox"
+              checked={selected.has(item.id)}
+              onChange={() => toggleSelected(item.id)}
+              aria-label={`${t.delete} — ${displayName(item, locale)}`}
+              className="mt-1 h-4 w-4 shrink-0 accent-brand-600"
+            />
+          )}
 
           <div className="min-w-0 flex-1">
             {/* The owner reads their own language first — and edits it
@@ -1301,7 +1349,14 @@ export function ItemsManager({
             not obvious from its label, which is exactly the kind of
             thing that should not be sitting on a console whose job is
             the catalogue. */}
+        {/* LEAN: no stock counter. It is the one control on the row whose
+            meaning is not readable off its label — "how many left" only pays
+            for itself once an owner has understood that zero hides the item
+            from customers by itself — and it is the third thing on a row that
+            already carries a price, a pack size and an in/out switch. The
+            in/out switch covers the same ground in one tap until then. */}
         {!wide &&
+          !lean &&
           (item.stockQty === null ? (
             <button
               type="button"
@@ -1362,8 +1417,21 @@ export function ItemsManager({
     );
   }
 
+  /**
+   * LEAN: no search box until there is something to search.
+   *
+   * A search box over eleven items is a control that cannot do anything the
+   * eye cannot already do, sitting in the most valuable row on the screen. The
+   * threshold is the point at which the list stops fitting on a phone; above
+   * it the box comes back by itself, with no setting to find and nothing for
+   * the owner to have learned.
+   */
+  const SEARCHABLE_FROM = 12;
+  const showSearch = !lean || items.length >= SEARCHABLE_FROM;
+
   const list = (
     <section className="min-w-0">
+      {showSearch && (
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             type="search"
@@ -1392,6 +1460,7 @@ export function ItemsManager({
             </select>
           )}
         </div>
+      )}
 
         {/* HOW MANY THINGS ARE ON THIS LIST.
             Each row used to carry its own number, which answered "which one am
@@ -1409,7 +1478,13 @@ export function ItemsManager({
             untouched list is a row of screen spent on an action nobody has
             started. Deleting sixty starter items one confirmation at a time was
             the thing this replaces. */}
-        {selected.size > 0 ? (
+        {/* LEAN: no bulk toolbar at all. Its whole contents are Select all and
+            Delete everything — the two most destructive controls in the owner's
+            app, sitting above the list on every visit, on a screen whose
+            complaint was that it offered too much. An owner can still empty a
+            row at a time, and the day they need to empty the shop is the day
+            they can afford to tap Show everything. */}
+        {lean ? null : selected.size > 0 ? (
           <div className="sticky top-2 z-10 mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-card">
             <span className="text-sm font-semibold tabular-nums text-slate-900">
               {selected.size} {t.selectedCount}
@@ -1531,7 +1606,14 @@ export function ItemsManager({
                           spices is told which spices they have not listed while
                           they are looking at spices. One tap lists it, priced.
                           The row disappears from here once it exists. */}
-                      {group.missing.length > 0 && (
+                      {/* LEAN: not offered inside the sections. It is a good
+                          idea and it is the wrong moment for it — an owner who
+                          opened their spices to fix a price meets a strip of
+                          things to buy into instead. The common-items picker
+                          above the fold still lists every one of them, and the
+                          "+n" count stays on the section header, so nothing is
+                          hidden, only un-asked. */}
+                      {!lean && group.missing.length > 0 && (
                         <div className="mb-2 rounded-xl border border-dashed border-slate-300 p-2">
                           <p className="mb-1.5 px-1 text-xs font-medium text-slate-500">
                             {t.alsoSold}
@@ -1593,7 +1675,13 @@ export function ItemsManager({
         </div>
       )}
 
-      {clashes.length > 0 && (
+      {/* LEAN: the unpriced warning above stays — an unpriced row means the
+          shop page is empty and the owner cannot see why, which is the single
+          most expensive thing that can be wrong here. This one goes: a repeated
+          name is now stopped in the add sheet before it is ever saved (see
+          `sameShelf`), so what is left is historical, and it is a subtlety
+          about pack sizes rather than a thing costing the shop money today. */}
+      {!lean && clashes.length > 0 && (
         <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 p-3">
           <p className="text-sm font-semibold text-amber-900">{t.clashTitle}</p>
           <p className="mt-0.5 text-sm text-amber-800">{t.clashHint}</p>
@@ -1639,6 +1727,7 @@ export function ItemsManager({
           slug={slug}
           items={items}
           locale={locale}
+          lean={lean}
           onDraft={applySpokenDraft}
         />
         {/* Said once, above the rows. The mic no longer answers each item with
