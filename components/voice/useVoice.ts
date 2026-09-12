@@ -47,6 +47,31 @@ const SILENT_LIMIT_MS = 90_000;
 /** How often to ask whether that has happened. */
 const WATCHDOG_MS = 15_000;
 
+/**
+ * HOW LONG THE MIC STAYS HOT WITH NOBODY TALKING INTO IT.
+ *
+ * The recogniser used to run until it was tapped off, restarting itself through
+ * every silence — which is right for a shopkeeper mid-dictation and wrong for
+ * every other minute of the day. An owner who tapped the mic, said nothing the
+ * phone could make sense of, and put the phone down left a red button pulsing
+ * on the counter with the microphone open, and the next thing it heard was a
+ * customer at the till.
+ *
+ * Worse, it is the failure that looks identical to success: when Chrome's
+ * speech service is reachable but deaf — no results, no error — the button says
+ * Listening forever and the owner concludes the app is broken. Turning itself
+ * off after a stretch of nothing is the app admitting it heard nothing, which
+ * is information; a button that pulses indefinitely is not.
+ *
+ * Measured from the last sign of a HUMAN VOICE, not from the last API event —
+ * `lastEventRef` is touched every few seconds by the silence restart cycle and
+ * would never expire. See `heardRef`.
+ */
+const IDLE_STOP_MS = 5_000;
+
+/** How often to check that. Well under the window, so the stop is not late. */
+const IDLE_CHECK_MS = 500;
+
 /** Long enough for Chrome to finish tearing a session down before the next. */
 const RESTART_DELAY_MS = 250;
 
@@ -75,6 +100,11 @@ export type VoiceErrorCode =
 export type UseVoiceOptions = {
   lang: VoiceLang;
   /**
+   * Silence, in milliseconds, after which the mic turns itself off. Defaults to
+   * `IDLE_STOP_MS`; pass 0 to let it run until it is tapped off.
+   */
+  idleStopMs?: number;
+  /**
    * Called once per completed sentence, with the recogniser's ranked guesses —
    * best first. Callers should try them all: on an unclear speaker the top
    * guess is often wrong where the second or third is exactly right.
@@ -82,7 +112,7 @@ export type UseVoiceOptions = {
   onPhrase: (alternatives: string[]) => void;
 };
 
-export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
+export function useVoice({ lang, onPhrase, idleStopMs = IDLE_STOP_MS }: UseVoiceOptions) {
   const [supported, setSupported] = useState(false);
   const [state, setState] = useState<VoiceState>('idle');
   const [errorCode, setErrorCode] = useState<VoiceErrorCode | null>(null);
@@ -95,6 +125,17 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
   const restartTimerRef = useRef<number | null>(null);
   /** When this recogniser last showed any sign of life. See `SILENT_LIMIT_MS`. */
   const lastEventRef = useRef(0);
+  /**
+   * When a human was last heard — the start of a phrase, or any syllable of
+   * one, interim or final.
+   *
+   * Deliberately NOT `lastEventRef`, which counts the session ending and
+   * restarting itself as life. That is life for the purpose of "has Chrome's
+   * speech service died", and the exact opposite of it for the purpose of "is
+   * anybody talking": a silent room touches `lastEventRef` every few seconds
+   * forever. See `IDLE_STOP_MS`.
+   */
+  const heardRef = useRef(0);
   const onPhraseRef = useRef(onPhrase);
   onPhraseRef.current = onPhrase;
   const langRef = useRef(lang);
@@ -180,13 +221,18 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
     const alive = () => {
       lastEventRef.current = Date.now();
     };
+    /** Alive, AND it was a person rather than the session cycling. */
+    const heard = () => {
+      lastEventRef.current = Date.now();
+      heardRef.current = Date.now();
+    };
 
     recognition.onstart = alive;
-    recognition.onspeechstart = alive;
+    recognition.onspeechstart = heard;
 
     recognition.onresult = (event: any) => {
       if (!current()) return;
-      alive();
+      heard();
 
       let pending = '';
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
@@ -293,6 +339,11 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
     recognitionRef.current = recognition;
     wantedRef.current = true;
     lastEventRef.current = Date.now();
+    // A fresh session is a fresh idle window. This is the user's tap, a
+    // language change, or the watchdog rebuilding a dead recogniser — in all
+    // three the owner deserves the full `IDLE_STOP_MS` to start talking, rather
+    // than inheriting the silence of whatever came before.
+    heardRef.current = Date.now();
     try {
       recognition.start();
       setState('listening');
@@ -385,6 +436,32 @@ export function useVoice({ lang, onPhrase }: UseVoiceOptions) {
 
     return () => window.clearInterval(timer);
   }, [state, launch]);
+
+  /**
+   * THE MIC THAT NOBODY IS TALKING INTO TURNS ITSELF OFF.
+   *
+   * Silence is not a state worth holding a microphone open for. See the
+   * argument at `IDLE_STOP_MS`; the short version is that a red button pulsing
+   * over an open mic on a shop counter is either a privacy problem or a lie
+   * about a recogniser that has stopped hearing, and it is never useful.
+   *
+   * No beep. The cues belong to `toggle()` and only to `toggle()` — a chirp the
+   * machine makes when it changes its own mind teaches nothing, and this fires
+   * after silence, where a sound would arrive out of nowhere. The button going
+   * from red back to green is the whole of the report, and it is on the screen
+   * the owner is already looking at.
+   */
+  useEffect(() => {
+    if (state !== 'listening' || idleStopMs <= 0) return;
+
+    const timer = window.setInterval(() => {
+      if (!wantedRef.current) return;
+      if (Date.now() - heardRef.current < idleStopMs) return;
+      stop();
+    }, IDLE_CHECK_MS);
+
+    return () => window.clearInterval(timer);
+  }, [state, idleStopMs, stop]);
 
   // Never leave the mic hot after the component goes away.
   useEffect(() => {

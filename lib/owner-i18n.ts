@@ -92,6 +92,13 @@ type OwnerDictionary = {
   rowsHint: string;
   /** Nothing was typed or spoken into any row, so Save had nothing to save. */
   nothingToSave: string;
+  /**
+   * Two rows of the add sheet name the same shelf. Said on the second row,
+   * because the first one is the one the owner is being sent back to.
+   */
+  duplicateRow: string;
+  /** The sheet cannot be saved while two rows name the same thing. */
+  duplicateRowsHint: string;
 
   searchItems: string;
   allCategories: string;
@@ -554,6 +561,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     addRow: 'One more row',
     rowsHint: 'Speak or type as many as you like — one row each. Save writes them all.',
     nothingToSave: 'Nothing to save yet — give at least one item a name.',
+    duplicateRow: 'already on a row above',
+    duplicateRowsHint:
+      'The same item is on two rows. One item can only have one price — keep the right one and remove the other.',
 
     searchItems: 'Search items',
     allCategories: 'All categories',
@@ -962,6 +972,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     addRow: 'আরও একটা ঘর',
     rowsHint: 'যত খুশি বলুন বা লিখুন — এক জিনিস এক ঘরে। সেভ করলে সবগুলো এক সঙ্গে যোগ হবে।',
     nothingToSave: 'এখনও কিছু নেই — অন্তত একটা জিনিসের নাম দিন।',
+    duplicateRow: 'উপরের ঘরে আগেই আছে',
+    duplicateRowsHint:
+      'একই জিনিস দুটো ঘরে আছে। এক জিনিসের একটাই দাম হয় — ঠিকটা রাখুন, অন্যটা মুছে দিন।',
 
     searchItems: 'জিনিস খুঁজুন',
     allCategories: 'সব ভাগ',
@@ -1353,6 +1366,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     addRow: 'एक और खाना',
     rowsHint: 'जितने चाहें बोलिए या लिखिए — एक सामान एक पंक्ति में। सेव करते ही सब जुड़ जाएंगे।',
     nothingToSave: 'अभी कुछ नहीं है — कम से कम एक सामान का नाम दीजिए।',
+    duplicateRow: 'ऊपर की पंक्ति में पहले से है',
+    duplicateRowsHint:
+      'एक ही सामान दो पंक्तियों में है। एक सामान का एक ही दाम होता है — सही वाला रखिए, दूसरा हटा दीजिए।',
 
     searchItems: 'सामान खोजें',
     allCategories: 'सभी श्रेणी',
