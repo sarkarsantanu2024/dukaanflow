@@ -137,11 +137,18 @@ export function VoiceItemAdder({
   slug,
   items,
   locale = 'en',
+  lean = false,
   onDraft,
 }: {
   slug: string;
   items: AdminItem[];
   locale?: Locale;
+  /**
+   * Simple mode. Drops the language picker and two of the three example lines
+   * — see the sites below, and `lib/simple-mode.ts` for the argument. Never set
+   * by the Super Admin console.
+   */
+  lean?: boolean;
   /**
    * Where the mic sits above a form, a new item fills that form instead of
    * saving on its own — the owner reads back what was heard, in the boxes they
@@ -484,34 +491,51 @@ export function VoiceItemAdder({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-semibold text-slate-900">{t.voiceTitle}</h2>
-            <select
-              value={lang}
-              onChange={(event) => changeLang(event.target.value as VoiceLang)}
-              aria-label={t.language}
-              className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm"
-            >
-              {VOICE_LANGS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            {/* LEAN: no language picker. It already defaults to the language
+                the owner set for the whole app, and a second language control
+                sitting beside the first one it agrees with is a question that
+                only makes an owner wonder whether they got the first one
+                wrong. The header's switch still moves both. */}
+            {!lean && (
+              <select
+                value={lang}
+                onChange={(event) => changeLang(event.target.value as VoiceLang)}
+                aria-label={t.language}
+                className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm"
+              >
+                {VOICE_LANGS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
             {busy && <span className="text-xs text-slate-400">{t.working}</span>}
           </div>
 
           <p className="mt-1 text-sm text-slate-600">
             {listening ? interim || t.voiceListening : t.voiceIdle}
           </p>
+          {/* LEAN: ONE example, and it is the one this sheet is open for.
+              Three lines teaching add, out-of-stock and remove is a manual, and
+              it is printed at the exact moment the owner has decided to add
+              something. The other two sentences work whether or not they are
+              listed here; they are taught on the item list, where an owner is
+              actually looking at a thing they want to mark finished. */}
           <ul className="mt-1 space-y-0.5 text-xs text-slate-400">
             <li>
               {t.labelAdd}: {t.voiceExampleAdd}
             </li>
-            <li>
-              {t.labelOut}: {t.voiceExampleOut}
-            </li>
-            <li>
-              {t.labelRemove}: {t.voiceExampleRemove}
-            </li>
+            {!lean && (
+              <>
+                <li>
+                  {t.labelOut}: {t.voiceExampleOut}
+                </li>
+                <li>
+                  {t.labelRemove}: {t.voiceExampleRemove}
+                </li>
+              </>
+            )}
           </ul>
 
           {errorCode && <p className="mt-2 text-sm text-red-600">{VOICE_ERRORS[errorCode]}</p>}

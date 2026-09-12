@@ -20,6 +20,7 @@ import { PlanBanner, type PlanState } from './PlanBanner';
 import { OpenInChromeNotice } from './OpenInChromeNotice';
 import { SubscriptionRoadblock, type RoadblockState } from './SubscriptionRoadblock';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { SimpleModeProvider, SimpleModeToggle } from './SimpleMode';
 
 export type OwnerTab = 'sell' | 'inventory' | 'khata' | 'orders';
 
@@ -108,6 +109,7 @@ export function OwnerShell({
   ];
 
   return (
+    <SimpleModeProvider slug={slug}>
     <div className="min-h-dvh pb-24">
       <OwnerHeader
         slug={slug}
@@ -123,6 +125,12 @@ export function OwnerShell({
         <OpenInChromeNotice locale={locale} />
         <PlanBanner slug={slug} locale={locale} plan={plan} />
         {children}
+
+        {/* The last thing on every owner screen, under whatever that screen is
+            about. One place, not four: an owner who finds it on the item list
+            has found it on the till and the khata too, which is the difference
+            between a setting and a trick you have to remember per screen. */}
+        <SimpleModeToggle simpleLabel={t.simpleModeOn} fullLabel={t.simpleModeOff} />
       </main>
 
       <nav
@@ -155,5 +163,6 @@ export function OwnerShell({
           banner with extra steps. */}
       {roadblock && <SubscriptionRoadblock slug={slug} locale={locale} state={roadblock} />}
     </div>
+    </SimpleModeProvider>
   );
 }
