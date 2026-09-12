@@ -911,7 +911,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataStatement: 'Statement',
 
     offline: 'No internet',
-    offlineHint: 'Showing what was on this phone. It will catch up when the signal comes back.',
+    offlineHint: 'Showing what was on this phone. Nothing can be added or changed until the signal is back.',
   },
 
   bn: {
@@ -1308,7 +1308,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataStatement: 'হিসাব',
 
     offline: 'ইন্টারনেট নেই',
-    offlineHint: 'ফোনে যা ছিল তাই দেখানো হচ্ছে। নেট এলে নিজেই ঠিক হয়ে যাবে।',
+    offlineHint: 'ফোনে যা ছিল তাই দেখানো হচ্ছে। নেট না আসা পর্যন্ত নতুন কিছু যোগ বা বদল করা যাবে না।',
   },
 
   hi: {
@@ -1705,7 +1705,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataStatement: 'हिसाब',
 
     offline: 'इंटरनेट नहीं है',
-    offlineHint: 'फोन में जो था वही दिख रहा है। नेट आते ही अपने आप ठीक हो जाएगा।',
+    offlineHint: 'फोन में जो था वही दिख रहा है। नेट आने तक कुछ जोड़ या बदल नहीं सकते।',
   },
 };
 
