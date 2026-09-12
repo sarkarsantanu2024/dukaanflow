@@ -100,6 +100,14 @@ type OwnerDictionary = {
   /** The sheet cannot be saved while two rows name the same thing. */
   duplicateRowsHint: string;
 
+  /* --- Simple mode. See `lib/simple-mode.ts` for what it is and why. --- */
+  /** Offered while the full app is showing: the way back to the quiet screen. */
+  simpleModeOn: string;
+  /** Offered while in simple mode: the way to everything else. */
+  simpleModeOff: string;
+  /** Heads the fold that holds what simple mode put away on this screen. */
+  moreSettings: string;
+
   searchItems: string;
   allCategories: string;
   inStock: string;
@@ -564,6 +572,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     duplicateRow: 'already on a row above',
     duplicateRowsHint:
       'The same item is on two rows. One item can only have one price — keep the right one and remove the other.',
+    simpleModeOn: 'Show less',
+    simpleModeOff: 'Show everything',
+    moreSettings: 'More settings',
 
     searchItems: 'Search items',
     allCategories: 'All categories',
@@ -975,6 +986,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     duplicateRow: 'উপরের ঘরে আগেই আছে',
     duplicateRowsHint:
       'একই জিনিস দুটো ঘরে আছে। এক জিনিসের একটাই দাম হয় — ঠিকটা রাখুন, অন্যটা মুছে দিন।',
+    simpleModeOn: 'কম দেখান',
+    simpleModeOff: 'সব দেখান',
+    moreSettings: 'আরও সেটিং',
 
     searchItems: 'জিনিস খুঁজুন',
     allCategories: 'সব ভাগ',
@@ -1369,6 +1383,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     duplicateRow: 'ऊपर की पंक्ति में पहले से है',
     duplicateRowsHint:
       'एक ही सामान दो पंक्तियों में है। एक सामान का एक ही दाम होता है — सही वाला रखिए, दूसरा हटा दीजिए।',
+    simpleModeOn: 'कम दिखाइए',
+    simpleModeOff: 'सब दिखाइए',
+    moreSettings: 'और सेटिंग',
 
     searchItems: 'सामान खोजें',
     allCategories: 'सभी श्रेणी',
