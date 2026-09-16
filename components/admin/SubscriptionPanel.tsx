@@ -53,7 +53,20 @@ export type SubscriptionState = {
   plan: Plan;
   status: SubStatus;
   itemCount: number;
+  /** The limit IN FORCE today — a trial's or a custom deal's, not the plan's. */
   itemLimit: number;
+  /**
+   * The plan name in force today, which is not always `plan`.
+   *
+   * A trial grants the top tier whatever the shop is stored as, and a custom
+   * deal replaces both the name and the limit. The panel used to print the
+   * STORED plan beside the EFFECTIVE limit, so a trialling Basic shop read
+   * "Basic · 9 / 1000 items" and looked broken — which is exactly how a real
+   * billing bug got noticed, and exactly how a real one could hide.
+   */
+  effectivePlanName: string;
+  /** Days of free trial left, or null when the shop is not on one. */
+  trialDaysLeft: number | null;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
   /** A price agreed with this one shop, or nulls when it is on the ladder. */
@@ -79,13 +92,27 @@ const STATUS_TONE: Record<SubStatus, string> = {
 };
 
 /** A labelled block, so each job on this card is visibly a separate job. */
+/**
+ * One control, with the situation it is for written above it.
+ *
+ * THE `when` LINE IS THE POINT OF THIS COMPONENT. There are five money controls
+ * on this panel and an operator arrives at it holding a phone, mid-call, with a
+ * shopkeeper's problem — not with a data model. Titles like "Listing service"
+ * and "Custom price for this shop" describe what the control IS, which is only
+ * useful to somebody who already knows which one they need. `when` describes
+ * the call: "they paid you directly", "they asked for more free time". Read
+ * down the panel, the five of them are a list of the situations that exist.
+ */
 function Block({
   title,
+  when,
   hint,
   children,
   tone = 'plain',
 }: {
   title: string;
+  /** The situation this control is for, in the operator's own words. */
+  when?: string;
   hint?: string;
   children: React.ReactNode;
   tone?: 'plain' | 'quiet';
@@ -97,6 +124,9 @@ function Block({
         tone === 'quiet' ? 'border-slate-200 bg-slate-50/60' : 'border-slate-200',
       )}
     >
+      {when && (
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">{when}</p>
+      )}
       <h3 className="text-sm font-bold text-slate-900">{title}</h3>
       {hint && <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{hint}</p>}
       <div className="mt-3">{children}</div>
@@ -246,7 +276,18 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
     <section className="rounded-2xl bg-white p-4 shadow-card">
       {dialog}
 
-      {/* ---- 1. Where this shop stands ---- */}
+      {/* ---- 1. WHERE THIS SHOP STANDS ----
+           Three facts, each labelled with WHICH KIND of fact it is, because
+           the panel's worst failure was printing two of them as if they were
+           one. The stored plan sat beside the effective limit, so a trialling
+           Basic shop read "Basic · 9 / 1000 items" — and the operator could
+           not tell whether that was a bug, a custom deal, or the trial doing
+           what trials do. It was the trial. It could have been a bug, and
+           nothing on the screen would have said so.
+
+           So: what the shop HAS today, then what it RETURNS TO when today's
+           reason ends, then WHEN that is. Only the middle line is conditional,
+           and it appears exactly when the two disagree. */}
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="mr-auto font-semibold text-slate-900">Subscription</h2>
         <span
@@ -254,25 +295,20 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
         >
           {state.status}
         </span>
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-          {PLAN_SPECS[state.plan].name}
-        </span>
       </div>
 
-      <div className="mt-3">
-        <div className="flex items-baseline justify-between text-sm">
-          <span className="font-medium tabular-nums text-slate-800">
-            {state.itemCount} / {state.itemLimit} items
+      <div className="mt-3 rounded-xl bg-slate-50 p-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          In force today
+        </p>
+        <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+          <span className="text-lg font-bold text-slate-900">{state.effectivePlanName}</span>
+          <span className="text-sm tabular-nums text-slate-600">
+            {state.itemCount} of {state.itemLimit} items used
           </span>
-          <span className="text-slate-500">
-            {state.currentPeriodEnd
-              ? `Paid to ${formatDay(state.currentPeriodEnd)}`
-              : state.trialEndsAt
-                ? `Trial to ${formatDay(state.trialEndsAt)}`
-                : 'No paid period'}
-          </span>
-        </div>
-        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+        </p>
+
+        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-200">
           <div
             className={clsx(
               'h-full rounded-full transition-all',
@@ -281,16 +317,75 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             style={{ width: `${Math.max(3, usage * 100)}%` }}
           />
         </div>
+
+        {/* WHY IT DIFFERS, whenever it does. A free trial grants the top tier
+            and a custom deal replaces the ladder entirely; both are legitimate
+            and both look identical to a billing fault until something says
+            which it is. */}
+        {state.effectivePlanName !== PLAN_SPECS[state.plan].name && (
+          <p className="mt-2 text-xs text-slate-600">
+            {state.trialDaysLeft !== null ? (
+              <>
+                Free trial — the top plan while deciding. Reverts to{' '}
+                <strong>{PLAN_SPECS[state.plan].name}</strong> when it ends.
+              </>
+            ) : (
+              <>
+                A price agreed with this shop. Stored plan is{' '}
+                <strong>{PLAN_SPECS[state.plan].name}</strong>.
+              </>
+            )}
+          </p>
+        )}
+
+        {/* THE TWO DATES ARE DIFFERENT FACTS AND ARE SHOWN AS TWO.
+            They shared one slot, so a shop with paid time AND a live trial
+            showed only one of them — which is how a paying shop quietly
+            running on a trial's entitlement stayed invisible. */}
+        <dl className="mt-2.5 space-y-0.5 border-t border-slate-200 pt-2 text-xs">
+          <div className="flex justify-between gap-2">
+            <dt className="text-slate-500">Paid to</dt>
+            <dd className="font-medium tabular-nums text-slate-800">
+              {state.currentPeriodEnd ? formatDay(state.currentPeriodEnd) : 'never paid'}
+            </dd>
+          </div>
+          {state.trialEndsAt && (
+            <div className="flex justify-between gap-2">
+              <dt className="text-slate-500">Free trial to</dt>
+              <dd className="font-medium tabular-nums text-slate-800">
+                {formatDay(state.trialEndsAt)}
+                {state.trialDaysLeft !== null && (
+                  <span className="ml-1 font-normal text-slate-500">
+                    · {state.trialDaysLeft} day{state.trialDaysLeft === 1 ? '' : 's'} left
+                  </span>
+                )}
+              </dd>
+            </div>
+          )}
+        </dl>
       </div>
 
       {/* ---- 2. Record a payment ---- */}
       <Block
+        when="They paid you"
         title="Record a payment"
         hint="For a shop that paid you in cash or over the phone. A shop that pays from its own app comes through Payments instead, and you issue a code there."
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1 block text-sm font-semibold text-slate-700">Plan</span>
+            {/* "Plan" alone was the confusion: the badge above also says a plan,
+                and the two are different kinds of thing. This one is a choice
+                the operator is making right now — and it silently drives the
+                prices below AND the placeholders in the custom-price box, so
+                moving it makes three other numbers change with no explanation.
+                Saying whose plan it is, and what the shop is on now, costs one
+                line and settles all of it. */}
+            <span className="mb-1 block text-sm font-semibold text-slate-700">
+              Plan to record{' '}
+              <span className="font-normal text-slate-500">
+                · shop is on {PLAN_SPECS[state.plan].name}
+              </span>
+            </span>
             <select
               value={plan}
               onChange={(event) => setPlan(event.target.value as Plan)}
@@ -401,6 +496,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
           by an operator who thinks they are recording a renewal. */}
       <Block
         tone="quiet"
+        when="You catalogued their items"
         title="Listing service"
         hint={`Charged when we catalogue the shop's items for them. ${formatPaise(
           LISTING_PAISE_PER_ITEM,
@@ -435,38 +531,30 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
         </div>
       </Block>
 
-      {/* ---- 4. Corrections ---- */}
-      {/* Last, quiet, and away from the money. These move a shop's state
-          without any payment behind it, and one of them takes an owner's
-          ability to edit their shop away today. */}
+      {/* ---- 4. More free trial ----
+           Its own control rather than a line inside Corrections, because it is
+           not a correction. Corrections put right something that went wrong;
+           this GIVES a shop something, at its owner's asking, and grouping the
+           two taught an operator to look for generosity in the same place as
+           "cancel this subscription". */}
       <Block
-        tone="quiet"
-        title="Corrections"
-        hint="Changes this shop's state without recording any money."
+        when="They asked for more free time"
+        title="Extend the trial"
+        hint="Free days, at the owner's request. Records no payment and buys no plan time. Counted from the trial's own end or today, whichever is later, so answering late still gives the full run. Not available once a shop has paid — use a custom price instead."
       >
-        {/* MORE FREE TRIAL, AT THE OWNER'S ASKING.
-            Shops ask, and until now the only answers were "no" or a fake
-            payment — which puts money in the month's takings that nobody was
-            given. This records nothing and buys nothing; it moves one date.
-
-            Counted from whichever is later, the trial's own end or today, so an
-            operator who answers the WhatsApp message two days late still gives
-            the full week they said they would. */}
-        <div className="mb-3 flex flex-wrap items-end gap-2 rounded-xl bg-white p-2.5 ring-1 ring-slate-200">
-          <label className="text-xs font-medium text-slate-600">
-            <span className="mb-1 block">Extend trial</span>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="text-xs font-semibold text-slate-700">
+            <span className="mb-1 block">Days</span>
             <input
               type="number"
               min={1}
               max={90}
               value={trialDays}
               onChange={(event) => setTrialDays(event.target.value)}
-              className="h-9 w-20 rounded-lg border border-slate-300 px-2 text-sm tabular-nums"
+              className="h-10 w-24 rounded-lg border border-slate-300 px-2 text-sm font-normal tabular-nums"
             />
           </label>
-          <span className="pb-2 text-xs text-slate-500">days</span>
           <Button
-            variant="secondary"
             size="sm"
             disabled={busy || !(Number(trialDays) > 0)}
             onClick={() =>
@@ -475,55 +563,12 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
           >
             Give the days
           </Button>
-          <p className="w-full text-xs text-slate-500">
-            Free time, recorded as no payment. Paid time is untouched.
-          </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={busy}
-            onClick={() => post({ plan, status: 'PAST_DUE' }, 'Marked past due')}
-          >
-            Mark past due
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={busy}
-            className="text-red-600 hover:bg-red-50"
-            onClick={async () => {
-              if (
-                !(await confirm({
-                  title: 'Cancel this subscription?',
-                  message:
-                    'The owner can no longer add or change items. Their shop page and QR keep working, and nothing is deleted.',
-                  confirmLabel: 'Cancel subscription',
-                  cancelLabel: 'Keep it',
-                  danger: true,
-                }))
-              ) {
-                return;
-              }
-              post({ plan, status: 'CANCELLED' }, 'Subscription cancelled');
-            }}
-          >
-            Cancel subscription
-          </Button>
-        </div>
-        <p className="mt-2 text-xs text-slate-600">
-          A lapsed shop keeps trading for {AUTO_PAUSE_DAYS} days — item editing stops after{' '}
-          {GRACE_DAYS}, but the QR and its customers carry on. After that the shop page goes to
-          the closed screen and no customer can see or order an item. Recording a payment reopens
-          it at once; nothing is deleted.
-        </p>
       </Block>
 
-      {/* ---- A price agreed with this shop alone ---- */}
+      {/* ---- 5. A price agreed with this shop alone ---- */}
       <Block
+        when="You agreed a special rate"
         title="Custom price for this shop"
         tone="quiet"
         hint="A rupee amount and an item limit agreed with this shop, instead of one of the four plans. Leave blank to put the shop back on the standard ladder. It takes effect when the trial ends."
@@ -629,6 +674,59 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             {state.customItemLimit ? ` · ${state.customItemLimit} items` : ''}
           </p>
         )}
+      </Block>
+
+      {/* ---- 6. Corrections ---- */}
+      {/* Last, quiet, and away from the money. These move a shop's state
+          without any payment behind it, and one of them takes an owner's
+          ability to edit their shop away today. */}
+      <Block
+        tone="quiet"
+        when="Something needs putting right"
+        title="Corrections"
+        hint="Changes this shop's state without recording any money."
+      >
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={busy}
+            onClick={() => post({ plan, status: 'PAST_DUE' }, 'Marked past due')}
+          >
+            Mark past due
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={busy}
+            className="text-red-600 hover:bg-red-50"
+            onClick={async () => {
+              if (
+                !(await confirm({
+                  title: 'Cancel this subscription?',
+                  message:
+                    'The owner can no longer add or change items. Their shop page and QR keep working, and nothing is deleted.',
+                  confirmLabel: 'Cancel subscription',
+                  cancelLabel: 'Keep it',
+                  danger: true,
+                }))
+              ) {
+                return;
+              }
+              post({ plan, status: 'CANCELLED' }, 'Subscription cancelled');
+            }}
+          >
+            Cancel subscription
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-slate-600">
+          A lapsed shop keeps trading for {AUTO_PAUSE_DAYS} days — item editing stops after{' '}
+          {GRACE_DAYS}, but the QR and its customers carry on. After that the shop page goes to
+          the closed screen and no customer can see or order an item. Recording a payment reopens
+          it at once; nothing is deleted.
+        </p>
       </Block>
 
       {state.payments.length > 0 && (
