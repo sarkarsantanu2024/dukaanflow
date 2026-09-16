@@ -259,13 +259,25 @@ export const GRACE_DAYS = 7;
 /**
  * Days a shop may go unpaid before its storefront is taken offline.
  *
- * Three months, and deliberately long. Losing editing is an inconvenience the
- * owner notices at once; taking the shop page down costs them real orders from
- * customers who did nothing wrong, so it is the last step, not the first. The
- * clock runs from the end of the last paid period — or from the end of the
+ * THIRTY, cut from ninety at the product owner's instruction.
+ *
+ * Ninety was chosen to protect the shopkeeper: taking a page down costs real
+ * orders from customers who did nothing wrong, so it was made the last step and
+ * a distant one. What it protected in practice was a shop trading for three
+ * months on a subscription it had stopped paying, which is not a grace period,
+ * it is a free tier nobody agreed to — and a lever that arrives three months
+ * late is not a lever.
+ *
+ * A month is still a month. The owner is warned before the period ends, loses
+ * editing after `GRACE_DAYS`, and has the rest of the thirty days to pay while
+ * the shop goes on trading. After that the page goes to the closed screen and
+ * no customer can see or order an item — and it reopens the instant a payment
+ * is recorded, because nothing here is a deletion.
+ *
+ * The clock runs from the end of the last paid period — or from the end of the
  * trial for a shop that never paid at all.
  */
-export const AUTO_PAUSE_DAYS = 90;
+export const AUTO_PAUSE_DAYS = 30;
 
 export type ShopBilling = {
   plan: Plan;
