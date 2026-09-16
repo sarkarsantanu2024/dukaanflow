@@ -84,7 +84,12 @@ const GROCERY: StarterItem[] = [
   { name: 'Kabuli Chana', nameBn: 'কাবুলি ছোলা', nameHi: 'काबुली चना', unit: '500 g', pricePaise: 6000, category: 'Dal & Pulses' },
   { name: 'Kala Chana', nameBn: 'কালো ছোলা', nameHi: 'काला चना', unit: '500 g', pricePaise: 4500, category: 'Dal & Pulses' },
   { name: 'Matar', nameBn: 'মটর', nameHi: 'मटर', unit: '500 g', pricePaise: 4000, category: 'Dal & Pulses' },
-  { name: 'Soyabean', nameBn: 'সয়াবিন', nameHi: 'सोयाबीन', unit: '200 g', pricePaise: 2500, category: 'Dal & Pulses' },
+  // Staples, not Dal & Pulses. What a kirana sells as "soyabean" is the dried
+  // nugget — soya badi — which is cooked as a vegetable or a curry and never as
+  // a dal. Botanically it is a legume and that is how it got filed here; a
+  // shopper looking under ডাল for it, or finding it there among the masoor and
+  // the moong, is being told something untrue about how it is used.
+  { name: 'Soyabean', nameBn: 'সয়াবিন', nameHi: 'सोयाबीन', unit: '200 g', pricePaise: 2500, category: 'Staples' },
 
   // Staples
   { name: 'Sugar', nameBn: 'চিনি', nameHi: 'चीनी', unit: '1 kg', pricePaise: 4800, category: 'Staples' },
@@ -215,6 +220,200 @@ const GROCERY: StarterItem[] = [
   { name: 'Face Cream', nameBn: 'ফেস ক্রিম', nameHi: 'फेस क्रीम', unit: '', pricePaise: 8000, category: 'Personal Care' },
   { name: 'Razor', nameBn: 'রেজার', nameHi: 'रेजर', unit: '1 pc', pricePaise: 3000, category: 'Personal Care' },
   { name: 'Sanitary Pad', nameBn: 'স্যানিটারি প্যাড', nameHi: 'सैनिटरी पैड', unit: '', pricePaise: 5000, category: 'Personal Care' },
+
+  /* ----------------------------------------------------------------------
+   * THE SECOND TRANCHE, taking this list to three hundred.
+   *
+   * A hundred and thirty was enough to prove the idea and not enough to be
+   * the answer: an owner ticked what was there, still faced forty things to
+   * dictate, and stopped. Three hundred is the size at which a West Bengal
+   * kirana can tick its way to a working shop and type almost nothing.
+   *
+   * Chosen as what actually moves off a para shelf — the everyday and the
+   * middling, not the long tail. Bengali kitchens are the bias throughout,
+   * because that is where the shops are: posto, kasundi, mocha, thor, potol,
+   * kul, mishti doi and gobindobhog belong on a Kolkata list and would be
+   * noise in Gujarat.
+   *
+   * Four headings are new. Beverages, Baby Care, Puja Items and Stationery
+   * are real aisles in a kirana and were landing under "Other", which is the
+   * one heading that tells a customer nothing.
+   *
+   * THE PRICES ARE A STARTING POINT AND NOTHING MORE — see the note at the
+   * top of this file. They are typical Kolkata retail for the pack size
+   * given, they are stale the day they are written, and every one of them is
+   * `priced: false` until the owner says the number is right.
+   * -------------------------------------------------------------------- */
+  { name: 'Miniket Rice', nameBn: 'মিনিকেট চাল', nameHi: 'मिनिकेट चावल', unit: '1 kg', pricePaise: 6000, category: 'Rice & Atta' },
+  { name: 'Swarna Rice', nameBn: 'স্বর্ণ চাল', nameHi: 'स्वर्ण चावल', unit: '1 kg', pricePaise: 4200, category: 'Rice & Atta' },
+  { name: 'Ratna Rice', nameBn: 'রত্না চাল', nameHi: 'रत्ना चावल', unit: '1 kg', pricePaise: 4500, category: 'Rice & Atta' },
+  { name: 'Kaminibhog Rice', nameBn: 'কামিনীভোগ চাল', nameHi: 'कामिनीभोग चावल', unit: '1 kg', pricePaise: 8500, category: 'Rice & Atta' },
+  { name: 'Sona Masoori Rice', nameBn: 'সোনা মসুরি চাল', nameHi: 'सोना मसूरी चावल', unit: '1 kg', pricePaise: 6500, category: 'Rice & Atta' },
+  { name: 'Broken Rice', nameBn: 'খুদ', nameHi: 'खुद चावल', unit: '1 kg', pricePaise: 3200, category: 'Rice & Atta' },
+  { name: 'Wheat', nameBn: 'গম', nameHi: 'गेहूं', unit: '1 kg', pricePaise: 3200, category: 'Rice & Atta' },
+  { name: 'Semai', nameBn: 'সেমাই', nameHi: 'सेवई', unit: '200 g', pricePaise: 3000, category: 'Rice & Atta' },
+  { name: 'Corn Flour', nameBn: 'কর্ন ফ্লাওয়ার', nameHi: 'कॉर्न फ्लोर', unit: '100 g', pricePaise: 2500, category: 'Rice & Atta' },
+  { name: 'Oats', nameBn: 'ওটস', nameHi: 'ओट्स', unit: '500 g', pricePaise: 9000, category: 'Rice & Atta' },
+  { name: 'Cornflakes', nameBn: 'কর্নফ্লেক্স', nameHi: 'कॉर्नफ्लेक्स', unit: '250 g', pricePaise: 9500, category: 'Rice & Atta' },
+  { name: 'Red Poha', nameBn: 'লাল চিঁড়ে', nameHi: 'लाल पोहा', unit: '500 g', pricePaise: 4000, category: 'Rice & Atta' },
+  { name: 'Matar Dal', nameBn: 'মটর ডাল', nameHi: 'मटर दाल', unit: '500 g', pricePaise: 3500, category: 'Dal & Pulses' },
+  { name: 'Sabut Moong', nameBn: 'গোটা মুগ', nameHi: 'साबुत मूंग', unit: '500 g', pricePaise: 6500, category: 'Dal & Pulses' },
+  { name: 'Sabut Masoor', nameBn: 'গোটা মুসুর', nameHi: 'साबुत मसूर', unit: '500 g', pricePaise: 5500, category: 'Dal & Pulses' },
+  { name: 'Sabut Urad', nameBn: 'গোটা বিউলি', nameHi: 'साबुत उड़द', unit: '500 g', pricePaise: 7500, category: 'Dal & Pulses' },
+  { name: 'Lobia', nameBn: 'বরবটি বীজ', nameHi: 'लोबिया', unit: '500 g', pricePaise: 6000, category: 'Dal & Pulses' },
+  { name: 'White Peas', nameBn: 'সাদা মটর', nameHi: 'सफ़ेद मटर', unit: '500 g', pricePaise: 4000, category: 'Dal & Pulses' },
+  { name: 'Soya Chunks', nameBn: 'সয়া বড়ি', nameHi: 'सोया बड़ी', unit: '200 g', pricePaise: 3000, category: 'Dal & Pulses' },
+  { name: 'Moong Sprouts', nameBn: 'মুগ অঙ্কুর', nameHi: 'मूंग स्प्राउट्स', unit: '250 g', pricePaise: 4000, category: 'Dal & Pulses' },
+  { name: 'Misri', nameBn: 'মিছরি', nameHi: 'मिश्री', unit: '250 g', pricePaise: 4000, category: 'Staples' },
+  { name: 'Tamarind', nameBn: 'তেঁতুল', nameHi: 'इमली', unit: '250 g', pricePaise: 4500, category: 'Staples' },
+  { name: 'Vinegar', nameBn: 'ভিনিগার', nameHi: 'सिरका', unit: '200 ml', pricePaise: 3000, category: 'Staples' },
+  { name: 'Baking Soda', nameBn: 'খাবার সোডা', nameHi: 'खाने का सोडा', unit: '100 g', pricePaise: 2000, category: 'Staples' },
+  { name: 'Baking Powder', nameBn: 'বেকিং পাউডার', nameHi: 'बेकिंग पाउडर', unit: '100 g', pricePaise: 3500, category: 'Staples' },
+  { name: 'Yeast', nameBn: 'ইস্ট', nameHi: 'यीस्ट', unit: '50 g', pricePaise: 4000, category: 'Staples' },
+  { name: 'Rock Salt', nameBn: 'সৈন্ধব লবণ', nameHi: 'सेंधा नमक', unit: '500 g', pricePaise: 3000, category: 'Staples' },
+  { name: 'Custard Powder', nameBn: 'কাস্টার্ড পাউডার', nameHi: 'कस्टर्ड पाउडर', unit: '100 g', pricePaise: 4000, category: 'Staples' },
+  { name: 'Til Oil', nameBn: 'তিল তেল', nameHi: 'तिल का तेल', unit: '500 ml', pricePaise: 18000, category: 'Oil & Ghee' },
+  { name: 'Groundnut Oil', nameBn: 'চিনাবাদাম তেল', nameHi: 'मूंगफली का तेल', unit: '1 l', pricePaise: 21000, category: 'Oil & Ghee' },
+  { name: 'Palm Oil', nameBn: 'পাম তেল', nameHi: 'पाम तेल', unit: '1 l', pricePaise: 12000, category: 'Oil & Ghee' },
+  { name: 'Olive Oil', nameBn: 'অলিভ অয়েল', nameHi: 'जैतून का तेल', unit: '500 ml', pricePaise: 45000, category: 'Oil & Ghee' },
+  { name: 'White Butter', nameBn: 'সাদা মাখন', nameHi: 'सफ़ेद मक्खन', unit: '200 g', pricePaise: 10000, category: 'Oil & Ghee' },
+  { name: 'Posto', nameBn: 'পোস্ত', nameHi: 'खसखस', unit: '100 g', pricePaise: 15000, category: 'Spices' },
+  { name: 'Kalonji', nameBn: 'কালোজিরে', nameHi: 'कलौंजी', unit: '100 g', pricePaise: 4000, category: 'Spices' },
+  { name: 'Chat Masala', nameBn: 'চাট মশলা', nameHi: 'चाट मसाला', unit: '100 g', pricePaise: 4500, category: 'Spices' },
+  { name: 'Kitchen King Masala', nameBn: 'কিচেন কিং মশলা', nameHi: 'किचन किंग मसाला', unit: '100 g', pricePaise: 8000, category: 'Spices' },
+  { name: 'Meat Masala', nameBn: 'মাংসের মশলা', nameHi: 'मीट मसाला', unit: '100 g', pricePaise: 8500, category: 'Spices' },
+  { name: 'Fish Masala', nameBn: 'মাছের মশলা', nameHi: 'मछली मसाला', unit: '100 g', pricePaise: 8000, category: 'Spices' },
+  { name: 'Biryani Masala', nameBn: 'বিরিয়ানি মশলা', nameHi: 'बिरयानी मसाला', unit: '100 g', pricePaise: 9000, category: 'Spices' },
+  { name: 'Tandoori Masala', nameBn: 'তন্দুরি মশলা', nameHi: 'तंदूरी मसाला', unit: '100 g', pricePaise: 8500, category: 'Spices' },
+  { name: 'Amchur', nameBn: 'আমচুর', nameHi: 'अमचूर', unit: '100 g', pricePaise: 4500, category: 'Spices' },
+  { name: 'Star Anise', nameBn: 'চক্র ফুল', nameHi: 'चक्र फूल', unit: '50 g', pricePaise: 9000, category: 'Spices' },
+  { name: 'Nutmeg', nameBn: 'জায়ফল', nameHi: 'जायफल', unit: '50 g', pricePaise: 12000, category: 'Spices' },
+  { name: 'Mace', nameBn: 'জয়িত্রী', nameHi: 'जावित्री', unit: '25 g', pricePaise: 15000, category: 'Spices' },
+  { name: 'White Pepper', nameBn: 'সাদা গোলমরিচ', nameHi: 'सफ़ेद काली मिर्च', unit: '50 g', pricePaise: 14000, category: 'Spices' },
+  { name: 'Ginger Garlic Paste', nameBn: 'আদা রসুন বাটা', nameHi: 'अदरक लहसुन पेस्ट', unit: '200 g', pricePaise: 6000, category: 'Spices' },
+  { name: 'Mustard Paste', nameBn: 'সরষে বাটা', nameHi: 'सरसों पेस्ट', unit: '200 g', pricePaise: 5500, category: 'Spices' },
+  { name: 'Kasundi', nameBn: 'কাসুন্দি', nameHi: 'कासुंदी', unit: '200 g', pricePaise: 6500, category: 'Spices' },
+  { name: 'Sweet Potato', nameBn: 'রাঙা আলু', nameHi: 'शकरकंद', unit: '1 kg', pricePaise: 5000, category: 'Vegetables' },
+  { name: 'Kochu', nameBn: 'কচু', nameHi: 'अरबी', unit: '500 g', pricePaise: 3000, category: 'Vegetables' },
+  { name: 'Ol', nameBn: 'ওল', nameHi: 'सूरन', unit: '500 g', pricePaise: 3500, category: 'Vegetables' },
+  { name: 'Potol', nameBn: 'পটল', nameHi: 'परवल', unit: '500 g', pricePaise: 3000, category: 'Vegetables' },
+  { name: 'Chichinga', nameBn: 'চিচিঙ্গা', nameHi: 'चिचिंडा', unit: '500 g', pricePaise: 2500, category: 'Vegetables' },
+  { name: 'Kundri', nameBn: 'কুঁদরি', nameHi: 'कुंदरू', unit: '250 g', pricePaise: 2000, category: 'Vegetables' },
+  { name: 'Mocha', nameBn: 'মোচা', nameHi: 'केले का फूल', unit: '1 pc', pricePaise: 4000, category: 'Vegetables' },
+  { name: 'Thor', nameBn: 'থোড়', nameHi: 'केले का तना', unit: '1 pc', pricePaise: 3000, category: 'Vegetables' },
+  { name: 'Sheem', nameBn: 'শিম', nameHi: 'सेम', unit: '500 g', pricePaise: 3500, category: 'Vegetables' },
+  { name: 'Cluster Beans', nameBn: 'ঝিঙা শিম', nameHi: 'ग्वार फली', unit: '250 g', pricePaise: 2500, category: 'Vegetables' },
+  { name: 'Spring Onion', nameBn: 'পেঁয়াজ কলি', nameHi: 'हरा प्याज', unit: '250 g', pricePaise: 2000, category: 'Vegetables' },
+  { name: 'Mint Leaves', nameBn: 'পুদিনা পাতা', nameHi: 'पुदीना', unit: '100 g', pricePaise: 1500, category: 'Vegetables' },
+  { name: 'Curry Leaves', nameBn: 'কারিপাতা', nameHi: 'करी पत्ता', unit: '50 g', pricePaise: 1000, category: 'Vegetables' },
+  { name: 'Methi Saag', nameBn: 'মেথি শাক', nameHi: 'मेथी साग', unit: '250 g', pricePaise: 2000, category: 'Vegetables' },
+  { name: 'Lal Shak', nameBn: 'লাল শাক', nameHi: 'लाल साग', unit: '1 bunch', pricePaise: 1500, category: 'Vegetables' },
+  { name: 'Pui Shak', nameBn: 'পুঁই শাক', nameHi: 'पोई साग', unit: '1 bunch', pricePaise: 1500, category: 'Vegetables' },
+  { name: 'Mushroom', nameBn: 'মাশরুম', nameHi: 'मशरूम', unit: '200 g', pricePaise: 5000, category: 'Vegetables' },
+  { name: 'Sweet Corn', nameBn: 'মিষ্টি ভুট্টা', nameHi: 'मीठा भुट्टा', unit: '1 pc', pricePaise: 2500, category: 'Vegetables' },
+  { name: 'Pineapple', nameBn: 'আনারস', nameHi: 'अनानास', unit: '1 pc', pricePaise: 6000, category: 'Fruits' },
+  { name: 'Litchi', nameBn: 'লিচু', nameHi: 'लीची', unit: '500 g', pricePaise: 9000, category: 'Fruits' },
+  { name: 'Jackfruit', nameBn: 'কাঁঠাল', nameHi: 'कटहल', unit: '1 kg', pricePaise: 6000, category: 'Fruits' },
+  { name: 'Custard Apple', nameBn: 'আতা', nameHi: 'सीताफल', unit: '500 g', pricePaise: 8000, category: 'Fruits' },
+  { name: 'Sapota', nameBn: 'সবেদা', nameHi: 'चीकू', unit: '500 g', pricePaise: 5000, category: 'Fruits' },
+  { name: 'Pear', nameBn: 'নাশপাতি', nameHi: 'नाशपाती', unit: '500 g', pricePaise: 9000, category: 'Fruits' },
+  { name: 'Mosambi', nameBn: 'মোসাম্বি', nameHi: 'मौसमी', unit: '1 kg', pricePaise: 8000, category: 'Fruits' },
+  { name: 'Jamun', nameBn: 'জাম', nameHi: 'जामुन', unit: '500 g', pricePaise: 8000, category: 'Fruits' },
+  { name: 'Kul', nameBn: 'কুল', nameHi: 'बेर', unit: '500 g', pricePaise: 5000, category: 'Fruits' },
+  { name: 'Musk Melon', nameBn: 'ফুটি', nameHi: 'खरबूजा', unit: '1 kg', pricePaise: 5000, category: 'Fruits' },
+  { name: 'Mishti Doi', nameBn: 'মিষ্টি দই', nameHi: 'मीठा दही', unit: '200 g', pricePaise: 4000, category: 'Dairy' },
+  { name: 'Buttermilk', nameBn: 'ঘোল', nameHi: 'छाछ', unit: '200 ml', pricePaise: 2000, category: 'Dairy' },
+  { name: 'Lassi', nameBn: 'লস্যি', nameHi: 'लस्सी', unit: '200 ml', pricePaise: 2500, category: 'Dairy' },
+  { name: 'Fresh Cream', nameBn: 'ফ্রেশ ক্রিম', nameHi: 'फ्रेश क्रीम', unit: '200 ml', pricePaise: 8000, category: 'Dairy' },
+  { name: 'Khoya', nameBn: 'ক্ষীর', nameHi: 'खोया', unit: '250 g', pricePaise: 12000, category: 'Dairy' },
+  { name: 'Flavoured Milk', nameBn: 'ফ্লেভারড দুধ', nameHi: 'फ्लेवर्ड दूध', unit: '200 ml', pricePaise: 3000, category: 'Dairy' },
+  { name: 'Ice Cream', nameBn: 'আইসক্রিম', nameHi: 'आइसक्रीम', unit: '500 ml', pricePaise: 15000, category: 'Dairy' },
+  { name: 'Tea Bags', nameBn: 'টি ব্যাগ', nameHi: 'टी बैग', unit: '25 pc', pricePaise: 9000, category: 'Tea & Coffee' },
+  { name: 'Darjeeling Tea', nameBn: 'দার্জিলিং চা', nameHi: 'दार्जिलिंग चाय', unit: '250 g', pricePaise: 25000, category: 'Tea & Coffee' },
+  { name: 'Assam Tea', nameBn: 'আসাম চা', nameHi: 'असम चाय', unit: '250 g', pricePaise: 14000, category: 'Tea & Coffee' },
+  { name: 'Masala Tea', nameBn: 'মশলা চা', nameHi: 'मसाला चाय', unit: '250 g', pricePaise: 16000, category: 'Tea & Coffee' },
+  { name: 'Instant Coffee', nameBn: 'ইনস্ট্যান্ট কফি', nameHi: 'इंस्टेंट कॉफ़ी', unit: '50 g', pricePaise: 18000, category: 'Tea & Coffee' },
+  { name: 'Soft Drink', nameBn: 'কোল্ড ড্রিংক', nameHi: 'कोल्ड ड्रिंक', unit: '600 ml', pricePaise: 4000, category: 'Beverages' },
+  { name: 'Fruit Juice', nameBn: 'ফলের রস', nameHi: 'फलों का रस', unit: '1 l', pricePaise: 11000, category: 'Beverages' },
+  { name: 'Mineral Water', nameBn: 'মিনারেল ওয়াটার', nameHi: 'मिनरल वाटर', unit: '1 l', pricePaise: 2000, category: 'Beverages' },
+  { name: 'Soda', nameBn: 'সোডা', nameHi: 'सोडा', unit: '750 ml', pricePaise: 2500, category: 'Beverages' },
+  { name: 'Energy Drink', nameBn: 'এনার্জি ড্রিংক', nameHi: 'एनर्जी ड्रिंक', unit: '250 ml', pricePaise: 5000, category: 'Beverages' },
+  { name: 'Glucose Powder', nameBn: 'গ্লুকোজ', nameHi: 'ग्लूकोज़', unit: '500 g', pricePaise: 10000, category: 'Beverages' },
+  { name: 'Squash', nameBn: 'স্কোয়াশ', nameHi: 'स्क्वैश', unit: '750 ml', pricePaise: 15000, category: 'Beverages' },
+  { name: 'Marie Biscuit', nameBn: 'মারি বিস্কুট', nameHi: 'मैरी बिस्कुट', unit: '250 g', pricePaise: 3500, category: 'Snacks' },
+  { name: 'Cream Biscuit', nameBn: 'ক্রিম বিস্কুট', nameHi: 'क्रीम बिस्कुट', unit: '100 g', pricePaise: 2000, category: 'Snacks' },
+  { name: 'Salt Biscuit', nameBn: 'নোনতা বিস্কুট', nameHi: 'नमकीन बिस्कुट', unit: '200 g', pricePaise: 3000, category: 'Snacks' },
+  { name: 'Cake', nameBn: 'কেক', nameHi: 'केक', unit: '1 pc', pricePaise: 3000, category: 'Snacks' },
+  { name: 'Nimki', nameBn: 'নিমকি', nameHi: 'निमकी', unit: '200 g', pricePaise: 4000, category: 'Snacks' },
+  { name: 'Bhujia', nameBn: 'ভুজিয়া', nameHi: 'भुजिया', unit: '200 g', pricePaise: 5000, category: 'Snacks' },
+  { name: 'Mixture', nameBn: 'মিক্সচার', nameHi: 'मिक्सचर', unit: '200 g', pricePaise: 4500, category: 'Snacks' },
+  { name: 'Popcorn', nameBn: 'পপকর্ন', nameHi: 'पॉपकॉर्न', unit: '100 g', pricePaise: 3000, category: 'Snacks' },
+  { name: 'Wafer', nameBn: 'ওয়েফার', nameHi: 'वेफर', unit: '75 g', pricePaise: 2000, category: 'Snacks' },
+  { name: 'Candy', nameBn: 'ক্যান্ডি', nameHi: 'कैंडी', unit: '100 g', pricePaise: 2500, category: 'Snacks' },
+  { name: 'Chewing Gum', nameBn: 'চুইংগাম', nameHi: 'च्युइंग गम', unit: '10 pc', pricePaise: 1000, category: 'Snacks' },
+  { name: 'Jam', nameBn: 'জ্যাম', nameHi: 'जैम', unit: '200 g', pricePaise: 8000, category: 'Snacks' },
+  { name: 'Pickle', nameBn: 'আচার', nameHi: 'अचार', unit: '200 g', pricePaise: 6000, category: 'Snacks' },
+  { name: 'Peanut', nameBn: 'চিনাবাদাম', nameHi: 'मूंगफली', unit: '250 g', pricePaise: 4000, category: 'Snacks' },
+  { name: 'Roasted Chana', nameBn: 'ভাজা ছোলা', nameHi: 'भुना चना', unit: '250 g', pricePaise: 4000, category: 'Snacks' },
+  { name: 'Pistachio', nameBn: 'পেস্তা', nameHi: 'पिस्ता', unit: '100 g', pricePaise: 12000, category: 'Dry Fruits' },
+  { name: 'Anjeer', nameBn: 'আঞ্জির', nameHi: 'अंजीर', unit: '100 g', pricePaise: 11000, category: 'Dry Fruits' },
+  { name: 'Apricot', nameBn: 'খুবানি', nameHi: 'खुबानी', unit: '100 g', pricePaise: 9000, category: 'Dry Fruits' },
+  { name: 'Makhana', nameBn: 'মাখানা', nameHi: 'मखाना', unit: '100 g', pricePaise: 9000, category: 'Dry Fruits' },
+  { name: 'Charmagaz', nameBn: 'চারমগজ', nameHi: 'चारमगज़', unit: '100 g', pricePaise: 8000, category: 'Dry Fruits' },
+  { name: 'Dry Coconut', nameBn: 'শুকনো নারকেল', nameHi: 'सूखा नारियल', unit: '200 g', pricePaise: 6000, category: 'Dry Fruits' },
+  { name: 'Detergent Powder', nameBn: 'ডিটারজেন্ট পাউডার', nameHi: 'डिटर्जेंट पाउडर', unit: '1 kg', pricePaise: 12000, category: 'Household' },
+  { name: 'Liquid Detergent', nameBn: 'লিকুইড ডিটারজেন্ট', nameHi: 'लिक्विड डिटर्जेंट', unit: '500 ml', pricePaise: 12000, category: 'Household' },
+  { name: 'Dishwash Liquid', nameBn: 'বাসন ধোয়ার লিকুইড', nameHi: 'बर्तन धोने का लिक्विड', unit: '500 ml', pricePaise: 11000, category: 'Household' },
+  { name: 'Scrubber', nameBn: 'স্ক্রাবার', nameHi: 'स्क्रबर', unit: '1 pc', pricePaise: 2000, category: 'Household' },
+  { name: 'Floor Cleaner', nameBn: 'মেঝে পরিষ্কারক', nameHi: 'फ़र्श क्लीनर', unit: '500 ml', pricePaise: 10000, category: 'Household' },
+  { name: 'Naphthalene Balls', nameBn: 'ন্যাপথলিন', nameHi: 'नेफ़थलीन', unit: '100 g', pricePaise: 3000, category: 'Household' },
+  { name: 'Mosquito Coil', nameBn: 'মশার কয়েল', nameHi: 'मच्छर कॉइल', unit: '10 pc', pricePaise: 4000, category: 'Household' },
+  { name: 'Mosquito Repellent', nameBn: 'মশা তাড়ানোর লিকুইড', nameHi: 'मच्छर भगाने वाला', unit: '45 ml', pricePaise: 8000, category: 'Household' },
+  { name: 'Room Freshener', nameBn: 'রুম ফ্রেশনার', nameHi: 'रूम फ्रेशनर', unit: '250 ml', pricePaise: 20000, category: 'Household' },
+  { name: 'Aluminium Foil', nameBn: 'অ্যালুমিনিয়াম ফয়েল', nameHi: 'एल्युमिनियम फॉयल', unit: '1 pc', pricePaise: 8000, category: 'Household' },
+  { name: 'Paper Napkin', nameBn: 'পেপার ন্যাপকিন', nameHi: 'पेपर नैपकिन', unit: '100 pc', pricePaise: 5000, category: 'Household' },
+  { name: 'Toilet Paper', nameBn: 'টয়লেট পেপার', nameHi: 'टॉयलेट पेपर', unit: '1 pc', pricePaise: 4500, category: 'Household' },
+  { name: 'Bleaching Powder', nameBn: 'ব্লিচিং পাউডার', nameHi: 'ब्लीचिंग पाउडर', unit: '500 g', pricePaise: 5000, category: 'Household' },
+  { name: 'Neel', nameBn: 'নীল', nameHi: 'नील', unit: '1 pc', pricePaise: 1500, category: 'Household' },
+  { name: 'Insect Killer', nameBn: 'পোকা মারার স্প্রে', nameHi: 'कीटनाशक स्प्रे', unit: '250 ml', pricePaise: 12000, category: 'Household' },
+  { name: 'Antiseptic Liquid', nameBn: 'অ্যান্টিসেপটিক লিকুইড', nameHi: 'एंटीसेप्टिक लिक्विड', unit: '250 ml', pricePaise: 14000, category: 'Personal Care' },
+  { name: 'Talcum Powder', nameBn: 'ট্যালকম পাউডার', nameHi: 'टैल्कम पाउडर', unit: '100 g', pricePaise: 6000, category: 'Personal Care' },
+  { name: 'Hand Wash', nameBn: 'হ্যান্ড ওয়াশ', nameHi: 'हैंड वाश', unit: '200 ml', pricePaise: 7000, category: 'Personal Care' },
+  { name: 'Sanitizer', nameBn: 'স্যানিটাইজার', nameHi: 'सैनिटाइज़र', unit: '100 ml', pricePaise: 5000, category: 'Personal Care' },
+  { name: 'Comb', nameBn: 'চিরুনি', nameHi: 'कंघी', unit: '1 pc', pricePaise: 2000, category: 'Personal Care' },
+  { name: 'Nail Cutter', nameBn: 'নেল কাটার', nameHi: 'नेल कटर', unit: '1 pc', pricePaise: 3000, category: 'Personal Care' },
+  { name: 'Shaving Cream', nameBn: 'শেভিং ক্রিম', nameHi: 'शेविंग क्रीम', unit: '70 g', pricePaise: 6000, category: 'Personal Care' },
+  { name: 'Hair Dye', nameBn: 'চুলের রং', nameHi: 'बालों का रंग', unit: '1 pc', pricePaise: 4000, category: 'Personal Care' },
+  { name: 'Vaseline', nameBn: 'ভ্যাসলিন', nameHi: 'वैसलीन', unit: '100 ml', pricePaise: 9000, category: 'Personal Care' },
+  { name: 'Lip Balm', nameBn: 'লিপ বাম', nameHi: 'लिप बाम', unit: '1 pc', pricePaise: 5000, category: 'Personal Care' },
+  { name: 'Deodorant', nameBn: 'ডিওডোরেন্ট', nameHi: 'डियोडरेंट', unit: '150 ml', pricePaise: 20000, category: 'Personal Care' },
+  { name: 'Conditioner', nameBn: 'কন্ডিশনার', nameHi: 'कंडीशनर', unit: '175 ml', pricePaise: 18000, category: 'Personal Care' },
+  { name: 'Kajal', nameBn: 'কাজল', nameHi: 'काजल', unit: '1 pc', pricePaise: 15000, category: 'Personal Care' },
+  { name: 'Bindi', nameBn: 'টিপ', nameHi: 'बिंदी', unit: '1 pc', pricePaise: 2000, category: 'Personal Care' },
+  { name: 'Baby Soap', nameBn: 'বেবি সাবান', nameHi: 'बेबी साबुन', unit: '75 g', pricePaise: 8000, category: 'Baby Care' },
+  { name: 'Baby Oil', nameBn: 'বেবি অয়েল', nameHi: 'बेबी ऑयल', unit: '100 ml', pricePaise: 11000, category: 'Baby Care' },
+  { name: 'Baby Powder', nameBn: 'বেবি পাউডার', nameHi: 'बेबी पाउडर', unit: '100 g', pricePaise: 9000, category: 'Baby Care' },
+  { name: 'Diaper', nameBn: 'ডায়াপার', nameHi: 'डायपर', unit: '10 pc', pricePaise: 25000, category: 'Baby Care' },
+  { name: 'Baby Food', nameBn: 'বেবি ফুড', nameHi: 'बेबी फ़ूड', unit: '400 g', pricePaise: 35000, category: 'Baby Care' },
+  { name: 'Baby Lotion', nameBn: 'বেবি লোশন', nameHi: 'बेबी लोशन', unit: '100 ml', pricePaise: 12000, category: 'Baby Care' },
+  { name: 'Dhoop', nameBn: 'ধূপ', nameHi: 'धूप', unit: '1 pc', pricePaise: 3000, category: 'Puja Items' },
+  { name: 'Camphor', nameBn: 'কর্পূর', nameHi: 'कपूर', unit: '50 g', pricePaise: 6000, category: 'Puja Items' },
+  { name: 'Cotton Wick', nameBn: 'প্রদীপের সলতে', nameHi: 'रुई की बत्ती', unit: '1 pc', pricePaise: 1500, category: 'Puja Items' },
+  { name: 'Earthen Diya', nameBn: 'মাটির প্রদীপ', nameHi: 'मिट्टी का दीया', unit: '10 pc', pricePaise: 3000, category: 'Puja Items' },
+  { name: 'Sindoor', nameBn: 'সিঁদুর', nameHi: 'सिंदूर', unit: '1 pc', pricePaise: 3000, category: 'Puja Items' },
+  { name: 'Ganga Jal', nameBn: 'গঙ্গাজল', nameHi: 'गंगाजल', unit: '250 ml', pricePaise: 3000, category: 'Puja Items' },
+  { name: 'Puja Thread', nameBn: 'পৈতে', nameHi: 'जनेऊ', unit: '1 pc', pricePaise: 2000, category: 'Puja Items' },
+  { name: 'Honey Comb Wax', nameBn: 'মোমবাতি সেট', nameHi: 'मोमबत्ती सेट', unit: '6 pc', pricePaise: 4000, category: 'Puja Items' },
+  { name: 'Pen', nameBn: 'কলম', nameHi: 'पेन', unit: '1 pc', pricePaise: 1000, category: 'Stationery' },
+  { name: 'Pencil', nameBn: 'পেন্সিল', nameHi: 'पेंसिल', unit: '1 pc', pricePaise: 500, category: 'Stationery' },
+  { name: 'Notebook', nameBn: 'খাতা', nameHi: 'कॉपी', unit: '1 pc', pricePaise: 3000, category: 'Stationery' },
+  { name: 'Eraser', nameBn: 'রবার', nameHi: 'रबर', unit: '1 pc', pricePaise: 500, category: 'Stationery' },
+  { name: 'Sharpener', nameBn: 'শার্পনার', nameHi: 'शार्पनर', unit: '1 pc', pricePaise: 500, category: 'Stationery' },
+  { name: 'Glue Stick', nameBn: 'আঠা', nameHi: 'गोंद', unit: '1 pc', pricePaise: 2500, category: 'Stationery' },
+  { name: 'Cello Tape', nameBn: 'সেলো টেপ', nameHi: 'सेलो टेप', unit: '1 pc', pricePaise: 3000, category: 'Stationery' },
+  { name: 'Envelope', nameBn: 'খাম', nameHi: 'लिफ़ाफ़ा', unit: '10 pc', pricePaise: 2000, category: 'Stationery' },
+  { name: 'Sattu', nameBn: 'ছাতু', nameHi: 'सत्तू', unit: '500 g', pricePaise: 6000, category: 'Rice & Atta' },
+  { name: 'Jhal Muri Masala', nameBn: 'ঝালমুড়ির মশলা', nameHi: 'झालमुड़ी मसाला', unit: '100 g', pricePaise: 3000, category: 'Spices' },
 ];
 
 const RESTAURANT: StarterItem[] = [
@@ -382,4 +581,273 @@ export function starterOtherNames(item: StarterItem, locale: 'en' | 'bn' | 'hi')
   return [...new Set([item.name, item.nameBn, item.nameHi])].filter(
     (name) => name && name !== shown,
   );
+}
+
+/* ------------------------------------------------------------------------- *
+ * What the shop already has, so it is never offered again.
+ *
+ * The suggestion lists used to match on `name + unit` in English only, and both
+ * halves of that were wrong. Matching on the unit meant a shop already selling
+ * "Rice — 5 kg" was cheerfully offered "Rice — 1 kg" as something it was
+ * missing, and one tap later the shop had two rice rows and a customer had two
+ * things to choose between that are the same thing. Matching in English only
+ * meant a shop that had typed "মুড়ি" by hand was offered "Muri", because
+ * nothing ever compared the two.
+ *
+ * So a shop owns a NAME, in any of its languages, whatever size it sells it in
+ * — and an owner's own hand-typed rows count exactly as much as ones that came
+ * from this catalogue, because to the owner staring at a duplicate there is no
+ * difference between them.
+ * ------------------------------------------------------------------------- */
+
+/** One shop item, as little of it as this needs to know. */
+export type OwnedName = { name: string; nameBn: string; nameHi: string };
+
+/** Every spelling this shop already uses, loosened for comparison. */
+export function ownedNames(items: OwnedName[]): Set<string> {
+  const owned = new Set<string>();
+  for (const item of items) {
+    for (const form of [item.name, item.nameBn, item.nameHi]) {
+      const key = loosenWord(form ?? '');
+      if (key) owned.add(key);
+    }
+  }
+  return owned;
+}
+
+/**
+ * Is this catalogue entry already on the shop's list, under any of its names?
+ *
+ * Any one of the three matching is enough. A shop holding "Puffed rice" has
+ * "মুড়ি", and offering it the catalogue's Muri would hand it the same sack
+ * twice under two names.
+ */
+/**
+ * Items on the shop's own list that name the same thing as another item on it.
+ *
+ * KEEPING SUGGESTIONS CLEAN DOES NOT CLEAN UP THE LIST. `alreadyOwned` stops a
+ * duplicate being offered from here on, and does nothing about the two "মটর
+ * ডাল" rows already sitting in a shop — one at ₹100 and one at ₹50, because
+ * they were typed on different days under English names that do not match
+ * ("Matar Dal", "Motor dal") while their Bengali names are identical.
+ *
+ * A customer meeting both has to guess which is real, and the shop has two
+ * prices for one sack. So they are FLAGGED, not merged: the two prices are each
+ * deliberate, only the owner knows which one stands, and silently keeping one
+ * would throw away a number somebody typed on purpose. One tap on the bin
+ * settles it.
+ *
+ * Matched on any of the three names, loosened — which is what catches a pair
+ * whose English spellings differ and whose Bengali is the same word.
+ */
+export function duplicateNameIds<T extends OwnedName & { id: string }>(items: T[]): Set<string> {
+  /** loosened name → the ids that use it */
+  const byName = new Map<string, string[]>();
+
+  for (const item of items) {
+    // Deduplicated per item: a row whose English and Bengali loosen to the
+    // same string must not be reported as a duplicate of itself.
+    const keys = new Set(
+      [item.name, item.nameBn, item.nameHi].map((form) => loosenWord(form ?? '')).filter(Boolean),
+    );
+    for (const key of keys) {
+      const bucket = byName.get(key);
+      if (bucket) bucket.push(item.id);
+      else byName.set(key, [item.id]);
+    }
+  }
+
+  const flagged = new Set<string>();
+  for (const ids of byName.values()) {
+    if (ids.length > 1) for (const id of ids) flagged.add(id);
+  }
+  return flagged;
+}
+
+export function alreadyOwned(entry: StarterItem, owned: Set<string>): boolean {
+  return [entry.name, entry.nameBn, entry.nameHi].some((form) => {
+    const key = loosenWord(form ?? '');
+    return key !== '' && owned.has(key);
+  });
+}
+
+/* ------------------------------------------------------------------------- *
+ * Working out which category an item belongs in.
+ *
+ * A shopkeeper knows they sell rice. Whether it files under "Rice & Atta" or
+ * "Staples" is a taxonomy question they never asked to be given, so the app
+ * answers it from the catalogue instead — and for a long time it answered it
+ * badly, because the only test was whether the typed English name was character
+ * for character one of the catalogue's English names.
+ *
+ * Everything real fell through that. "Matar Dal" is not "Matar". "Minicate
+ * rice" is not "Rice". An item named "Flour" with মুড়ি-style Bengali filled in
+ * was never even compared against its own Bengali name, because only the
+ * primary name was passed in. All of them landed with a blank category and
+ * piled up under "Other", which is the one heading that tells a customer
+ * nothing — and a category filter where half the shop is "Other" is worse than
+ * no filter at all.
+ *
+ * So: all three names are tried, spelling is loosened the way voice matching
+ * already loosens it, a catalogue name that is contained in what was typed
+ * counts as a match, and the LONGEST such match wins — "Soyabean Oil" must
+ * resolve to Oil & Ghee and never to Soyabean. Only then, for a word no
+ * catalogue entry knows, does a short table of head-words answer.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Spelling, with everything that varies between two romanisations removed.
+ *
+ * The same idea as `loosen` in `lib/speech.ts` and for the same reason: roman
+ * Bengali and Hindi have no correct spelling, so "Basmoti", "basmati" and
+ * "Basmathi" are one word typed by three people. Punctuation goes, case goes,
+ * and a doubled letter collapses.
+ */
+function loosenWord(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\p{M}]+/gu, '')
+    .replace(/(.)\1+/gu, '$1');
+}
+
+/** A name as a list of loosened words, blanks dropped. */
+function wordsOf(value: string): string[] {
+  return value
+    .trim()
+    .toLowerCase()
+    .split(/[\s,./\\()-]+/)
+    .map(loosenWord)
+    .filter(Boolean);
+}
+
+/**
+ * Head-words that decide a category on their own, for names no catalogue entry
+ * covers.
+ *
+ * DELIBERATELY SHORT, and every entry is a word that names the kind of thing
+ * rather than the thing: "dal" is a category in the way "masoor" is not. That
+ * is the whole test for adding one. A generous list would start guessing —
+ * putting "Lux" in Personal Care because somebody wrote "soap" in a brand name
+ * — and a wrong category is worse than a blank one, because the blank one is
+ * visibly unfinished and the wrong one is not.
+ *
+ * Checked only after the catalogue itself has failed, and only ever used when
+ * the shop's own catalogue actually has that category — a roll counter must
+ * never acquire a "Dal & Pulses" heading because somebody listed a side of dal.
+ */
+const HEAD_WORDS: { category: string; words: string[] }[] = [
+  {
+    category: 'Dal & Pulses',
+    words: ['dal', 'daal', 'dail', 'ডাল', 'दाल', 'lentil', 'lentils', 'pulse', 'pulses'],
+  },
+  {
+    category: 'Rice & Atta',
+    words: [
+      'rice', 'chal', 'chaal', 'chawal', 'chaval', 'চাল', 'चावल',
+      'atta', 'ata', 'flour', 'আটা', 'आटा', 'maida', 'ময়দা', 'मैदा',
+      'suji', 'sooji', 'rava', 'muri', 'মুড়ি', 'poha', 'chire', 'চিঁড়ে',
+    ],
+  },
+  {
+    category: 'Oil & Ghee',
+    words: ['oil', 'tel', 'তেল', 'तेल', 'ghee', 'ঘি', 'घी', 'dalda', 'vanaspati'],
+  },
+  {
+    category: 'Spices',
+    words: ['masala', 'মশলা', 'मसाला', 'spice', 'powder', 'guro', 'গুঁড়ো', 'mirch', 'lanka'],
+  },
+  {
+    category: 'Dairy',
+    words: ['milk', 'dudh', 'doodh', 'দুধ', 'दूध', 'curd', 'dahi', 'doi', 'দই', 'paneer', 'পনির', 'butter', 'cheese'],
+  },
+  {
+    category: 'Tea & Coffee',
+    words: ['tea', 'cha', 'chai', 'চা', 'चाय', 'coffee', 'কফি', 'कॉफ़ी'],
+  },
+  {
+    category: 'Snacks',
+    words: ['biscuit', 'biscuits', 'বিস্কুট', 'बिस्कुट', 'chips', 'namkeen', 'chanachur', 'চানাচুর', 'noodles', 'cake'],
+  },
+  {
+    category: 'Personal Care',
+    words: ['soap', 'sabun', 'saban', 'সাবান', 'साबुन', 'shampoo', 'শ্যাম্পু', 'paste', 'toothpaste', 'brush', 'oil-hair'],
+  },
+  {
+    category: 'Household',
+    words: ['detergent', 'surf', 'phenyl', 'broom', 'jharu', 'matchbox', 'deshlai', 'candle', 'agarbatti', 'battery'],
+  },
+  { category: 'Vegetables', words: ['sabji', 'sabzi', 'সবজি', 'सब्ज़ी', 'veg', 'vegetable'] },
+  { category: 'Fruits', words: ['fruit', 'ful', 'ফল', 'फल'] },
+];
+
+/**
+ * The category an item belongs in, or `''` when nothing is confident enough.
+ *
+ * Every name the owner gave is tried — English, Bengali and Hindi — because a
+ * shop that types "Puffed rice" and "মুড়ি" on the same row has named a
+ * catalogue item twice and only one of the two spellings needs to land.
+ *
+ * `''` is a real answer and stays one. An item whose category nobody can work
+ * out belongs under the shop's "Other" heading, which is honest; inventing a
+ * category to avoid the blank puts the item somewhere a customer will not look.
+ */
+export function categoryForNames(names: string[], catalogue: StarterItem[]): string {
+  const candidates = names.map((name) => name?.trim() ?? '').filter(Boolean);
+  if (candidates.length === 0 || catalogue.length === 0) return '';
+
+  const looseCandidates = candidates.map(loosenWord);
+  const wordSets = candidates.map((name) => new Set(wordsOf(name)));
+
+  /** Every written form of a catalogue entry, as typed and as loosened words. */
+  const formsOf = (item: StarterItem) =>
+    [item.name, item.nameBn, item.nameHi].filter(Boolean);
+
+  // 1. The whole name is a catalogue name, give or take spelling. The strongest
+  //    signal there is, so it is tried across every entry before anything else.
+  for (const item of catalogue) {
+    for (const form of formsOf(item)) {
+      if (looseCandidates.includes(loosenWord(form))) return item.category;
+    }
+  }
+
+  /**
+   * 2. A catalogue name sits INSIDE what was typed — "Matar" within "Matar
+   *    Dal", "Rice" within "Minicate rice".
+   *
+   *    THE LONGEST MATCH WINS, and that is not a refinement, it is the whole
+   *    correctness of this step: "Soyabean Oil" contains both "Soyabean" and
+   *    "Soyabean Oil", and taking the first match found would file cooking oil
+   *    under whatever Soyabean happens to be. The same lesson the voice matcher
+   *    learned when "Chandramukhi aloo" resolved to plain "Potato" — score
+   *    precision, never coverage alone.
+   */
+  let best = '';
+  let bestWords = 0;
+
+  for (const item of catalogue) {
+    for (const form of formsOf(item)) {
+      const formWords = wordsOf(form);
+      if (formWords.length === 0 || formWords.length <= bestWords) continue;
+
+      const contained = wordSets.some((set) => formWords.every((word) => set.has(word)));
+      if (contained) {
+        best = item.category;
+        bestWords = formWords.length;
+      }
+    }
+  }
+  if (best) return best;
+
+  // 3. A head-word, for a thing this catalogue has never heard of. Only ever
+  //    into a category the shop's own list actually uses.
+  const available = new Set(catalogue.map((item) => item.category));
+  for (const { category, words } of HEAD_WORDS) {
+    if (!available.has(category)) continue;
+    const loose = words.map(loosenWord);
+    if (wordSets.some((set) => [...set].some((word) => loose.includes(word)))) {
+      return category;
+    }
+  }
+
+  return '';
 }

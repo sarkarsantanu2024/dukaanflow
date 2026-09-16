@@ -25,6 +25,9 @@ async function loadShop(slug: string) {
       address: true,
       upiId: true,
       active: true,
+      // The shopkeeper's own shutter, separate from the operator's `active`.
+      // Either one down closes the page; it reopens only when both agree.
+      ownerClosed: true,
       openTime: true,
       closeTime: true,
       closedNote: true,
@@ -128,7 +131,12 @@ export default async function ShopPage({ params }: PageProps) {
     currentPeriodEnd: shop.currentPeriodEnd,
   });
 
-  if (!shop.active || billing.autoPaused) {
+  // Three ways a shop is shut, and the page cannot tell them apart on purpose:
+  // the operator paused it, the subscription lapsed, or the shopkeeper pulled
+  // their own shutter down this morning. A customer needs to know the shop is
+  // closed and, where the owner said so, why — the rest is none of their
+  // business and would only read as an accusation.
+  if (!shop.active || shop.ownerClosed || billing.autoPaused) {
     return (
       <>
       {/* `flex-1` rather than `min-h-dvh`: the page is now a column with a
@@ -165,6 +173,7 @@ export default async function ShopPage({ params }: PageProps) {
   const {
     items,
     active: _active,
+    ownerClosed: _ownerClosed,
     closedNote: _note,
     noticeText: _noticeText,
     noticeFrom: _noticeFrom,

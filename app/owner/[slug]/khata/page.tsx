@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function KhataPage({ params }: PageProps) {
   const { slug } = await params;
-  const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
+  const { shop, plan, settings, roadblock, locale } = await loadOwnerShop(slug);
 
   // The two windows the owner actually asks about — see `lib/takings.ts`.
   const day = todayWindow();
@@ -89,6 +89,8 @@ export default async function KhataPage({ params }: PageProps) {
       roadblock={roadblock}
       locale={locale}
       plan={plan}
+      settings={settings}
+      ownerClosed={shop.ownerClosed}
     >
       <KhataScreen
         slug={shop.slug}

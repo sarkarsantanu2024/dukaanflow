@@ -7,7 +7,9 @@ import { entitlementFrom, type ShopEntitlement } from './billing';
 import { PLAN_SPECS, planFor } from './plans';
 import type { Locale } from './i18n';
 import type { PlanState } from '@/components/owner/PlanBanner';
+import type { OwnerSettings } from '@/components/owner/MoreDrawer';
 import type { RoadblockState } from '@/components/owner/SubscriptionRoadblock';
+import { dateInputValue } from './notice';
 import { BRAND_NAME } from './brand';
 
 /**
@@ -67,6 +69,8 @@ export async function loadOwnerShop(slug: string) {
         deliveryFeePaise: true,
         freeDeliveryAbovePaise: true,
         minOrderPaise: true,
+        // The shopkeeper's own shutter, for the switch in the header.
+        ownerClosed: true,
         // Read here rather than in a second query: the PIN version is what
         // makes revocation real, and the plan columns are what decide whether
         // this owner may still edit anything.
@@ -118,9 +122,28 @@ export async function loadOwnerShop(slug: string) {
     helpUrl: supportUrl(shop.name, shop.slug),
   };
 
+  /**
+   * What the folded-away block at the foot of every owner screen shows.
+   *
+   * Built here rather than in each page for the reason everything else in this
+   * function is: there are five owner screens, they all render the same shell,
+   * and a settings object assembled five times is five chances for one screen
+   * to show a stale notice.
+   */
+  const settings: OwnerSettings = {
+    noticeText: shop.noticeText,
+    noticeFrom: dateInputValue(shop.noticeFrom),
+    noticeTo: dateInputValue(shop.noticeTo),
+    deliveryEnabled: shop.deliveryEnabled,
+    deliveryFeePaise: shop.deliveryFeePaise,
+    freeDeliveryAbovePaise: shop.freeDeliveryAbovePaise,
+    minOrderPaise: shop.minOrderPaise,
+  };
+
   return {
     shop,
     plan,
+    settings,
     roadblock: roadblockFor(shop, billing),
     locale: (shop.locale as Locale) ?? 'en',
   };

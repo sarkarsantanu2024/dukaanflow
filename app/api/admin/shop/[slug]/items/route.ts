@@ -30,7 +30,7 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = itemUpsertSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { pricePaise, category, inStock, priced } = parsed.data;
+  const { pricePaise, category, inStock, priced, stockQty } = parsed.data;
 
   // Canonical spelling before anything else touches these.
   //
@@ -121,6 +121,7 @@ export async function POST(request: Request, { params }: Context) {
     unit: true,
     category: true,
     inStock: true,
+    stockQty: true,
   } as const;
 
   const item = existing
@@ -135,13 +136,37 @@ export async function POST(request: Request, { params }: Context) {
           priced: priced || undefined,
           category,
           inStock,
+          /**
+           * A count only when one was actually sent.
+           *
+           * `null` is the schema's default, and on an UPDATE it has to mean
+           * "unchanged" rather than "stop counting": every re-price, every
+           * voice correction and every catalogue tap goes through this branch
+           * without a count, and letting the default through would quietly
+           * wipe the shelf figure an owner had typed. Clearing a count is done
+           * deliberately, from the row's own box, through PATCH.
+           */
+          ...(stockQty === null ? {} : { stockQty }),
           ...(nameBn ? { nameBn } : {}),
           ...(nameHi ? { nameHi } : {}),
         },
         select: shape,
       })
     : await prisma.item.create({
-        data: { shopId, name, nameBn, nameHi, pricePaise, priced, unit, category, inStock },
+        // On a CREATE the default means what it says: an item nobody has
+        // counted starts uncounted, which is most of a kirana's list.
+        data: {
+          shopId,
+          name,
+          nameBn,
+          nameHi,
+          pricePaise,
+          priced,
+          unit,
+          category,
+          inStock,
+          stockQty,
+        },
         select: shape,
       });
 

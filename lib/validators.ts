@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { isStateCode } from './states';
-import { MOST_PER_LINE, QUANTITY_DP } from './units';
+import { MOST_PER_LINE, QUANTITY_DP, roundQuantity } from './units';
 
 export const SHOP_TYPES = [
   'GROCERY',
@@ -33,6 +33,24 @@ export const phoneSchema = z
       .string()
       .regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number'),
   );
+
+/**
+ * Is this a number `phoneSchema` will accept? Asked on the CLIENT, before a
+ * round trip.
+ *
+ * THE RULE HAS TO BE SHARED OR IT DRIFTS, and it had. Forms tested a phone by
+ * counting digits — `phone.replace(/\D/g, '').length < 10` — while the server
+ * required a real Indian mobile, ten digits starting 6-9. Every number in
+ * between passed the button and failed the save: 1234567890 is exactly ten
+ * digits and is not a mobile number, so the owner got a rejection for a field
+ * the app had just told them was fine by letting them press the button.
+ *
+ * Same schema, one source of truth. A client check that disagrees with the
+ * server is worse than no client check at all.
+ */
+export function isValidMobile(value: string): boolean {
+  return phoneSchema.safeParse(value).success;
+}
 
 export const slugSchema = z
   .string()
@@ -176,6 +194,26 @@ export const deliveryTermsSchema = z
   );
 
 /**
+ * The two things a shopkeeper decides about trading, rather than about identity.
+ *
+ * Both are theirs and neither is the operator's: whether the shutter is up this
+ * afternoon, and the smallest basket they are willing to pick. Routed through
+ * the console they would never be changed, which is the same reasoning that put
+ * the notice and the delivery terms on the owner's side.
+ *
+ * BOTH OPTIONAL, because the two controls sit on one card but save separately —
+ * flicking the shutter must not also rewrite a minimum the owner was midway
+ * through typing, so each PATCH sends only the field it changed.
+ *
+ * The ceiling on the minimum is 50. Above that no basket in a kirana would ever
+ * qualify and the shop would have silently closed itself to every customer,
+ * which is a slipped keypress rather than a decision.
+ */
+export const tradingTermsSchema = z.object({
+  ownerClosed: z.boolean(),
+});
+
+/**
  * A mobile number that may simply not have been given.
  *
  * `phoneSchema` refuses a blank, which is right for a shop's own WhatsApp — a
@@ -267,6 +305,25 @@ export const itemUpsertSchema = z.object({
   unit: z.string().trim().max(24).default(''),
   category: z.string().trim().max(40).default(''),
   inStock: z.boolean().default(true),
+  /**
+   * How much is on the shelf as the item is created, in multiples of its own
+   * unit, or null for "nobody is counting".
+   *
+   * NULL IS THE DEFAULT AND MUST STAY NULL RATHER THAN ZERO. Most of a kirana's
+   * list is never counted — rice comes out of a sack — and an item created with
+   * a count of nought would list itself as sold out the moment it was saved,
+   * which is the opposite of what adding an item means.
+   *
+   * The owner types it as "12", "4.5 kg" or "700 g"; `parseStockAmount` on the
+   * client turns that into this number against the row's own pack size.
+   */
+  stockQty: z
+    .number()
+    .min(0)
+    .max(1_000_000)
+    .transform(roundQuantity)
+    .nullable()
+    .default(null),
 });
 
 export const itemPatchSchema = z.object({
@@ -297,7 +354,23 @@ export const itemPatchSchema = z.object({
    * The cap is generous rather than tight. A tea stall counts twelve cups; a
    * wholesaler counts four thousand bidis. Neither of them counts a million.
    */
-  stockQty: z.number().int().min(0).max(1_000_000).nullable().optional(),
+  /**
+   * How much is on the shelf, in multiples of the item's own unit. Null means
+   * nobody is counting.
+   *
+   * No longer an integer. A shop's stock is 5.5 kg of rice or 700 g of posto,
+   * and rounding that to whole packs made the count a lie about the shelf —
+   * see the note on `Item.stockQty`. Rounded to the same 3 dp every quantity
+   * in the product is, so a count and an order line can be subtracted from one
+   * another without either drifting.
+   */
+  stockQty: z
+    .number()
+    .min(0)
+    .max(1_000_000)
+    .transform(roundQuantity)
+    .nullable()
+    .optional(),
   category: z.string().trim().max(40).optional(),
   nameBn: altNameSchema.optional(),
   nameHi: altNameSchema.optional(),

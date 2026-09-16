@@ -4,7 +4,6 @@ import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { InventoryScreen } from '@/components/owner/InventoryScreen';
 import { starterCatalogue } from '@/lib/starter-catalogue';
-import { dateInputValue } from '@/lib/notice';
 import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function InventoryPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const { welcome } = await searchParams;
-  const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
+  const { shop, plan, settings, roadblock, locale } = await loadOwnerShop(slug);
 
   const items = await prisma.item.findMany({
     where: { shopId: shop.id },
@@ -53,19 +52,15 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
       roadblock={roadblock}
       locale={locale}
       plan={plan}
+      settings={settings}
+      ownerClosed={shop.ownerClosed}
     >
       <InventoryScreen
         slug={shop.slug}
+        shopName={shop.name}
         items={items}
         catalogue={starterCatalogue(shop.type)}
         shopType={shop.type}
-        noticeText={shop.noticeText}
-        noticeFrom={dateInputValue(shop.noticeFrom)}
-        noticeTo={dateInputValue(shop.noticeTo)}
-        deliveryEnabled={shop.deliveryEnabled}
-        deliveryFeePaise={shop.deliveryFeePaise}
-        freeDeliveryAbovePaise={shop.freeDeliveryAbovePaise}
-        minOrderPaise={shop.minOrderPaise}
         locale={locale}
         showWelcome={welcome === '1' && items.length === 0}
         itemLimit={plan.itemLimit}

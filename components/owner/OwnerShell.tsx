@@ -21,6 +21,7 @@ import { OpenInChromeNotice } from './OpenInChromeNotice';
 import { SubscriptionRoadblock, type RoadblockState } from './SubscriptionRoadblock';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { SimpleModeProvider, SimpleModeToggle } from './SimpleMode';
+import { MoreDrawer, type OwnerSettings } from './MoreDrawer';
 
 export type OwnerTab = 'sell' | 'inventory' | 'khata' | 'orders';
 
@@ -74,7 +75,9 @@ export function OwnerShell({
   ownerImageData = '',
   locale,
   plan,
+  settings,
   roadblock,
+  ownerClosed,
   children,
 }: {
   slug: string;
@@ -90,6 +93,14 @@ export function OwnerShell({
   ownerImageData?: string;
   locale: Locale;
   plan: PlanState;
+  /** The shopkeeper's own shutter, for the switch in the header. */
+  ownerClosed: boolean;
+  /**
+   * The once-a-shop settings, shown behind one folded line at the foot of every
+   * screen — see `MoreDrawer`. They used to be four cards stacked on the Items
+   * tab, which is a tab about items.
+   */
+  settings: OwnerSettings;
   /** Set when the subscription has lapsed; null while the owner may work. */
   roadblock?: RoadblockState | null;
   children: React.ReactNode;
@@ -115,6 +126,7 @@ export function OwnerShell({
         slug={slug}
         locale={locale}
         shopName={shopName}
+        ownerClosed={ownerClosed}
         ownerImageData={ownerImageData}
       />
 
@@ -125,6 +137,12 @@ export function OwnerShell({
         <OpenInChromeNotice locale={locale} />
         <PlanBanner slug={slug} locale={locale} plan={plan} />
         {children}
+
+        {/* Everything a shop sets once, behind one closed line — the notice,
+            the smallest order, the delivery terms and the way to pay. Under
+            the screen's own content rather than over it, and on every screen
+            rather than only on Items. */}
+        <MoreDrawer slug={slug} locale={locale} settings={settings} />
 
         {/* The last thing on every owner screen, under whatever that screen is
             about. One place, not four: an owner who finds it on the item list

@@ -6,6 +6,7 @@ import { orderSchema } from '@/lib/validators';
 import type { OrderLine } from '@/lib/whatsapp';
 import { upsertCustomer } from '@/lib/khata';
 import { quoteDelivery } from '@/lib/delivery';
+import { basketShortfallPaise, minBasketPaise } from '@/lib/basket';
 import { formatPaise, linePaise } from '@/lib/money';
 import { isLooseUnit, MOST_PER_LINE, roundQuantity } from '@/lib/units';
 import { sendPush } from '@/lib/push';
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
       name: true,
       phone: true,
       active: true,
+      ownerClosed: true,
       deliveryEnabled: true,
       deliveryFeePaise: true,
       freeDeliveryAbovePaise: true,
@@ -60,7 +62,12 @@ export async function POST(request: Request) {
     },
   });
   if (!shop) return fail('Shop not found', 404);
-  if (!shop.active) return fail('This shop is not accepting orders right now', 409);
+  // Either shutter. `active` is the operator's, `ownerClosed` the shopkeeper's,
+  // and a stale tab left open from before the shop shut must not slip an order
+  // in behind either of them.
+  if (!shop.active || shop.ownerClosed) {
+    return fail('This shop is not accepting orders right now', 409);
+  }
 
   // The storefront hides the option, but hiding is not enforcing: a delivery
   // this shop never offered would be a promise its owner has to break by phone.
@@ -106,30 +113,21 @@ export async function POST(request: Request) {
     [item.name, item.unit].filter(Boolean).join(' ');
 
   /**
-   * A FRACTION OF SOMETHING THAT CANNOT BE CUT.
+   * COUNTING NO LONGER STOPS AN ITEM BEING SPLIT, and that restriction is gone
+   * rather than relaxed. It existed for one reason: `stockQty` was a whole
+   * number of packs, so there was nowhere to keep the 700 g left over from
+   * selling 300 g off a count of one — and an owner who started counting their
+   * rice thereby lost the ability to sell it by weight, which is the only way
+   * rice is sold. The column holds decimals now, so the cause is gone.
    *
-   * Weighed and poured goods divide — fifty grams of poppy seeds priced by the
-   * kilo is an ordinary ask, and the whole point of a fractional quantity. A
-   * plate of chowmein, a biscuit packet, a bottle of oil does not: 0.4 of one
-   * is not something anybody can hand over, so a payload naming one is refused
-   * rather than rounded into a number the shop would have to guess at.
-   *
-   * The storefront never offers it either — see `AmountStepper` — but hiding is
-   * not enforcing.
+   * What remains is the real rule, and only it: a plate of chowmein, a biscuit
+   * packet, a bottle of oil cannot be cut. 0.4 of one is not something anybody
+   * can hand over, so a payload naming one is refused rather than rounded into
+   * a number the shop would have to guess at. The storefront never offers it
+   * either — see `AmountStepper` — but hiding is not enforcing.
    */
   const indivisible = dbItems.filter(
-    (item) =>
-      !Number.isInteger(requested.get(item.id)!) &&
-      /**
-       * A counted item cannot be split either, whatever its unit says.
-       *
-       * `stockQty` is a whole number of packs, and there is nowhere to keep the
-       * 700 g left over from selling 300 g off a count of one — so an owner who
-       * is counting a loose item is, for now, selling it whole. Clearing the
-       * count on that item is what makes it divisible again, and the storefront
-       * offers the amount picker on exactly the same test.
-       */
-      (!isLooseUnit(item.unit) || item.stockQty !== null),
+    (item) => !Number.isInteger(requested.get(item.id)!) && !isLooseUnit(item.unit),
   );
   if (indivisible.length > 0) {
     return fail(
@@ -194,6 +192,36 @@ export async function POST(request: Request) {
   }
 
   /**
+   * Below the smallest order this shop takes at all.
+   *
+   * A DIFFERENT RULE FROM THE ONE ABOVE, and both can be live at once. That one
+   * is about a journey the shop makes and is escaped by choosing Pickup; this
+   * one is about the work of picking and packing, which happens either way — a
+   * ₹10 packet of chips has to be confirmed, bagged, marked ready and messaged
+   * about exactly like an ₹800 order.
+   *
+   * The floor is derived from how much the shop actually has on sale rather
+   * than set by anyone, so it is counted here rather than trusted from the
+   * client, and a shop below the first size boundary has no floor at all. See
+   * `lib/basket.ts`.
+   *
+   * Checked against `goodsPaise` — the delivery charge is not part of what the
+   * shop thinks the order was worth.
+   */
+  const onSale = await prisma.item.count({
+    where: { shopId: shop.id, priced: true, inStock: true },
+  });
+  const floorPaise = minBasketPaise(onSale);
+  const basketShort = basketShortfallPaise(floorPaise, goodsPaise);
+
+  if (basketShort > 0) {
+    return fail(
+      `This shop takes orders from ${formatPaise(floorPaise)}. Add ${formatPaise(basketShort)} more and try again.`,
+      409,
+    );
+  }
+
+  /**
    * The row and the stock, together or not at all.
    *
    * Two customers can reach the last packet of biscuits in the same second.
@@ -210,9 +238,8 @@ export async function POST(request: Request) {
   const created = await prisma.$transaction(async (tx) => {
     for (const item of dbItems) {
       if (item.stockQty === null) continue;
-      // Whole, guaranteed: a counted item with a fractional quantity was
-      // refused above, so this decrement can never be a fraction of a pack
-      // going into an integer column.
+      // Fractions are fine here now — `stockQty` is a decimal in multiples of
+      // the item's own unit, so 300 g off a kilo leaves 0.7 on the shelf.
       const quantity = requested.get(item.id)!;
       const updated = await tx.item.updateMany({
         where: { id: item.id, stockQty: { gte: quantity } },

@@ -316,6 +316,8 @@ type OwnerDictionary = {
   khataGot: string;
   khataCustomer: string;
   khataPhone: string;
+  /** The phone box was refused: an Indian mobile is 10 digits starting 6-9. */
+  khataPhoneInvalid: string;
   khataArea: string;
   khataAmount: string;
   /**
@@ -364,6 +366,11 @@ type OwnerDictionary = {
   stockStop: string;
   stockHint: string;
   stockSoldOut: string;
+  /** The stock box on an item row, and what a bad number in it says. */
+  stockShort: string;
+  stockBadNumber: string;
+  /** Badge on a row that names the same thing as another row. */
+  duplicateName: string;
 
   /** The sound on this phone when an order arrives. */
   pushTitle: string;
@@ -493,6 +500,42 @@ type OwnerDictionary = {
   khataExportCsv: string;
   khataExportPdf: string;
   khataStatement: string;
+
+  /**
+   * The shopkeeper's own shutter, and the smallest basket they will pack.
+   *
+   * Separate from the console's Pause, which an owner can neither see nor undo
+   * — see the note on `Shop.ownerClosed`.
+   */
+  shutterTitle: string;
+  shutterOpen: string;
+  shutterClosed: string;
+  shutterOpenHint: string;
+  shutterClosedHint: string;
+  shutterOpenAction: string;
+  shutterCloseAction: string;
+  shutterOpened: string;
+  shutterShut: string;
+
+  /** The list of what has run out, to hand a supplier. */
+  restockTitle: string;
+  restockHint: string;
+  restockNone: string;
+  restockOut: string;
+  restockLow: string;
+  restockAll: string;
+  restockClear: string;
+  restockSend: string;
+  restockPdf: string;
+  restockPicked: string;
+  restockDownloaded: string;
+  /** Words that go on the message and the sheet, so the vendor can read them. */
+  restockHeading: string;
+  restockItemCol: string;
+  /** The box where the owner says how much to order, and its column head. */
+  restockWanted: string;
+  restockTotal: string;
+  restockEmptyLine: string;
 
   /** Shown when the phone has lost the network. */
   offline: string;
@@ -787,6 +830,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataGot: 'Got payment',
     khataCustomer: 'Name',
     khataPhone: 'Phone',
+    khataPhoneInvalid: 'A mobile number is 10 digits and starts with 6, 7, 8 or 9.',
     khataArea: 'Area',
     khataAmount: 'Amount (₹)',
     khataVoiceTap: 'Say a name and an amount',
@@ -820,8 +864,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     stockCount: 'Count how many are left',
     stockStop: 'Stop counting',
     stockHint:
-      'For things you can count — packets, bottles, bread. Each sale takes one off, and at zero it comes off your shop page on its own. Leave rice and anything you weigh out uncounted: a counted item can only be sold whole, so a customer could not ask for 250 g of it.',
+      'How much is on the shelf. Write a plain number for the pack size beside it, or write the amount with its unit — 4.5 kg, 700 g, 12. Every sale takes its share off, and at zero the item comes off your shop page on its own. Leave it empty for anything you are not counting.',
     stockSoldOut: 'Sold out — taken off your shop page',
+    stockShort: 'Stock',
+    stockBadNumber: 'write a number, or an amount like 4.5 kg that matches the pack size',
+    duplicateName: 'listed twice',
 
     pushTitle: 'Get a sound on this phone',
     pushHint: 'When an order comes in, this phone will ring even if the app is shut.',
@@ -909,6 +956,33 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataExportCsv: 'Spreadsheet (CSV)',
     khataExportPdf: 'Statement (PDF)',
     khataStatement: 'Statement',
+
+    shutterTitle: 'Taking orders',
+    shutterOpen: 'Shop is open',
+    shutterClosed: 'Shop is closed',
+    shutterOpenHint: 'Customers can see your shop and place orders.',
+    shutterClosedHint: 'Customers see a closed sign and cannot order. Orders you already have are not affected.',
+    shutterOpenAction: 'Open the shop',
+    shutterCloseAction: 'Close the shop',
+    shutterOpened: 'Shop is open — customers can order',
+    shutterShut: 'Shop is closed — customers cannot order',
+
+    restockTitle: 'Order list for your supplier',
+    restockHint: 'What has run out, or is about to. Untick anything you are not buying, then send it.',
+    restockNone: 'Nothing has run out. Your shelves are full.',
+    restockOut: 'finished',
+    restockLow: 'left',
+    restockAll: 'Tick all',
+    restockClear: 'Untick all',
+    restockSend: 'Send on WhatsApp',
+    restockPdf: 'Download PDF',
+    restockPicked: 'ticked',
+    restockDownloaded: 'Order list downloaded',
+    restockHeading: 'order list',
+    restockItemCol: 'Item',
+    restockWanted: 'How much',
+    restockTotal: 'Items',
+    restockEmptyLine: 'nothing to order',
 
     offline: 'No internet',
     offlineHint: 'Showing what was on this phone. Nothing can be added or changed until the signal is back.',
@@ -1184,6 +1258,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataGot: 'টাকা পেলাম',
     khataCustomer: 'নাম',
     khataPhone: 'ফোন',
+    khataPhoneInvalid: 'মোবাইল নম্বর ১০ সংখ্যার, আর শুরু হয় ৬, ৭, ৮ বা ৯ দিয়ে।',
     khataArea: 'পাড়া',
     khataAmount: 'টাকা (₹)',
     khataVoiceTap: 'নাম আর টাকা বলুন',
@@ -1217,8 +1292,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     stockCount: 'কটা আছে গুনে রাখুন',
     stockStop: 'গোনা বন্ধ',
     stockHint:
-      'যা গোনা যায় তার জন্য — প্যাকেট, বোতল, পাউরুটি। বিক্রি হলেই একটা কমবে, শূন্য হলে নিজে থেকেই দোকানের পাতা থেকে সরে যাবে। চাল-ডালের মতো মেপে দেওয়া জিনিস গুনবেন না: গোনা জিনিস গোটা হিসেবেই বিক্রি হয়, খদ্দের ২৫০ গ্রাম চাইতে পারবেন না।',
+      'দোকানে কতটা আছে। পাশের মাপ অনুযায়ী শুধু সংখ্যা লিখুন, বা মাপ সমেত লিখুন — 4.5 kg, 700 g, 12। বিক্রি হলেই যতটা গেছে ততটা কমবে, শূন্য হলে জিনিসটা নিজে থেকেই দোকানের পাতা থেকে সরে যাবে। যেটা গুনছেন না, সেটা ফাঁকা রাখুন।',
     stockSoldOut: 'শেষ — দোকানের পাতা থেকে সরে গেছে',
+    stockShort: 'কত আছে',
+    stockBadNumber: 'সংখ্যা লিখুন, বা পাশের মাপের সঙ্গে মেলে এমন মাপ — যেমন 4.5 kg',
+    duplicateName: 'দুবার আছে',
 
     pushTitle: 'এই ফোনে আওয়াজ পান',
     pushHint: 'অর্ডার এলে অ্যাপ বন্ধ থাকলেও এই ফোনটা বাজবে।',
@@ -1306,6 +1384,33 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataExportCsv: 'এক্সেল ফাইল (CSV)',
     khataExportPdf: 'হিসাবের কাগজ (PDF)',
     khataStatement: 'হিসাব',
+
+    shutterTitle: 'অর্ডার নেওয়া',
+    shutterOpen: 'দোকান খোলা',
+    shutterClosed: 'দোকান বন্ধ',
+    shutterOpenHint: 'খদ্দের আপনার দোকান দেখতে ও অর্ডার দিতে পারছে।',
+    shutterClosedHint: 'খদ্দের দেখবে দোকান বন্ধ, অর্ডার দিতে পারবে না। আগের অর্ডারগুলো ঠিকই থাকবে।',
+    shutterOpenAction: 'দোকান খুলুন',
+    shutterCloseAction: 'দোকান বন্ধ করুন',
+    shutterOpened: 'দোকান খোলা — খদ্দের অর্ডার দিতে পারবে',
+    shutterShut: 'দোকান বন্ধ — খদ্দের অর্ডার দিতে পারবে না',
+
+    restockTitle: 'দোকানদারের জন্য অর্ডার লিস্ট',
+    restockHint: 'যা শেষ হয়ে গেছে বা প্রায় শেষ। যেটা নেবেন না সেটার টিক তুলে দিন, তারপর পাঠান।',
+    restockNone: 'কিছুই শেষ হয়নি। সব মজুত আছে।',
+    restockOut: 'শেষ',
+    restockLow: 'বাকি',
+    restockAll: 'সব টিক',
+    restockClear: 'সব টিক তুলুন',
+    restockSend: 'হোয়াটসঅ্যাপে পাঠান',
+    restockPdf: 'PDF নামান',
+    restockPicked: 'টিক করা',
+    restockDownloaded: 'অর্ডার লিস্ট নেমে গেছে',
+    restockHeading: 'অর্ডার লিস্ট',
+    restockItemCol: 'জিনিস',
+    restockWanted: 'কত লাগবে',
+    restockTotal: 'মোট',
+    restockEmptyLine: 'অর্ডার করার কিছু নেই',
 
     offline: 'ইন্টারনেট নেই',
     offlineHint: 'ফোনে যা ছিল তাই দেখানো হচ্ছে। নেট না আসা পর্যন্ত নতুন কিছু যোগ বা বদল করা যাবে না।',
@@ -1581,6 +1686,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataGot: 'पैसा मिला',
     khataCustomer: 'नाम',
     khataPhone: 'फ़ोन',
+    khataPhoneInvalid: 'मोबाइल नंबर 10 अंकों का होता है और 6, 7, 8 या 9 से शुरू होता है।',
     khataArea: 'इलाक़ा',
     khataAmount: 'रकम (₹)',
     khataVoiceTap: 'नाम और रकम बोलिए',
@@ -1614,8 +1720,11 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     stockCount: 'कितने बचे हैं, गिनती रखें',
     stockStop: 'गिनती बंद',
     stockHint:
-      'जो गिना जा सके उसके लिए — पैकेट, बोतल, ब्रेड। हर बिक्री पर एक कम होगा, और शून्य होते ही दुकान के पेज से अपने आप हट जाएगा। चावल जैसी तौलकर दी जाने वाली चीज़ें मत गिनिए: गिनी हुई चीज़ पूरी ही बिकती है, ग्राहक 250 ग्राम नहीं मांग पाएगा।',
+      'दुकान में कितना है। बगल के पैक के हिसाब से सिर्फ़ संख्या लिखिए, या माप के साथ लिखिए — 4.5 kg, 700 g, 12। हर बिक्री पर उतना ही कम होगा, और शून्य होते ही चीज़ दुकान के पेज से अपने आप हट जाएगी। जो नहीं गिन रहे, उसे खाली छोड़िए।',
     stockSoldOut: 'खत्म — दुकान के पेज से हट गया',
+    stockShort: 'कितना है',
+    stockBadNumber: 'संख्या लिखिए, या पैक के माप से मेल खाता माप — जैसे 4.5 kg',
+    duplicateName: 'दो बार है',
 
     pushTitle: 'इस फोन पर आवाज़ पाइए',
     pushHint: 'ऑर्डर आते ही यह फोन बजेगा, चाहे ऐप बंद हो।',
@@ -1703,6 +1812,33 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     khataExportCsv: 'एक्सेल फाइल (CSV)',
     khataExportPdf: 'हिसाब का कागज़ (PDF)',
     khataStatement: 'हिसाब',
+
+    shutterTitle: 'ऑर्डर लेना',
+    shutterOpen: 'दुकान खुली है',
+    shutterClosed: 'दुकान बंद है',
+    shutterOpenHint: 'ग्राहक आपकी दुकान देख और ऑर्डर कर सकते हैं।',
+    shutterClosedHint: 'ग्राहक को दुकान बंद दिखेगी, ऑर्डर नहीं कर पाएंगे। पुराने ऑर्डर वैसे ही रहेंगे।',
+    shutterOpenAction: 'दुकान खोलें',
+    shutterCloseAction: 'दुकान बंद करें',
+    shutterOpened: 'दुकान खुली — ग्राहक ऑर्डर कर सकते हैं',
+    shutterShut: 'दुकान बंद — ग्राहक ऑर्डर नहीं कर सकते',
+
+    restockTitle: 'सप्लायर के लिए ऑर्डर लिस्ट',
+    restockHint: 'जो खत्म हो गया या होने वाला है। जो नहीं लेना उसका टिक हटा दें, फिर भेजें।',
+    restockNone: 'कुछ खत्म नहीं हुआ। सब स्टॉक में है।',
+    restockOut: 'खत्म',
+    restockLow: 'बचा',
+    restockAll: 'सब टिक',
+    restockClear: 'सब टिक हटाएं',
+    restockSend: 'व्हाट्सएप पर भेजें',
+    restockPdf: 'PDF डाउनलोड करें',
+    restockPicked: 'टिक किए',
+    restockDownloaded: 'ऑर्डर लिस्ट डाउनलोड हो गई',
+    restockHeading: 'ऑर्डर लिस्ट',
+    restockItemCol: 'सामान',
+    restockWanted: 'कितना चाहिए',
+    restockTotal: 'कुल',
+    restockEmptyLine: 'ऑर्डर करने को कुछ नहीं',
 
     offline: 'इंटरनेट नहीं है',
     offlineHint: 'फोन में जो था वही दिख रहा है। नेट आने तक कुछ जोड़ या बदल नहीं सकते।',

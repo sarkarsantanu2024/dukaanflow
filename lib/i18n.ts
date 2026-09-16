@@ -124,8 +124,15 @@ type Dictionary = {
   repeatAdd: string;
   repeatDismiss: string;
 
-  /** How many of a counted item are left. Followed by the number. */
-  onlyLeft: string;
+  /**
+   * The owner's till, on a row whose stock nobody has written down.
+   *
+   * Never shown to a customer — how well a shop keeps its own books is not
+   * their business. It is on the till because an uncounted row is the one that
+   * will be oversold, and the person selling from this screen is the only one
+   * who can fix it.
+   */
+  notCounted: string;
   /** What the basket adds up, once delivery has a price. */
   goods: string;
   deliveryCharge: string;
@@ -136,6 +143,11 @@ type Dictionary = {
   minOrder: string;
   /** "Add ₹55 more, or choose Pickup" — the amount follows. */
   addMoreToOrder: string;
+
+  /** "This shop takes orders from ₹100." — the amount follows. */
+  minBasketBefore: string;
+  /** "₹40 more needed." — the amount comes first. */
+  addMoreValue: string;
 
   /** Being told what happened to this order, without asking. */
   notifyTitle: string;
@@ -270,13 +282,16 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceTooMuch: 'That is more than one order can hold. Please say the amount again.',
     voiceAtMost: 'at most',
 
-    onlyLeft: 'Only left:',
+    notCounted: 'not counted',
     goods: 'Items',
     deliveryCharge: 'Delivery',
     deliveryFree: 'Free',
     addMoreForFree: 'more for free delivery',
     minOrder: 'This shop delivers orders from',
     addMoreToOrder: 'more, or choose Pickup',
+
+    minBasketBefore: 'This shop takes orders from',
+    addMoreValue: 'more needed.',
 
     notifyTitle: 'Shall we tell you when it is ready?',
     notifyBody: 'Your phone will let you know when the shop has it ready. Nothing else, ever.',
@@ -394,13 +409,16 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceTooMuch: 'একবারে এত নেওয়া যায় না। পরিমাণটা আবার বলুন।',
     voiceAtMost: 'সর্বোচ্চ',
 
-    onlyLeft: 'আছে মাত্র:',
+    notCounted: 'গোনা হয়নি',
     goods: 'জিনিসপত্র',
     deliveryCharge: 'ডেলিভারি',
     deliveryFree: 'ফ্রি',
     addMoreForFree: 'টাকার জিনিস নিলে ডেলিভারি ফ্রি',
     minOrder: 'এই দোকান ডেলিভারি করে',
     addMoreToOrder: 'টাকার জিনিস নিন, বা দোকান থেকে নিন',
+
+    minBasketBefore: 'এই দোকান অর্ডার নেয়',
+    addMoreValue: 'টাকার জিনিস আরও নিন।',
 
     notifyTitle: 'তৈরি হলে জানিয়ে দেব?',
     notifyBody: 'দোকান তৈরি করে দিলেই আপনার ফোনে জানিয়ে দেব। আর কিছু নয়।',
@@ -518,13 +536,16 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceTooMuch: 'एक बार में इतना नहीं लिया जा सकता। मात्रा दोबारा बोलिए।',
     voiceAtMost: 'ज़्यादा से ज़्यादा',
 
-    onlyLeft: 'सिर्फ़ बचा:',
+    notCounted: 'गिना नहीं',
     goods: 'सामान',
     deliveryCharge: 'डिलीवरी',
     deliveryFree: 'मुफ़्त',
     addMoreForFree: 'का सामान और लीजिए, डिलीवरी मुफ़्त',
     minOrder: 'यह दुकान डिलीवरी करती है',
     addMoreToOrder: 'का सामान और लीजिए, या दुकान से ले जाइए',
+
+    minBasketBefore: 'यह दुकान ऑर्डर लेती है',
+    addMoreValue: 'का सामान और लीजिए।',
 
     notifyTitle: 'तैयार होने पर बता दें?',
     notifyBody: 'दुकान के तैयार करते ही आपके फोन पर बता देंगे। और कुछ नहीं।',

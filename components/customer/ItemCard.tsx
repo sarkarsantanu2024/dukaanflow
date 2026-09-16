@@ -1,10 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import clsx from 'clsx';
 import { Badge } from '@/components/ui/Badge';
 import { CartIcon } from '@/components/ui/Icon';
 import { formatPaise } from '@/lib/money';
-import { isLooseUnit, MOST_PER_LINE } from '@/lib/units';
+import { amountLabel, isLooseUnit, MOST_PER_LINE } from '@/lib/units';
 import { AmountStepper } from './AmountStepper';
 import type { Locale } from '@/lib/i18n';
 import { dict } from '@/lib/i18n';
@@ -64,15 +65,19 @@ export function itemName(item: CustomerItem, locale: Locale): string {
 /**
  * Can this item be sold in any amount the customer asks for?
  *
- * Two conditions, and both are the shop's own settings rather than anything the
- * customer chooses. The unit has to be a weight or a volume — a plate, a packet
- * and a bottle are handed over whole — and nobody can be counting it, because a
- * count is a whole number of packs with nowhere to keep the 700 g left over
- * from selling 300 g. The order route enforces exactly this test, so a card can
- * never offer an amount the server will refuse.
+ * ONE CONDITION NOW, and it is the shop's own setting rather than anything the
+ * customer chooses: the unit has to be a weight or a volume. A plate, a packet
+ * and a bottle are handed over whole.
+ *
+ * There was a second condition — that nobody was counting the item — and it is
+ * gone. It existed only because `stockQty` was a whole number of packs with
+ * nowhere to keep the 700 g left over from selling 300 g, which meant an owner
+ * who started counting their rice could no longer sell it by weight. The column
+ * holds decimals now. The order route enforces exactly this same test, so a
+ * card can never offer an amount the server will refuse.
  */
 export function sellsAnyAmount(item: { unit: string; stockQty: number | null }): boolean {
-  return isLooseUnit(item.unit) && item.stockQty === null;
+  return isLooseUnit(item.unit);
 }
 
 export function ItemCard({
@@ -80,14 +85,33 @@ export function ItemCard({
   quantity,
   onChange,
   locale,
+  showStock = false,
 }: {
   item: CustomerItem;
   quantity: number;
   onChange: (next: number) => void;
   locale: Locale;
+  /**
+   * Print the stock figure on every counted row, rather than only when it is
+   * running low. For the owner's till, which is the screen they sell from —
+   * see the note where the badge is drawn. Off for customers.
+   */
+  showStock?: boolean;
 }) {
   const t = dict(locale);
   const label = itemName(item, locale);
+  /**
+   * What is in the quantity box while it is being typed, or null when nobody is
+   * typing and it should simply show the basket's own number.
+   *
+   * A DRAFT IS NEEDED BECAUSE "12" IS TYPED AS "1" FIRST. Writing every
+   * keystroke straight to the basket is mostly fine — a shopper who lands on 1
+   * on the way to 12 has not broken anything — but an EMPTY box is not a
+   * quantity at all, and reading it as zero would drop the item out of the
+   * basket the moment somebody selected the number to replace it, taking the
+   * box they were typing into with it.
+   */
+  const [draft, setDraft] = useState<string | null>(null);
   const inBasket = quantity > 0;
   const disabled = !item.inStock;
   const loose = sellsAnyAmount(item);
@@ -182,20 +206,52 @@ export function ItemCard({
               Only where it is true: a plate or a bottle really is sold
               whole. */}
           {loose && !disabled && <span className="text-xs text-slate-400">· {t.anyAmount}</span>}
-          {/* "Only 2 left" replaces the plain "In stock" when the shop is
-              nearly out. It is the more useful of the two facts and takes the
-              same room: a shopper reaching for three of something the shop has
-              two of finds out here, rather than at checkout — or, worse, when
-              the delivery arrives one short. */}
-          {item.inStock && item.stockQty !== null && item.stockQty <= SHOW_COUNT_AT_OR_BELOW ? (
-            <Badge tone="amber">
-              {t.onlyLeft} {item.stockQty}
-            </Badge>
-          ) : (
-            <Badge tone={item.inStock ? 'green' : 'red'}>
-              {item.inStock ? t.inStock : t.outOfStock}
-            </Badge>
-          )}
+          {/* A CUSTOMER IS TOLD NOTHING ABOUT THE SHELF. NOT THE WORD, NOT
+              THE NUMBER.
+
+              There used to be a green "in stock" capsule on every card, which
+              is furniture rather than a fact — it said the same word about the
+              whole shop, so it was read past on the first row and never again.
+              Everything listed is in stock; that is the default and needs no
+              badge.
+
+              The count went with it. "Only 1 kg left" was well meant — it let
+              somebody reaching for three of something find out here rather than
+              at checkout — but how much is on a shop's shelf is the shop's
+              business, and printing it to whoever scans the QR is a running
+              inventory report published to the street. The owner asked for it
+              off and they are right. Nothing is lost at the till either: the
+              amount picker is already capped at what the shop has (see `most`),
+              so a customer cannot ask for more than exists — they simply are
+              not told why.
+
+              OUT OF STOCK IS STILL OBVIOUS, and needs no badge to be: the card
+              greys out and the far end of the row reads "out of stock" — see
+              `trailing`.
+
+              THE TILL IS THE EXCEPTION. The person behind the counter sells
+              from this screen, the figure moves under them all day as orders
+              come in, and a row they have not counted is the one that will be
+              oversold — so there, every row carries a badge. */}
+          {showStock &&
+            (item.stockQty === null ? (
+              <Badge tone="slate">{t.notCounted}</Badge>
+            ) : (
+              <Badge
+                tone={
+                  item.stockQty <= 0
+                    ? 'red'
+                    : item.stockQty <= SHOW_COUNT_AT_OR_BELOW
+                      ? 'amber'
+                      : 'green'
+                }
+              >
+                {/* "500 g", not "0.5". The count is a decimal in multiples of
+                    the pack, and a raw one is a number nobody in this chain
+                    speaks. Counted goods keep the plain number. */}
+                {amountLabel(item.unit, item.stockQty) ?? item.stockQty}
+              </Badge>
+            ))}
         </span>
         </span>
 
@@ -221,9 +277,40 @@ export function ItemCard({
           >
             −
           </button>
-          <span aria-live="polite" className="w-7 text-center font-bold tabular-nums text-slate-900">
-            {quantity}
-          </span>
+          {/* TYPED, NOT ONLY TAPPED.
+              This was a read-only number, so a shopper wanting a dozen eggs
+              tapped + twelve times and a shopkeeper ringing up a case of
+              biscuits did the same. The count is the one thing on this row a
+              customer actually knows in advance, so it takes a number.
+
+              The − and + stay: they are faster for the ones and twos that most
+              orders are, and they are the whole control on a phone where a
+              numeric keyboard covering half the screen to change 2 into 3 is
+              the worse trade. Typing is for when the number is large. */}
+          <input
+            type="text"
+            inputMode="numeric"
+            aria-label={`${t.amount} — ${label}`}
+            value={draft ?? String(quantity)}
+            onChange={(event) => {
+              // Digits only: a stray "-" or "." here is a quantity nobody can
+              // be sold, and stripping is kinder than an error on a box this
+              // small.
+              const raw = event.target.value.replace(/\D/g, '');
+              setDraft(raw);
+              if (raw === '') return;
+              // Clamped to what the shop actually has, exactly as + is. The
+              // order route refuses more anyway, and finding that out at
+              // checkout — after a name, a number and an address — is the
+              // worst possible moment to be told.
+              onChange(Math.min(most, Number(raw)));
+            }}
+            onBlur={() => setDraft(null)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur();
+            }}
+            className="w-9 rounded-lg bg-transparent text-center font-bold tabular-nums text-slate-900 focus:bg-brand-50 focus:outline-none"
+          />
           {/* The stepper stops at what the shop has.
               A counted item cannot be asked for beyond its count — the order
               route refuses it anyway, and finding that out at checkout, after

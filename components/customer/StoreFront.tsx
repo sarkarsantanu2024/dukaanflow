@@ -21,6 +21,7 @@ import { matchesSearch, translateCategory } from '@/lib/speech';
 import { MOST_PER_LINE, roundQuantity } from '@/lib/units';
 import { linePaise } from '@/lib/money';
 import { DELIVERY_AVAILABLE, quoteDelivery } from '@/lib/delivery';
+import { minBasketPaise } from '@/lib/basket';
 import { rememberShop } from '@/lib/saved-shops';
 import { OrderPlaced } from './OrderPlaced';
 import { watchInstallPrompt } from '@/lib/install-prompt';
@@ -209,6 +210,20 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   const quote = useMemo(
     () => quoteDelivery(shop, totalAmountPaise, deliveryOffered ? 'DELIVERY' : 'PICKUP'),
     [shop, totalAmountPaise, deliveryOffered],
+  );
+
+  /**
+   * The smallest order this shop will take, in paise.
+   *
+   * Derived from how much the shop actually lists rather than set by anybody —
+   * see `lib/basket.ts`. `items` here is already only what a customer can order
+   * (the page selects on `priced`), so a shop still filling in its list is
+   * sized as the small shop it is, and below twenty-five items has no minimum
+   * at all.
+   */
+  const minBasket = useMemo(
+    () => minBasketPaise(items.filter((item) => item.inStock).length),
+    [items],
   );
 
   const cartLines: CartLine[] = useMemo(
@@ -605,6 +620,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         onClear={() => setCart({})}
         onContinue={() => setCheckoutOpen(true)}
         quote={quote}
+        minBasketPaise={minBasket}
       />
 
       <CheckoutSheet
@@ -617,6 +633,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         locale={locale}
         deliveryEnabled={deliveryOffered}
         terms={shop}
+        minBasketPaise={minBasket}
         remembered={remembered}
       />
 

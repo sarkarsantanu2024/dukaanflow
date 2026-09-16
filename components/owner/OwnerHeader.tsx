@@ -29,6 +29,7 @@ import { SignOutIcon } from '@/components/ui/Icon';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { Spinner } from '@/components/ui/Spinner';
 import { OwnerInstallButton } from './OwnerInstallButton';
+import { ShutterSwitch } from './ShutterSwitch';
 import { ownerDict } from '@/lib/owner-i18n';
 import { LOCALE_LABELS, LOCALES, type Locale } from '@/lib/i18n';
 
@@ -36,12 +37,15 @@ export function OwnerHeader({
   slug,
   locale,
   shopName,
+  ownerClosed,
   ownerImageData,
 }: {
   slug: string;
   locale: Locale;
   /** The shop this owner is signed into, shown on every screen. */
   shopName: string;
+  /** The shopkeeper's own shutter. True means customers see a closed sign. */
+  ownerClosed: boolean;
   /**
    * The owner's photo as a data URL, or '' when they have not set one. Blank
    * falls back to the shop's initial on a brand tile — the same stand-in the
@@ -111,20 +115,16 @@ export function OwnerHeader({
 
         <OwnerInstallButton slug={slug} label={t.installNow} />
 
-        {/* THE ONLY PERMANENT WAY TO PAY US.
-            PlanBanner covers the last week of a trial and a catalogue near its
-            limit, and the roadblock covers an owner already locked out — but a
-            shop comfortably inside its plan sees neither, and until this button
-            existed such an owner had no route to a payment screen at all. It is
-            a word rather than an icon because "where do I pay" is a question
-            somebody asks in words, and a rupee glyph on a green bar reads as a
-            price, not a link. */}
-        <Link
-          href={`/owner/${slug}/renew`}
-          className="inline-flex h-9 shrink-0 items-center rounded-lg px-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-        >
-          {t.renewOpen}
-        </Link>
+        {/* THE SHUTTER TOOK THE PAY LINK'S PLACE, and the swap is the point.
+            A route to the payment screen is important and wanted about twice a
+            year; whether the shop is open is wanted on an ordinary Tuesday
+            morning, in a hurry, by somebody who has just decided not to open.
+            Only one of those earns a permanent seat on a phone header. Paying
+            moved into the folded-away block at the foot of every screen, where
+            the rest of the once-a-year settings already live — it is still one
+            tap from everywhere, and `PlanBanner` and the roadblock still put it
+            in front of an owner who actually needs it. */}
+        <ShutterSwitch slug={slug} locale={locale} ownerClosed={ownerClosed} />
 
         <button
           type="button"

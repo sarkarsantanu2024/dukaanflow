@@ -8,7 +8,7 @@ import { sendPush } from '@/lib/push';
 import { orderRevisedNotification, orderStatusNotification } from '@/lib/push-text';
 import { quoteDelivery } from '@/lib/delivery';
 import { linePaise } from '@/lib/money';
-import { amountLabel } from '@/lib/units';
+import { amountLabel, roundQuantity } from '@/lib/units';
 import type { Locale } from '@/lib/i18n';
 
 export const runtime = 'nodejs';
@@ -318,14 +318,15 @@ export async function PUT(request: Request, { params }: Context) {
     // What the customer is not getting goes back on the shelf, so the next
     // person can be sold it.
     for (const [itemId, quantity] of returning) {
-      // A counted item is only ever ordered in whole packs — the order route
-      // refuses a fraction of one — so rounding here restores exactly what was
-      // taken, and never puts a fraction into a whole-number column.
-      const whole = Math.round(quantity);
-      if (whole <= 0) continue;
+      // Exactly what was taken, fractions included. `stockQty` is a decimal in
+      // multiples of the item's own unit now, so 300 g cut from a line puts
+      // 0.3 of a kilo back rather than rounding it up to a whole one and
+      // inventing stock the shop does not have.
+      const back = roundQuantity(quantity);
+      if (back <= 0) continue;
       await tx.item.updateMany({
         where: { id: itemId, shopId: shop.id, stockQty: { not: null } },
-        data: { stockQty: { increment: whole }, inStock: true },
+        data: { stockQty: { increment: back }, inStock: true },
       });
     }
 
@@ -511,14 +512,14 @@ function readSnapshot(itemsJson: unknown): SnapshotLine[] {
 async function restoreStock(shopId: string, lines: SnapshotLine[]): Promise<void> {
   for (const line of lines) {
     if (!line.itemId || line.quantity <= 0) continue;
-    // Whole packs only: see the note in the revise transaction.
-    const whole = Math.round(line.quantity);
-    if (whole <= 0) continue;
+    // Fractions included: see the note in the revise transaction.
+    const back = roundQuantity(line.quantity);
+    if (back <= 0) continue;
     await prisma.item.updateMany({
       // `stockQty: { not: null }` is the whole guard: an item nobody counts must
       // stay uncounted rather than acquiring a total out of a cancellation.
       where: { id: line.itemId, shopId, stockQty: { not: null } },
-      data: { stockQty: { increment: whole }, inStock: true },
+      data: { stockQty: { increment: back }, inStock: true },
     });
   }
 }

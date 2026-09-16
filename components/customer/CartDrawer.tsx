@@ -20,6 +20,7 @@
  * order itself, stays behind Continue.
  */
 
+import { useState } from 'react';
 import { formatPaise, linePaise } from '@/lib/money';
 import { amountLabel, isLooseUnit, totalMeasure } from '@/lib/units';
 import { AmountStepper } from './AmountStepper';
@@ -28,6 +29,7 @@ import { Drawer } from '@/components/ui/Drawer';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { TrashIcon } from '@/components/ui/Icon';
 import type { DeliveryQuote } from '@/lib/delivery';
+import { basketShortfallPaise } from '@/lib/basket';
 
 export type CartLine = {
   id: string;
@@ -57,11 +59,20 @@ export function CartDrawer({
   onContinue,
   continueLabel,
   quote,
+  minBasketPaise = 0,
 }: {
   open: boolean;
   lines: CartLine[];
   totalPaise: number;
   locale: Locale;
+  /**
+   * The smallest order this shop will take, in PAISE. Zero is silent.
+   *
+   * Defaulted rather than required because the owner's own till uses this same
+   * panel, and a shopkeeper serving somebody across the counter must never be
+   * refused for taking ten rupees off them.
+   */
+  minBasketPaise?: number;
   /**
    * What delivery would cost this basket, or null when there is nothing to say
    * — a shop that delivers free with no minimum, or the owner's own till,
@@ -87,6 +98,19 @@ export function CartDrawer({
 }) {
   const t = dict(locale);
   const { confirm, dialog } = useConfirm();
+  /**
+   * What is being typed into each line's quantity box, keyed by item id.
+   *
+   * Per line rather than one value, because the basket shows every line at
+   * once and a single draft would follow the cursor from one row to the next.
+   * Empty means nobody is typing there and the box shows the basket's own
+   * number — see the note on the input.
+   */
+  const [qtyDrafts, setQtyDrafts] = useState<Record<string, string>>({});
+  // On the goods alone, and on every order including pickup — see
+  // `lib/basket.ts`. The delivery shortfall below is a different rule with a
+  // different reason, and the two can both be live at once.
+  const basketShort = basketShortfallPaise(minBasketPaise, totalPaise);
 
   return (
     <>
@@ -175,6 +199,20 @@ export function CartDrawer({
               </p>
             )}
 
+            {/* Below the shop's smallest order. Said as the amount still
+                missing rather than as a refusal — "₹40 more" is something a
+                shopper can act on without leaving the panel, and the menu is
+                one tap behind it. The shop's own rule is named above it so it
+                does not read as a fault in the app. */}
+            {basketShort > 0 && (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+                {t.minBasketBefore} {formatPaise(minBasketPaise)}.{' '}
+                <span className="whitespace-nowrap">
+                  {formatPaise(basketShort)} {t.addMoreValue}
+                </span>
+              </p>
+            )}
+
             <div className="flex items-center gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-slate-500">{t.total}</p>
@@ -184,11 +222,17 @@ export function CartDrawer({
               </div>
               <button
                 type="button"
+                // Stopped here rather than at the checkout, unlike the delivery
+                // minimum. That one leaves the button live because Pickup is a
+                // way out of it and finding that out is what the checkout is
+                // for; this one applies to pickup too, so sending the shopper
+                // on to fill a form in would only waste it.
+                disabled={basketShort > 0}
                 onClick={() => {
                   onClose();
                   onContinue();
                 }}
-                className="h-12 shrink-0 rounded-xl bg-brand-600 px-5 text-base font-semibold text-white transition hover:bg-brand-700"
+                className="h-12 shrink-0 rounded-xl bg-brand-600 px-5 text-base font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 {continueLabel ?? `${t.continue} →`}
               </button>
@@ -265,9 +309,34 @@ export function CartDrawer({
                     >
                       −
                     </button>
-                    <span className="w-7 text-center font-bold tabular-nums text-slate-900">
-                      {line.quantity}
-                    </span>
+                    {/* Typed as well as tapped, exactly as on the item card —
+                        the two places a shopper changes a quantity have to
+                        behave the same way or one of them is a trap. An empty
+                        box is left alone rather than read as zero, which would
+                        delete the line somebody was halfway through retyping. */}
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      aria-label={`${t.amount} — ${line.label}`}
+                      value={qtyDrafts[line.id] ?? String(line.quantity)}
+                      onChange={(event) => {
+                        const raw = event.target.value.replace(/\D/g, '');
+                        setQtyDrafts((current) => ({ ...current, [line.id]: raw }));
+                        if (raw === '') return;
+                        onSetQuantity(line.id, Number(raw));
+                      }}
+                      onBlur={() =>
+                        setQtyDrafts((current) => {
+                          const copy = { ...current };
+                          delete copy[line.id];
+                          return copy;
+                        })
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') event.currentTarget.blur();
+                      }}
+                      className="w-9 rounded-lg bg-transparent text-center font-bold tabular-nums text-slate-900 focus:bg-white focus:outline-none"
+                    />
                     <button
                       type="button"
                       aria-label="+"

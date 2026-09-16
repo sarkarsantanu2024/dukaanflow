@@ -1,0 +1,317 @@
+'use client';
+
+/**
+ * What has run out, as a list to hand the supplier standing at the counter.
+ *
+ * The moment this exists for is a specific one and it is short. A vendor comes
+ * in once a week, asks what is needed, and the owner answers from memory and
+ * from glancing at the shelves — which is why the same two things are forgotten
+ * every week and bought twice the week after. Halkhata already knows the answer:
+ * the count comes down on every storefront order and every counter sale, and an
+ * item that reaches zero takes itself off the shop page.
+ *
+ * EVERY LINE IS UNTICKABLE, AND THAT IS THE FEATURE. An owner does not reorder
+ * everything that is out: some of it they have stopped stocking, some they buy
+ * from a different supplier, some is out because it is out of season. A list
+ * that cannot be edited is a list that gets ignored in favour of the back of a
+ * calendar, so the ticking happens here, before anything is sent.
+ *
+ * TWO WAYS OUT, because there are two kinds of supplier. A message is for the
+ * man standing in the shop with his phone; a PDF is for the wholesaler who
+ * takes orders as files, and for the sheet that gets printed and ticked off
+ * with a pen. They are the same list.
+ *
+ * NO PRICES ANYWHERE. What the shop sells something for is not what it pays,
+ * and putting a retail price in front of a wholesaler shows him the shop's
+ * margin for no reason at all.
+ */
+
+import { useMemo, useState } from 'react';
+import clsx from 'clsx';
+import { Button } from '@/components/ui/Button';
+import { useToast } from '@/components/ui/Toast';
+import { WhatsAppIcon } from '@/components/ui/Icon';
+import { ownerDict } from '@/lib/owner-i18n';
+import { translateCategory } from '@/lib/speech';
+import { formatDay } from '@/lib/time';
+import { stockAmountLabel } from '@/lib/units';
+import {
+  buildRestockMessage,
+  needsRestock,
+  restockFilename,
+  restockName,
+  type RestockItem,
+} from '@/lib/restock';
+import type { Locale } from '@/lib/i18n';
+
+export function RestockCard({
+  shopName,
+  items,
+  locale,
+}: {
+  shopName: string;
+  /** The shop's whole list. What needs reordering is worked out from it here. */
+  items: RestockItem[];
+  locale: Locale;
+}) {
+  const t = ownerDict(locale);
+  const { push } = useToast();
+
+  const wanted = useMemo(() => needsRestock(items), [items]);
+
+  /**
+   * Which lines are going to the vendor. Everything, until the owner says
+   * otherwise.
+   *
+   * Ticked by default rather than empty: the common case is "order the lot",
+   * and a list that opens with nothing selected makes the owner do the work
+   * twice — once to read it and once to re-tick it.
+   */
+  const [picked, setPicked] = useState<Set<string> | null>(null);
+  /**
+   * HOW MUCH TO ORDER OF EACH, in the owner's own words, keyed by item id.
+   *
+   * This is the field the whole card was missing. It named what had run out and
+   * never asked the one question the supplier actually needs answering, so the
+   * owner sent a list of names and then said the amounts out loud anyway —
+   * which is the phone call this exists to save.
+   *
+   * Free text, and not checked against anything: a shop sells rice by the kilo
+   * and buys it by the fifty-kilo bosta. See `RestockLine`.
+   */
+  const [orderQty, setOrderQty] = useState<Record<string, string>>({});
+  const chosenIds = picked ?? new Set(wanted.map((item) => item.id));
+  const chosen = wanted.filter((item) => chosenIds.has(item.id));
+  const [building, setBuilding] = useState(false);
+
+  function toggle(id: string) {
+    const next = new Set(chosenIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setPicked(next);
+  }
+
+  /**
+   * The list as it will be sent: what to bring, and how much of it.
+   *
+   * THE PACK SIZE IS NOT IN IT. The card still shows it under each name,
+   * because it is how the owner recognises which of their two dal rows this is
+   * — but it is the shop's own retail pack, and a supplier loading a van has no
+   * use for it. See the note in `lib/restock.ts`.
+   */
+  const lines = chosen.map((item) => ({
+    name: restockName(item, locale),
+    wanted: orderQty[item.id] ?? '',
+  }));
+
+  const message = buildRestockMessage({
+    shopName,
+    lines,
+    labels: {
+      heading: t.restockHeading,
+      total: t.restockTotal,
+      empty: t.restockEmptyLine,
+    },
+  });
+
+  /**
+   * WhatsApp with no number in the link, so the owner picks the contact.
+   *
+   * There is nowhere to store a supplier's number and there should not be: a
+   * kirana buys from four or five people depending on what it is, and a field
+   * for "the supplier" would be wrong most weeks. WhatsApp's own contact picker
+   * already knows all of them. Same shape the delivery round uses.
+   */
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+  async function downloadPdf() {
+    setBuilding(true);
+    try {
+      // Imported here rather than at the top: this pulls in jsPDF and a page of
+      // canvas drawing, and an owner who never opens this card should not pay
+      // for it on every load of the Items tab.
+      const { restockPdf } = await import('@/lib/restock-pdf');
+      const { saveBlob } = await import('@/lib/khata-pdf');
+
+      const now = new Date();
+      const blob = await restockPdf({
+        shopName,
+        dateLabel: formatDay(now),
+        // Name and pack size only. What is left on the shop's own shelf is the
+        // shop's business, not the supplier's — see the note in `restock-pdf`.
+        rows: chosen.map((item) => ({
+          name: restockName(item, locale),
+          wanted: (orderQty[item.id] ?? '').trim(),
+        })),
+        labels: {
+          heading: t.restockHeading,
+          item: t.restockItemCol,
+          wanted: t.restockWanted,
+          total: t.restockTotal,
+          empty: t.restockEmptyLine,
+        },
+      });
+
+      saveBlob(blob, restockFilename(shopName, now));
+      push(t.restockDownloaded, 'success');
+    } catch {
+      push(t.networkError, 'error');
+    } finally {
+      setBuilding(false);
+    }
+  }
+
+  // Nothing out of stock is the good case and it does not need a card. A shop
+  // with full shelves should not be shown an empty list every time it opens the
+  // Items tab — one quiet line, and out of the way.
+  if (wanted.length === 0) {
+    return (
+      <section className="rounded-2xl bg-white px-4 py-3 shadow-card">
+        <p className="text-sm font-semibold text-slate-900">{t.restockTitle}</p>
+        <p className="mt-1 text-sm text-slate-500">{t.restockNone}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-2xl bg-white px-4 py-3 shadow-card">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <p className="text-sm font-semibold text-slate-900">{t.restockTitle}</p>
+        <p className="text-sm tabular-nums text-slate-500">
+          {chosen.length} / {wanted.length} {t.restockPicked}
+        </p>
+      </div>
+      <p className="mt-1 text-xs text-slate-500">{t.restockHint}</p>
+
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setPicked(new Set(wanted.map((item) => item.id)))}
+          className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-200"
+        >
+          {t.restockAll}
+        </button>
+        <button
+          type="button"
+          onClick={() => setPicked(new Set())}
+          className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-200"
+        >
+          {t.restockClear}
+        </button>
+      </div>
+
+      {/* Capped in height and scrolled. A shop that has let itself run down has
+          forty of these, and forty rows pushed between the item list and
+          everything under it would bury the tab. */}
+      <ul className="mt-3 max-h-80 divide-y divide-slate-100 overflow-y-auto">
+        {wanted.map((item) => {
+          const ticked = chosenIds.has(item.id);
+          const finished = !item.inStock || item.stockQty === 0;
+
+          return (
+            <li key={item.id}>
+              <label className="flex cursor-pointer items-center gap-3 py-2">
+                <input
+                  type="checkbox"
+                  checked={ticked}
+                  onChange={() => toggle(item.id)}
+                  className="h-5 w-5 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                />
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={clsx(
+                      'block truncate text-sm font-medium',
+                      ticked ? 'text-slate-900' : 'text-slate-400',
+                    )}
+                  >
+                    {restockName(item, locale)}
+                  </span>
+                  <span className="block truncate text-xs text-slate-500">
+                    {[item.unit, item.category ? translateCategory(item.category, locale) : '']
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
+                </span>
+                <span
+                  className={clsx(
+                    'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums',
+                    finished ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800',
+                  )}
+                >
+                  {/* "1 kg বাকি", not "2 বাকি". `stockQty` is a multiple of
+                      the item's own pack, so the raw number means nothing on
+                      its own — two of a 500 g pack is a kilo, and two of a
+                      1 kg pack is two. `stockAmountLabel` is the same
+                      conversion the item row and the till use, so one shelf
+                      never reads three different ways in one app. */}
+                  {finished
+                    ? t.restockOut
+                    : `${stockAmountLabel(item.unit, item.stockQty ?? 0)} ${t.restockLow}`}
+                </span>
+
+                {/* HOW MUCH TO ORDER — the question this card never asked.
+                    It listed what had run out and stopped there, so the owner
+                    sent a list of names and then said the amounts out loud
+                    anyway, which is the phone call the card exists to save.
+
+                    Free text on purpose: a shop sells rice by the kilo and
+                    buys it by the fifty-kilo bosta, so "2 bosta" and "5 strip"
+                    have to be sayable. Blank is allowed — the shop wants the
+                    item and will settle the amount at the counter.
+
+                    Outside the label's own click target (`onClick` stops the
+                    bubble) or tapping into the box would tick the row off. */}
+                <input
+                  type="text"
+                  value={orderQty[item.id] ?? ''}
+                  onChange={(event) =>
+                    setOrderQty((current) => ({ ...current, [item.id]: event.target.value }))
+                  }
+                  onClick={(event) => event.preventDefault()}
+                  placeholder={t.restockWanted}
+                  aria-label={`${t.restockWanted} — ${restockName(item, locale)}`}
+                  className="h-9 w-24 shrink-0 rounded-lg border border-slate-300 px-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none"
+                />
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {/* A real link rather than the Button component, which only renders a
+            `<button>`. WhatsApp has to be opened by a navigation the browser
+            can see the owner asked for — a click handler calling `window.open`
+            is what pop-up blockers exist to stop. */}
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener"
+          aria-disabled={chosen.length === 0}
+          onClick={(event) => {
+            if (chosen.length === 0) event.preventDefault();
+          }}
+          className={clsx(
+            'inline-flex h-9 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition',
+            chosen.length === 0
+              ? 'cursor-not-allowed bg-[#25D366] opacity-50'
+              : 'bg-[#25D366] hover:bg-[#1eb457]',
+            'text-white',
+          )}
+        >
+          <WhatsAppIcon className="h-4 w-4" />
+          {t.restockSend}
+        </a>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={downloadPdf}
+          loading={building}
+          disabled={chosen.length === 0}
+        >
+          {t.restockPdf}
+        </Button>
+      </div>
+    </section>
+  );
+}
