@@ -10,6 +10,7 @@ import type { PlanState } from '@/components/owner/PlanBanner';
 import type { OwnerSettings } from '@/components/owner/MoreDrawer';
 import type { RoadblockState } from '@/components/owner/SubscriptionRoadblock';
 import { dateInputValue } from './notice';
+import { formatDay } from './time';
 import { BRAND_NAME } from './brand';
 
 /**
@@ -119,7 +120,13 @@ export async function loadOwnerShop(slug: string) {
     // then refusing those items after they pay is how a first payment becomes a
     // refund.
     suggested: planFor(billing.itemCount).id,
-    helpUrl: supportUrl(shop.name, shop.slug),
+    helpUrl: supportUrl(shop.name, shop.slug, {
+      planName: billing?.plan.name ?? PLAN_SPECS.FREE.name,
+      itemCount: billing?.itemCount ?? 0,
+      itemLimit: billing?.itemLimit ?? 25,
+      trialDaysLeft: billing?.trialDaysLeft ?? null,
+      paidTo: shop.currentPeriodEnd,
+    }),
   };
 
   /**
@@ -158,7 +165,7 @@ export async function loadOwnerShop(slug: string) {
  * their items after they pay is how a first payment becomes a refund.
  */
 function roadblockFor(
-  shop: { name: string; slug: string },
+  shop: { name: string; slug: string; currentPeriodEnd: Date | null },
   billing: ShopEntitlement | null,
 ): RoadblockState | null {
   if (!billing || billing.canEdit) return null;
@@ -168,7 +175,15 @@ function roadblockFor(
     planName: planFor(billing.itemCount).name,
     itemCount: billing.itemCount,
     suggested: planFor(billing.itemCount).id,
-    helpUrl: supportUrl(shop.name, shop.slug),
+    // A locked-out owner is the one most likely to press this, so the operator
+    // gets the standing that explains why they are locked out.
+    helpUrl: supportUrl(shop.name, shop.slug, {
+      planName: billing.plan.name,
+      itemCount: billing.itemCount,
+      itemLimit: billing.itemLimit,
+      trialDaysLeft: billing.trialDaysLeft,
+      paidTo: shop.currentPeriodEnd,
+    }),
   };
 }
 
@@ -185,9 +200,48 @@ function roadblockFor(
  * button on blank rather than rendering one that goes nowhere. Paying does not
  * depend on this — the payment dialog does that on its own.
  */
-function supportUrl(shopName: string, slug: string): string {
+function supportUrl(
+  shopName: string,
+  slug: string,
+  state: { planName: string; itemCount: number; itemLimit: number; trialDaysLeft: number | null; paidTo: Date | null },
+): string {
   const support = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '';
   if (!support) return '';
-  const text = encodeURIComponent(`${BRAND_NAME} — ${shopName} (${slug}).`);
+
+  /**
+   * THE MESSAGE CARRIED THE SHOP'S NAME AND NOTHING ELSE.
+   *
+   * "Halkhata — Sarkar Stores (sarkar-stores-badamtala)." is what arrived, and
+   * an operator reading it on their phone had to open the console, find the
+   * shop and work out what state it was in before they could even guess what
+   * the owner wanted. Every one of those facts was already on the screen the
+   * owner tapped the button from.
+   *
+   * So the message brings them: the plan, how much of it is used, and where the
+   * shop stands on time. The operator can answer from the notification without
+   * opening anything, and the one thing they genuinely cannot know — what the
+   * owner actually wants — is left as an empty line for the owner to type into,
+   * with their cursor already sitting in it.
+   *
+   * Deliberately no PIN, no token, no link that grants anything. This text goes
+   * through WhatsApp and sits in two phones' chat history for years.
+   */
+  const standing =
+    state.trialDaysLeft !== null
+      ? `Trial: ${state.trialDaysLeft} day${state.trialDaysLeft === 1 ? '' : 's'} left`
+      : state.paidTo
+        ? `Paid to: ${formatDay(state.paidTo)}`
+        : 'Not paid';
+
+  const text = encodeURIComponent(
+    [
+      `${BRAND_NAME} — ${shopName} (${slug})`,
+      `Plan: ${state.planName} · ${state.itemCount}/${state.itemLimit} items`,
+      standing,
+      '',
+      '', // Where the owner types. The blank line above it is the whole point.
+    ].join('\n'),
+  );
+
   return `https://wa.me/${support}?text=${text}`;
 }

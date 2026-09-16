@@ -724,6 +724,19 @@ export const subscriptionSchema = z.object({
    * console can never record a figure the price list does not agree with.
    */
   listedItems: z.number().int().min(1).max(5000).optional(),
+  /**
+   * Set to give a shop more free trial, in days, at the owner's request.
+   *
+   * ADDED TO THE TRIAL, NOT TO PAID TIME, and it records no money — a shop that
+   * asks for another week because the son who reads English is away has not
+   * bought anything, and a payment row saying otherwise would put a figure in
+   * the month's takings that nobody was ever given.
+   *
+   * Capped at 90 days a time. Beyond that an operator is not extending a trial,
+   * they are running a shop for free, and that is a decision that should be
+   * made as a custom price rather than by typing a large number into a box.
+   */
+  trialDays: z.number().int().min(1).max(90).optional(),
   method: z.string().trim().max(20).default('UPI'),
   reference: z.string().trim().max(60).default(''),
   note: z.string().trim().max(200).default(''),

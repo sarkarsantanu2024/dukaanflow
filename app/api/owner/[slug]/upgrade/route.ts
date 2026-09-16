@@ -24,6 +24,32 @@ type Context = { params: Promise<{ slug: string }> };
 /** The one request that still matters to the owner, or null. */
 const OPEN_STATUSES = ['SUBMITTED', 'CODE_ISSUED'] as const;
 
+/**
+ * How long a claim stays "we are checking your payment".
+ *
+ * IT USED TO BE FOREVER, and that is a quiet way to lose a shop. A request the
+ * operator never got to sat open indefinitely, so the owner's plan screen went
+ * on saying their money was being checked — weeks later, on a shop that had
+ * since paid by another route and was covered until next year. Worse, the guard
+ * below then refused to let them start again, so the one screen they could act
+ * on was frozen by a row nobody was ever going to action.
+ *
+ * Seven days is generous for a job that takes an operator a minute. After that
+ * the claim stops being shown to the owner, who can submit again, and the row
+ * itself is left exactly as it is — the operator's queue is the record of what
+ * was claimed, and deleting it would erase a shopkeeper saying they had paid.
+ */
+const OPEN_FOR_DAYS = 7;
+
+/** The claims still worth showing this shop, by age as well as by status. */
+function openRequestWhere(shopId: string) {
+  return {
+    shopId,
+    status: { in: [...OPEN_STATUSES] },
+    createdAt: { gte: new Date(Date.now() - OPEN_FOR_DAYS * 86_400_000) },
+  };
+}
+
 const REQUEST_SHAPE = {
   id: true,
   plan: true,
@@ -46,7 +72,7 @@ export async function GET(request: Request, { params }: Context) {
   const [settings, open, lastRejected] = await Promise.all([
     operatorPayment(),
     prisma.paymentRequest.findFirst({
-      where: { shopId: shop.id, status: { in: [...OPEN_STATUSES] } },
+      where: openRequestWhere(shop.id),
       orderBy: { createdAt: 'desc' },
       select: REQUEST_SHAPE,
     }),
@@ -116,7 +142,7 @@ export async function POST(request: Request, { params }: Context) {
    * owner wanted to see anyway.
    */
   const existing = await prisma.paymentRequest.findFirst({
-    where: { shopId: shop.id, status: { in: [...OPEN_STATUSES] } },
+    where: openRequestWhere(shop.id),
     orderBy: { createdAt: 'desc' },
     select: REQUEST_SHAPE,
   });
