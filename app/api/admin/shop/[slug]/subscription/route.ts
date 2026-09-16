@@ -58,6 +58,30 @@ export async function POST(request: Request, { params }: Context) {
    */
   if (trialDays !== undefined) {
     const now = new Date();
+
+    /**
+     * REFUSED FOR A SHOP THAT HAS PAID, and this guard is the whole lesson of
+     * the block.
+     *
+     * The first version set `subscriptionStatus: 'TRIALING'` unconditionally,
+     * which on a paying shop was a quiet disaster: `entitlement` reads TRIALING
+     * as "inside the free look" and grants `TRIAL_PLAN` — the TOP tier. A Basic
+     * shop paid up until 2027 was silently moved to Business and 1000 items,
+     * for nothing, while its own console still read "Paid to 14/09/2027". Two
+     * contradictory truths on one panel, and the generous one winning.
+     *
+     * There is no sensible meaning to give the action anyway. A shop holding
+     * paid time is not trialling, and "more free days" for one of them is a
+     * discount on the next renewal — which is `customPricePaise`, a different
+     * control, with a different record, that does not pretend to be a trial.
+     */
+    if (shop.currentPeriodEnd && shop.currentPeriodEnd > now) {
+      return fail(
+        `This shop has paid to ${shop.currentPeriodEnd.toISOString().slice(0, 10)}, so it is not on a trial. Use the custom price to give it a better rate instead.`,
+        409,
+      );
+    }
+
     const from = shop.trialEndsAt && shop.trialEndsAt > now ? shop.trialEndsAt : now;
     const trialEndsAt = new Date(from.getTime() + trialDays * 86_400_000);
 
