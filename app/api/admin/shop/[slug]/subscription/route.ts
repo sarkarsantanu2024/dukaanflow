@@ -31,11 +31,42 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = subscriptionSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { plan, months, status, listedItems, method, reference, note } = parsed.data;
+  const { plan, months, status, listedItems, trialDays, method, reference, note } = parsed.data;
 
   if (status) {
     await prisma.shop.update({ where: { id: shop.id }, data: { plan, subscriptionStatus: status } });
     return ok({ success: true });
+  }
+
+  /**
+   * More free trial, at the owner's request. No money, no Payment row.
+   *
+   * COUNTED FROM WHICHEVER IS LATER — the trial's own end, or today. A shop
+   * whose trial ran out three days ago and is given "seven more days" means
+   * seven days from now, not four; counting from a date already past would hand
+   * the operator a number that quietly shrinks the longer they take to answer
+   * the WhatsApp message asking for it.
+   *
+   * The status goes back to TRIALING because that is what the shop now is.
+   * Without it a shop that had already lapsed keeps a CANCELLED status while
+   * holding a live trial date, and `entitlement()` would go on refusing them —
+   * an extension the owner was promised and never received.
+   *
+   * `currentPeriodEnd` is deliberately untouched. A trial and paid time are
+   * different facts, and a shop that has paid must not have that overwritten by
+   * a goodwill week.
+   */
+  if (trialDays !== undefined) {
+    const now = new Date();
+    const from = shop.trialEndsAt && shop.trialEndsAt > now ? shop.trialEndsAt : now;
+    const trialEndsAt = new Date(from.getTime() + trialDays * 86_400_000);
+
+    await prisma.shop.update({
+      where: { id: shop.id },
+      data: { trialEndsAt, subscriptionStatus: 'TRIALING' },
+    });
+
+    return ok({ success: true, trialEndsAt: trialEndsAt.toISOString() });
   }
 
   // The cataloguing service: a one-off charge for work done, not time bought.

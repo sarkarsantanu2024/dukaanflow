@@ -216,6 +216,13 @@ type OwnerDictionary = {
   renewPaidUntil: string;
   renewTrialUntil: string;
   renewEarlyHint: string;
+  /**
+   * Shown instead of `renewEarlyHint` while the shop is still on its free
+   * trial, because that sentence is not true for trial days — they are not
+   * carried over, and a shop told otherwise would feel cheated on the day it
+   * paid.
+   */
+  renewTrialPayHint: string;
   renewChoosePlan: string;
   renewFits: string;
   renewNoUpi: string;
@@ -726,7 +733,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     renewPaidUntil: 'Paid until',
     renewTrialUntil: 'Free trial until',
     renewEarlyHint:
-      'Paying early costs you nothing — the days you have left are added on top of the time you buy.',
+      'Paying early costs you nothing — the paid days you have left are added on top of the time you buy.',
+    renewTrialPayHint:
+      'Your free trial runs to the date above. Paying starts your plan from that day, so nothing is wasted by waiting — and the trial days themselves are not added on top.',
     renewChoosePlan: 'Choose a plan',
     renewFits: 'Fits your shop',
     renewNoUpi:
@@ -1158,7 +1167,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     renewPaidUntil: 'টাকা দেওয়া আছে',
     renewTrialUntil: 'ফ্রি ট্রায়াল চলবে',
     renewEarlyHint:
-      'আগে টাকা দিলে কিছু নষ্ট হয় না — আপনার হাতে যে দিনগুলো আছে, সেগুলো নতুন সময়ের সঙ্গে যোগ হয়ে যায়।',
+      'আগে টাকা দিলে কিছু নষ্ট হয় না — টাকা দেওয়া যে দিনগুলো হাতে আছে, সেগুলো নতুন সময়ের সঙ্গে যোগ হয়ে যায়।',
+    renewTrialPayHint:
+      'উপরের তারিখ পর্যন্ত আপনার ফ্রি ট্রায়াল চলবে। টাকা দিলে প্ল্যান ওই দিন থেকেই শুরু হবে, তাই অপেক্ষা করলে কিছু নষ্ট হয় না — তবে ট্রায়ালের দিনগুলো আলাদা করে যোগ হয় না।',
     renewChoosePlan: 'প্ল্যান বাছুন',
     renewFits: 'আপনার দোকানের মাপে',
     renewNoUpi:
@@ -1586,7 +1597,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     renewPaidUntil: 'भुगतान इस तारीख तक',
     renewTrialUntil: 'फ्री ट्रायल इस तारीख तक',
     renewEarlyHint:
-      'पहले भुगतान करने से कुछ नहीं जाता — आपके बचे हुए दिन नए समय में जुड़ जाते हैं।',
+      'पहले भुगतान करने से कुछ नहीं जाता — आपके बचे हुए भुगतान किए दिन नए समय में जुड़ जाते हैं।',
+    renewTrialPayHint:
+      'ऊपर दी तारीख तक आपका फ्री ट्रायल चलेगा। भुगतान करने पर प्लान उसी दिन से शुरू होगा, तो इंतज़ार करने में कुछ नहीं जाता — पर ट्रायल के दिन अलग से नहीं जुड़ते।',
     renewChoosePlan: 'प्लान चुनिए',
     renewFits: 'आपकी दुकान के हिसाब से',
     renewNoUpi:

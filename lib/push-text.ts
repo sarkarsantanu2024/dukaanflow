@@ -34,6 +34,15 @@ type PushDictionary = {
   revisedTitle: string;
   /** Followed by the new total. */
   revisedBody: string;
+
+  /** The owner's free trial has run out. */
+  trialOverTitle: string;
+  trialOverBody: string;
+  /** The last few days of it, so the end is not a surprise. */
+  trialEndingTitle: string;
+  /** "3 days left" — the number is put in front of this. */
+  trialEndingDays: string;
+  trialEndingBody: string;
 };
 
 const DICTIONARIES: Record<Locale, PushDictionary> = {
@@ -49,6 +58,12 @@ const DICTIONARIES: Record<Locale, PushDictionary> = {
     readyDeliveryBody: 'It has left',
     cancelledTitle: 'Order could not be taken',
     cancelledBody: 'could not take your order this time.',
+    trialOverTitle: 'Your free trial has ended',
+    trialOverBody:
+      'Your shop page and QR keep working. To add or change items again, choose a plan in the app.',
+    trialEndingTitle: 'Your free trial is nearly over',
+    trialEndingDays: 'days left',
+    trialEndingBody: 'Choose a plan in the app to carry on without a break.',
     revisedTitle: 'Your order has changed',
     revisedBody: 'did not have everything. New total:',
   },
@@ -64,6 +79,12 @@ const DICTIONARIES: Record<Locale, PushDictionary> = {
     readyDeliveryBody: 'বেরিয়ে গেছে —',
     cancelledTitle: 'অর্ডার নেওয়া গেল না',
     cancelledBody: 'এবার আপনার অর্ডারটি নিতে পারল না।',
+    trialOverTitle: 'আপনার ফ্রি সময় শেষ',
+    trialOverBody:
+      'দোকানের পাতা আর QR ঠিকই চলবে। আবার জিনিস যোগ বা বদল করতে অ্যাপে একটা প্ল্যান নিন।',
+    trialEndingTitle: 'ফ্রি সময় প্রায় শেষ',
+    trialEndingDays: 'দিন বাকি',
+    trialEndingBody: 'কাজ না থামিয়ে চালিয়ে যেতে অ্যাপে একটা প্ল্যান নিন।',
     revisedTitle: 'অর্ডার বদলেছে',
     revisedBody: 'সব জিনিস ছিল না। নতুন মোট:',
   },
@@ -79,6 +100,12 @@ const DICTIONARIES: Record<Locale, PushDictionary> = {
     readyDeliveryBody: 'निकल चुका है —',
     cancelledTitle: 'ऑर्डर नहीं लिया जा सका',
     cancelledBody: 'इस बार आपका ऑर्डर नहीं ले सका।',
+    trialOverTitle: 'आपका फ्री समय खत्म',
+    trialOverBody:
+      'दुकान का पेज और QR चलता रहेगा। दोबारा सामान जोड़ने या बदलने के लिए ऐप में प्लान चुनिए।',
+    trialEndingTitle: 'फ्री समय लगभग खत्म',
+    trialEndingDays: 'दिन बचे',
+    trialEndingBody: 'बिना रुकावट चलाने के लिए ऐप में प्लान चुनिए।',
     revisedTitle: 'ऑर्डर बदल गया',
     revisedBody: 'सब सामान नहीं था। नया कुल:',
   },
@@ -162,5 +189,35 @@ export function orderRevisedNotification(input: {
   return {
     title: t.revisedTitle,
     body: `${input.shopName} ${t.revisedBody} ${plainPaise(input.totalAmountPaise)}`,
+  };
+}
+
+/**
+ * What the owner's phone shows about their free trial.
+ *
+ * TWO MOMENTS, NOT ONE. The day it ends is too late to be the first anybody
+ * hears of it — an owner who opens the app to a locked item list on a Tuesday
+ * morning has been ambushed by us, and the fix takes a payment they have not
+ * arranged. So there is a warning while there is still time to act on it, and
+ * the plain fact when it happens.
+ *
+ * Neither says the shop has stopped, because it has not: the storefront and the
+ * QR go on working when a trial lapses. Only editing stops. Saying "your shop
+ * is closed" would be a lie that costs the owner a day of panic.
+ */
+export function trialNotification(input: {
+  locale: Locale;
+  /** Days remaining. Zero or less means it has already run out. */
+  daysLeft: number;
+}): { title: string; body: string } {
+  const t = pushDict(input.locale);
+
+  if (input.daysLeft <= 0) {
+    return { title: t.trialOverTitle, body: t.trialOverBody };
+  }
+
+  return {
+    title: `${t.trialEndingTitle} · ${input.daysLeft} ${t.trialEndingDays}`,
+    body: t.trialEndingBody,
   };
 }

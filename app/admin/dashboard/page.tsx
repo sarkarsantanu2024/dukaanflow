@@ -28,7 +28,19 @@ export const metadata = { title: `${BRAND_NAME} — Dashboard` };
  * ₹249.
  */
 export default async function DashboardPage() {
-  const [money, shops, itemCount, orderCount] = await Promise.all([
+  /**
+   * Trials the operator has to do something about, soonest first.
+   *
+   * THE OWNER'S NOTIFICATION IS NOT ENOUGH ON ITS OWN. The nightly job pushes
+   * to the owner's phone (see `/api/cron/trials`), but a shopkeeper who never
+   * turned notifications on has no subscription to push to, and one who did may
+   * simply not act. Somebody has to ring them, and that somebody needs a list.
+   *
+   * Shops that have paid are excluded: their trial date is a leftover fact.
+   */
+  const trialHorizon = new Date(Date.now() + 3 * 86_400_000);
+
+  const [money, shops, itemCount, orderCount, trials] = await Promise.all([
     earnings(),
     prisma.shop.findMany({
       where: { isDemo: false },
@@ -36,6 +48,24 @@ export default async function DashboardPage() {
     }),
     prisma.item.count(),
     prisma.order.count(),
+    prisma.shop.findMany({
+      where: {
+        isDemo: false,
+        active: true,
+        trialEndsAt: { not: null, lte: trialHorizon },
+        OR: [{ currentPeriodEnd: null }, { currentPeriodEnd: { lte: new Date() } }],
+      },
+      select: {
+        name: true,
+        slug: true,
+        phone: true,
+        ownerName: true,
+        trialEndsAt: true,
+        _count: { select: { items: true } },
+      },
+      orderBy: { trialEndsAt: 'asc' },
+      take: 25,
+    }),
   ]);
 
   const live = shops.filter((shop) => shop.active).length;
@@ -178,6 +208,65 @@ export default async function DashboardPage() {
             />
           </div>
         </section>
+
+        {/* TRIALS THAT NEED A PHONE CALL.
+            Placed under the money because that is what it becomes, and above
+            the product reference because this is work and that is a lookup. It
+            is absent entirely when there is nothing to do — a permanently
+            empty "nothing to see" panel is the fastest way to teach an operator
+            to stop looking at a part of the screen. */}
+        {trials.length > 0 && (
+          <section className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+            <h2 className="text-sm font-bold text-amber-900">
+              Trials ending or ended · {trials.length}
+            </h2>
+            <p className="mt-0.5 text-xs text-amber-800">
+              Not paid. The owner has been notified on their phone if they turned notifications
+              on — this is the list to ring. The shop page and QR keep working either way.
+            </p>
+
+            <ul className="mt-3 divide-y divide-amber-200/70">
+              {trials.map((shop) => {
+                const days = Math.ceil(
+                  (shop.trialEndsAt!.getTime() - Date.now()) / 86_400_000,
+                );
+                return (
+                  <li key={shop.slug} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2">
+                    <a
+                      href={`/admin/shop/${shop.slug}`}
+                      className="font-semibold text-amber-900 underline decoration-amber-400 underline-offset-2"
+                    >
+                      {shop.name}
+                    </a>
+                    <span
+                      className={
+                        days <= 0
+                          ? 'text-xs font-bold text-red-700'
+                          : 'text-xs font-medium text-amber-800'
+                      }
+                    >
+                      {days <= 0 ? 'ended' : `${days} day${days === 1 ? '' : 's'} left`}
+                    </span>
+                    <span className="text-xs tabular-nums text-amber-800">
+                      {shop._count.items} items
+                    </span>
+                    {/* The number, because the next step is a phone call and
+                        an operator should not have to open the shop to make
+                        it. */}
+                    <a
+                      href={`https://wa.me/91${shop.phone}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs tabular-nums text-amber-900 underline underline-offset-2"
+                    >
+                      {shop.ownerName || '+91'} {shop.phone}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
 
         <ProductGuide />
       </main>

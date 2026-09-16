@@ -109,6 +109,8 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
   const [plan, setPlan] = useState<Plan>(state.plan);
   const [months, setMonths] = useState(1);
   const [reference, setReference] = useState('');
+  /** Days of extra free trial to give. Seven is what shops actually ask for. */
+  const [trialDays, setTrialDays] = useState('7');
   const [busy, setBusy] = useState(false);
   // Seeded from the shop's stored deal, so the boxes read back what is in force
   // rather than starting blank over a live custom price.
@@ -140,10 +142,10 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
    * commit a shopkeeper's money to an outcome it declined to show them.
    */
   const { periodEnd } = periodFor(
-    {
-      currentPeriodEnd: state.currentPeriodEnd ? new Date(state.currentPeriodEnd) : null,
-      trialEndsAt: state.trialEndsAt ? new Date(state.trialEndsAt) : null,
-    },
+    // Paid time only. Unused trial days are no longer added on — see the note
+    // on `periodFor` — so passing the trial date here would have this preview
+    // quote a date the server will not grant.
+    { currentPeriodEnd: state.currentPeriodEnd ? new Date(state.currentPeriodEnd) : null },
     monthCount,
   );
 
@@ -346,8 +348,9 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
           Runs to <strong>{formatDay(periodEnd)}</strong>
         </p>
         <p className="mt-1 text-center text-xs leading-relaxed text-slate-500">
-          Time is added to whatever is left — unused trial days included — so paying early never
-          costs the shop days.
+          Paid time is added to paid time already held, so renewing early never costs the shop
+          days. Unused trial days are not added — the trial is the free look, and paying starts
+          the plan.
         </p>
       </Block>
 
@@ -400,6 +403,42 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
         title="Corrections"
         hint="Changes this shop's state without recording any money."
       >
+        {/* MORE FREE TRIAL, AT THE OWNER'S ASKING.
+            Shops ask, and until now the only answers were "no" or a fake
+            payment — which puts money in the month's takings that nobody was
+            given. This records nothing and buys nothing; it moves one date.
+
+            Counted from whichever is later, the trial's own end or today, so an
+            operator who answers the WhatsApp message two days late still gives
+            the full week they said they would. */}
+        <div className="mb-3 flex flex-wrap items-end gap-2 rounded-xl bg-white p-2.5 ring-1 ring-slate-200">
+          <label className="text-xs font-medium text-slate-600">
+            <span className="mb-1 block">Extend trial</span>
+            <input
+              type="number"
+              min={1}
+              max={90}
+              value={trialDays}
+              onChange={(event) => setTrialDays(event.target.value)}
+              className="h-9 w-20 rounded-lg border border-slate-300 px-2 text-sm tabular-nums"
+            />
+          </label>
+          <span className="pb-2 text-xs text-slate-500">days</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={busy || !(Number(trialDays) > 0)}
+            onClick={() =>
+              post({ plan, trialDays: Number(trialDays) }, `Trial extended by ${trialDays} days`)
+            }
+          >
+            Give the days
+          </Button>
+          <p className="w-full text-xs text-slate-500">
+            Free time, recorded as no payment. Paid time is untouched.
+          </p>
+        </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="secondary"
