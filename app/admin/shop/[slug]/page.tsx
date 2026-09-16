@@ -10,6 +10,7 @@ import { DeleteShopButton } from '@/components/admin/DeleteShopButton';
 import { OwnerAccessPanel } from '@/components/admin/OwnerAccessPanel';
 import { SubscriptionPanel } from '@/components/admin/SubscriptionPanel';
 import { shopEntitlement } from '@/lib/billing';
+import { PLAN_SPECS } from '@/lib/plans';
 import { baseUrl } from '@/lib/qr';
 
 export const dynamic = 'force-dynamic';
@@ -178,6 +179,13 @@ export default async function ShopDetailPage({ params }: PageProps) {
             status: shop.subscriptionStatus,
             itemCount: billing?.itemCount ?? shop._count.items,
             itemLimit: billing?.itemLimit ?? 25,
+            // What this shop is actually entitled to TODAY, which is not always
+            // `plan`: a trial grants the top tier, and a custom deal overrides
+            // both the name and the limit. The panel showed the stored plan
+            // beside the effective limit, so a trialling Basic shop read
+            // "Basic · 9/1000 items" and looked broken.
+            effectivePlanName: billing?.plan.name ?? PLAN_SPECS.FREE.name,
+            trialDaysLeft: billing?.trialDaysLeft ?? null,
             trialEndsAt: shop.trialEndsAt?.toISOString() ?? null,
             currentPeriodEnd: shop.currentPeriodEnd?.toISOString() ?? null,
             customPricePaise: shop.customPricePaise,
