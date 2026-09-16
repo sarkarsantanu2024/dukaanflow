@@ -11,6 +11,7 @@ import { formatPaise } from '@/lib/money';
 import { phoneSchema } from '@/lib/validators';
 import { dict, type Locale } from '@/lib/i18n';
 import { quoteDelivery, type DeliveryTerms } from '@/lib/delivery';
+import { basketShortfallPaise } from '@/lib/basket';
 
 const checkoutSchema = z.object({
   customerName: z.string().trim().min(1, 'Please give your name').max(60),
@@ -33,6 +34,7 @@ export function CheckoutSheet({
   locale,
   deliveryEnabled = true,
   terms,
+  minBasketPaise = 0,
   remembered,
 }: {
   open: boolean;
@@ -53,6 +55,14 @@ export function CheckoutSheet({
    * not believe it did.
    */
   terms: DeliveryTerms;
+  /**
+   * The smallest order this shop will take, in PAISE. Zero is silent.
+   *
+   * Re-checked here as well as in the basket because the basket is not the only
+   * way in: a repeat order drops a whole previous basket in at once, and it may
+   * be one the shop would no longer accept.
+   */
+  minBasketPaise?: number;
   /** What this phone gave last time, so nobody types it twice. */
   remembered?: Partial<CheckoutValues> | null;
 }) {
@@ -71,6 +81,14 @@ export function CheckoutSheet({
   const quote = quoteDelivery(terms, totalAmountPaise, orderType);
   /** Too small to deliver. Pickup is never blocked, so this only ever bites one way. */
   const belowMinimum = quote.shortfallPaise > 0;
+  /**
+   * Below the shop's smallest order, whichever way it is collected.
+   *
+   * On the goods alone, and unlike the DELIVERY minimum above, switching to
+   * Pickup does not escape it — the picking and packing happen either way, and
+   * that is what this rule is about.
+   */
+  const basketShort = basketShortfallPaise(minBasketPaise, totalAmountPaise);
 
   const {
     register,
@@ -311,6 +329,18 @@ export function CheckoutSheet({
             </p>
           )}
 
+          {/* Below the shop's smallest order. Reached from a repeat order
+              rather than from the basket panel, which stops this on its own —
+              so it is said again here, where the shopper actually is. Going
+              back to the menu is what fixes it, and Back is next to the button
+              this disables. */}
+          {basketShort > 0 && (
+            <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+              {t.minBasketBefore} {formatPaise(minBasketPaise)}.{' '}
+              {formatPaise(basketShort)} {t.addMoreValue}
+            </p>
+          )}
+
           <div className="flex gap-2 pt-1">
             <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={submitting}>
               {t.back}
@@ -325,7 +355,7 @@ export function CheckoutSheet({
               variant="primary"
               size="lg"
               fullWidth
-              disabled={belowMinimum}
+              disabled={belowMinimum || basketShort > 0}
               loading={submitting}
             >
               {submitting ? t.sending : t.placeOrder}

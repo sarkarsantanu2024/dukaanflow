@@ -12,10 +12,17 @@ import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { VoiceItemAdder } from './VoiceItemAdder';
 import { PhotoItemAdder, type Identified } from './PhotoItemAdder';
-import { starterName, type StarterItem } from '@/lib/starter-catalogue';
+import {
+  alreadyOwned,
+  categoryForNames,
+  duplicateNameIds,
+  ownedNames,
+  starterName,
+  type StarterItem,
+} from '@/lib/starter-catalogue';
 import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import { suggestNames, translateCategory } from '@/lib/speech';
-import { unitsFor, UNIT_LIST_ID } from '@/lib/units';
+import { parseStockAmount, stockAmountLabel, unitsFor, UNIT_LIST_ID } from '@/lib/units';
 import { Drawer } from '@/components/ui/Drawer';
 import { FloatingTools } from './FloatingTools';
 import { useSimpleMode } from '@/components/owner/SimpleMode';
@@ -50,6 +57,15 @@ type NewItem = {
   price: string;
   unit: string;
   category: string;
+  /**
+   * How much is on the shelf, as typed — "12", "4.5 kg", "700 g" — or blank.
+   *
+   * A STRING, like `price`, because it is what is in the box rather than what
+   * it means. It is read against the row's own pack size on save, and blank
+   * stays blank: most of a kirana's list is never counted and an item that
+   * arrives with a count of zero would list itself as sold out.
+   */
+  stock: string;
 };
 
 /**
@@ -82,19 +98,29 @@ function otherNames(item: AdminItem, locale: Locale): string[] {
  * they leave blank — or fill with a different word every time — makes the
  * customer's category filter worse than having none at all. The shop-type
  * catalogue already answers it for the things a shop of this kind carries.
+ *
+ * The work itself is `categoryForNames` in `lib/starter-catalogue.ts`, which is
+ * where the categories are defined and is therefore the only place that can be
+ * kept honest about them. It used to be a four-line exact match on the English
+ * name alone, and almost nothing a shopkeeper actually types survived it — see
+ * the note over that function.
  */
-function categoryFor(name: string, catalogue: StarterItem[]): string {
-  const needle = name.trim().toLowerCase();
-  if (!needle) return '';
+function categoryFor(names: string[], catalogue: StarterItem[]): string {
+  return categoryForNames(names, catalogue);
+}
 
-  const hit = catalogue.find(
-    (item) =>
-      item.name.toLowerCase() === needle ||
-      item.nameBn.toLowerCase() === needle ||
-      item.nameHi.toLowerCase() === needle,
-  );
-
-  return hit?.category ?? '';
+/**
+ * A stock figure as the shopkeeper says it: "5.5 kg", "700 g", "12".
+ *
+ * `stockQty` is a multiple of the item's own unit, so the raw number is only
+ * meaningful next to that unit — 0.5 against a "1 kg" row is half a kilo and
+ * against a "500 g" row is 250 g. `amountLabel` already does that arithmetic
+ * for every quantity in the product; weighed and poured goods get the words,
+ * and counted goods keep the plain number, where "12 × 1 packet" needs no
+ * translating.
+ */
+function stockLabel(unit: string, quantity: number): string {
+  return stockAmountLabel(unit, quantity);
 }
 
 const EMPTY_NEW_ITEM: NewItem = {
@@ -104,6 +130,7 @@ const EMPTY_NEW_ITEM: NewItem = {
   price: '',
   unit: '',
   category: '',
+  stock: '',
 };
 
 /**
@@ -128,7 +155,7 @@ function blankRows(count: number = BLANK_ROWS): NewItem[] {
 
 /** A row nobody has touched — neither typed into nor dictated into. */
 function isBlankRow(row: NewItem): boolean {
-  return !row.name.trim() && !row.price.trim() && !row.unit.trim();
+  return !row.name.trim() && !row.price.trim() && !row.unit.trim() && !row.stock.trim();
 }
 
 /** The spelling two rows are compared on. Case and stray spaces are not a product. */
@@ -243,6 +270,8 @@ export function ItemsManager({
   const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({});
   const [unitDrafts, setUnitDrafts] = useState<Record<string, string>>({});
   const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({});
+  /** Same as the others: a stock edit saves on blur, not on every keystroke. */
+  const [stockDrafts, setStockDrafts] = useState<Record<string, string>>({});
   /** Rows ticked for deleting together. Empty is the normal state. */
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
@@ -345,6 +374,13 @@ export function ItemsManager({
    * gaps in shelves the owner has actually started, which is a list they can
    * read rather than a hundred and thirty checkboxes.
    */
+  /**
+   * Rows that name the same thing as another row. Computed over the WHOLE list,
+   * not the filtered view: a duplicate hidden behind a search is still a
+   * duplicate, and flagging only one half of a pair says nothing useful.
+   */
+  const duplicates = useMemo(() => duplicateNameIds(items), [items]);
+
   const groups = useMemo(() => {
     const byCategory = new Map<string, AdminItem[]>();
     for (const item of visible) {
@@ -356,9 +392,12 @@ export function ItemsManager({
 
     // Matched on the whole list, not the filtered view: an item hidden by a
     // search is still listed, and offering to add it again would create a twin.
-    const owned = new Set(
-      items.map((item) => `${item.name.toLowerCase()}|${item.unit.toLowerCase()}`),
-    );
+    //
+    // By NAME, in any language, and regardless of pack size — see `ownedNames`.
+    // Keying on name+unit meant a shop selling "Rice — 5 kg" was offered
+    // "Rice — 1 kg" as a gap, and keying on English alone meant a shop that had
+    // typed "মুড়ি" was offered "Muri".
+    const owned = ownedNames(items);
 
     return [...byCategory.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
@@ -367,9 +406,7 @@ export function ItemsManager({
         label: key ? translateCategory(key, locale) : t.categoryNone,
         items: groupItems,
         missing: catalogue.filter(
-          (entry) =>
-            entry.category === key &&
-            !owned.has(`${entry.name.toLowerCase()}|${entry.unit.toLowerCase()}`),
+          (entry) => entry.category === key && !alreadyOwned(entry, owned),
         ),
       }));
   }, [visible, items, catalogue, locale, t.categoryNone]);
@@ -483,7 +520,18 @@ export function ItemsManager({
       nameHi: known?.hi ?? '',
       price: pricePaise === null ? '' : paiseToInput(pricePaise),
       unit: spoken.unit || suggestion?.unit || '',
-      category: suggestion?.category ?? categoryFor(spoken.name, catalogue),
+      // All three names, not just what was said. The Bengali and Hindi forms
+      // the vocabulary just filled in are often the ones the catalogue knows —
+      // an owner who says "puffed rice" has also, by this line, been given
+      // "মুড়ি", which is the spelling that matches.
+      category:
+        suggestion?.category ??
+        categoryFor([spoken.name, known?.bn ?? '', known?.hi ?? ''], catalogue),
+      // Never guessed from a sentence. The mic hears a name, a pack size and a
+      // price; a count is a statement about a shelf that nobody said out loud,
+      // and inventing one would put a number on the shop that no shopkeeper
+      // typed. The owner fills it in if they want it.
+      stock: '',
     };
 
     /**
@@ -554,7 +602,7 @@ export function ItemsManager({
       name,
       nameBn: known?.bn ?? '',
       nameHi: known?.hi ?? '',
-      category: categoryFor(name, catalogue),
+      category: categoryFor([name, known?.bn ?? '', known?.hi ?? ''], catalogue),
     });
   }
 
@@ -612,6 +660,24 @@ export function ItemsManager({
     let firstProblem = '';
 
     for (const { row } of pending) {
+      /**
+       * The count, read against this row's own pack size — "700 g" on a "1 kg"
+       * row is 0.7. Blank stays null: nobody is counting, which is the honest
+       * answer for most of a kirana's list and is NOT the same as zero, which
+       * would list the item as sold out the moment it was created.
+       *
+       * An unreadable count is refused here rather than sent, because the
+       * server would only see a number and could not tell the owner which of
+       * their forty rows the bad one was.
+       */
+      const stock = parseStockAmount(row.stock, row.unit);
+      if (stock === 'bad') {
+        failures[kept.length] = { stock: t.stockBadNumber };
+        firstProblem ||= `${row.name || ''} — ${t.stockBadNumber}`.trim();
+        kept.push(row);
+        continue;
+      }
+
       try {
         const response = await fetch(`/api/admin/shop/${slug}/items`, {
           method: 'POST',
@@ -623,7 +689,11 @@ export function ItemsManager({
             pricePaise: parsePaise(row.price) ?? 0,
             unit: row.unit,
             category: row.category,
-            inStock: true,
+            stockQty: stock,
+            // A count of zero is the shop saying the shelf is empty, and the
+            // items route turns `inStock` off for it on its own. Anything else
+            // arrives on sale.
+            inStock: stock === null || stock > 0,
           }),
         });
         const payload = (await response.json().catch(() => ({}))) as {
@@ -841,6 +911,65 @@ export function ItemsManager({
   }
 
   /**
+   * How much is on the shelf, typed straight into the row.
+   *
+   * THIS REPLACED THREE CONTROLS, and the point of it is that it is one. There
+   * used to be a "say it is finished" button, a "start counting this" link, a
+   * −/+ counter and a "stop counting" link, spread over two lines of every row.
+   * Four ways to say something about stock, none of which was simply writing
+   * down how much there is — which is the only one a shopkeeper asked for.
+   *
+   * MEASURED IN THE ITEM'S OWN UNIT, exactly as an order quantity is. 2.5 on a
+   * "1 kg" row is two and a half kilos; 12 on a "1 packet" row is twelve
+   * packets. That is how the number can mean kg, gram, litre, packet, plate or
+   * piece without the shop ever choosing a second unit for it.
+   *
+   * Blank clears the count back to null, which is not the same as zero: "I am
+   * not counting this" leaves the item on sale, and "there are none" takes it
+   * off. Most of a kirana's list is the first of those and always will be —
+   * rice comes out of a sack and nobody weighs the sack each morning.
+   */
+  async function commitStock(item: AdminItem) {
+    const next = stockDrafts[item.id];
+    if (next === undefined) return;
+
+    setStockDrafts((current) => {
+      const copy = { ...current };
+      delete copy[item.id];
+      return copy;
+    });
+
+    // Reads "12", "4.5 kg" and "700 g" alike, against this row's own pack size
+    // — see `parseStockAmount`. An owner with 700 g of posto left should be
+    // able to write that, not work out that it is 0.7 of a kilo.
+    const parsed = parseStockAmount(next, item.unit);
+
+    if (parsed === null) {
+      if (item.stockQty === null) return;
+      // Back to uncounted, and back on sale — clearing a count is not the same
+      // as saying the shelf is empty.
+      if (await patchItem(item.id, { stockQty: null, inStock: true })) {
+        push(`${displayName(item, locale)} · ${t.stockStop}`, 'success');
+      }
+      return;
+    }
+
+    if (parsed === 'bad') {
+      push(`${displayName(item, locale)} — ${t.stockBadNumber}`, 'error');
+      return;
+    }
+
+    const stockQty = parsed;
+    if (stockQty === item.stockQty) return;
+
+    // `inStock` follows the count on the server (see the items route), so it is
+    // not sent here — one place decides it, and this row cannot disagree.
+    if (await patchItem(item.id, { stockQty })) {
+      push(`${displayName(item, locale)} · ${stockLabel(item.unit, stockQty)}`, 'success');
+    }
+  }
+
+  /**
    * Corrects a name in place.
    *
    * Names arrive from three places that can each be slightly wrong — the mic
@@ -950,33 +1079,40 @@ export function ItemsManager({
           key={index}
           className="rounded-2xl bg-white p-3 shadow-card"
         >
+          {/* THE NAME GETS A LINE OF ITS OWN.
+              It was the first cell of a four-column grid, so on a phone — and
+              in this drawer, which is narrower than a phone — "চুনার চাল" came
+              out as "চুনার চ" and the owner could not read back what they had
+              just dictated. The name is the one field on this row whose whole
+              value is being able to see it; the other three are short numbers
+              that sit happily side by side underneath. */}
+          <Input
+            // Labelled once, on the first row. Repeating "Name / Price / Unit"
+            // down six rows is a form that reads as six forms.
+            label={index === 0 ? t.name : undefined}
+            aria-label={t.name}
+            value={row.name}
+            onChange={(event) => nameChanged(index, event.target.value)}
+            // Said while the second name is being typed, not held back until
+            // Save. An owner who finishes a row, fills its price and only then
+            // learns the row was never going to go has done that work for
+            // nothing.
+            error={duplicateRows.has(index) ? t.duplicateRow : rowErrors[index]?.name}
+            placeholder="Rice"
+          />
+
           <div
             className={clsx(
-              'grid gap-2',
-              // Name takes the room; price and pack size are short and fixed,
-              // and the last column is the width of the remove button so every
+              'mt-2 grid gap-2',
+              // Three short boxes and the width of the remove button, so every
               // row's boxes line up with the row above whether or not it has
               // one. In simple mode the pack size is not asked for, so its
               // column goes with it rather than being left as a gap.
               lean
-                ? 'sm:grid-cols-[minmax(0,1fr)_8rem_2.5rem]'
-                : 'sm:grid-cols-[minmax(0,1fr)_8rem_8rem_2.5rem]',
+                ? 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.5rem]'
+                : 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2.5rem]',
             )}
           >
-            <Input
-              // Labelled once, on the first row. Repeating "Name / Price /
-              // Unit" down six rows is a form that reads as six forms.
-              label={index === 0 ? t.name : undefined}
-              aria-label={t.name}
-              value={row.name}
-              onChange={(event) => nameChanged(index, event.target.value)}
-              // Said while the second name is being typed, not held back until
-              // Save. An owner who finishes a row, fills its price and only
-              // then learns the row was never going to go has done that work
-              // for nothing.
-              error={duplicateRows.has(index) ? t.duplicateRow : rowErrors[index]?.name}
-              placeholder="Rice"
-            />
             <Input
               label={index === 0 ? t.price : undefined}
               aria-label={t.price}
@@ -985,7 +1121,7 @@ export function ItemsManager({
               value={row.price}
               onChange={(event) => updateRow(index, { price: event.target.value })}
               error={rowErrors[index]?.price}
-              placeholder="68 or 68.50"
+              placeholder="68"
             />
             {/* LEAN: the name and the price, and nothing else.
                 "চাল · ৬৮ · কী?" is where a first-time owner stops, because a
@@ -1006,6 +1142,24 @@ export function ItemsManager({
                 placeholder={units[0]}
               />
             )}
+
+            {/* HOW MUCH IS ON THE SHELF, ASKED WHILE THE ITEM IS BEING ADDED.
+                It was only on the saved row, so an owner listing forty things
+                had to go back down the finished list and fill in forty counts.
+                Optional here as it is there: blank means nobody is counting,
+                which stays the honest answer for most of a kirana's list.
+                Takes "12", "4.5 kg" or "700 g" against the pack size in the box
+                beside it — see `parseStockAmount`. */}
+            <Input
+              label={index === 0 ? t.stockShort : undefined}
+              aria-label={t.stockShort}
+              type="text"
+              inputMode="decimal"
+              value={row.stock}
+              onChange={(event) => updateRow(index, { stock: event.target.value })}
+              error={rowErrors[index]?.stock}
+              placeholder={t.stockShort}
+            />
 
             {/* THROWING ONE ROW AWAY.
                 The mic mishears — a scrap of counter conversation lands as a
@@ -1212,7 +1366,16 @@ export function ItemsManager({
                 form field: a box on every row would make the list look
                 like a form to fill in, when almost every row is only
                 ever read. The border appears on hover and focus, which
-                is where "you can change this" needs to be said. */}
+                is where "you can change this" needs to be said.
+
+                EXCEPT THAT A PHONE HAS NO HOVER. This is a phone product —
+                almost every owner is on a touch screen, where the hover
+                border never appears at all, so the name looked like plain
+                text and nobody discovered they could fix it. An owner
+                staring at "ছোলাchatu" would delete the whole item and
+                retype it, losing its price, its stock count and its
+                history, because the one-tap fix was invisible. On a coarse
+                pointer the border is simply always there. */}
             <input
               type="text"
               aria-label={`${t.name} — ${displayName(item, locale)}`}
@@ -1233,7 +1396,7 @@ export function ItemsManager({
                   event.currentTarget.blur();
                 }
               }}
-              className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 -ml-1 font-semibold leading-tight text-slate-900 transition hover:border-slate-200 focus:border-brand-500 focus:bg-white focus:outline-none"
+              className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 -ml-1 font-semibold leading-tight text-slate-900 transition hover:border-slate-200 focus:border-brand-500 focus:bg-white focus:outline-none [@media(pointer:coarse)]:border-slate-200"
             />
             <p className="truncate text-xs leading-tight text-slate-500">
               {[...otherNames(item, locale), item.category && translateCategory(item.category, locale)]
@@ -1247,6 +1410,17 @@ export function ItemsManager({
               screen could do — the shop looks stocked and the shop
               page is empty. The missing price is the fact that
               matters, so it is the one shown. */}
+          {/* TWO ROWS FOR ONE SACK, SAID OUT LOUD.
+              A shop ends up with "Matar Dal" and "Motor dal" — different
+              English spellings, the same মটর ডাল, typed weeks apart at two
+              different prices. A customer meeting both has to guess which is
+              real. Flagged rather than merged: both prices were typed on
+              purpose and only the owner knows which one stands, so the bin
+              beside it is the answer and this is only the pointing. */}
+          {duplicates.has(item.id) && (
+            <Badge tone="amber">{t.duplicateName}</Badge>
+          )}
+
           <Badge tone={!item.priced ? 'amber' : item.inStock ? 'green' : 'red'}>
             {!item.priced ? t.notOnSale : item.inStock ? t.inStock : t.outOfStock}
           </Badge>
@@ -1298,21 +1472,50 @@ export function ItemsManager({
           {/* WHAT IS ON THE SHELF IS THE OWNER'S WORD.
               The console keeps the catalogue — the names, the prices,
               the pack sizes — because those arrive by phone and an
-              operator can set them on the shop's behalf. Whether the
-              rice ran out this afternoon is not something anybody at a
-              desk can know, and a stale "in stock" set from here is
-              worse than no answer: it sells a customer something that
-              is not there. The badge above still reports the state, so
-              the operator can see it and cannot set it. */}
+              operator can set them on the shop's behalf. How much rice
+              is left this afternoon is not something anybody at a desk
+              can know, and a stale answer set from here is worse than
+              none: it sells a customer something that is not there. The
+              badge above still reports the state, so the operator can
+              see it and cannot set it.
+
+              ONE BOX INSTEAD OF FOUR CONTROLS. This replaced a "say it
+              is finished" button here and, on the line below, a "start
+              counting", a −/+ counter and a "stop counting". Four ways
+              to talk about stock, and not one of them was writing down
+              how much there is. Zero takes the item off the shop page
+              by itself; blank means nobody is counting, which stays
+              the honest answer for most of a kirana's list. */}
           {!wide && (
-            <button
-              type="button"
-              disabled={busyId === item.id}
-              onClick={() => patchItem(item.id, { inStock: !item.inStock })}
-              className="h-10 shrink-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-            >
-              {item.inStock ? t.markOut : t.markIn}
-            </button>
+            <label className="relative shrink-0">
+              <span className="sr-only">{`${t.stockShort} — ${displayName(item, locale)}`}</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder={t.stockShort}
+                title={t.stockHint}
+                value={
+                  stockDrafts[item.id] ??
+                  (item.stockQty === null ? '' : stockLabel(item.unit, item.stockQty))
+                }
+                onChange={(event) =>
+                  setStockDrafts((current) => ({ ...current, [item.id]: event.target.value }))
+                }
+                onBlur={() => commitStock(item)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur();
+                }}
+                className={clsx(
+                  'h-10 w-24 rounded-lg border px-2.5 text-sm tabular-nums',
+                  // Empty reads as "nobody is counting" and must not look like
+                  // a field somebody failed to fill in; zero is the shop
+                  // saying it has run out, which is worth the red.
+                  item.stockQty === 0
+                    ? 'border-red-300 bg-red-50 text-red-700'
+                    : 'border-slate-300 text-slate-900',
+                )}
+              />
+            </label>
           )}
 
           {/* An icon, not the word. "Delete" spelled out in three
@@ -1330,89 +1533,12 @@ export function ItemsManager({
           </button>
         </div>
 
-        {/* HOW MANY ARE LEFT — for the half of the shop you can count.
-            A quiet grey line by default, because most rows will never
-            use it and a stock box on every one of them would say the
-            shop is supposed to count its rice. Tapping it starts the
-            count at what is on the shelf; from then on every sale,
-            through the shop page or across the counter, takes one off,
-            and zero takes the item off the shop page by itself.
-
-            This is the fix for a customer ordering the two kilos of
-            basmati that went an hour ago: the toggle it sits beside
-            only ever knew "yes" or "no", and nobody remembers to move
-            it.
-
-            Owner's screen only, for the reason above the stock toggle:
-            a count is a statement about a shelf, and the shelf is in
-            the shop. It is also the one control here whose meaning is
-            not obvious from its label, which is exactly the kind of
-            thing that should not be sitting on a console whose job is
-            the catalogue. */}
-        {/* LEAN: no stock counter. It is the one control on the row whose
-            meaning is not readable off its label — "how many left" only pays
-            for itself once an owner has understood that zero hides the item
-            from customers by itself — and it is the third thing on a row that
-            already carries a price, a pack size and an in/out switch. The
-            in/out switch covers the same ground in one tap until then. */}
-        {!wide &&
-          !lean &&
-          (item.stockQty === null ? (
-            <button
-              type="button"
-              disabled={busyId === item.id}
-              onClick={() => patchItem(item.id, { stockQty: 1 })}
-              title={t.stockHint}
-              className="mt-2 text-xs font-medium text-slate-400 underline decoration-dotted underline-offset-2 transition hover:text-brand-700 disabled:opacity-50"
-            >
-              {t.stockCount}
-            </button>
-          ) : (
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs font-medium text-slate-500">{t.stockLeft}</span>
-              <span className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
-                <button
-                  type="button"
-                  aria-label={`− ${displayName(item, locale)}`}
-                  disabled={busyId === item.id || item.stockQty <= 0}
-                  onClick={() => patchItem(item.id, { stockQty: item.stockQty! - 1 })}
-                  className="h-8 w-8 rounded text-lg font-bold text-slate-700 disabled:opacity-30"
-                >
-                  −
-                </button>
-                <span className="w-8 text-center text-sm font-bold tabular-nums text-slate-900">
-                  {item.stockQty}
-                </span>
-                <button
-                  type="button"
-                  aria-label={`+ ${displayName(item, locale)}`}
-                  disabled={busyId === item.id}
-                  onClick={() => patchItem(item.id, { stockQty: item.stockQty! + 1 })}
-                  className="h-8 w-8 rounded text-lg font-bold text-slate-700 disabled:opacity-30"
-                >
-                  +
-                </button>
-              </span>
-
-              {item.stockQty === 0 && (
-                <span className="text-xs font-medium text-red-600">{t.stockSoldOut}</span>
-              )}
-
-              {/* Going back to uncounted, for the item that turned out
-                  to be sold by weight after all. `null` rather than 0:
-                  "I am not counting this" and "there are none" are
-                  different facts, and only one of them should hide the
-                  item from customers. */}
-              <button
-                type="button"
-                disabled={busyId === item.id}
-                onClick={() => patchItem(item.id, { stockQty: null, inStock: true })}
-                className="ml-auto text-xs font-medium text-slate-400 underline decoration-dotted underline-offset-2 transition hover:text-slate-700 disabled:opacity-50"
-              >
-                {t.stockStop}
-              </button>
-            </div>
-          ))}
+        {/* THE STOCK COUNTER THAT USED TO LIVE HERE IS GONE.
+            It was a "start counting" link, a −/+ counter and a "stop
+            counting" link on a second line of every row — three controls
+            that could only move stock one whole pack at a time, which is
+            not how any of it is sold. It is one box on the row above now,
+            beside the pack size, and it takes 5.5 as readily as 12. */}
       </li>
     );
   }

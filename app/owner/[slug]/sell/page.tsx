@@ -87,7 +87,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SellPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
-  const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
+  const { shop, plan, settings, roadblock, locale } = await loadOwnerShop(slug);
   const tillOrder = await loadTillOrder(shop.id, (await searchParams).order);
 
   // The day's takings and the list of sales rung up today used to load here and
@@ -126,6 +126,8 @@ export default async function SellPage({ params, searchParams }: PageProps) {
       roadblock={roadblock}
       locale={locale}
       plan={plan}
+      settings={settings}
+      ownerClosed={shop.ownerClosed}
     >
       <SellScreen
         slug={shop.slug}

@@ -46,7 +46,7 @@ function formatDate(date: Date | null, locale: Locale): string | null {
  */
 export default async function RenewPage({ params }: PageProps) {
   const { slug } = await params;
-  const { shop, plan, locale } = await loadOwnerShop(slug);
+  const { shop, plan, settings, locale } = await loadOwnerShop(slug);
 
   const expiry = shop.currentPeriodEnd ?? shop.trialEndsAt;
 
@@ -62,6 +62,8 @@ export default async function RenewPage({ params }: PageProps) {
       roadblock={null}
       locale={locale}
       plan={plan}
+      settings={settings}
+      ownerClosed={shop.ownerClosed}
     >
       <RenewScreen
         slug={shop.slug}

@@ -59,6 +59,7 @@ import type { SnapshotLine } from '@/lib/order-snapshot';
 import { ownerDict } from '@/lib/owner-i18n';
 import { dict } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
+import { isValidMobile } from '@/lib/validators';
 import type { VoiceLang } from '@/lib/speech';
 import { speak } from '@/components/voice/useVoice';
 import { spokenSaleTotal } from '@/lib/spoken-money';
@@ -190,6 +191,11 @@ export function SellScreen({
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
   const [khata, setKhata] = useState<{ name: string; phone: string; area: string } | null>(null);
+  /**
+   * The field the last rejected sale named, and what it said about it. Null is
+   * the normal state; see the error handling in `record`.
+   */
+  const [saleError, setSaleError] = useState<{ field: string; message: string } | null>(null);
 
   /**
    * Which lines of the loaded order are already in the bag.
@@ -457,13 +463,35 @@ export function SellScreen({
             : {}),
         }),
       });
-      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        errors?: Record<string, string>;
+      };
 
       if (handledExpiredSession({ response, slug, t, push })) return;
       if (!response.ok) {
-        push(payload.error ?? t.networkError, 'error');
+        /**
+         * THE REASON, NOT "PLEASE CHECK THE HIGHLIGHTED FIELDS".
+         *
+         * `invalid()` answers every rejected save with that sentence in
+         * `error` and the actual problem in `errors` — and this read only
+         * `error`. So an owner recording udhaar against a number the server
+         * would not take was told to check the highlighted fields, nothing was
+         * highlighted, and the one sentence that said what was wrong ("Enter a
+         * valid 10-digit mobile number") was parsed and thrown away.
+         *
+         * A message promising a highlight that does not exist is worse than
+         * the bare failure: the owner reads it, looks for the red box, finds
+         * none, and concludes the app is broken. Which, at that moment, it is.
+         */
+        const fields = Object.entries(payload.errors ?? {});
+        const [field, message] = fields[0] ?? [];
+        if (field) setSaleError({ field, message: message ?? '' });
+        push(message ?? payload.error ?? t.networkError, 'error');
         return;
       }
+
+      setSaleError(null);
 
       /**
        * SAY THE TOTAL, BEFORE THE BASKET IS EMPTIED.
@@ -698,6 +726,11 @@ export function SellScreen({
                   quantity={cart[item.id] ?? 0}
                   onChange={(next) => setQuantity(item.id, next)}
                   locale={locale}
+                  // The till shows what is left on every counted row, not just
+                  // the ones running out. This is the screen the shop sells
+                  // from, and the figure moves under the owner all day as
+                  // orders come in off the shop page.
+                  showStock
                 />
               ))}
             </ul>
@@ -795,7 +828,20 @@ export function SellScreen({
               </button>
             </div>
 
-            {khata && (
+            {khata && (() => {
+              /**
+               * Red only once the owner has given a whole number's worth of
+               * digits, or once the server has actually complained about this
+               * one. Colouring the box on the first keystroke marks every
+               * number as wrong while it is being typed, which is the app
+               * arguing with somebody who has not finished talking.
+               */
+              const typed = khata.phone.replace(/\D/g, '');
+              const phoneRejected =
+                saleError?.field === 'customerPhone' ||
+                (typed.length >= 10 && !isValidMobile(khata.phone));
+
+              return (
               <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
                 <p className="text-sm font-semibold text-amber-900">{t.sellWhoseKhata}</p>
 
@@ -836,24 +882,51 @@ export function SellScreen({
                   />
                   <input
                     value={khata.phone}
-                    onChange={(event) => setKhata({ ...khata, phone: event.target.value })}
+                    onChange={(event) => {
+                      setKhata({ ...khata, phone: event.target.value });
+                      // The complaint is about the number as it was; typing is
+                      // the owner answering it.
+                      if (saleError?.field === 'customerPhone') setSaleError(null);
+                    }}
                     inputMode="numeric"
                     placeholder={t.khataPhone}
                     aria-label={t.khataPhone}
-                    className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-base"
+                    aria-invalid={phoneRejected || undefined}
+                    className={clsx(
+                      'rounded-lg border bg-white px-3 py-2 text-base',
+                      phoneRejected ? 'border-red-500 ring-1 ring-red-500' : 'border-amber-300',
+                    )}
                   />
                 </div>
 
+                {/* THE HIGHLIGHT THAT "PLEASE CHECK THE HIGHLIGHTED FIELDS"
+                    was promising and never drew. Said in words under the box it
+                    is about, because a red border alone tells an owner that
+                    something is wrong with a number they can see nothing wrong
+                    with — the rule (an Indian mobile starts 6-9) is not one
+                    they can infer from a colour. */}
+                {phoneRejected && (
+                  <p className="mt-1.5 text-sm font-medium text-red-600">
+                    {saleError?.message || t.khataPhoneInvalid}
+                  </p>
+                )}
+
+                {/* Ten digits was never the rule. The server wants a real
+                    Indian mobile, so the button asks the same question the
+                    server will — a button that enables on a number the save is
+                    going to refuse is the app telling the owner they are done
+                    and then taking it back. */}
                 <button
                   type="button"
-                  disabled={saving || khata.phone.replace(/\D/g, '').length < 10}
+                  disabled={saving || !isValidMobile(khata.phone)}
                   onClick={() => record('KHATA')}
                   className="mt-2 h-11 w-full rounded-xl bg-amber-600 font-semibold text-white disabled:opacity-50"
                 >
                   {t.sellKhata} · {formatPaise(totalPaise)}
                 </button>
               </div>
-            )}
+              );
+            })()}
 
             <button
               type="button"
