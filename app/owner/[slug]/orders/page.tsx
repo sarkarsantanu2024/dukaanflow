@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function OrdersPage({ params }: PageProps) {
   const { slug } = await params;
-  const { shop, plan, roadblock, locale } = await loadOwnerShop(slug);
+  const { shop, plan, settings, roadblock, locale } = await loadOwnerShop(slug);
 
   /**
    * Three questions, asked together.
@@ -140,6 +140,8 @@ export default async function OrdersPage({ params }: PageProps) {
       roadblock={roadblock}
       locale={locale}
       plan={plan}
+      settings={settings}
+      ownerClosed={shop.ownerClosed}
     >
       <OrdersScreen
         slug={shop.slug}

@@ -4,7 +4,7 @@ import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { saleSchema } from '@/lib/validators';
 import { upsertCustomer } from '@/lib/khata';
 import { linePaise } from '@/lib/money';
-import { amountLabel, isLooseUnit } from '@/lib/units';
+import { amountLabel, isLooseUnit, roundQuantity } from '@/lib/units';
 
 export const runtime = 'nodejs';
 
@@ -104,9 +104,12 @@ export async function POST(request: Request, { params }: Context) {
   for (const line of items) {
     const item = byId.get(line.itemId);
     if (!item || item.stockQty === null) continue;
-    // A counted item is never sold in fractions (see above), so this stays a
-    // whole number going into a whole-number column.
-    const left = Math.max(0, item.stockQty - Math.round(line.quantity));
+    // Fractions now, and not rounded. `stockQty` is a decimal in multiples of
+    // the item's own unit, the same thing a line quantity is, so selling 300 g
+    // off a kilo leaves 0.7 on the shelf instead of rounding the remainder
+    // away — which used to mean a counted item could not be sold by weight at
+    // all. Rounded to the shared 3 dp so a count and a sale cannot drift.
+    const left = Math.max(0, roundQuantity(item.stockQty - line.quantity));
     await prisma.item.update({
       where: { id: item.id },
       data: { stockQty: left, ...(left === 0 ? { inStock: false } : {}) },

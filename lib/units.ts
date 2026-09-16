@@ -377,3 +377,57 @@ export function totalMeasure(unit: string, packs: number): string | null {
   if (packs === 1) return null;
   return formatBase('count', pack.base * packs);
 }
+
+/**
+ * What an owner typed into a stock box, as a quantity of the item's own unit.
+ *
+ * THE BOX TAKES A UNIT, and that is the whole reason this exists. `stockQty` is
+ * a multiple of the item's pack — 4.5 against a "1 kg" row — which is the right
+ * thing to store and a wrong thing to ask anybody to type. A shopkeeper with
+ * four and a half kilos of rice on the shelf thinks "4.5 kg"; one with 700 g of
+ * posto left thinks "700 g", and against a "1 kg" row that is 0.7, a number
+ * they should never have to work out. So both forms are accepted:
+ *
+ *   "12"      → twelve of whatever the row's pack is
+ *   "4.5 kg"  → against a "1 kg" row, 4.5   · against a "500 g" row, 9
+ *   "700 g"   → against a "1 kg" row, 0.7
+ *   "2 litre" → against a "500 ml" row, 4
+ *
+ * A unit that cannot be converted into the row's own is refused rather than
+ * guessed at: "5 kg" against a row sold by the plate is not a quantity anybody
+ * can act on, and silently reading it as five plates would put a number on the
+ * shelf that nobody typed.
+ *
+ * Returns `null` for an empty box — "nobody is counting this", which is not the
+ * same as zero — and `'bad'` for anything unreadable.
+ */
+export function parseStockAmount(text: string, unit: string): number | null | 'bad' {
+  const value = text.trim();
+  if (!value) return null;
+
+  // A bare number is already in multiples of the row's own pack, which is what
+  // the box shows back for counted goods and what most owners will type.
+  if (/^\d+(?:\.\d+)?$/.test(value)) {
+    const amount = Number(value);
+    return Number.isFinite(amount) && amount >= 0 ? roundQuantity(amount) : 'bad';
+  }
+
+  const typed = parseMeasure(value);
+  const pack = parseMeasure(unit);
+  if (!typed || !pack || pack.base <= 0) return 'bad';
+  if (!comparableMeasures(typed, pack)) return 'bad';
+
+  return roundQuantity(typed.base / pack.base);
+}
+
+/**
+ * A stock figure written back into the box, in the words the owner uses.
+ *
+ * Weighed and poured goods read as an amount — "4.5 kg", "700 g" — because that
+ * is what is on the shelf and "0.7" is not. Counted goods keep the plain
+ * number: the row's pack size is in the field immediately to the left, so "12"
+ * beside "1 packet" needs no repeating.
+ */
+export function stockAmountLabel(unit: string, quantity: number): string {
+  return amountLabel(unit, quantity) ?? String(quantity);
+}

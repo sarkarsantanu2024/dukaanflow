@@ -170,6 +170,35 @@ model Shop {
   /// refusing the order is the rule.
   minOrderPaise Int @default(0)
 
+  /// RETIRED. Read by nothing; kept only because dropping a column needs a
+  /// destructive migration and this one holds no value worth the risk.
+  ///
+  /// It was a minimum number of DIFFERENT items a basket had to hold, added
+  /// when an owner asked that tiny orders be refused. It was the wrong
+  /// instrument and the shape of the wrongness is worth keeping on record:
+  /// "ten different things" refuses 2 kg rice + 1 kg dal + 1 l oil — an ₹800
+  /// order, three lines, exactly the order a kirana most wants — while ten
+  /// sachets worth ₹60 pass. The work of packing an order tracks its VALUE,
+  /// not its line count, so the rule is a rupee floor now, derived from how
+  /// much the shop has listed. See `lib/basket.ts`.
+  ///
+  /// Every row is 0. Safe to drop whenever a destructive migration is being
+  /// run for another reason.
+  minOrderItems Int @default(0)
+
+  /// The shopkeeper's own shutter, as against `active`, which is the operator's.
+  ///
+  /// TWO SWITCHES ON PURPOSE. `active` is how the console pauses a shop — an
+  /// unpaid subscription, a suspension, an onboarding not finished — and an
+  /// owner must never be able to reopen a shop the operator has closed. Sharing
+  /// one column would hand them exactly that. So this is theirs: shut for a
+  /// family function, shut for the afternoon, shut because the delivery did not
+  /// come. The storefront closes on either one and reopens only when both agree.
+  ///
+  /// `closedNote` already carries the why, and the closed page shows it whichever
+  /// switch is down.
+  ownerClosed Boolean @default(false)
+
   /// A demonstration shop, not a real customer.
   ///
   /// Marked rather than deleted so there is always something to show, test a
@@ -453,8 +482,23 @@ model Item {
    * `inStock` remains the switch the whole product reads. Hitting zero turns it
    * off, and raising the count turns it back on, so nothing downstream has to
    * learn about a second kind of "available".
+   *
+   * A FLOAT, AND IN MULTIPLES OF THIS ITEM'S OWN `unit` — exactly what an order
+   * line's quantity is. 2.5 against a "1 kg" row is two and a half kilos; 12
+   * against a "1 packet" row is twelve packets. `amountLabel(unit, stockQty)`
+   * is what turns it into the words a shopkeeper uses, so nothing ever prints
+   * the raw number.
+   *
+   * It was an Int, and that single decision cost the feature most of the shop.
+   * A kirana's stock is not a number of packets — it is 5½ kg of rice, 700 g of
+   * posto, 3 litres of oil — and a whole-number column could hold none of them.
+   * Worse, it forced a rule outward: a counted item could not be sold in
+   * fractions, because there was nowhere to keep the 700 g left over from
+   * selling 300 g off a count of one. So an owner who started counting their
+   * rice lost the ability to sell it by weight, which is the only way rice is
+   * sold. Decimals remove the cause and that rule goes with it.
    */
-  stockQty   Int?
+  stockQty   Float?
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

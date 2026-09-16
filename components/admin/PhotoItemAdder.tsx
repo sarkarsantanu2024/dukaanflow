@@ -21,7 +21,7 @@
 import { useRef, useState } from 'react';
 import { Spinner } from '@/components/ui/Spinner';
 import { matchCatalogue, extractUnit, pickLikelyName, type ScannedLine } from '@/lib/ocr-match';
-import type { StarterItem } from '@/lib/starter-catalogue';
+import { categoryForNames, type StarterItem } from '@/lib/starter-catalogue';
 
 /** Text needs resolution; this is the smallest that reads a label reliably. */
 const MAX_EDGE = 1400;
@@ -148,7 +148,18 @@ export function PhotoItemAdder({
         // rather than inventing them.
         const guess = pickLikelyName(lines);
         if (guess) {
-          found.push({ name: guess, nameBn: '', nameHi: '', unit, pricePaise: 0, category: '' });
+          found.push({
+            name: guess,
+            nameBn: '',
+            nameHi: '',
+            unit,
+            pricePaise: 0,
+            // Still worth asking. The catalogue did not recognise the packet as
+            // a whole, but "Aashirvaad Select Atta" carries a word that names
+            // what it is — and an item the owner has to file by hand is one
+            // more reason to leave the category blank forever.
+            category: categoryForNames([guess], catalogue),
+          });
         }
         else unreadable += 1;
       }

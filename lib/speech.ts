@@ -1321,6 +1321,12 @@ const CATEGORY_VOCAB: Vocab[] = [
   { en: 'Biryani', hi: 'बिरयानी', bn: 'বিরিয়ানি' },
   { en: 'Meals', hi: 'भोजन', bn: 'খাবার' },
   { en: 'Extras', hi: 'अन्य', bn: 'অন্যান্য' },
+  // Real aisles in a kirana that the grocery list had no heading for, so
+  // everything in them landed under "Other" — the one heading that tells a
+  // customer nothing about what is in it.
+  { en: 'Baby Care', hi: 'बच्चों का सामान', bn: 'শিশুদের জিনিস' },
+  { en: 'Puja Items', hi: 'पूजा का सामान', bn: 'পুজোর জিনিস' },
+  { en: 'Stationery', hi: 'स्टेशनरी', bn: 'খাতা-কলম' },
 ];
 
 const CATEGORY_BY_FORM = new Map<string, Vocab>();

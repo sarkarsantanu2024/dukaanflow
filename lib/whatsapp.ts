@@ -120,14 +120,25 @@ export function buildRevisedMessage(input: {
       : `• ${label(line)} ${saidAs(line)} = ${plainPaise(line.amountPaise)}`,
   );
 
-  const gone = input.removed.map((line) => `• ${label(line)} ${saidAs(line)} — not available`);
+  const gone = input.removed.map((line) => `• ${label(line)} ${saidAs(line)}`);
 
+  /**
+   * The unavailable items get a heading rather than a suffix per line, because
+   * the heading can say the thing the suffix could not: that they are coming.
+   *
+   * "Not available" on its own ends the conversation — the customer sources it
+   * elsewhere and the shop loses the line permanently. Owners asked for this
+   * word for word: the stock is out today, it is back tomorrow, and saying so
+   * is the difference between a lost sale and a deferred one.
+   */
   return [
     `${hello} we did not have everything you asked for. ${shop}`,
     '',
     'This is what we can send:',
     ...kept,
-    ...(gone.length > 0 ? ['', ...gone] : []),
+    ...(gone.length > 0
+      ? ['', 'Below items not available right now. We will notify you next day:', ...gone]
+      : []),
     '',
     `New total: ${plainPaise(input.totalAmountPaise)}`,
   ].join('\n');
