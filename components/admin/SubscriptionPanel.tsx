@@ -137,6 +137,8 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
     state.customItemLimit === null ? String(state.itemCount) : String(state.customItemLimit),
   );
   const [customName, setCustomName] = useState(state.customPlanName);
+  /** Whether the item-limit box has been edited. See `noHeadroom`. */
+  const [limitTouched, setLimitTouched] = useState(false);
   // Pre-filled with what the shop already holds, because that is the job in
   // almost every case: the operator has just finished listing this catalogue.
   const [listedItems, setListedItems] = useState(String(state.itemCount || ''));
@@ -176,8 +178,19 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
    * later when a save is refused.
    */
   const typedLimit = Number(customLimit.trim());
+  /**
+   * Only once the operator has actually touched the box.
+   *
+   * The seeded value is the shop's own count, so the warning was true the
+   * instant the panel rendered — an amber field and a red-ish sentence on a
+   * form nobody had typed into, which reads as "something is already wrong
+   * here" rather than as advice. It is advice, and advice waits to be asked.
+   */
   const noHeadroom =
-    customLimit.trim() !== '' && Number.isFinite(typedLimit) && typedLimit <= state.itemCount;
+    limitTouched &&
+    customLimit.trim() !== '' &&
+    Number.isFinite(typedLimit) &&
+    typedLimit <= state.itemCount;
 
   async function post(body: Record<string, unknown>, done: string) {
     setBusy(true);
@@ -539,7 +552,10 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             Items <span className="font-normal text-slate-400">· has {state.itemCount}</span>
             <input
               value={customLimit}
-              onChange={(event) => setCustomLimit(event.target.value)}
+              onChange={(event) => {
+                setLimitTouched(true);
+                setCustomLimit(event.target.value);
+              }}
               inputMode="numeric"
               placeholder={String(PLAN_SPECS[plan].itemLimit)}
               className={clsx(
