@@ -37,6 +37,8 @@ import { useConfirm } from '@/components/ui/useConfirm';
 import { formatPaise, paiseToInput, parsePaise, rupeesToPaise } from '@/lib/money';
 import { periodFor } from '@/lib/period';
 import {
+  AUTO_PAUSE_DAYS,
+  GRACE_DAYS,
   LISTING_PAISE_PER_ITEM,
   PLAN_ORDER,
   PLAN_SPECS,
@@ -500,7 +502,10 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
           </Button>
         </div>
         <p className="mt-2 text-xs text-slate-600">
-          A lapsed shop keeps its QR and its customers; only item editing stops.
+          A lapsed shop keeps trading for {AUTO_PAUSE_DAYS} days — item editing stops after{' '}
+          {GRACE_DAYS}, but the QR and its customers carry on. After that the shop page goes to
+          the closed screen and no customer can see or order an item. Recording a payment reopens
+          it at once; nothing is deleted.
         </p>
       </Block>
 
