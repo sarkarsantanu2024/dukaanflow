@@ -117,8 +117,22 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
   const [customPrice, setCustomPrice] = useState(
     state.customPricePaise === null ? '' : paiseToInput(state.customPricePaise),
   );
+  /**
+   * The custom item limit, seeded from the deal in force or — when there is no
+   * deal yet — from what the shop actually holds today.
+   *
+   * The operator agreeing a custom price is almost always looking at a shop
+   * whose catalogue they have just finished listing, and the number they need
+   * is that count. Making them go and find it is how a deal gets typed as a
+   * round guess instead.
+   *
+   * IT IS A CEILING, THOUGH, AND THE COUNT IS THE FLOOR. Saving it unchanged
+   * leaves the shop with no room to add a single item, so the warning under the
+   * box says so — see `noHeadroom`. Seeding it is a convenience; agreeing to it
+   * has to stay a decision.
+   */
   const [customLimit, setCustomLimit] = useState(
-    state.customItemLimit === null ? '' : String(state.customItemLimit),
+    state.customItemLimit === null ? String(state.itemCount) : String(state.customItemLimit),
   );
   const [customName, setCustomName] = useState(state.customPlanName);
   // Pre-filled with what the shop already holds, because that is the job in
@@ -150,6 +164,18 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
   );
 
   const downgrade = PLAN_SPECS[plan].itemLimit < state.itemCount;
+
+  /**
+   * A custom limit the shop has already reached, so it could not add one item.
+   *
+   * Worth saying because the box is now seeded with that very number: the
+   * convenience of not having to look the count up would otherwise become a
+   * shop quietly capped at exactly what it holds, discovered by the owner days
+   * later when a save is refused.
+   */
+  const typedLimit = Number(customLimit.trim());
+  const noHeadroom =
+    customLimit.trim() !== '' && Number.isFinite(typedLimit) && typedLimit <= state.itemCount;
 
   async function post(body: Record<string, unknown>, done: string) {
     setBusy(true);
@@ -505,13 +531,16 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             />
           </label>
           <label className="text-xs font-semibold text-slate-700">
-            Items
+            Items <span className="font-normal text-slate-400">· has {state.itemCount}</span>
             <input
               value={customLimit}
               onChange={(event) => setCustomLimit(event.target.value)}
               inputMode="numeric"
               placeholder={String(PLAN_SPECS[plan].itemLimit)}
-              className="mt-1 block h-10 w-24 rounded-lg border border-slate-300 px-2 text-sm font-normal tabular-nums"
+              className={clsx(
+                'mt-1 block h-10 w-24 rounded-lg border px-2 text-sm font-normal tabular-nums',
+                noHeadroom ? 'border-amber-400 bg-amber-50' : 'border-slate-300',
+              )}
             />
           </label>
 
@@ -539,6 +568,19 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
           >
             Save
           </Button>
+
+          {/* The seeded number, said back as its consequence.
+              Not a refusal — an operator may genuinely mean "this many and no
+              more" — but a shop capped at exactly what it holds cannot add one
+              item, and that is worth finding out here rather than from the
+              owner a week later. */}
+          {noHeadroom && (
+            <p className="w-full text-xs font-medium text-amber-800">
+              {typedLimit === state.itemCount
+                ? `This shop already has ${state.itemCount} items, so it could not add another. Raise it to leave room.`
+                : `Below what this shop already holds (${state.itemCount}). Existing items stay; nothing new can be added.`}
+            </p>
+          )}
 
           {state.customPricePaise !== null && (
             <Button
