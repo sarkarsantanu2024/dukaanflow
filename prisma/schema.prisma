@@ -266,6 +266,19 @@ model Shop {
   /// When this shop first listed an item — the activation metric.
   activatedAt        DateTime?
 
+  /// The trial end this shop has already been told about.
+  ///
+  /// A DATE, NOT A FLAG, and that is the whole of it. The nightly job would
+  /// otherwise have to choose between telling an owner their trial has ended
+  /// every morning for a fortnight, or remembering it told them once and then
+  /// staying silent when the operator gives them another week and THAT runs out
+  /// too. Storing the date it warned about answers both: it warns again only
+  /// when `trialEndsAt` has moved to a date it has not seen.
+  ///
+  /// Null means nothing has been sent, which is every shop until its first
+  /// trial actually runs out.
+  trialEndNoticedAt  DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

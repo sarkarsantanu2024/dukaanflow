@@ -63,9 +63,15 @@ export function RenewScreen({
 
         {/* The reason to pay before the date rather than on it. Without this
             said out loud, paying early looks like throwing away the days you
-            have left, and an owner waits until the last one. */}
+            have left, and an owner waits until the last one.
+
+            TWO SENTENCES, BECAUSE ONE OF THEM IS ONLY TRUE HALF THE TIME. Paid
+            days carry over; trial days do not (see `periodFor`). Telling a shop
+            still inside its trial that "the days you have left are added on
+            top" is a promise the billing will break on the day they pay, and
+            the day somebody pays is the worst possible day to be caught out. */}
         <p className="mt-3 rounded-xl bg-brand-50 px-3 py-2 text-sm leading-relaxed text-brand-900">
-          {t.renewEarlyHint}
+          {plan.trialDaysLeft !== null ? t.renewTrialPayHint : t.renewEarlyHint}
         </p>
       </section>
 
