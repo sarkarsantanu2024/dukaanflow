@@ -8,7 +8,6 @@ import { ItemCard, itemName, sellsAnyAmount, type CustomerItem } from './ItemCar
 import { CartBar } from './CartBar';
 import { CartDrawer, type CartLine } from './CartDrawer';
 import { CheckoutSheet, type CheckoutSubmit } from './CheckoutSheet';
-import { VoiceOrder } from './VoiceOrder';
 import { RepeatOrder, rememberOrder } from './RepeatOrder';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
@@ -254,23 +253,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
    * on checkout — nothing here opens or shuts it.
    */
 
-  /**
-   * What the mic just heard, put in the basket.
-   *
-   * `set` REPLACES the line and `add` increases it, and which one is used is
-   * decided by whether the shopper named an amount. That distinction is the
-   * whole of the "I said 800 g and got 1.3 kg" bug: an amount said out loud is
-   * a statement about the total wanted, and adding it to the 500 g already on
-   * the card produced a number the shopper never asked for and could not
-   * account for. Saying a bare item name is still "one more of these", because
-   * that is what saying it twice means.
-   */
-  function applyVoice(itemId: string, quantity: number, mode: 'set' | 'add') {
-    if (mode === 'set') setQuantity(itemId, quantity);
-    else addQuantity(itemId, quantity);
-  }
-
-  /** Relative — saying "rice" twice means two of them. */
+  /** Relative — ordering the same thing again adds to the line. */
   function addQuantity(itemId: string, more: number) {
     setCart((current) => ({
       ...current,
@@ -416,7 +399,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     // buttons, `main` reserved another 7rem, and the footer then added its own
     // — three separate guesses at the same clearance, stacked into a screen of
     // empty grey. The footer is the last thing on the page now, so it is the
-    // one place that has to clear the mic.
+    // one place that has to clear the basket button.
     <div className="min-h-dvh bg-slate-100">
       <ShopHeader shop={shop} locale={locale} onLocaleChange={changeLocale} payLabel={t.payViaUpi} />
 
@@ -444,8 +427,8 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
                 floating search box unusable. A search field parked in the
                 empty space to the right of the grid has no visual
                 relationship to the grid, so nothing on screen says what
-                typing in it will do — the shopper has to guess. The mic and
-                the basket float because they DO something; search and
+                typing in it will do — the shopper has to guess. The
+                basket floats because it DOES something; search and
                 categories narrow what is below them, so they sit above it.
 
                 Sticky, so both are still reachable ten items down. */}
@@ -562,44 +545,17 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           repeat-order panel — a footer in the middle of the page. It has moved
           to the real one, at the very bottom, beside the support details. */}
 
-      {/* Everything a shopper reaches for, in the one corner their thumb
-          already rests in.
+      {/* The basket button, in the one corner the shopper's thumb already
+          rests in. It DOES something; search and categories only narrow the
+          list, so they live above the list instead.
 
-          Two things only — speak an order, and open the basket. Both DO
-          something; search and categories only narrow the list, so they live
-          above the list instead.
+          There is no mic here. Shoppers did not need to speak an order — the
+          voice tools are for the owner's till and khata.
 
-          The wrapper is `pointer-events-none` and only the buttons themselves
-          take a click, so the gaps between them are still the live page — a
-          fixed box here once swallowed taps and left a card underneath
-          refusing to respond. `main` also carries enough bottom padding that
-          the last card scrolls clear rather than living under the stack.
-
-          WHEN THE BASKET IS OPEN THE MIC RISES OVER IT rather than moving.
-          The basket is a panel down the right-hand edge and the mic sits in
-          that same corner, so it was buried — a shopper could not speak an
-          order while looking at what they had already ordered, which is
-          exactly when they would. It was then made to step aside on a wide
-          screen and hide on a narrow one, which was worse: the one control a
-          shopper reaches for by muscle memory left its corner and crossed the
-          page, or vanished. It stays put and floats above the panel instead —
-          one fixed corner, whatever else is open. */}
-      <div
-        className={clsx(
-          'pointer-events-none fixed inset-x-0 flex flex-col items-end gap-3 px-4 transition-[bottom]',
-          // Above the drawer's own z-50 while it is open, and back below it
-          // afterwards so nothing here sits over an ordinary page.
-          //
-          // It also RISES ABOVE THE TOTAL BAR rather than landing on top of
-          // it: floating over the list is what the mic is for, floating over
-          // the button that places the order is a mis-tap waiting to happen.
-          cartOpen
-            ? 'z-[60] bottom-[calc(5.25rem+env(safe-area-inset-bottom))]'
-            : 'z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))]',
-        )}
-      >
-          <VoiceOrder items={items} locale={locale} onApply={applyVoice} />
-
+          The wrapper is `pointer-events-none` and only the button itself
+          takes a click — a fixed box here once swallowed taps and left a card
+          underneath refusing to respond. */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-3 px-4">
           {!cartOpen && (
             <CartBar
               totalItems={totalItems}
