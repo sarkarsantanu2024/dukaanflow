@@ -38,7 +38,22 @@ export function periodFor(shop: ExistingTime, months: number, now = new Date()) 
   const paidTo = shop.currentPeriodEnd;
   const from = paidTo !== null && paidTo > now ? paidTo : now;
 
-  const periodEnd = new Date(from);
-  periodEnd.setMonth(periodEnd.getMonth() + months);
-  return { from, periodEnd };
+  return { from, periodEnd: addMonths(from, months) };
+}
+
+/**
+ * The same day `months` later, or the last day of that month if it is shorter.
+ *
+ * Plain `setMonth` rolls over: a month from 31 January came out as 3 March, so
+ * a payment made on the 31st was quietly given extra days, and the date shown
+ * to the shop looked wrong.
+ */
+export function addMonths(date: Date, months: number): Date {
+  const result = new Date(date);
+  const day = result.getDate();
+  result.setDate(1);
+  result.setMonth(result.getMonth() + months);
+  const lastDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+  result.setDate(Math.min(day, lastDay));
+  return result;
 }

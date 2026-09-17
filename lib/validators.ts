@@ -711,14 +711,16 @@ export const starterSchema = z.object({
 });
 
 export const subscriptionSchema = z.object({
-  plan: z.enum(['FREE', 'STARTER', 'PRO', 'EX', 'ENTERPRISE']),
+  /// Only a payment needs it. Corrections, trial days and listing charges never
+  /// change the plan, so they must not send one.
+  plan: z.enum(['FREE', 'STARTER', 'PRO', 'EX', 'ENTERPRISE']).optional(),
   months: z.number().int().min(1).max(24).default(1),
   /// Set to change plan/state without recording money — corrections and cancellations.
   status: z.enum(['TRIALING', 'ACTIVE', 'PAST_DUE', 'CANCELLED']).optional(),
   /**
    * Set to bill the cataloguing service instead of subscription time: how many
-   * items the operator listed for this shop. Priced at ₹1 each with a ₹99
-   * floor (lib/plans.ts) and recorded as a one-off that buys no period.
+   * items the operator listed for this shop. Priced at ₹1 each, no minimum
+   * (lib/plans.ts), and recorded as a one-off that buys no period.
    *
    * The server prices it from this count rather than taking an amount, so the
    * console can never record a figure the price list does not agree with.

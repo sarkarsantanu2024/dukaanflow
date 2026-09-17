@@ -34,18 +34,20 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
-import { formatPaise, paiseToInput, parsePaise, rupeesToPaise } from '@/lib/money';
+import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import { periodFor } from '@/lib/period';
 import {
   AUTO_PAUSE_DAYS,
   GRACE_DAYS,
   LISTING_PAISE_PER_ITEM,
+  MONTHS_PER_YEAR_PAID,
   PLAN_ORDER,
   PLAN_SPECS,
+  amountForMonthsPaise,
   listingChargePaise,
-  priceForMonths,
-  yearSaving,
+  standingLabel,
   type Plan,
+  type Standing,
   type SubStatus,
 } from '@/lib/plans';
 
@@ -67,6 +69,10 @@ export type SubscriptionState = {
   effectivePlanName: string;
   /** Days of free trial left, or null when the shop is not on one. */
   trialDaysLeft: number | null;
+  /** Where the shop stands today, from the dates. See `Entitlement.standing`. */
+  standing: Standing;
+  /** Days until the shop page goes offline, or null. */
+  daysUntilAutoPause: number | null;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
   /** A price agreed with this one shop, or nulls when it is on the ladder. */
@@ -84,11 +90,13 @@ export type SubscriptionState = {
   }[];
 };
 
-const STATUS_TONE: Record<SubStatus, string> = {
-  TRIALING: 'bg-sky-50 text-sky-700',
-  ACTIVE: 'bg-green-50 text-green-700',
-  PAST_DUE: 'bg-amber-50 text-amber-700',
-  CANCELLED: 'bg-red-50 text-red-700',
+const STANDING_TONE: Record<Standing, string> = {
+  trial: 'bg-sky-50 text-sky-700',
+  active: 'bg-green-50 text-green-700',
+  overdue: 'bg-amber-50 text-amber-700',
+  blocked: 'bg-red-50 text-red-700',
+  paused: 'bg-red-50 text-red-700',
+  cancelled: 'bg-red-50 text-red-700',
 };
 
 /** A labelled block, so each job on this card is visibly a separate job. */
@@ -177,8 +185,23 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
   // Priced through the same function the server charges from, so the figure the
   // operator reads out to a shopkeeper on the phone is the figure that gets
   // recorded. Twelve months and up carry the two-months-free yearly rate.
-  const amountPaise = rupeesToPaise(priceForMonths(plan, monthCount));
+  // A custom price replaces the plan's price, exactly as the server charges it.
+  const customRate = state.customPricePaise;
+  const priceFor = (months: number) => amountForMonthsPaise(plan, months, customRate);
+  const amountPaise = priceFor(monthCount);
+  const neverPaid = state.currentPeriodEnd === null;
+  const trialOver =
+    state.trialEndsAt !== null && new Date(state.trialEndsAt).getTime() <= Date.now();
+  // The server refuses more trial for a shop still holding paid time.
+  const holdsPaidTime =
+    state.currentPeriodEnd !== null && new Date(state.currentPeriodEnd).getTime() > Date.now();
   const listedCount = Math.max(0, Math.trunc(Number(listedItems) || 0));
+  // The server takes 1–5000 items and 1–90 trial days; anything else is a 400
+  // with a raw validation message, so the buttons refuse it first.
+  const validListing = listedCount >= 1 && listedCount <= 5000;
+  const trialDayCount = Number(trialDays);
+  const validTrialDays =
+    Number.isInteger(trialDayCount) && trialDayCount >= 1 && trialDayCount <= 90;
   const listingPaise = listingChargePaise(listedCount);
   const usage = state.itemLimit > 0 ? Math.min(1, state.itemCount / state.itemLimit) : 0;
 
@@ -197,7 +220,12 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
     monthCount,
   );
 
-  const downgrade = PLAN_SPECS[plan].itemLimit < state.itemCount;
+  // A custom item limit replaces the plan's, so only the limit that will apply counts.
+  const limitAfterPayment =
+    customRate !== null && state.customItemLimit !== null
+      ? state.customItemLimit
+      : PLAN_SPECS[plan].itemLimit;
+  const downgrade = limitAfterPayment < state.itemCount;
 
   /**
    * A custom limit the shop has already reached, so it could not add one item.
@@ -290,10 +318,15 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
            and it appears exactly when the two disagree. */}
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="mr-auto font-semibold text-slate-900">Subscription</h2>
+        {/* From the dates, not the stored status: a trial that ended yesterday
+            is still stored as TRIALING, and the badge used to say so. */}
         <span
-          className={clsx('rounded-full px-2.5 py-1 text-xs font-semibold', STATUS_TONE[state.status])}
+          className={clsx(
+            'rounded-full px-2.5 py-1 text-xs font-semibold',
+            STANDING_TONE[state.standing],
+          )}
         >
-          {state.status}
+          {standingLabel(state.standing, neverPaid)}
         </span>
       </div>
 
@@ -322,9 +355,10 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             and a custom deal replaces the ladder entirely; both are legitimate
             and both look identical to a billing fault until something says
             which it is. */}
-        {state.effectivePlanName !== PLAN_SPECS[state.plan].name && (
+        {(state.standing === 'trial' ||
+          state.effectivePlanName !== PLAN_SPECS[state.plan].name) && (
           <p className="mt-2 text-xs text-slate-600">
-            {state.trialDaysLeft !== null ? (
+            {state.standing === 'trial' ? (
               <>
                 Free trial — the top plan while deciding. Reverts to{' '}
                 <strong>{PLAN_SPECS[state.plan].name}</strong> when it ends.
@@ -354,7 +388,8 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
               <dt className="text-slate-500">Free trial to</dt>
               <dd className="font-medium tabular-nums text-slate-800">
                 {formatDay(state.trialEndsAt)}
-                {state.trialDaysLeft !== null && (
+                {trialOver && <span className="ml-1 font-normal text-red-600">· ended</span>}
+                {!trialOver && state.trialDaysLeft !== null && (
                   <span className="ml-1 font-normal text-slate-500">
                     · {state.trialDaysLeft} day{state.trialDaysLeft === 1 ? '' : 's'} left
                   </span>
@@ -363,6 +398,31 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             </div>
           )}
         </dl>
+
+        {/* What the lapse means today, so the operator on the phone can say it.
+            "Pro" above is only the plan the shop returns to once it pays. */}
+        {(state.standing === 'overdue' || state.standing === 'blocked') && (
+          <p
+            className={clsx(
+              'mt-2 rounded-lg px-2.5 py-1.5 text-xs',
+              state.standing === 'blocked' ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-900',
+            )}
+          >
+            {state.standing === 'blocked'
+              ? 'The owner can no longer add or change items.'
+              : `The owner can still edit for up to ${GRACE_DAYS} days after it ended.`}
+            {state.daysUntilAutoPause !== null &&
+              ` The shop page goes offline in ${state.daysUntilAutoPause} day${
+                state.daysUntilAutoPause === 1 ? '' : 's'
+              } unless a payment is recorded.`}
+          </p>
+        )}
+        {(state.standing === 'paused' || state.standing === 'cancelled') && (
+          <p className="mt-2 rounded-lg bg-red-50 px-2.5 py-1.5 text-xs text-red-800">
+            The shop page is offline and the owner cannot edit items. Recording a payment reopens
+            it at once.
+          </p>
+        )}
       </div>
 
       {/* ---- 2. Record a payment ---- */}
@@ -432,10 +492,10 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
                   {option === 12 ? '1 year' : '1 month'}
                 </span>
                 <span className="block text-sm font-bold tabular-nums text-brand-700">
-                  ₹{priceForMonths(plan, option).toLocaleString('en-IN')}
+                  {formatPaise(priceFor(option))}
                   {option === 12 && (
                     <span className="ml-1 text-xs font-semibold">
-                      saves ₹{yearSaving(plan).toLocaleString('en-IN')}
+                      saves {formatPaise(priceFor(1) * (12 - MONTHS_PER_YEAR_PAID))}
                     </span>
                   )}
                 </span>
@@ -462,8 +522,24 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             waiting to happen: they pay, then cannot edit their own items. */}
         {downgrade && (
           <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-            This shop lists {state.itemCount} items — more than {PLAN_SPECS[plan].name} holds. They
-            would not be able to edit their own catalogue.
+            This shop lists {state.itemCount} items — more than the {limitAfterPayment} this plan
+            holds. Their items stay, but they could not add a new one.
+          </p>
+        )}
+
+        {/* Nothing above changes the shop until this is pressed. An operator
+            picked Basic, saw "Pro" still in force, and took it for a fault. */}
+        {plan !== state.plan && (
+          <p className="mt-3 text-xs text-slate-600">
+            The shop stays on <strong>{PLAN_SPECS[state.plan].name}</strong> until you record
+            this payment.
+          </p>
+        )}
+
+        {customRate !== null && (
+          <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-800">
+            This shop has a custom price, so it is charged {formatPaise(customRate)} a month
+            whichever plan is chosen.
           </p>
         )}
 
@@ -472,9 +548,21 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
           size="lg"
           className="mt-3"
           loading={busy}
-          onClick={() =>
-            post({ plan, months: monthCount, reference }, `Recorded ${formatPaise(amountPaise)}`)
-          }
+          onClick={async () => {
+            if (
+              downgrade &&
+              !(await confirm({
+                title: `Record ${PLAN_SPECS[plan].name} anyway?`,
+                message: `This shop has ${state.itemCount} items but this plan holds ${limitAfterPayment}. The owner will not be able to add items.`,
+                confirmLabel: 'Record it',
+                cancelLabel: 'Go back',
+                danger: true,
+              }))
+            ) {
+              return;
+            }
+            post({ plan, months: monthCount, reference }, `Recorded ${formatPaise(amountPaise)}`);
+          }}
         >
           Record {formatPaise(amountPaise)} · {PLAN_SPECS[plan].name}
         </Button>
@@ -517,10 +605,10 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
 
           <Button
             variant="secondary"
-            disabled={busy || listedCount < 1}
+            disabled={busy || !validListing}
             onClick={() =>
               post(
-                { plan, listedItems: listedCount, reference },
+                { listedItems: listedCount, reference },
                 `Charged ${formatPaise(listingPaise)} for ${listedCount} items`,
               )
             }
@@ -556,14 +644,22 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
           </label>
           <Button
             size="sm"
-            disabled={busy || !(Number(trialDays) > 0)}
+            disabled={busy || holdsPaidTime || !validTrialDays}
             onClick={() =>
-              post({ plan, trialDays: Number(trialDays) }, `Trial extended by ${trialDays} days`)
+              post({ trialDays: Number(trialDays) }, `Trial extended by ${trialDays} days`)
             }
           >
             Give the days
           </Button>
         </div>
+        {holdsPaidTime && (
+          <p className="mt-2 text-xs text-slate-600">
+            This shop has paid time left, so it is not on a trial.
+          </p>
+        )}
+        {!validTrialDays && (
+          <p className="mt-2 text-xs text-red-600">Enter a whole number of days from 1 to 90.</p>
+        )}
       </Block>
 
       {/* ---- 5. A price agreed with this shop alone ---- */}
@@ -692,7 +788,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             variant="secondary"
             size="sm"
             disabled={busy}
-            onClick={() => post({ plan, status: 'PAST_DUE' }, 'Marked past due')}
+            onClick={() => post({ status: 'PAST_DUE' }, 'Marked past due')}
           >
             Mark past due
           </Button>
@@ -707,7 +803,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
                 !(await confirm({
                   title: 'Cancel this subscription?',
                   message:
-                    'The owner can no longer add or change items. Their shop page and QR keep working, and nothing is deleted.',
+                    'The owner can no longer add or change items, and the shop page goes offline today — customers see the closed screen. Nothing is deleted, and recording a payment reopens it.',
                   confirmLabel: 'Cancel subscription',
                   cancelLabel: 'Keep it',
                   danger: true,
@@ -715,7 +811,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
               ) {
                 return;
               }
-              post({ plan, status: 'CANCELLED' }, 'Subscription cancelled');
+              post({ status: 'CANCELLED' }, 'Subscription cancelled');
             }}
           >
             Cancel subscription

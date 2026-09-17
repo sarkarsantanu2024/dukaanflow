@@ -87,6 +87,28 @@ export function priceForMonths(plan: Plan, months: number): number {
 }
 
 /**
+ * What a given number of months costs this shop, in paise, when it may have a
+ * custom price.
+ *
+ * A custom price REPLACES the plan's price. Recording a payment used to charge
+ * the plan's own price, so a shop that had agreed ₹150 a month was recorded at
+ * ₹99 while getting the custom deal's items. The custom rate follows the same
+ * rule as the standard one: twelve months cost ten.
+ */
+export function amountForMonthsPaise(
+  plan: Plan,
+  months: number,
+  customPricePaise?: number | null,
+): number {
+  if (customPricePaise === null || customPricePaise === undefined) {
+    return priceForMonths(plan, months) * 100;
+  }
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  return years * customPricePaise * MONTHS_PER_YEAR_PAID + rest * customPricePaise;
+}
+
+/**
  * WHAT EVERY PLAN INCLUDES, WHICH IS EVERYTHING.
  *
  * The plans used to differ by feature as well as by size — order history on
@@ -348,7 +370,43 @@ export type Entitlement = {
   autoPaused: boolean;
   /** Days until the storefront goes offline, or null once it has. */
   daysUntilAutoPause: number | null;
+  /**
+   * Where the shop stands TODAY, worked out from the dates, not the stored status.
+   *
+   * The stored status only changes when somebody writes it, so a trial that ran
+   * out yesterday is still stored as TRIALING. Screens printed that stored word,
+   * and a shop whose trial had ended — editing about to stop — showed a
+   * reassuring blue "TRIALING" badge.
+   */
+  standing: Standing;
 };
+
+export type Standing = 'trial' | 'active' | 'overdue' | 'blocked' | 'paused' | 'cancelled';
+
+/**
+ * A short label for the operator, e.g. "Trial ended · grace".
+ *
+ * `neverPaid` separates a trial that ran out from a paid month that ran out.
+ * They are handled the same way but mean different things to the person on the
+ * phone.
+ */
+export function standingLabel(standing: Standing, neverPaid: boolean): string {
+  const lapsed = neverPaid ? 'Trial ended' : 'Payment overdue';
+  switch (standing) {
+    case 'trial':
+      return 'Free trial';
+    case 'active':
+      return 'Paid';
+    case 'overdue':
+      return `${lapsed} · grace`;
+    case 'blocked':
+      return `${lapsed} · editing stopped`;
+    case 'paused':
+      return `${lapsed} · shop offline`;
+    case 'cancelled':
+      return 'Cancelled';
+  }
+}
 
 function daysBetween(from: Date, to: Date): number {
   return Math.ceil((to.getTime() - from.getTime()) / 86_400_000);
@@ -383,6 +441,7 @@ export function entitlement(shop: ShopBilling, now = new Date()): Entitlement {
       expiresOn: shop.trialEndsAt,
       autoPaused: false,
       daysUntilAutoPause: null,
+      standing: 'trial',
     };
   }
 
@@ -415,6 +474,7 @@ export function entitlement(shop: ShopBilling, now = new Date()): Entitlement {
       expiresOn: null,
       autoPaused: false,
       daysUntilAutoPause: null,
+      standing: shop.subscriptionStatus === 'CANCELLED' ? 'cancelled' : 'active',
     };
   }
 
@@ -448,6 +508,15 @@ export function entitlement(shop: ShopBilling, now = new Date()): Entitlement {
     autoPaused,
     daysUntilAutoPause:
       autoPaused || !pauseOn ? null : Math.max(0, daysBetween(now, pauseOn)),
+    standing: cancelled
+      ? 'cancelled'
+      : autoPaused
+        ? 'paused'
+        : !canEdit
+          ? 'blocked'
+          : inGrace || shop.subscriptionStatus === 'PAST_DUE'
+            ? 'overdue'
+            : 'active',
   };
 }
 
