@@ -186,6 +186,8 @@ export default async function ShopDetailPage({ params }: PageProps) {
             // "Basic · 9/1000 items" and looked broken.
             effectivePlanName: billing?.plan.name ?? PLAN_SPECS.FREE.name,
             trialDaysLeft: billing?.trialDaysLeft ?? null,
+            standing: billing?.standing ?? 'active',
+            daysUntilAutoPause: billing?.daysUntilAutoPause ?? null,
             trialEndsAt: shop.trialEndsAt?.toISOString() ?? null,
             currentPeriodEnd: shop.currentPeriodEnd?.toISOString() ?? null,
             customPricePaise: shop.customPricePaise,

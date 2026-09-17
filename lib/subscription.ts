@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { priceForMonths, type Plan } from './plans';
+import { amountForMonthsPaise, priceForMonths, type Plan } from './plans';
 import { rupeesToPaise } from './money';
 import { periodFor } from './period';
 
@@ -25,6 +25,12 @@ export type Grant = {
   /** UTR, gateway id, or in our case the payment-request id. */
   reference?: string;
   note?: string;
+  /**
+   * Charge this monthly rate instead of the plan's own, for a shop with a custom
+   * price. Only the console passes it: an activation code buys exactly what its
+   * request was priced at.
+   */
+  customPricePaise?: number | null;
 };
 
 export type GrantResult = { periodEnd: Date; amountPaise: number };
@@ -40,11 +46,7 @@ export { periodFor, type ExistingTime } from './period';
  * Adds paid time to whatever the shop already has, and records the payment.
  *
  * Time is ADDED, never replaced — renewing a week early must not cost the shop
- * that week. "Whatever is left" includes unused trial: an owner convinced on
- * day three and paying used to lose the other eleven days, which punished
- * exactly the behaviour we want. The two are the same fact — time the shop has
- * already been given — so the new period runs from whichever of them lasts
- * longest.
+ * that week. Unused trial days are NOT added — see `periodFor`.
  *
  * Priced from `lib/plans.ts`, never from an amount the caller passes. A route
  * that could be told what to charge is a route a browser can buy a year on
@@ -64,7 +66,7 @@ export async function grantSubscription(grant: Grant): Promise<GrantResult> {
   // Twelve months and up are charged at the yearly rate — two months free — and
   // that rule lives in lib/plans.ts so the console, the pricing page and this
   // can never quote three different numbers for the same year.
-  const amountPaise = rupeesToPaise(priceForMonths(plan, months));
+  const amountPaise = amountForMonthsPaise(plan, months, grant.customPricePaise);
 
   await prisma.$transaction([
     prisma.shop.update({
@@ -73,9 +75,8 @@ export async function grantSubscription(grant: Grant): Promise<GrantResult> {
         plan,
         subscriptionStatus: 'ACTIVE',
         currentPeriodEnd: periodEnd,
-        // Cleared because it has been SPENT, not discarded: whatever was left
-        // of the trial is inside `periodEnd` above. Leaving it set would make
-        // the same days count twice the next time this runs.
+        // Cleared because paying ends the trial. Left set, a later "extend
+        // the trial" or a lapsed period would read an old trial date.
         trialEndsAt: null,
       },
     }),

@@ -24,7 +24,13 @@ export async function POST(request: Request, { params }: Context) {
   const { slug } = await params;
   const shop = await prisma.shop.findUnique({
     where: { slug },
-    select: { id: true, currentPeriodEnd: true, trialEndsAt: true },
+    select: {
+      id: true,
+      plan: true,
+      currentPeriodEnd: true,
+      trialEndsAt: true,
+      customPricePaise: true,
+    },
   });
   if (!shop) return fail('Shop not found', 404);
 
@@ -33,8 +39,20 @@ export async function POST(request: Request, { params }: Context) {
 
   const { plan, months, status, listedItems, trialDays, method, reference, note } = parsed.data;
 
+  // Only one action per request. A body carrying two would silently do the
+  // first one and drop the other.
+  const actions = [status, listedItems, trialDays].filter((value) => value !== undefined);
+  if (actions.length > 1) return fail('Send one change at a time', 400);
+
+  /**
+   * THE STATUS ONLY, NEVER THE PLAN.
+   *
+   * This used to write the plan too, taken from the console's "Plan to record"
+   * dropdown. An operator who picked Basic, did not record it, and then pressed
+   * "Mark past due" moved the shop to Basic with no payment behind it.
+   */
   if (status) {
-    await prisma.shop.update({ where: { id: shop.id }, data: { plan, subscriptionStatus: status } });
+    await prisma.shop.update({ where: { id: shop.id }, data: { subscriptionStatus: status } });
     return ok({ success: true });
   }
 
@@ -104,7 +122,8 @@ export async function POST(request: Request, { params }: Context) {
       data: {
         shopId: shop.id,
         amountPaise,
-        plan,
+        // The plan the shop is on, not whatever the dropdown showed.
+        plan: shop.plan,
         kind: 'LISTING',
         itemsListed: listedItems,
         // Equal, because this buys no period. A one-off charge with a span
@@ -123,6 +142,8 @@ export async function POST(request: Request, { params }: Context) {
   // live in lib/subscription.ts now — the owner's activation-code route has to
   // do exactly the same thing, and two copies of "when does this shop's month
   // start" is how one of them quietly starts costing a shop a week.
+  if (!plan) return fail('Choose a plan to record', 400);
+
   const { periodEnd, amountPaise } = await grantSubscription({
     shopId: shop.id,
     plan,
@@ -130,6 +151,8 @@ export async function POST(request: Request, { params }: Context) {
     method,
     reference,
     note,
+    // A shop on a custom price pays that price. See `amountForMonthsPaise`.
+    customPricePaise: shop.customPricePaise,
   });
 
   return ok({ success: true, periodEnd: periodEnd.toISOString(), amountPaise });
