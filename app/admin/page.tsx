@@ -66,6 +66,9 @@ export default async function AdminDashboard() {
         subscriptionStatus: true,
         trialEndsAt: true,
         currentPeriodEnd: true,
+        customPricePaise: true,
+        customItemLimit: true,
+        customPlanName: true,
         activatedAt: true,
         createdAt: true,
         // The hash itself never leaves the server — only whether there is one.
@@ -83,16 +86,23 @@ export default async function AdminDashboard() {
       subscriptionStatus: shop.subscriptionStatus as SubStatus,
       trialEndsAt: shop.trialEndsAt,
       currentPeriodEnd: shop.currentPeriodEnd,
+      // Without these a shop on a custom deal was listed with the standard
+      // plan's name and limit, disagreeing with its own page.
+      customPricePaise: shop.customPricePaise,
+      customItemLimit: shop.customItemLimit,
+      customPlanName: shop.customPlanName,
     });
 
+    // From the dates, not the stored status, which still says TRIALING after a
+    // trial has run out.
     const planState: ShopRow['planState'] =
-      state.status === 'CANCELLED'
+      state.standing === 'cancelled'
         ? 'cancelled'
-        : state.status === 'TRIALING'
+        : state.standing === 'trial'
           ? 'trial'
-          : state.inGrace || state.status === 'PAST_DUE'
-            ? 'due'
-            : 'paid';
+          : state.standing === 'active'
+            ? 'paid'
+            : 'due';
 
     return {
       id: shop.id,
