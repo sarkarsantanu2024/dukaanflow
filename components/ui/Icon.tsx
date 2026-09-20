@@ -94,6 +94,26 @@ export function BoxIcon(props: IconProps) {
   );
 }
 
+export function HomeIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3 11.5 12 4l9 7.5" />
+      <path d="M5 10v10h14V10" />
+    </Svg>
+  );
+}
+
+export function TruckIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3 6h11v9H3z" />
+      <path d="M14 9h4l3 3v3h-7z" />
+      <circle cx="7.5" cy="17.5" r="1.8" />
+      <circle cx="17.5" cy="17.5" r="1.8" />
+    </Svg>
+  );
+}
+
 export function BellIcon(props: IconProps) {
   return (
     <Svg {...props}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { SearchIcon } from '@/components/ui/Icon';
 import { ShopHeader, type ShopSummary } from './ShopHeader';
@@ -100,6 +100,17 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   const [cartOpen, setCartOpen] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
+  /**
+   * The idempotency key for the order being placed right now.
+   *
+   * Minted once, the first time this basket is submitted, and kept across every
+   * retry of that submission — the network retries in `postOrder`, and a shopper
+   * re-tapping after it gave up. That is the whole point: a first request that
+   * succeeded on the server but whose reply was lost must, on retry, return the
+   * same order rather than place a second. It is cleared only once an order is
+   * actually confirmed, so the next, genuinely different order gets a fresh key.
+   */
+  const idempotencyKeyRef = useRef<string | null>(null);
   /** The order that just went through, so it can be tracked and followed. */
   const [placed, setPlaced] = useState<{
     orderId: string;
@@ -304,6 +315,13 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
 
   async function placeOrder(values: CheckoutSubmit) {
     setSubmitting(true);
+    // Minted here, not per fetch, so all three retries of one submission carry
+    // one key. `crypto.randomUUID` is present on every browser this app targets;
+    // the server treats a missing key as "no idempotency" and behaves as before.
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : null;
+    }
     try {
       const response = await postOrder(
         JSON.stringify({
@@ -316,6 +334,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           // Only ids and quantities travel to the server. Prices are re-read
           // from the database there — the client never quotes a total.
           items: Object.entries(cart).map(([itemId, quantity]) => ({ itemId, quantity })),
+          ...(idempotencyKeyRef.current ? { idempotencyKey: idempotencyKeyRef.current } : {}),
         }),
       );
 
@@ -347,6 +366,11 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
       } catch {
         // Storage refused. The order still went through, which is what matters.
       }
+
+      // The order is confirmed, so this key has done its job. Clearing it means
+      // the shopper's NEXT order — a genuinely new one — mints a fresh key and
+      // is not deduplicated against the one just placed.
+      idempotencyKeyRef.current = null;
 
       setCheckoutOpen(false);
       setCart({});

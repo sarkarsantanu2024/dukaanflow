@@ -101,8 +101,6 @@ type Dictionary = {
   voiceSoldIn: string;
   /** The label on the amount picker — how much of a weighed item to send. */
   amount: string;
-  /** "Any amount" — said on a card whose item is sold loose off a scale. */
-  anyAmount: string;
   /**
    * The amount asked for is past what one line of an order may hold.
    *
@@ -278,7 +276,6 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceYouSaid: 'You said',
     voiceSoldIn: 'this shop sells it in',
     amount: 'Amount',
-    anyAmount: 'any amount',
     voiceTooMuch: 'That is more than one order can hold. Please say the amount again.',
     voiceAtMost: 'at most',
 
@@ -405,7 +402,6 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceYouSaid: 'আপনি বলেছেন',
     voiceSoldIn: 'এই দোকানে বিক্রি হয়',
     amount: 'পরিমাণ',
-    anyAmount: 'যত খুশি',
     voiceTooMuch: 'একবারে এত নেওয়া যায় না। পরিমাণটা আবার বলুন।',
     voiceAtMost: 'সর্বোচ্চ',
 
@@ -532,7 +528,6 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     voiceYouSaid: 'आपने कहा',
     voiceSoldIn: 'यह दुकान बेचती है',
     amount: 'मात्रा',
-    anyAmount: 'जितना चाहें',
     voiceTooMuch: 'एक बार में इतना नहीं लिया जा सकता। मात्रा दोबारा बोलिए।',
     voiceAtMost: 'ज़्यादा से ज़्यादा',
 

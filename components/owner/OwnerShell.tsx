@@ -20,7 +20,7 @@ import { PlanBanner, type PlanState } from './PlanBanner';
 import { OpenInChromeNotice } from './OpenInChromeNotice';
 import { SubscriptionRoadblock, type RoadblockState } from './SubscriptionRoadblock';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
-import { SimpleModeProvider, SimpleModeToggle } from './SimpleMode';
+import { SimpleModeProvider } from './SimpleMode';
 import { MoreDrawer, type OwnerSettings } from './MoreDrawer';
 
 export type OwnerTab = 'sell' | 'inventory' | 'khata' | 'orders';
@@ -78,6 +78,7 @@ export function OwnerShell({
   settings,
   roadblock,
   ownerClosed,
+  showSettings = false,
   children,
 }: {
   slug: string;
@@ -103,6 +104,18 @@ export function OwnerShell({
   settings: OwnerSettings;
   /** Set when the subscription has lapsed; null while the owner may work. */
   roadblock?: RoadblockState | null;
+  /**
+   * Whether to show the settings block — "More settings", the plan, the
+   * customer notice and the simple/full switch — at the foot of the screen.
+   *
+   * ONLY THE HOME SCREEN. These are things a shop sets once and rarely touches,
+   * and repeating them under the till, the item list, the khata and the orders
+   * made every one of those screens end in the same block of admin an owner had
+   * to scroll past to reach what they came for. They live on the home screen —
+   * one tap away from anywhere by the house icon — and everywhere else is left
+   * to the one job that screen is for.
+   */
+  showSettings?: boolean;
   children: React.ReactNode;
 }) {
   const t = ownerDict(locale);
@@ -138,17 +151,12 @@ export function OwnerShell({
         <PlanBanner slug={slug} locale={locale} plan={plan} />
         {children}
 
-        {/* Everything a shop sets once, behind one closed line — the notice,
-            the smallest order, the delivery terms and the way to pay. Under
-            the screen's own content rather than over it, and on every screen
-            rather than only on Items. */}
-        <MoreDrawer slug={slug} locale={locale} settings={settings} />
-
-        {/* The last thing on every owner screen, under whatever that screen is
-            about. One place, not four: an owner who finds it on the item list
-            has found it on the till and the khata too, which is the difference
-            between a setting and a trick you have to remember per screen. */}
-        <SimpleModeToggle simpleLabel={t.simpleModeOn} fullLabel={t.simpleModeOff} />
+        {/* Everything a shop sets once — the notice, the delivery terms, the
+            way to pay, and the simple/full switch — behind one closed line, and
+            ONLY on the home screen. See `showSettings`: repeating this block at
+            the foot of every screen made each one end in admin the owner had to
+            scroll past. */}
+        {showSettings && <MoreDrawer slug={slug} locale={locale} settings={settings} />}
       </main>
 
       <nav

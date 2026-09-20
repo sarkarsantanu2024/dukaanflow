@@ -1255,9 +1255,13 @@ const VOCAB: Vocab[] = [
   // or nothing — left the entire name untranslated and a Bengali customer read
   // it in roman letters.
   { en: 'Basmati', hi: 'बासमती', bn: 'বাসমতী', roman: ['basmoti', 'basmati'] },
-  { en: 'Miniket', hi: 'मिनिकेट', bn: 'মিনিকেট' },
+  { en: 'Miniket', hi: 'मिनिकेट', bn: 'মিনিকেট', roman: ['minicate', 'minicat', 'minikit'] },
+  // A brand, not a grain, but it is the first word of a name a shop actually
+  // types — "Britannia Biscuit" — and without it the whole name fell through
+  // untranslated. Alternate spellings go in `roman`, which matches any script.
+  { en: 'Britannia', hi: 'ब्रिटानिया', bn: 'ব্রিটানিয়া' },
   { en: 'Gobindobhog', hi: 'गोबिंदभोग', bn: 'গোবিন্দভোগ', roman: ['gobindo bhog'] },
-  { en: 'Masoor', hi: 'मसूर', bn: 'মুসুর', roman: ['musur', 'musuri', 'musurir', 'mosur', 'masur'] },
+  { en: 'Masoor', hi: 'मसूर', bn: 'মুসুর', roman: ['musur', 'musuri', 'musurir', 'mosur', 'masur', 'মসুর'] },
   { en: 'Matar', hi: 'मटर', bn: 'মটর', roman: ['motor', 'moter', 'matar', 'motorer'] },
   { en: 'Chana', hi: 'चना', bn: 'ছোলা', roman: ['chola', 'chhola', 'cholar', 'chholar'] },
   { en: 'Moong', hi: 'मूंग', bn: 'মুগ', roman: ['mug', 'mung', 'muger'] },

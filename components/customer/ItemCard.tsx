@@ -201,21 +201,25 @@ export function ItemCard({
         <span className="mt-1 flex flex-wrap items-center gap-2">
           <span className="text-base font-bold text-brand-700">{formatPaise(item.pricePaise)}</span>
           {item.unit && <span className="text-sm text-slate-500">/ {item.unit}</span>}
-          {/* THE RATE IS NOT THE MINIMUM, and the card has to say so before
-              the shopper decides they cannot afford ₹1,500 of poppy seeds.
-              Only where it is true: a plate or a bottle really is sold
-              whole. */}
-          {loose && !disabled && <span className="text-xs text-slate-400">· {t.anyAmount}</span>}
-          {/* A CUSTOMER IS TOLD NOTHING ABOUT THE SHELF. NOT THE WORD, NOT
-              THE NUMBER.
+          {/* AVAILABLE, OR NOT AVAILABLE — nothing else about the shelf.
+              This used to read "any amount" on weighed rows, to say that the
+              rate quoted is not the minimum. The owner asked for that off: it
+              is a sentence about pricing in a spot where a shopper is looking
+              for one thing only, whether they can have it today. The rate is
+              still not the minimum — the amount picker on a weighed row opens
+              on fractions, and the order route accepts them.
 
-              There used to be a green "in stock" capsule on every card, which
-              is furniture rather than a fact — it said the same word about the
-              whole shop, so it was read past on the first row and never again.
-              Everything listed is in stock; that is the default and needs no
-              badge.
+              Out of stock is said once, at the far end of the row (`trailing`),
+              so this spot only carries the other half of the answer. Off at the
+              till, where the badge below prints the count instead. */}
+          {!showStock && !disabled && (
+            <span className="text-xs font-medium text-emerald-600">{t.inStock}</span>
+          )}
+          {/* A CUSTOMER IS TOLD THE WORD, NEVER THE NUMBER.
 
-              The count went with it. "Only 1 kg left" was well meant — it let
+              The word is above: available, or out of stock. The count is what
+              stays off a customer's screen. "Only 1 kg left" was well meant — it
+              let
               somebody reaching for three of something find out here rather than
               at checkout — but how much is on a shop's shelf is the shop's
               business, and printing it to whoever scans the QR is a running

@@ -547,6 +547,36 @@ type OwnerDictionary = {
   /** Shown when the phone has lost the network. */
   offline: string;
   offlineHint: string;
+
+  /**
+   * The "আজকের দোকান" home — the owner's morning briefing and the app's
+   * landing screen. A greeting, prioritised cards for what needs attention, the
+   * day's takings at a glance, and one big way back to the till.
+   */
+  todayTitle: string;
+  todayGreetingMorning: string;
+  todayGreetingAfternoon: string;
+  todayGreetingEvening: string;
+  todaySubtitle: string;
+  /** Prioritised cards. `{n}` is replaced with the count, so word order stays
+   *  the shop's language's own. */
+  todayOrdersWaiting: string;
+  todayOrdersReady: string;
+  todayLowStock: string;
+  todayKhataOutstanding: string;
+  todayDelivery: string;
+  /** One obvious action per card. */
+  todaySeeOrders: string;
+  todaySeeStock: string;
+  todaySeeKhata: string;
+  todaySellNow: string;
+  /** The day's takings, in one glance. */
+  todaySalesLabel: string;
+  todayCash: string;
+  todayUpi: string;
+  todayCredit: string;
+  /** Shown in place of the cards when nothing needs attention. */
+  todayAllQuiet: string;
 };
 
 export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
@@ -995,6 +1025,26 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
 
     offline: 'No internet',
     offlineHint: 'Showing what was on this phone. Nothing can be added or changed until the signal is back.',
+
+    todayTitle: 'Today',
+    todayGreetingMorning: 'Good morning 👋',
+    todayGreetingAfternoon: 'Good afternoon 👋',
+    todayGreetingEvening: 'Good evening 👋',
+    todaySubtitle: 'Here is your shop today',
+    todayOrdersWaiting: '{n} orders waiting',
+    todayOrdersReady: '{n} ready to hand over',
+    todayLowStock: '{n} items running low',
+    todayKhataOutstanding: '{n} customers owe money',
+    todayDelivery: '{n} deliveries to make',
+    todaySeeOrders: 'See orders',
+    todaySeeStock: 'See items',
+    todaySeeKhata: 'See khata',
+    todaySellNow: 'Sell now',
+    todaySalesLabel: "Today's sales",
+    todayCash: 'Cash',
+    todayUpi: 'UPI',
+    todayCredit: 'Udhaar',
+    todayAllQuiet: 'All caught up — nothing needs attention right now.',
   },
 
   bn: {
@@ -1307,7 +1357,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     stockSoldOut: 'শেষ — দোকানের পাতা থেকে সরে গেছে',
     stockShort: 'কত আছে',
     stockBadNumber: 'সংখ্যা লিখুন, বা পাশের মাপের সঙ্গে মেলে এমন মাপ — যেমন 4.5 kg',
-    duplicateName: 'দুবার আছে',
+    duplicateName: 'একই নাম',
 
     pushTitle: 'এই ফোনে আওয়াজ পান',
     pushHint: 'অর্ডার এলে অ্যাপ বন্ধ থাকলেও এই ফোনটা বাজবে।',
@@ -1425,6 +1475,26 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
 
     offline: 'ইন্টারনেট নেই',
     offlineHint: 'ফোনে যা ছিল তাই দেখানো হচ্ছে। নেট না আসা পর্যন্ত নতুন কিছু যোগ বা বদল করা যাবে না।',
+
+    todayTitle: 'আজ',
+    todayGreetingMorning: 'সুপ্রভাত 👋',
+    todayGreetingAfternoon: 'শুভ অপরাহ্ন 👋',
+    todayGreetingEvening: 'শুভ সন্ধ্যা 👋',
+    todaySubtitle: 'আজকের দোকানের খবর',
+    todayOrdersWaiting: '{n}টি Order অপেক্ষা করছে',
+    todayOrdersReady: '{n}টি Order তৈরি',
+    todayLowStock: '{n}টি মাল কমে গেছে',
+    todayKhataOutstanding: '{n} জনের টাকা বাকি',
+    todayDelivery: '{n}টি Delivery বাকি',
+    todaySeeOrders: 'Order দেখুন',
+    todaySeeStock: 'মাল দেখুন',
+    todaySeeKhata: 'বাকি দেখুন',
+    todaySellNow: 'বিক্রি করুন',
+    todaySalesLabel: 'আজকের বিক্রি',
+    todayCash: 'ক্যাশ',
+    todayUpi: 'UPI',
+    todayCredit: 'বাকি',
+    todayAllQuiet: 'সব ঠিক আছে — এখন আলাদা করে কিছু করার নেই।',
   },
 
   hi: {
@@ -1855,6 +1925,26 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
 
     offline: 'इंटरनेट नहीं है',
     offlineHint: 'फोन में जो था वही दिख रहा है। नेट आने तक कुछ जोड़ या बदल नहीं सकते।',
+
+    todayTitle: 'आज',
+    todayGreetingMorning: 'सुप्रभात 👋',
+    todayGreetingAfternoon: 'नमस्ते 👋',
+    todayGreetingEvening: 'शुभ संध्या 👋',
+    todaySubtitle: 'आज आपकी दुकान का हाल',
+    todayOrdersWaiting: '{n} ऑर्डर बाकी हैं',
+    todayOrdersReady: '{n} ऑर्डर तैयार',
+    todayLowStock: '{n} सामान कम हैं',
+    todayKhataOutstanding: '{n} ग्राहकों का उधार बाकी',
+    todayDelivery: '{n} डिलीवरी बाकी',
+    todaySeeOrders: 'ऑर्डर देखें',
+    todaySeeStock: 'सामान देखें',
+    todaySeeKhata: 'उधार देखें',
+    todaySellNow: 'बिक्री करें',
+    todaySalesLabel: 'आज की बिक्री',
+    todayCash: 'नकद',
+    todayUpi: 'UPI',
+    todayCredit: 'उधार',
+    todayAllQuiet: 'सब ठीक है — अभी अलग से कुछ करना नहीं है।',
   },
 };
 
