@@ -443,7 +443,8 @@ export function UpgradeFlow({
  * Its own dialog rather than the shared `Modal`, for one reason: this is a
  * picture somebody is pointing another phone at, so it wants the whole screen
  * and no chrome competing with it. Everything else about it — escape to close,
- * a backdrop that closes, a real cross icon — matches the rest of the product.
+ * a real cross icon — matches the rest of the product. The backdrop does NOT
+ * close it, like every other dialog now, so a stray tap does not dismiss it.
  */
 function QrDialog({
   payTo,
@@ -464,7 +465,7 @@ function QrDialog({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/70" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 bg-slate-900/70" aria-hidden />
       <div
         role="dialog"
         aria-modal="true"

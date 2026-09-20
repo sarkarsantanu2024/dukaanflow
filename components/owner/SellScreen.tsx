@@ -54,7 +54,7 @@ import { upiPayUrlWithAmount } from '@/lib/qr';
 import { useToast } from '@/components/ui/Toast';
 import { formatPaise, linePaise } from '@/lib/money';
 import { amountLabel, isLooseUnit, MOST_PER_LINE, roundQuantity } from '@/lib/units';
-import { CheckIcon, PinIcon } from '@/components/ui/Icon';
+import { CheckIcon, CloseIcon, PinIcon } from '@/components/ui/Icon';
 import type { SnapshotLine } from '@/lib/order-snapshot';
 import { ownerDict } from '@/lib/owner-i18n';
 import { dict } from '@/lib/i18n';
@@ -749,11 +749,19 @@ export function SellScreen({
           aria-modal="true"
         >
           <div className="w-full max-w-md rounded-t-2xl bg-white p-5 sm:rounded-2xl">
-            <div className="flex items-baseline justify-between">
+            <div className="flex items-center gap-3">
               <h3 className="text-lg font-bold text-slate-900">{t.sellTakePayment}</h3>
-              <p className="text-2xl font-bold tabular-nums text-brand-700">
+              <p className="ml-auto text-2xl font-bold tabular-nums text-brand-700">
                 {formatPaise(payablePaise)}
               </p>
+              <button
+                type="button"
+                onClick={() => setPaying(false)}
+                aria-label={t.no}
+                className="-mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <CloseIcon className="h-5 w-5" />
+              </button>
             </div>
 
             {/* Whose money this is, when it is an order's. The name is the

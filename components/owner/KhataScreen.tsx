@@ -34,11 +34,9 @@ import {
 } from '@/lib/khata-pdf';
 import { ItemNotePicker, type PickableItem } from './ItemNotePicker';
 import { KhataVoice } from './KhataVoice';
-import { TakingsPanel } from './TakingsPanel';
 import { speak } from '@/components/voice/useVoice';
 import { spokenKhataEntry } from '@/lib/spoken-money';
 import type { VoiceLang } from '@/lib/speech';
-import type { Drawer, Takings } from '@/lib/takings';
 import type { Locale } from '@/lib/i18n';
 
 /** The shop's language, as the synthesiser names it. */
@@ -96,9 +94,6 @@ export function KhataScreen({
   items,
   outstandingPaise,
   locale,
-  today,
-  month,
-  drawer,
 }: {
   slug: string;
   shopName: string;
@@ -107,17 +102,6 @@ export function KhataScreen({
   items: PickableItem[];
   outstandingPaise: number;
   locale: Locale;
-  /**
-   * What the shop took, split by how it was taken — see `TakingsPanel`.
-   *
-   * It lives behind this tab rather than in a fifth one along the bottom: this
-   * is the tab an owner already opens to read the shop's money, and five tabs
-   * on a 375px phone is four targets nobody can hit.
-   */
-  today: Takings;
-  month: Takings;
-  /** Today's cash drawer, or null before the owner has typed the opening float. */
-  drawer: Drawer | null;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -145,15 +129,6 @@ export function KhataScreen({
    */
   const [showSettled, setShowSettled] = useState(false);
 
-  /**
-   * Which of this tab's two jobs is on screen.
-   *
-   * The credit book opens first, always. It is what the tab is called and what
-   * an owner comes here to do twenty times a day; the day's reckoning is read
-   * once, at closing, and a screen that opened on it would put a summary in
-   * front of the name somebody is standing at the counter asking about.
-   */
-  const [view, setView] = useState<'khata' | 'takings'>('khata');
   const [busy, setBusy] = useState(false);
   /** Which PDF is being drawn — the whole book, or one customer's id. */
   const [building, setBuilding] = useState<string | null>(null);
@@ -448,46 +423,9 @@ export function KhataScreen({
 
   return (
     <div className="space-y-4">
-      {/* TWO JOBS ON ONE TAB, and they are genuinely the same subject: who owes
-          the shop, and what the shop took. Named rather than iconed, because
-          "Money" and "Credit book" are the two words a shopkeeper would use and
-          neither has a picture everyone reads the same way. */}
-      <div className="flex gap-2">
-        {(
-          [
-            { id: 'khata' as const, label: t.khataView },
-            { id: 'takings' as const, label: t.takingsView },
-          ]
-        ).map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => setView(option.id)}
-            aria-pressed={view === option.id}
-            className={clsx(
-              'h-10 flex-1 rounded-xl text-sm font-semibold transition',
-              view === option.id
-                ? 'bg-slate-900 text-white'
-                : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50',
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
-      {view === 'takings' && (
-        <TakingsPanel
-          slug={slug}
-          today={today}
-          month={month}
-          drawer={drawer}
-          locale={locale}
-        />
-      )}
-
-      {view === 'khata' && (
-      <>
+      {/* Just the credit book now — who owes the shop. The day's takings and the
+          cash drawer that used to sit behind a "হিসাব" tab here have moved to the
+          home screen, so this screen has one job and no tab to choose it. */}
       <div className="rounded-2xl bg-white p-4 shadow-card">
         {/* THE TWO EXPORTS MOVED UP HERE, AS ICONS.
             They were a pair of wide labelled buttons and a line of hint text on
@@ -887,8 +825,6 @@ export function KhataScreen({
           </Button>
         </div>
       </section>
-      </>
-      )}
 
       {confirmDialog}
     </div>

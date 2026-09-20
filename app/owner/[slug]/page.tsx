@@ -3,10 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { TodayScreen } from '@/components/owner/TodayScreen';
-import { takingsBetween, todayWindow } from '@/lib/takings';
+import { drawerForToday, monthWindow, takingsBetween, todayWindow } from '@/lib/takings';
 import { needsRestock, type RestockItem } from '@/lib/restock';
 import { customerBalances } from '@/lib/khata';
-import { ownerDict } from '@/lib/owner-i18n';
 import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
@@ -25,11 +24,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function OwnerHome({ params }: PageProps) {
   const { slug } = await params;
   const { shop, plan, settings, roadblock, locale } = await loadOwnerShop(slug);
-  const { from, to } = todayWindow();
+  const day = todayWindow();
+  const period = monthWindow();
 
   // Everything the briefing needs, worked out from the same queries the rest of
-  // the app trusts, in one round of parallel reads.
-  const [ordersWaiting, ordersReady, deliveries, items, balances, takings] = await Promise.all([
+  // the app trusts, in one round of parallel reads. Today's and this month's
+  // takings and the cash drawer moved here from the khata "হিসাব" tab — this is
+  // where the day starts, so the opening cash and what came in belong here.
+  const [ordersWaiting, ordersReady, deliveries, items, balances, today, month] = await Promise.all([
     prisma.order.count({ where: { shopId: shop.id, status: { in: ['NEW', 'CONFIRMED'] } } }),
     prisma.order.count({ where: { shopId: shop.id, status: 'READY' } }),
     prisma.order.count({
@@ -49,9 +51,11 @@ export default async function OwnerHome({ params }: PageProps) {
       },
     }),
     customerBalances(shop.id),
-    takingsBetween(shop.id, from, to),
+    takingsBetween(shop.id, day.from, day.to),
+    takingsBetween(shop.id, period.from, period.to),
   ]);
 
+  const drawer = await drawerForToday(shop.id, today);
   const lowStock = needsRestock(items as RestockItem[]).length;
   const owing = balances.filter((b) => b.balancePaise > 0).length;
 
@@ -71,12 +75,9 @@ export default async function OwnerHome({ params }: PageProps) {
         slug={shop.slug}
         locale={locale}
         counts={{ ordersWaiting, ordersReady, lowStock, deliveries, owing }}
-        takings={{
-          totalPaise: takings.totalPaise,
-          cashPaise: takings.cashPaise,
-          upiPaise: takings.upiPaise,
-          khataPaise: takings.khataPaise,
-        }}
+        today={today}
+        month={month}
+        drawer={drawer}
       />
     </OwnerShell>
   );

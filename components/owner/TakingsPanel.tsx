@@ -79,7 +79,7 @@ export function TakingsPanel({
           screen can honestly show — so the ask sits at the top, where an owner
           opening up meets it, rather than under a table they have not read
           yet. */}
-      {period === 'today' && <DrawerPanel slug={slug} drawer={drawer} locale={locale} />}
+      {period === 'today' && <DrawerPanel slug={slug} drawer={drawer} locale={locale} hideEntry />}
 
       {/* Two periods, as a switch rather than a date picker: a shopkeeper
           closing up has one question, and a calendar is four taps of answering
@@ -138,41 +138,6 @@ export function TakingsPanel({
         )}
       </div>
 
-      {/* BELOW THE LINE, AND DELIBERATELY NOT IN THE TOTAL.
-          Both of these are real money and neither belongs in "what the shop
-          sold in this period": an unfinished order has taken nothing yet, and a
-          repayment is an old sale being settled, not a new one. Adding either
-          in would break the one promise the panel above makes — that its three
-          figures come to its total. */}
-      {(figures.pendingPaise > 0 || figures.khataCollectedPaise > 0) && (
-        <div className="space-y-2 rounded-2xl border border-dashed border-slate-300 bg-white p-4">
-          {figures.khataCollectedPaise > 0 && (
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="text-sm text-slate-600">{t.takingsCollected}</p>
-              <p className="font-semibold tabular-nums text-brand-700">
-                {formatPaise(figures.khataCollectedPaise)}
-              </p>
-            </div>
-          )}
-
-          {figures.pendingPaise > 0 && (
-            <div>
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="flex items-baseline gap-2 text-sm text-slate-600">
-                  {t.takingsPending}
-                  <span className="text-xs tabular-nums text-slate-400">
-                    {figures.pendingCount}
-                  </span>
-                </p>
-                <p className="font-semibold tabular-nums text-slate-500">
-                  {formatPaise(figures.pendingPaise)}
-                </p>
-              </div>
-              <p className="mt-0.5 text-xs text-slate-400">{t.takingsPendingHint}</p>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
