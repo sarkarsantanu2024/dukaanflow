@@ -1,4 +1,5 @@
 import { after } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
@@ -14,6 +15,14 @@ import { newOrderNotification } from '@/lib/push-text';
 import type { Locale } from '@/lib/i18n';
 
 export const runtime = 'nodejs';
+
+/**
+ * Returned from the create transaction when it rolled back on the idempotency
+ * unique constraint — a concurrent request with the same key committed first.
+ * A sentinel rather than an error because the caller's response is a success
+ * (the order exists), not a failure.
+ */
+const DUPLICATE_KEY = Symbol('duplicate-key');
 
 /**
  * POST /api/order
@@ -44,7 +53,35 @@ export async function POST(request: Request) {
     customerArea,
     orderType,
     items,
+    idempotencyKey,
   } = parsed.data;
+
+  /**
+   * Already placed? Hand back the order that exists rather than making a second.
+   *
+   * The storefront retries a failed POST (see `postOrder`), so the commonest way
+   * to arrive here twice is a first request that succeeded on the server and
+   * whose response never reached the phone. This is checked BEFORE the shop is
+   * even looked up, and regardless of whether the shop has since closed: the
+   * order is a fact that already happened, and a retry must return it, not be
+   * told the shutter is now down.
+   *
+   * `select` mirrors exactly what a fresh create returns below, so a replay is
+   * indistinguishable from the original success.
+   */
+  if (idempotencyKey) {
+    const existing = await prisma.order.findUnique({
+      where: { idempotencyKey },
+      select: { id: true, totalAmountPaise: true, deliveryFeePaise: true },
+    });
+    if (existing) {
+      return ok({
+        orderId: existing.id,
+        totalAmountPaise: existing.totalAmountPaise,
+        deliveryFeePaise: existing.deliveryFeePaise,
+      });
+    }
+  }
 
   const shop = await prisma.shop.findUnique({
     where: { slug: shopSlug },
@@ -298,16 +335,50 @@ export async function POST(request: Request) {
         // is money the shop took.
         totalAmountPaise: quote.totalPaise,
         deliveryFeePaise: quote.deliveryFeePaise,
+        // Stamped inside the transaction alongside the stock decrement, so a
+        // second request racing on the same key trips the unique constraint and
+        // its whole transaction rolls back — the stock it decremented included.
+        idempotencyKey,
       },
       select: { id: true },
     });
   }).catch((error: unknown) => {
     if (error instanceof StockRaceError) return error;
+    // Two requests with one key reached the create together; this one lost. The
+    // winner's order exists, so this is a replay, not a failure — see below.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002' &&
+      idempotencyKey
+    ) {
+      return DUPLICATE_KEY;
+    }
     throw error;
   });
 
   if (created instanceof StockRaceError) {
     return fail(`${created.itemLabel} has just sold out. Please refresh the page.`, 409);
+  }
+
+  if (created === DUPLICATE_KEY) {
+    // The concurrent winner has committed by now. Read its order back and return
+    // it, exactly as the pre-create replay above would have.
+    const twin = idempotencyKey
+      ? await prisma.order.findUnique({
+          where: { idempotencyKey },
+          select: { id: true, totalAmountPaise: true, deliveryFeePaise: true },
+        })
+      : null;
+    if (twin) {
+      return ok({
+        orderId: twin.id,
+        totalAmountPaise: twin.totalAmountPaise,
+        deliveryFeePaise: twin.deliveryFeePaise,
+      });
+    }
+    // The conflict was on the key but the row cannot be read — vanishingly
+    // unlikely, and safer to ask for a retry than to guess.
+    return fail('Please try placing the order again.', 409);
   }
 
   // Every order makes the customer known to the shop.

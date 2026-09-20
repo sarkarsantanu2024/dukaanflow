@@ -188,11 +188,11 @@ export function CheckoutSheet({
         role="dialog"
         aria-modal="true"
         aria-label={t.yourOrder}
-        className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-4 pb-6 shadow-sheet"
+        className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 pb-7 shadow-sheet sm:p-6 sm:pb-8"
       >
-        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-300" />
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300" />
 
-        <div className="mb-4 flex items-baseline justify-between">
+        <div className="mb-5 flex items-baseline justify-between">
           <h2 className="text-lg font-bold text-slate-900">{t.yourOrder}</h2>
           <p className="text-sm text-slate-500">
             {totalItems} {t.items} ·{' '}
@@ -216,7 +216,7 @@ export function CheckoutSheet({
           </dl>
         )}
 
-        <form onSubmit={handleSubmit((values) => onSubmit({ ...values, orderType }))} className="space-y-4">
+        <form onSubmit={handleSubmit((values) => onSubmit({ ...values, orderType }))} className="space-y-5">
           {/* A collection-only shop gets no chooser at all — not a disabled
               delivery button, which reads as something that might work later.
               One line saying where to come is the whole message. */}
@@ -273,7 +273,12 @@ export function CheckoutSheet({
             </div>
           )}
 
-          <div className={showForm ? 'contents' : 'hidden'}>
+          {/* A real spacing container, not `display:contents`: the form's
+              `space-y` only reaches its direct children, so under `contents` the
+              name / phone / area fields collapsed flush against each other. Its
+              own `space-y-5` gives them room, and the form's `space-y-5` spaces
+              this whole group from the buttons above and below. */}
+          <div className={showForm ? 'space-y-5' : 'hidden'}>
           <Input
             label={t.name}
             hint={t.required}
@@ -341,7 +346,7 @@ export function CheckoutSheet({
             </p>
           )}
 
-          <div className="flex gap-2 pt-1">
+          <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={submitting}>
               {t.back}
             </Button>

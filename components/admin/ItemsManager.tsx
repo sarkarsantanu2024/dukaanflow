@@ -4,10 +4,11 @@ import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { Badge } from '@/components/ui/Badge';
-import { ChevronRightIcon, TrashIcon } from '@/components/ui/Icon';
+import { CameraIcon, ChevronRightIcon, TrashIcon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
+import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { VoiceItemAdder } from './VoiceItemAdder';
@@ -121,6 +122,18 @@ function categoryFor(names: string[], catalogue: StarterItem[]): string {
  */
 function stockLabel(unit: string, quantity: number): string {
   return stockAmountLabel(unit, quantity);
+}
+
+/**
+ * The pack size read as a rate beside the price, so "₹120" says "₹120 / kg"
+ * rather than leaving the owner to pair it with the box next door. A leading
+ * "1" is dropped — "1 kg" is priced per kg, not per one-kilo — while a real
+ * quantity stays: "500 g" is the rate for 500 g. Blank when there is no unit.
+ */
+function priceUnitSuffix(unit: string): string {
+  const u = unit.trim();
+  const one = u.match(/^1\s+(.+)$/);
+  return one ? one[1] : u;
 }
 
 const EMPTY_NEW_ITEM: NewItem = {
@@ -1291,7 +1304,10 @@ export function ItemsManager({
    * is a scan that came back wrong. The mic is the route that works, and in
    * simple mode it is the only one offered.
    */
-  const photoAvailable = !wide && !lean && catalogue.length > 0;
+  // Not tied to the retired simple/full mode any more: the "add by photo" option
+  // lives in the add sheet and should be there whenever there is a catalogue to
+  // match a scanned packet against, on the owner's phone (never the console).
+  const photoAvailable = !wide && catalogue.length > 0;
 
   // Only offered when there is a catalogue to match against — without one the
   // scan can do no better than the largest text on the wrapper.
@@ -1308,7 +1324,9 @@ export function ItemsManager({
   const floatingTools = (
     <FloatingTools
       onVoice={() => setDrawer('add')}
-      onPhoto={photoAvailable ? () => openPhoto.current?.() : undefined}
+      // The camera is no longer a second floating button; it moved inside the
+      // add sheet (below), so there is one thing to tap to add an item and the
+      // ways to do it — speak, type, photograph — all live together in the sheet.
       addLabel={t.addItem}
       photoLabel={t.photoAdd}
       photoBusy={scanning}
@@ -1324,6 +1342,8 @@ export function ItemsManager({
    * sixty cards this used to be.
    */
   function itemRow(item: AdminItem) {
+    // The unit shown as a rate on the price field — see `priceUnitSuffix`.
+    const priceUnit = priceUnitSuffix(unitDrafts[item.id] ?? item.unit);
     return (
       <li
         key={item.id}
@@ -1426,7 +1446,7 @@ export function ItemsManager({
           </Badge>
         </div>
 
-        <div className="mt-2.5 flex items-center gap-2">
+        <div className="mt-2.5 flex items-end gap-2">
           <label className="relative min-w-0 flex-1">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">
               ₹
@@ -1447,8 +1467,18 @@ export function ItemsManager({
               onKeyDown={(event) => {
                 if (event.key === 'Enter') event.currentTarget.blur();
               }}
-              className="h-10 w-full rounded-lg border border-slate-300 pl-6 pr-2 text-left text-sm tabular-nums"
+              className={clsx(
+                'h-10 w-full rounded-lg border border-slate-300 pl-6 text-left text-sm tabular-nums',
+                priceUnit ? 'pr-12' : 'pr-2',
+              )}
             />
+            {/* The unit as a rate — "/ kg", "/ 500 g" — so the price reads on its
+                own. Faded and non-interactive: it is context, not a control. */}
+            {priceUnit && (
+              <span className="pointer-events-none absolute right-2.5 top-1/2 max-w-[3.5rem] -translate-y-1/2 truncate text-xs text-slate-400">
+                / {priceUnit}
+              </span>
+            )}
           </label>
 
           {/* Pack size, editable in place and suggested from what this
@@ -1487,12 +1517,16 @@ export function ItemsManager({
               by itself; blank means nobody is counting, which stays
               the honest answer for most of a kirana's list. */}
           {!wide && (
-            <label className="relative shrink-0">
-              <span className="sr-only">{`${t.stockShort} — ${displayName(item, locale)}`}</span>
+            <label className="flex shrink-0 flex-col gap-1">
+              {/* A visible label, not just a placeholder: owners did not know
+                  what this box was for, and a placeholder vanishes the moment
+                  they type. Only this field is labelled — the price and pack
+                  fields read for themselves — so the row keeps its shape. */}
+              <span className="px-0.5 text-xs font-medium text-slate-500">{t.stockShort}</span>
               <input
                 type="text"
                 inputMode="decimal"
-                placeholder={t.stockShort}
+                aria-label={`${t.stockShort} — ${displayName(item, locale)}`}
                 title={t.stockHint}
                 value={
                   stockDrafts[item.id] ??
@@ -1856,6 +1890,21 @@ export function ItemsManager({
           lean={lean}
           onDraft={applySpokenDraft}
         />
+        {/* Add from a packet photo — the third way to add, beside speaking and
+            typing, and now living in the same sheet rather than as a lone
+            floating camera that read as its own separate feature. Only where
+            there is a catalogue to match the scan against. */}
+        {photoAvailable && (
+          <button
+            type="button"
+            onClick={() => openPhoto.current?.()}
+            disabled={scanning}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-brand-700 transition hover:bg-slate-50 disabled:opacity-60"
+          >
+            {scanning ? <Spinner className="h-5 w-5" /> : <CameraIcon className="h-5 w-5" />}
+            {t.photoAdd}
+          </button>
+        )}
         {/* Said once, above the rows. The mic no longer answers each item with
             a line of its own — the row filling itself in is the answer — so
             something has to tell a first-time owner that they may keep going. */}

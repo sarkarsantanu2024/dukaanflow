@@ -418,6 +418,12 @@ export const orderSchema = z
       .array(z.object({ itemId: z.string().uuid(), quantity: quantitySchema }))
       .min(1, 'Add at least one item')
       .max(60, 'Too many items in one order'),
+    /**
+     * A client-minted UUID that makes this submission idempotent — see the note
+     * on `Order.idempotencyKey`. Optional: a non-browser client or an older app
+     * may not send one, and an order without a key behaves exactly as before.
+     */
+    idempotencyKey: z.string().uuid().optional(),
   })
   // Only a delivery needs somewhere to be delivered to. Demanding an address
   // from somebody walking in to collect would be asking for nothing.

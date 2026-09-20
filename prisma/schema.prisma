@@ -574,6 +574,21 @@ model Order {
   /// writes it down — and not writing it down is the thing Halkhata exists
   /// to end.
   paymentReceived  Boolean     @default(false)
+  /// A client-minted UUID that makes placing THIS order idempotent.
+  ///
+  /// The order's own id cannot do this job: it is minted by the create, so a
+  /// request whose response was lost — the connection dropped after the row was
+  /// written but before the customer's phone heard back — has no id to send on
+  /// the retry. The storefront already retries a failed POST up to three times,
+  /// so without this a single dropped response packs and charges the shop's
+  /// customer twice. The client generates this once per order attempt and keeps
+  /// it across those retries; the server replays the order that already exists
+  /// rather than creating a second.
+  ///
+  /// Nullable because every row written before this column has none, and unique
+  /// so the replay is one indexed lookup and two requests racing on one key
+  /// cannot both write a row — the second trips the constraint and is replayed.
+  idempotencyKey   String?     @unique @db.Uuid
   createdAt        DateTime    @default(now())
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)

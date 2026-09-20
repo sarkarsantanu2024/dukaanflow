@@ -25,7 +25,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
-import { SignOutIcon } from '@/components/ui/Icon';
+import { HomeIcon, SignOutIcon } from '@/components/ui/Icon';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { Spinner } from '@/components/ui/Spinner';
 import { OwnerInstallButton } from './OwnerInstallButton';
@@ -181,9 +181,19 @@ export function OwnerHeader({
               picks neither; a step up settles it, and the right one wins — in
               the owner's own app the shop is the subject and the product is the
               stationery it is printed on. */}
-          <span className="truncate text-base font-bold leading-tight text-slate-900">
+          <span className="min-w-0 flex-1 truncate text-base font-bold leading-tight text-slate-900">
             {shopName}
           </span>
+          {/* The way home. "আজকের দোকান" is the screen the app opens on; from
+              any tab this returns to it, and a house is the one icon every
+              phone owner already reads as "back to the start". */}
+          <Link
+            href={`/owner/${slug}`}
+            aria-label={t.todayTitle}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"
+          >
+            <HomeIcon className="h-5 w-5" />
+          </Link>
         </div>
       </div>
     </header>
