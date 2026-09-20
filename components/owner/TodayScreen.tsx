@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import clsx from 'clsx';
 import { ownerDict } from '@/lib/owner-i18n';
-import { formatPaise } from '@/lib/money';
-import { BellIcon, BoxIcon, CartIcon, CheckIcon, RupeeIcon, TruckIcon } from '@/components/ui/Icon';
+import { BellIcon, BoxIcon, CheckIcon, RupeeIcon, TruckIcon } from '@/components/ui/Icon';
+import { StartDayRow } from './StartDayRow';
+import { TakingsPanel } from './TakingsPanel';
 import type { Locale } from '@/lib/i18n';
+import type { Drawer, Takings } from '@/lib/takings';
 
 /**
  * "আজকের দোকান" — the owner's morning briefing, and the app's landing screen.
@@ -34,13 +36,6 @@ export type TodayCounts = {
   lowStock: number;
   deliveries: number;
   owing: number;
-};
-
-export type TodayTakings = {
-  totalPaise: number;
-  cashPaise: number;
-  upiPaise: number;
-  khataPaise: number;
 };
 
 type Tone = 'red' | 'emerald' | 'amber' | 'sky' | 'yellow';
@@ -104,12 +99,18 @@ export function TodayScreen({
   slug,
   locale,
   counts,
-  takings,
+  today,
+  month,
+  drawer,
 }: {
   slug: string;
   locale: Locale;
   counts: TodayCounts;
-  takings: TodayTakings;
+  /** Today's and this month's takings, and today's cash drawer — the "হিসাব"
+   *  that used to live behind a tab on the khata screen, now on the home. */
+  today: Takings;
+  month: Takings;
+  drawer: Drawer | null;
 }) {
   const t = ownerDict(locale);
 
@@ -128,18 +129,9 @@ export function TodayScreen({
 
   return (
     <div className="space-y-4">
-      {/* The biggest, most-pressed action: back to the till. */}
-      <Link
-        href={`/owner/${slug}/sell`}
-        className={clsx(
-          'flex items-center justify-center gap-2 rounded-2xl bg-brand-600 px-4 py-4 text-lg font-bold text-white shadow-card transition',
-          'hover:bg-brand-700 active:scale-[0.99]',
-          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
-        )}
-      >
-        <CartIcon className="h-6 w-6" />
-        {t.todaySellNow}
-      </Link>
+      {/* The top of the screen and the start of the day: today's cash on the
+          left, the way to the till on the right, in one row. */}
+      <StartDayRow slug={slug} drawer={drawer} locale={locale} />
 
       {/* What needs attention, worst first — or the one quiet line. */}
       {cards.length > 0 ? (
@@ -154,27 +146,11 @@ export function TodayScreen({
         </p>
       )}
 
-      {/* The day's takings at a glance — the evening question, always in view. */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
-        <div className="flex items-baseline justify-between">
-          <span className="text-sm font-medium text-slate-500">{t.todaySalesLabel}</span>
-          <span className="text-2xl font-bold text-slate-900">{formatPaise(takings.totalPaise)}</span>
-        </div>
-        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-xl bg-slate-50 py-2">
-            <div className="text-xs text-slate-500">{t.todayCash}</div>
-            <div className="text-sm font-semibold text-slate-900">{formatPaise(takings.cashPaise)}</div>
-          </div>
-          <div className="rounded-xl bg-slate-50 py-2">
-            <div className="text-xs text-slate-500">{t.todayUpi}</div>
-            <div className="text-sm font-semibold text-slate-900">{formatPaise(takings.upiPaise)}</div>
-          </div>
-          <div className="rounded-xl bg-slate-50 py-2">
-            <div className="text-xs text-slate-500">{t.todayCredit}</div>
-            <div className="text-sm font-semibold text-slate-900">{formatPaise(takings.khataPaise)}</div>
-          </div>
-        </div>
-      </section>
+      {/* Today's and this month's takings, and the drawer reconciliation once a
+          float is set — moved off the khata screen's "হিসাব" tab, which no
+          longer exists. Its own today/month switch lives inside it; the opening
+          cash it used to ask for is the row at the top of this screen now. */}
+      <TakingsPanel slug={slug} today={today} month={month} drawer={drawer} locale={locale} />
     </div>
   );
 }

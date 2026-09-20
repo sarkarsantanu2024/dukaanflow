@@ -72,7 +72,7 @@ export function MoreDrawer({
   }
 
   return (
-    <div className="space-y-3">
+    <div>
       <button
         type="button"
         onClick={() => setOpen(false)}
@@ -82,6 +82,9 @@ export function MoreDrawer({
         <ChevronRightIcon className="ml-auto h-4 w-4 shrink-0 rotate-90 text-slate-400" />
       </button>
 
+      {/* The settings sit in an indented tray under the header, so they read as
+          belonging to "More settings" rather than as loose cards of their own. */}
+      <div className="ml-3 mt-2 space-y-2 border-l-2 border-slate-200 pl-3">
       {/* THE PERMANENT WAY TO PAY US, moved off the header.
           `PlanBanner` only appears in the last week of a trial or near a
           catalogue limit, and the roadblock only once an owner is already
@@ -116,6 +119,7 @@ export function MoreDrawer({
           minOrderPaise={settings.minOrderPaise}
         />
       )}
+      </div>
     </div>
   );
 }

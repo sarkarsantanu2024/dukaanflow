@@ -18,6 +18,7 @@
 import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { Button } from './Button';
+import { CloseIcon } from './Icon';
 
 export function Modal({
   open,
@@ -61,6 +62,9 @@ export function Modal({
     // under the finger.
     panelRef.current?.querySelector<HTMLElement>('[data-autofocus]')?.focus();
 
+    // Escape still closes — a keyboard affordance, not a stray tap. What no
+    // longer closes it is a tap on the backdrop: an answer this dialog is asking
+    // for must be given on a button, not lost to a misplaced tap outside it.
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
@@ -80,7 +84,10 @@ export function Modal({
         full ? 'p-[10px]' : 'p-4',
       )}
     >
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      {/* Backdrop, but NOT a way out: a tap here no longer closes the dialog,
+          so an answer cannot be lost to a misplaced tap. The X and the buttons
+          are the ways out. */}
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" aria-hidden="true" />
 
       <div
         ref={panelRef}
@@ -98,14 +105,26 @@ export function Modal({
             : clsx('max-h-[calc(100dvh-2rem)]', size === 'md' ? 'max-w-md' : 'max-w-sm'),
         )}
       >
-        <h2
-          className={clsx(
-            'shrink-0 text-lg font-bold leading-snug',
-            tone === 'danger' ? 'text-red-700' : tone === 'success' ? 'text-brand-700' : 'text-slate-900',
-          )}
-        >
-          {title}
-        </h2>
+        <div className="flex shrink-0 items-start gap-3">
+          <h2
+            className={clsx(
+              'mr-auto text-lg font-bold leading-snug',
+              tone === 'danger' ? 'text-red-700' : tone === 'success' ? 'text-brand-700' : 'text-slate-900',
+            )}
+          >
+            {title}
+          </h2>
+          {/* Every dialog carries an explicit way out in its corner, beside
+              whatever buttons it also offers. */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="-mr-1 -mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <CloseIcon className="h-5 w-5" />
+          </button>
+        </div>
 
         {children && (
           <div className="-mx-1 mt-2 min-h-0 flex-1 overflow-y-auto px-1 text-sm leading-relaxed text-slate-600">

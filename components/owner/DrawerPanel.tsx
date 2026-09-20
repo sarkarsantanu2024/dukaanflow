@@ -42,11 +42,20 @@ export function DrawerPanel({
   slug,
   drawer,
   locale,
+  hideEntry = false,
 }: {
   slug: string;
   /** Null before the owner has started the day — then this asks for the float. */
   drawer: Drawer | null;
   locale: Locale;
+  /**
+   * Don't render the "type today's cash" entry when the float has not been set.
+   *
+   * The home screen now asks for the opening cash in its own row at the top, so
+   * this panel is used there only for the reconciliation that follows once a
+   * float exists — it must not draw a second, empty entry box under it.
+   */
+  hideEntry?: boolean;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -87,6 +96,10 @@ export function DrawerPanel({
   }
 
   /* ---------------------------------------------------- before the shutter */
+
+  // The opening-cash entry lives at the top of the home now; here we only ever
+  // show the reconciliation, and only once a float exists.
+  if (!drawer && hideEntry) return null;
 
   if (!drawer || editingOpening) {
     const value = parsePaise(editingOpening ? opening : opening);

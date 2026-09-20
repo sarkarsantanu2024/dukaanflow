@@ -5,7 +5,6 @@ import { OwnerShell } from '@/components/owner/OwnerShell';
 import { KhataScreen, type KhataCustomer } from '@/components/owner/KhataScreen';
 import { customerBalances, totalOutstanding } from '@/lib/khata';
 import { BRAND_NAME } from '@/lib/brand';
-import { drawerForToday, monthWindow, takingsBetween, todayWindow } from '@/lib/takings';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,11 +23,9 @@ export default async function KhataPage({ params }: PageProps) {
   const { slug } = await params;
   const { shop, plan, settings, roadblock, locale } = await loadOwnerShop(slug);
 
-  // The two windows the owner actually asks about — see `lib/takings.ts`.
-  const day = todayWindow();
-  const period = monthWindow();
-
-  const [balances, entries, items, today, month] = await Promise.all([
+  // The day's takings and the cash drawer used to load here for the "হিসাব" tab.
+  // They live on the home screen now, so this page loads only the credit book.
+  const [balances, entries, items] = await Promise.all([
     customerBalances(shop.id),
     prisma.ledgerEntry.findMany({
       where: { shopId: shop.id },
@@ -51,12 +48,7 @@ export default async function KhataPage({ params }: PageProps) {
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
       select: { id: true, name: true, nameBn: true, nameHi: true, unit: true, pricePaise: true },
     }),
-    takingsBetween(shop.id, day.from, day.to),
-    takingsBetween(shop.id, period.from, period.to),
   ]);
-
-  // Needs today's cash figures, so it cannot join the batch above.
-  const drawer = await drawerForToday(shop.id, today);
 
   const byCustomer = new Map<string, KhataCustomer['entries']>();
   for (const entry of entries) {
@@ -99,9 +91,6 @@ export default async function KhataPage({ params }: PageProps) {
         items={items}
         outstandingPaise={totalOutstanding(balances)}
         locale={locale}
-        today={today}
-        month={month}
-        drawer={drawer}
       />
     </OwnerShell>
   );

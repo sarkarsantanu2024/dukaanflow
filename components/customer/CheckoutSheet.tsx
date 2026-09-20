@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
+import { CloseIcon } from '@/components/ui/Icon';
 import { Input, Textarea } from '@/components/ui/Input';
 import { formatPaise } from '@/lib/money';
 import { phoneSchema } from '@/lib/validators';
@@ -178,11 +179,9 @@ export function CheckoutSheet({
        notification rather than the checkout; on a phone `items-center` still
        fills the screen because the panel is taller than the space. */
     <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
-      <div
-        className="absolute inset-0 bg-slate-900/50"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      {/* Backdrop only — a tap here no longer closes the sheet, so a half-typed
+          order is not lost to a misplaced tap. "পিছনে" and the X close it. */}
+      <div className="absolute inset-0 bg-slate-900/50" aria-hidden="true" />
       <div
         ref={panelRef}
         role="dialog"
@@ -192,12 +191,20 @@ export function CheckoutSheet({
       >
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300" />
 
-        <div className="mb-5 flex items-baseline justify-between">
+        <div className="mb-5 flex items-center gap-3">
           <h2 className="text-lg font-bold text-slate-900">{t.yourOrder}</h2>
-          <p className="text-sm text-slate-500">
+          <p className="ml-auto text-sm text-slate-500">
             {totalItems} {t.items} ·{' '}
             <span className="font-bold text-slate-900">{formatPaise(quote.totalPaise)}</span>
           </p>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t.back}
+            className="-mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <CloseIcon className="h-5 w-5" />
+          </button>
         </div>
 
         {/* What the total is made of, once delivery has a price. Two lines, and

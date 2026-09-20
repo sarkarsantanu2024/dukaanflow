@@ -11,8 +11,9 @@
  * not push the thing you are looking at off the screen.
  *
  * So the sidebar keeps only compact triggers, and each tool opens here: its own
- * scroll, over the page rather than inside it, dismissed by Escape, by the
- * backdrop, or by the close button.
+ * scroll, over the page rather than inside it, dismissed by Escape or the close
+ * button in the header. The backdrop deliberately does NOT dismiss it — a tap
+ * outside must not throw away an edit in progress.
  */
 
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -135,10 +136,11 @@ export function Drawer({
       )}
     >
       {modal && (
-        <button
-          type="button"
-          aria-label="Close"
-          onClick={onClose}
+        // A backdrop, not a way out: tapping it no longer closes the drawer, so
+        // an edit in progress cannot be lost to a misplaced tap. The X in the
+        // header (and Escape) close it.
+        <div
+          aria-hidden
           className={clsx(
             'absolute inset-0 bg-slate-900/30 backdrop-blur-[1px]',
             leaving ? 'animate-fade-out' : 'animate-fade-in',
