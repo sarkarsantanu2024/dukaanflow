@@ -135,18 +135,20 @@ export function Drawer({
         !modal && 'pointer-events-none',
       )}
     >
-      {modal && (
-        // A backdrop, not a way out: tapping it no longer closes the drawer, so
-        // an edit in progress cannot be lost to a misplaced tap. The X in the
-        // header (and Escape) close it.
-        <div
-          aria-hidden
-          className={clsx(
-            'absolute inset-0 bg-slate-900/30 backdrop-blur-[1px]',
-            leaving ? 'animate-fade-out' : 'animate-fade-in',
-          )}
-        />
-      )}
+      {/* A black overlay behind every drawer, modal or not. It does not close
+          the drawer (that is the X in the header, or Escape). For a modal
+          drawer the container is interactive, so this also blocks the page
+          behind it; for a non-modal one (the basket) the container is
+          `pointer-events-none`, so the overlay only DIMS the page — taps still
+          reach the menu underneath, which is what keeps the basket usable while
+          the shopper carries on picking things. */}
+      <div
+        aria-hidden
+        className={clsx(
+          'absolute inset-0 bg-slate-900/50 backdrop-blur-[1px]',
+          leaving ? 'animate-fade-out' : 'animate-fade-in',
+        )}
+      />
 
       <div
         role="dialog"

@@ -187,9 +187,15 @@ export function OwnerAccessPanel({
       {invite && (
         <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-sm font-semibold text-slate-800">
-            Invite link created — valid once, for 7 days
+            Invite link created — it never expires
           </p>
           <p className="mt-1 break-all font-mono text-xs text-slate-500">{invite.url}</p>
+          {invite.pin && (
+            <p className="mt-1 text-sm text-slate-700">
+              First PIN: <span className="font-mono font-bold tracking-widest">{invite.pin}</span>{' '}
+              <span className="text-slate-400">— sent with the link.</span>
+            </p>
+          )}
           <div className="mt-2 flex flex-wrap gap-2">
             <a
               href={invite.whatsappUrl}
@@ -199,8 +205,21 @@ export function OwnerAccessPanel({
             >
               Open WhatsApp again
             </a>
-            <Button size="sm" variant="secondary" onClick={() => copy(invite.url, 'Link')}>
-              Copy link
+            {/* Copies the link, and the first PIN with it when there is one, so
+                the owner gets both however the admin chooses to send it. */}
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() =>
+                copy(
+                  invite.pin
+                    ? `Your ${BRAND_NAME} shop: ${invite.url}\nPIN: ${invite.pin}`
+                    : invite.url,
+                  invite.pin ? 'Link & PIN' : 'Link',
+                )
+              }
+            >
+              {invite.pin ? 'Copy link & PIN' : 'Copy link'}
             </Button>
           </div>
         </div>
@@ -229,8 +248,9 @@ export function OwnerAccessPanel({
 
       <p className="mt-2 break-all text-xs text-slate-400">{link}</p>
       <p className="mt-1 text-xs text-slate-500">
-        The link signs the owner in and opens their shop — no PIN to type on the first run. It works
-        once, then the PIN is how they come back.
+        The link signs the owner in and opens their shop — no PIN to type on the first run. It does
+        not expire and can be opened again later; the PIN is how they come back if the link is ever
+        cleared.
       </p>
 
       {confirmDialog}
