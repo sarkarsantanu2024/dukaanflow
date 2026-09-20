@@ -2,29 +2,28 @@ import { createHash, randomBytes } from 'node:crypto';
 import { BRAND_NAME } from './brand';
 
 /**
- * One-time invite links.
+ * Owner invite links.
  *
  * The Super Admin sends the owner a WhatsApp message with a link; opening it
  * signs them in and drops them straight into their shop. No PIN typing on the
  * first run — which is exactly where a shopkeeper who is not sure this is for
  * them gives up. The PIN stays, for coming back afterwards.
  *
- * The token is random, stored only as a SHA-256 hash, single use, and expires.
- * SHA-256 rather than bcrypt is deliberate and safe here: unlike a 6-digit PIN,
- * a 256-bit random token has nothing to brute-force, so the slow hash buys
- * nothing and would only make the link slower to open.
+ * THE LINK DOES NOT EXPIRE AND MAY BE OPENED MORE THAN ONCE (changed on request):
+ * a shopkeeper who taps it a week later, or on a second phone, still lands in
+ * their shop. It is invalidated only by minting a fresh one, or by revoking the
+ * owner's access. The trade this makes is deliberate — the link is now a
+ * standing way into the shop, so it should be sent only to the owner, and
+ * revoking access (which reissues the PIN) is what cuts a leaked one off.
+ *
+ * The token is random and stored only as a SHA-256 hash. SHA-256 rather than
+ * bcrypt is safe here: unlike a 6-digit PIN, a 256-bit random token has nothing
+ * to brute-force, so the slow hash buys nothing.
  */
 
-/** A week is long enough for a shopkeeper to get around to it, short enough to matter. */
-export const INVITE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
-
-export function createInviteToken(): { token: string; hash: string; expiresAt: Date } {
+export function createInviteToken(): { token: string; hash: string } {
   const token = randomBytes(32).toString('base64url');
-  return {
-    token,
-    hash: hashInviteToken(token),
-    expiresAt: new Date(Date.now() + INVITE_TTL_MS),
-  };
+  return { token, hash: hashInviteToken(token) };
 }
 
 export function hashInviteToken(token: string): string {

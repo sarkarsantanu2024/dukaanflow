@@ -744,7 +744,7 @@ export function SellScreen({
           launched it and only appeared once that had finished sliding away. */}
       {paying && (
         <div
-          className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-4"
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
         >

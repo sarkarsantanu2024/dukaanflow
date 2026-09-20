@@ -117,24 +117,20 @@ export function TakingsPanel({
         {figures.totalPaise === 0 && figures.pendingPaise === 0 ? (
           <p className="mt-3 text-sm text-slate-500">{t.takingsNothing}</p>
         ) : (
-          <dl className="mt-3 divide-y divide-slate-100 border-t border-slate-100">
+          // Three tiles rather than a list: the owner reads the split at a
+          // glance, and the three sit level so no one of them reads as more
+          // important than the others. Credit keeps the amber it wears
+          // everywhere in this app — money the shop does not yet have.
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             {rows.map((row) => (
-              <div key={row.label} className="flex items-baseline justify-between gap-3 py-2.5">
-                <dt className="flex items-baseline gap-2 text-sm text-slate-600">
-                  {row.label}
-                  {/* How many transactions made the figure. It is the check an
-                      owner actually performs — "seven cash sales, that sounds
-                      about right" — and it costs nothing to print. */}
-                  {row.count > 0 && (
-                    <span className="text-xs tabular-nums text-slate-400">{row.count}</span>
-                  )}
-                </dt>
-                <dd className={clsx('font-semibold tabular-nums', row.tone)}>
+              <div key={row.label} className="rounded-xl bg-slate-50 py-2.5">
+                <div className="text-xs text-slate-500">{row.label}</div>
+                <div className={clsx('mt-0.5 text-sm font-semibold tabular-nums', row.tone)}>
                   {formatPaise(row.paise)}
-                </dd>
+                </div>
               </div>
             ))}
-          </dl>
+          </div>
         )}
       </div>
 

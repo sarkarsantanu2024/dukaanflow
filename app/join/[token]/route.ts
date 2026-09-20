@@ -14,29 +14,22 @@ type Context = { params: Promise<{ token: string }> };
  * A route handler rather than a page, because signing them in means setting a
  * cookie and Next only allows that outside of rendering.
  *
- * Opening it signs them in and sends them to their shop. The token is spent in
- * the same breath: a link forwarded to somebody else, or sitting in a chat
- * backup a year later, is worthless once it has been used.
+ * Opening it signs them in and sends them to their shop. THE TOKEN IS NOT SPENT
+ * (changed on request): the same link opens the shop again a week later or on a
+ * second phone, and it does not expire. It stops working only when a fresh link
+ * is minted or the owner's access is revoked.
  */
 export async function GET(request: Request, { params }: Context) {
   const { token } = await params;
 
   const shop = await prisma.shop.findFirst({
-    where: {
-      inviteTokenHash: hashInviteToken(token),
-      inviteTokenExpiresAt: { gt: new Date() },
-    },
+    where: { inviteTokenHash: hashInviteToken(token) },
     select: { id: true, slug: true, active: true, ownerPinSetAt: true },
   });
 
   if (!shop || !shop.active || !shop.ownerPinSetAt) {
     return NextResponse.redirect(new URL('/join/expired', request.url));
   }
-
-  await prisma.shop.update({
-    where: { id: shop.id },
-    data: { inviteTokenHash: null, inviteTokenExpiresAt: null },
-  });
 
   const store = await cookies();
   store.set(

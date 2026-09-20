@@ -36,7 +36,9 @@ export async function POST(request: Request, { params }: Context) {
     where: { id: shop.id },
     data: {
       inviteTokenHash: invite.hash,
-      inviteTokenExpiresAt: invite.expiresAt,
+      // No expiry — the link stays valid until a fresh one replaces it. See
+      // `lib/invite.ts`.
+      inviteTokenExpiresAt: null,
       ...(pin ? { ownerPinHash: await hashOwnerPin(pin), ownerPinSetAt: new Date() } : {}),
     },
   });
@@ -51,6 +53,5 @@ export async function POST(request: Request, { params }: Context) {
     // Opens WhatsApp with the message already typed, addressed to the shop's
     // own number — one tap for the Super Admin, nothing to copy or paste.
     whatsappUrl: `https://wa.me/${toWhatsAppNumber(shop.phone)}?text=${encodeURIComponent(message)}`,
-    expiresAt: invite.expiresAt.toISOString(),
   });
 }
