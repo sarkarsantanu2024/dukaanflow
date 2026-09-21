@@ -39,24 +39,51 @@ function Chrome({
   );
 }
 
-export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & FieldChrome>(
-  function Input({ label, hint, error, className, id, ...rest }, ref) {
-    const generatedId = useId();
-    const fieldId = id ?? generatedId;
-    return (
-      <Chrome id={fieldId} label={label} hint={hint} error={error}>
-        <input
-          {...rest}
-          id={fieldId}
-          ref={ref}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? `${fieldId}-error` : undefined}
-          className={clsx(BASE, borderFor(error), className)}
-        />
-      </Chrome>
-    );
-  },
-);
+export const Input = forwardRef<
+  HTMLInputElement,
+  InputHTMLAttributes<HTMLInputElement> & FieldChrome & {
+    /**
+     * A unit or currency written faintly INSIDE the right-hand end of the box —
+     * "kg", "packet" — so a field that wants a bare number can say what the
+     * number will be counted in without spending a second box on it.
+     *
+     * Optional, and absent it renders exactly what it always did: the wrapper
+     * and the padding only appear when there is something to show, so no
+     * existing caller moves by a pixel.
+     *
+     * Context, never a control: it does not take the pointer, so a tap anywhere
+     * over it still lands in the field underneath.
+     */
+    suffix?: string;
+  }
+>(function Input({ label, hint, error, className, id, suffix, ...rest }, ref) {
+  const generatedId = useId();
+  const fieldId = id ?? generatedId;
+  const field = (
+    <input
+      {...rest}
+      id={fieldId}
+      ref={ref}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={error ? `${fieldId}-error` : undefined}
+      className={clsx(BASE, borderFor(error), suffix && 'pr-10', className)}
+    />
+  );
+  return (
+    <Chrome id={fieldId} label={label} hint={hint} error={error}>
+      {suffix ? (
+        <div className="relative">
+          {field}
+          <span className="pointer-events-none absolute right-3 top-1/2 max-w-[2.5rem] -translate-y-1/2 truncate text-xs text-slate-400">
+            {suffix}
+          </span>
+        </div>
+      ) : (
+        field
+      )}
+    </Chrome>
+  );
+});
 
 export const Textarea = forwardRef<
   HTMLTextAreaElement,

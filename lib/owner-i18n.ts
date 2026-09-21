@@ -293,6 +293,28 @@ type OwnerDictionary = {
   sellRecorded: string;
   sellMissingItem: string;
   sellKhata: string;
+
+  /**
+   * THE BILL, OFFERED AFTER THE SALE RATHER THAN DURING IT.
+   *
+   * Asked for here and nowhere earlier on purpose: the till is the screen most
+   * sensitive to speed, and most counter customers do not want a bill. Putting
+   * a phone number field in the sale flow would tax every sale to serve a few.
+   * So the sale finishes at the speed it always did, and the bill is a tap
+   * afterwards for the customer who asks.
+   */
+  billTitle: string;
+  billPhone: string;
+  billSend: string;
+  billSkip: string;
+  /** Says the file downloads and the owner attaches it — see `BillCard`. */
+  billHint: string;
+  billBadPhone: string;
+  billReady: string;
+  /** Words printed on the sheet itself. */
+  billDoc: string;
+  billTotal: string;
+  billPaidBy: string;
   sellWhoseKhata: string;
 
   tabKhata: string;
@@ -376,6 +398,16 @@ type OwnerDictionary = {
   /** The stock box on an item row, and what a bad number in it says. */
   stockShort: string;
   stockBadNumber: string;
+  /**
+   * The same refusal, for a row that has no pack size to measure against.
+   *
+   * `stockBadNumber` sends the owner to "the pack size" — which is sound advice
+   * on the full screen, where that box is the one next door. In simple mode the
+   * pack size is deliberately never asked for, so the box does not exist and
+   * the advice named something the owner could not see. This says the thing
+   * they can actually do instead.
+   */
+  stockNoPack: string;
   /** Badge on a row that names the same thing as another row. */
   duplicateName: string;
 
@@ -844,6 +876,16 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellRecorded: 'Sale recorded',
     sellMissingItem: 'Item not in the list? Add it in Items, then come back.',
     sellKhata: 'Udhaar',
+    billTitle: 'Send a bill',
+    billPhone: "Customer's WhatsApp number",
+    billSend: 'Download bill and open WhatsApp',
+    billSkip: 'Not now',
+    billHint: 'The bill saves to this phone. In WhatsApp, attach it with the 📎 clip.',
+    billBadPhone: 'Enter a 10-digit mobile number',
+    billReady: 'Bill saved — attach it in WhatsApp',
+    billDoc: 'Bill',
+    billTotal: 'Total',
+    billPaidBy: 'Paid by',
     sellWhoseKhata: 'Whose khata?',
 
     tabKhata: 'Khata',
@@ -907,6 +949,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     stockSoldOut: 'Sold out — taken off your shop page',
     stockShort: 'Stock',
     stockBadNumber: 'write a number, or an amount like 4.5 kg that matches the pack size',
+    stockNoPack: 'write a plain number — this item has no pack size yet',
     duplicateName: 'listed twice',
 
     pushTitle: 'Get a sound on this phone',
@@ -1294,6 +1337,16 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellRecorded: 'বিক্রি লেখা হয়েছে',
     sellMissingItem: 'তালিকায় নেই? “জিনিস”-এ গিয়ে যোগ করুন, তারপর ফিরে আসুন।',
     sellKhata: 'ধার',
+    billTitle: 'বিল পাঠান',
+    billPhone: 'কাস্টমারের WhatsApp নম্বর',
+    billSend: 'বিল নামিয়ে WhatsApp খুলুন',
+    billSkip: 'এখন নয়',
+    billHint: 'বিলটা এই ফোনে নেমে যাবে। WhatsApp-এ 📎 ক্লিপ দিয়ে জুড়ে দিন।',
+    billBadPhone: '১০ সংখ্যার মোবাইল নম্বর লিখুন',
+    billReady: 'বিল তৈরি — WhatsApp-এ জুড়ে দিন',
+    billDoc: 'বিল',
+    billTotal: 'মোট',
+    billPaidBy: 'যেভাবে দিলেন',
     sellWhoseKhata: 'কার খাতায়?',
 
     tabKhata: 'খাতা',
@@ -1357,6 +1410,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     stockSoldOut: 'শেষ — দোকানের পাতা থেকে সরে গেছে',
     stockShort: 'কত আছে',
     stockBadNumber: 'সংখ্যা লিখুন, বা পাশের মাপের সঙ্গে মেলে এমন মাপ — যেমন 4.5 kg',
+    stockNoPack: 'শুধু সংখ্যা লিখুন — এই জিনিসের মাপ এখনো দেওয়া হয়নি',
     duplicateName: 'একই নাম',
 
     pushTitle: 'এই ফোনে আওয়াজ পান',
@@ -1744,6 +1798,16 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellRecorded: 'बिक्री दर्ज हुई',
     sellMissingItem: 'सूची में नहीं है? “सामान” में जाकर जोड़िए, फिर लौटिए।',
     sellKhata: 'उधार',
+    billTitle: 'बिल भेजिए',
+    billPhone: 'ग्राहक का WhatsApp नंबर',
+    billSend: 'बिल डाउनलोड कर WhatsApp खोलें',
+    billSkip: 'अभी नहीं',
+    billHint: 'बिल इसी फ़ोन में आ जाएगा। WhatsApp में 📎 क्लिप से जोड़ दीजिए।',
+    billBadPhone: '10 अंकों का मोबाइल नंबर लिखिए',
+    billReady: 'बिल तैयार — WhatsApp में जोड़ दीजिए',
+    billDoc: 'बिल',
+    billTotal: 'कुल',
+    billPaidBy: 'भुगतान',
     sellWhoseKhata: 'किसके खाते में?',
 
     tabKhata: 'खाता',
@@ -1807,6 +1871,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     stockSoldOut: 'खत्म — दुकान के पेज से हट गया',
     stockShort: 'कितना है',
     stockBadNumber: 'संख्या लिखिए, या पैक के माप से मेल खाता माप — जैसे 4.5 kg',
+    stockNoPack: 'सिर्फ़ संख्या लिखिए — इस चीज़ का माप अभी तय नहीं है',
     duplicateName: 'दो बार है',
 
     pushTitle: 'इस फोन पर आवाज़ पाइए',

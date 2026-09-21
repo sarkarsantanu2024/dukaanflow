@@ -111,6 +111,33 @@ function categoryFor(names: string[], catalogue: StarterItem[]): string {
 }
 
 /**
+ * The pack size a shop of this kind usually sells this item in.
+ *
+ * The catalogue has carried a unit for every one of its entries all along —
+ * rice is priced per kg, maida per 500 g, eggs per piece — and the add sheet
+ * was asking the owner to tell it what it already knew. A pack size is the one
+ * box of the three whose question a first-time owner has not been asked before,
+ * so answering it from the catalogue is the difference between forty decisions
+ * and forty confirmations.
+ *
+ * DELIBERATELY AN EXACT MATCH, not the fuzzy one `categoryForNames` runs. A
+ * wrong category is invisible and costs a mis-filed row; a wrong pack size is
+ * arithmetic, and "500 g" guessed onto an item sold by the kilo misprices
+ * every sale of it. Certain, or nothing.
+ */
+function catalogueUnit(names: string[], catalogue: StarterItem[]): string {
+  const wanted = names.map((name) => name.trim().toLowerCase()).filter(Boolean);
+  if (wanted.length === 0) return '';
+
+  const hit = catalogue.find((entry) =>
+    [entry.name, entry.nameBn, entry.nameHi]
+      .filter(Boolean)
+      .some((form) => wanted.includes(form.trim().toLowerCase())),
+  );
+  return hit?.unit ?? '';
+}
+
+/**
  * A stock figure as the shopkeeper says it: "5.5 kg", "700 g", "12".
  *
  * `stockQty` is a multiple of the item's own unit, so the raw number is only
@@ -134,6 +161,27 @@ function priceUnitSuffix(unit: string): string {
   const u = unit.trim();
   const one = u.match(/^1\s+(.+)$/);
   return one ? one[1] : u;
+}
+
+/**
+ * The item's own unit, written faintly inside the stock box.
+ *
+ * "কত আছে" was three boxes along from the only thing that said what to measure
+ * in, and empty it said nothing at all — so the owner either typed the unit out
+ * for every item on the list or guessed whether a bare number meant kilos or
+ * packets. The price box has answered exactly this question since it grew its
+ * "/ kg"; this is the same answer in the same faded grey, one box over.
+ *
+ * SHOWN ONLY WHEN WHAT IS TYPED CARRIES NO UNIT OF ITS OWN. A bare number is
+ * already in multiples of the pack — `parseStockAmount` reads it that way — so
+ * "5" beside a faded "kg" is true as well as legible. The moment the owner
+ * writes "700 g" themselves the hint would be arguing with them, so it goes;
+ * and it never appears on an item with no pack size to report.
+ */
+function stockUnitHint(unit: string, text: string): string {
+  const typed = text.trim();
+  if (typed && !/^\d+(?:\.\d+)?$/.test(typed)) return '';
+  return priceUnitSuffix(unit);
 }
 
 const EMPTY_NEW_ITEM: NewItem = {
@@ -611,11 +659,22 @@ export function ItemsManager({
     // question they did not ask to be given, and a field they leave blank -- or
     // fill with something new every time -- is worse than one that fills itself
     // from the catalogue this shop type already has.
+    const bn = known?.bn ?? '';
+    const hi = known?.hi ?? '';
+
+    // The pack size, filled in from the catalogue ONLY while the box is still
+    // empty. An owner who has typed their own — because they sell rice in 5 kg
+    // sacks, whatever the catalogue thinks — must never watch it be corrected
+    // back under them on the next keystroke of the name.
+    const suggested = catalogueUnit([name, bn, hi], catalogue);
+    const untouched = !(rows[index]?.unit ?? '').trim();
+
     updateRow(index, {
       name,
-      nameBn: known?.bn ?? '',
-      nameHi: known?.hi ?? '',
-      category: categoryFor([name, known?.bn ?? '', known?.hi ?? ''], catalogue),
+      nameBn: bn,
+      nameHi: hi,
+      category: categoryFor([name, bn, hi], catalogue),
+      ...(suggested && untouched ? { unit: suggested } : {}),
     });
   }
 
@@ -685,8 +744,12 @@ export function ItemsManager({
        */
       const stock = parseStockAmount(row.stock, row.unit);
       if (stock === 'bad') {
-        failures[kept.length] = { stock: t.stockBadNumber };
-        firstProblem ||= `${row.name || ''} — ${t.stockBadNumber}`.trim();
+        // Which refusal depends on whether there is a pack size to measure
+        // against at all. Sending a simple-mode owner to a box that screen
+        // never shows them is how "1kg" became an error they could not clear.
+        const why = row.unit.trim() ? t.stockBadNumber : t.stockNoPack;
+        failures[kept.length] = { stock: why };
+        firstProblem ||= `${row.name || ''} — ${why}`.trim();
         kept.push(row);
         continue;
       }
@@ -968,7 +1031,8 @@ export function ItemsManager({
     }
 
     if (parsed === 'bad') {
-      push(`${displayName(item, locale)} — ${t.stockBadNumber}`, 'error');
+      const why = item.unit.trim() ? t.stockBadNumber : t.stockNoPack;
+      push(`${displayName(item, locale)} — ${why}`, 'error');
       return;
     }
 
@@ -1172,6 +1236,11 @@ export function ItemsManager({
               onChange={(event) => updateRow(index, { stock: event.target.value })}
               error={rowErrors[index]?.stock}
               placeholder={t.stockShort}
+              // The unit the count will be read in, from the box beside this
+              // one. Empty until the owner names a pack size, and in simple
+              // mode they are never asked for one — so on the quiet screen this
+              // is blank and the row keeps the shape it has always had.
+              suffix={stockUnitHint(row.unit, row.stock)}
             />
 
             {/* THROWING ONE ROW AWAY.
@@ -1523,32 +1592,45 @@ export function ItemsManager({
                   they type. Only this field is labelled — the price and pack
                   fields read for themselves — so the row keeps its shape. */}
               <span className="px-0.5 text-xs font-medium text-slate-500">{t.stockShort}</span>
-              <input
-                type="text"
-                inputMode="decimal"
-                aria-label={`${t.stockShort} — ${displayName(item, locale)}`}
-                title={t.stockHint}
-                value={
+              {(() => {
+                const stockText =
                   stockDrafts[item.id] ??
-                  (item.stockQty === null ? '' : stockLabel(item.unit, item.stockQty))
-                }
-                onChange={(event) =>
-                  setStockDrafts((current) => ({ ...current, [item.id]: event.target.value }))
-                }
-                onBlur={() => commitStock(item)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') event.currentTarget.blur();
-                }}
-                className={clsx(
-                  'h-10 w-24 rounded-lg border px-2.5 text-sm tabular-nums',
-                  // Empty reads as "nobody is counting" and must not look like
-                  // a field somebody failed to fill in; zero is the shop
-                  // saying it has run out, which is worth the red.
-                  item.stockQty === 0
-                    ? 'border-red-300 bg-red-50 text-red-700'
-                    : 'border-slate-300 text-slate-900',
-                )}
-              />
+                  (item.stockQty === null ? '' : stockLabel(item.unit, item.stockQty));
+                const hint = stockUnitHint(item.unit, stockText);
+                return (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      aria-label={`${t.stockShort} — ${displayName(item, locale)}`}
+                      title={t.stockHint}
+                      value={stockText}
+                      onChange={(event) =>
+                        setStockDrafts((current) => ({ ...current, [item.id]: event.target.value }))
+                      }
+                      onBlur={() => commitStock(item)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') event.currentTarget.blur();
+                      }}
+                      className={clsx(
+                        'h-10 w-24 rounded-lg border pl-2.5 text-sm tabular-nums',
+                        hint ? 'pr-9' : 'pr-2.5',
+                        // Empty reads as "nobody is counting" and must not look like
+                        // a field somebody failed to fill in; zero is the shop
+                        // saying it has run out, which is worth the red.
+                        item.stockQty === 0
+                          ? 'border-red-300 bg-red-50 text-red-700'
+                          : 'border-slate-300 text-slate-900',
+                      )}
+                    />
+                    {hint && (
+                      <span className="pointer-events-none absolute right-2 top-1/2 max-w-[2rem] -translate-y-1/2 truncate text-xs text-slate-400">
+                        {hint}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
             </label>
           )}
 
