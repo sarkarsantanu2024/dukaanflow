@@ -27,7 +27,18 @@ export async function GET(request: Request) {
     name: `${shop.name} — ${BRAND_NAME}`,
     short_name: shop.name.slice(0, 12),
     description: 'Update your prices and stock. Add items by voice.',
-    start_url: `/owner/${slug}/sell`,
+    // THE INSTALLED APP OPENS ON THE DAY, NOT ON THE TILL. It used to launch
+    // straight into `/sell`, which answers "I am serving someone right now" —
+    // true perhaps twice an hour, and wrong every other time the icon is
+    // tapped. An owner opening their shop's app in the morning is asking what
+    // is waiting: orders, low stock, who owes. That is `/owner/<slug>`, and the
+    // till is one tap away on the tab bar for the times it is the answer.
+    // THE TRAILING SLASH IS LOAD-BEARING. A start_url must sit inside `scope`,
+    // and scope keeps its slash for the sibling-slug reason below — so bare
+    // `/owner/<slug>` is, by strict prefix matching, outside its own app's
+    // scope. Next then 308s this to the slashless form, which costs one hop at
+    // a cold launch and is the price of the two rules agreeing.
+    start_url: `/owner/${slug}/`,
     // The trailing slash matters: without it, "ramu-grocery" would also scope
     // "ramu-grocery-2", and two shops on one phone would collide.
     scope: `/owner/${slug}/`,

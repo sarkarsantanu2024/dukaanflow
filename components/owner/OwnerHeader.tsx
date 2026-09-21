@@ -90,9 +90,12 @@ export function OwnerHeader({
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-3xl items-center gap-1.5 px-3 py-2 sm:px-4">
-        {/* The mark leads back to the item list, which is where an owner starts
-            their day. */}
-        <BrandMark href={`/owner/${slug}/inventory`} className="mr-auto text-sm" />
+        {/* The mark leads home, where a logo leads everywhere else. It used to
+            go to the item list on the reasoning that stock is where an owner
+            starts their day — but the day's takings, the waiting orders and who
+            owes now live on the home screen, so that is the answer to "take me
+            back". The item list is one tap away on the tab bar. */}
+        <BrandMark href={`/owner/${slug}`} className="mr-auto text-sm" />
 
         {/* One control instead of three buttons. A native select is also the
             one thing on this bar that a shopkeeper's phone already knows how
