@@ -41,19 +41,19 @@ export function BrandMark({
           nothing. */}
       {/* 40px, where the old glyph was 28.
           A one-colour glyph reads at any size because there is one shape to
-          recognise. This mark is a little scene — an awning, a chart, an arrow
-          around both — and at 28px those collapse into a coloured smudge. An
-          illustration has to be given the room to be an illustration, or it
-          should not be the logo.
+          recognise. This mark is a little scene — a tied ledger, a seal, two
+          figures on its cover, leaves at its foot — and at 28px those collapse
+          into a red smudge. An illustration has to be given the room to be an
+          illustration, or it should not be the logo.
 
           ON THE DARK RAIL IT GETS A WHITE TILE, and that reverses an older
           rule here. The rule was right for a glyph that took `currentColor`:
           a logo sits on the page in its own colour, and a tile behind it makes
-          it look like an app icon pasted in. But this mark contains a deep navy
-          chart panel, and navy on a dark green rail is not a logo, it is a
-          smudge — most of the artwork simply stopped being visible. A picture
-          with dark ink in it needs light under it, so the tile is what keeps
-          the mark legible rather than what decorates it. */}
+          it look like an app icon pasted in. But the mango leaves at the foot
+          of this mark are a green within a hair of the rail's own, and on the
+          bare rail they simply vanish — the ledger survives, its leaves do not.
+          The tile is what keeps the whole picture rather than what decorates
+          it. */}
       <span
         className={clsx(
           'inline-flex shrink-0 items-center justify-center',
