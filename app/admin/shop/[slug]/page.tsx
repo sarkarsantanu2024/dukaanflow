@@ -7,6 +7,7 @@ import { BoxIcon, ChartIcon, PrinterIcon } from '@/components/ui/Icon';
 import { ShopForm } from '@/components/admin/ShopForm';
 import { QrPanel } from '@/components/admin/QrPanel';
 import { DeleteShopButton } from '@/components/admin/DeleteShopButton';
+import { ResetShopButton } from '@/components/admin/ResetShopButton';
 import { OwnerAccessPanel } from '@/components/admin/OwnerAccessPanel';
 import { SubscriptionPanel } from '@/components/admin/SubscriptionPanel';
 import { shopEntitlement } from '@/lib/billing';
@@ -154,6 +155,21 @@ export default async function ShopDetailPage({ params }: PageProps) {
             the same rows with no way to act on any of them, which made this the
             longest section on the page and the least useful. Counts stay on the
             dashboard; the queue belongs to whoever fills it. */}
+
+        {/* A test-shop convenience, and only on demo shops: wipe the data and
+            run the whole customer→owner flow again without building a new shop.
+            The item list and PIN survive; the server refuses this on any shop
+            not flagged demo. */}
+        {shop.isDemo && (
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
+            <h2 className="font-semibold text-slate-900">Test tools</h2>
+            <p className="mb-3 mt-1 text-sm text-slate-600">
+              This is a demo shop. Reset its orders, sales, khata and stock to a clean slate to run
+              the flow again. Items and PIN are kept.
+            </p>
+            <ResetShopButton slug={shop.slug} shopName={shop.name} />
+          </section>
+        )}
 
         <section className="rounded-2xl border border-red-200 bg-red-50 p-4">
           <h2 className="font-semibold text-red-800">Danger zone</h2>
