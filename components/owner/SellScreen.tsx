@@ -63,6 +63,8 @@ import { isValidMobile } from '@/lib/validators';
 import type { VoiceLang } from '@/lib/speech';
 import { speak } from '@/components/voice/useVoice';
 import { spokenSaleTotal } from '@/lib/spoken-money';
+import { BillCard } from './BillCard';
+import type { Bill } from '@/lib/bill-pdf';
 import type { Locale } from '@/lib/i18n';
 
 /** The shop's language, as the synthesiser names it. */
@@ -196,6 +198,14 @@ export function SellScreen({
    * the normal state; see the error handling in `record`.
    */
   const [saleError, setSaleError] = useState<{ field: string; message: string } | null>(null);
+  /**
+   * The sale just recorded, kept only so a bill can be offered for it.
+   *
+   * Cleared the moment the next sale starts — see `record` — because a card
+   * still offering the previous customer's bill is how the wrong bill gets
+   * sent to the right number.
+   */
+  const [lastBill, setLastBill] = useState<Bill | null>(null);
 
   /**
    * Which lines of the loaded order are already in the bag.
@@ -446,6 +456,10 @@ export function SellScreen({
 
   async function record(paymentMode: 'CASH' | 'UPI' | 'KHATA') {
     if (paymentMode === 'KHATA' && !khata?.phone) return;
+    // The previous customer's bill goes the moment this sale starts, not when
+    // it finishes — a failed save must not leave the old one sitting there
+    // looking like it belongs to the sale the owner just tried to make.
+    setLastBill(null);
     setSaving(true);
     try {
       const response = await fetch(`/api/admin/shop/${slug}/sale`, {
@@ -506,6 +520,29 @@ export function SellScreen({
        */
       const settled = totalPaise;
 
+      /**
+       * THE BILL'S SNAPSHOT, TAKEN BEFORE THE BASKET IS EMPTIED.
+       *
+       * Same trap as `settled` immediately above: `lines` is derived from the
+       * cart and the next statement clears it, so a bill built afterwards would
+       * be an empty one. Copied rather than referenced for the same reason —
+       * these are the items as they were sold, and nothing that happens at the
+       * till afterwards may edit them.
+       */
+      setLastBill({
+        shopName,
+        lines: lines.map((line) => ({
+          name: itemName(line.item, locale),
+          unit: line.item.unit,
+          quantity: line.quantity,
+          amountPaise: linePaise(line.item.pricePaise, line.quantity),
+        })),
+        totalPaise: settled,
+        paymentMode,
+        at: new Date(),
+        ...(paymentMode === 'KHATA' && khata?.name ? { customerName: khata.name } : {}),
+      });
+
       setCart({});
       setPaying(false);
       setKhata(null);
@@ -552,6 +589,25 @@ export function SellScreen({
        came to press, on the one screen used with a customer waiting. Takings
        are read at closing, on Orders; the till is for selling. */
     <div className="space-y-4 pb-24">
+      {/* THE BILL FOR THE SALE JUST MADE, AND THE ONE EXCEPTION TO THE RULE
+          DIRECTLY ABOVE. Nothing sits over this grid, because what used to sit
+          there was yesterday's news between an owner and the buttons they came
+          to press. This is the opposite of that: it is about the customer still
+          standing at the counter, it exists for the seconds between taking the
+          money and them walking away, and it removes itself on dismissal or on
+          the next sale. A card that outlived either would be exactly the kind
+          of thing that rule is there to keep off this screen. */}
+      {lastBill && (
+        <BillCard
+          bill={lastBill}
+          slug={slug}
+          t={t}
+          onDone={() => setLastBill(null)}
+          onError={(message) => push(message, 'error')}
+          onSent={(message) => push(message, 'success')}
+        />
+      )}
+
       {/* THE ORDER, ON THE SCREEN THE GOODS ARE ON.
           Sticky, because the whole point is that it is still there ten items
           down the grid — the scrolling and the reading used to be on two
@@ -977,10 +1033,20 @@ export function SellScreen({
             : 'z-30 bottom-[calc(5.5rem+env(safe-area-inset-bottom))]',
         )}
       >
-        {/* The mic fills a basket, and in order mode there is no basket to
-            fill — an order is what the customer asked for, not what the shop
-            decides to put in the bag. */}
-        {!tillOrder && <VoiceOrder items={sellable} locale={locale} onApply={applyVoice} />}
+        {/* THE MIC IS HIDDEN ON THIS SCREEN, BY REQUEST.
+            It used to fill the till basket by voice — "চাল এক কেজি" — and it
+            was never shown in order mode, because an order is what the customer
+            asked for rather than what the shop decides to put in the bag.
+
+            Hidden rather than deleted: `VoiceOrder`, `applyVoice` and `sellable`
+            are all still here and still wired to each other, so restoring it is
+            putting this one line back:
+
+              {!tillOrder && <VoiceOrder items={sellable} locale={locale} onApply={applyVoice} />}
+
+            Note this removes the only voice route into a till sale, which is
+            the one an owner who does not read uses — the khata and item mics
+            are untouched and remain their own way in. */}
 
         {tillOrder ? (
           /* WHERE THE BASKET WOULD BE, AND DOING THE ORDER'S JOB.
