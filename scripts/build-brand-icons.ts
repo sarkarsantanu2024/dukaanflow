@@ -12,12 +12,12 @@
  * WHAT IT DOES TO THE SOURCE, AND WHY:
  *
  *   - TRIMS the transparent margin, then re-pads to a square. The supplied art
- *     sits off centre with a soft shadow under the shopfront, so scaling it
- *     directly makes every launcher icon look like it has slipped down inside
- *     its tile.
+ *     sits off centre — the mango leaves push the ledger up and left — so
+ *     scaling it directly makes every launcher icon look like it has slipped
+ *     inside its tile.
  *   - PUTS WHITE BEHIND the launcher and Apple sizes. iOS composites a
  *     transparent icon onto black, which would stand this artwork's white
- *     shopfront on a black ground.
+ *     binding string and ribbon on a black ground.
  *   - LEAVES the in-page sizes transparent, because they sit on the console's
  *     dark rail as often as on white.
  *
@@ -38,7 +38,8 @@ const RENDITIONS = [
   { file: 'public/brand/halkhata-logo-192.png', size: 192, white: true, inset: 1, use: 'manifest any' },
   { file: 'public/brand/halkhata-logo-512.png', size: 512, white: true, inset: 1, use: 'manifest any' },
   // Android crops a maskable icon to a circle or squircle. Holding the art
-  // inside the middle 62% guarantees the awning and the arrow survive the crop.
+  // inside the middle 62% guarantees the ledger's corners and the mango leaves
+  // survive the crop.
   { file: 'public/brand/halkhata-logo-maskable-512.png', size: 512, white: true, inset: 0.62, use: 'manifest maskable' },
   { file: 'app/icon.png', size: 64, white: false, inset: 1, use: 'favicon' },
   { file: 'app/apple-icon.png', size: 180, white: true, inset: 1, use: 'iOS home screen' },

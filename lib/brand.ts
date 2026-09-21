@@ -1,26 +1,30 @@
 /**
  * The Halkhata mark.
  *
- * A supplied illustration — a shop with its awning, a rising chart behind it
- * and an arrow sweeping round the two — held as a PNG in `public/brand/`.
+ * A supplied illustration — the হালখাতা itself: the red cloth-bound ledger a
+ * shop opens on Poila Boishakh, tied in white string, with শ্রী in a green seal,
+ * Ganesh and Lakshmi on the cover and mango leaves at its foot. Held as a PNG
+ * in `public/brand/`. The mark is the thing the product is named after, which is
+ * the whole of the idea.
  *
- * IT IS A PICTURE, NOT A GLYPH, AND THAT CHANGES THE RULES. The two marks
- * before it were single-colour vectors that took `currentColor`, so one shape
- * served the green header, the console's dark rail and a knocked-out tile
- * without a second asset. This one carries its own colours and cannot be
- * recoloured, so:
+ * IT IS A PICTURE, NOT A GLYPH, AND THAT CHANGES THE RULES. The earliest marks
+ * here were single-colour vectors that took `currentColor`, so one shape served
+ * the green header, the console's dark rail and a knocked-out tile without a
+ * second asset. This one carries its own colours and cannot be recoloured, so:
  *
- *   - `tone="dark"` no longer tints the mark, only the wordmark beside it. The
- *     artwork reads on the dark rail because the shop itself is white.
+ *   - `tone="dark"` no longer tints the mark, only the wordmark beside it, and
+ *     THE DARK RAIL PUTS A WHITE TILE BEHIND IT. The ledger's red would survive
+ *     the rail on its own, but the mango leaves are a green very close to it and
+ *     simply disappear. The tile is there to keep the leaves, not to decorate.
  *   - Every size is a separate file. They are generated, not hand-cut — see
  *     `scripts/build-brand-icons.ts`, and re-run it if the artwork changes.
  *   - The art is trimmed and re-squared during generation. The source sits off
- *     centre with a soft shadow at its foot, which would otherwise make every
- *     launcher icon look like it had slipped down inside its tile.
+ *     centre, the leaves pushing it right and low, which would otherwise make
+ *     every launcher icon look like it had slipped inside its tile.
  *
- * The mark also carries a blue that the interface green does not, so it is
- * deliberately never placed against `brand-600` — it sits on white, on the dark
- * rail, or on the poster's paper.
+ * The mark is deliberately never placed against `brand-600`: it is mostly red,
+ * and red on the interface green is the one pairing that fights. It sits on
+ * white, on the dark rail's tile, or on the poster's paper.
  */
 
 /**
@@ -97,8 +101,8 @@ export const BRAND_GROUND = '#f5f8f6';
  * shipping a 468px PNG to do it costs a quarter of a megabyte per page.
  *
  * The launcher sizes sit on white rather than transparency on purpose: iOS
- * composites a transparent icon onto black, which would put this artwork's
- * white shopfront on a black tile.
+ * composites a transparent icon onto black, which would stand this artwork's
+ * white binding string and its ribbon on a black tile.
  */
 export const BRAND_LOGO = {
   master: '/brand/halkhata-logo.png',
