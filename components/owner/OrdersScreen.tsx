@@ -379,18 +379,23 @@ export function OrdersScreen({
 
   const visible = useMemo(() => {
     // One list, so it has to carry both jobs at once. Work still to be done
-    // sits on top, oldest first — whoever ordered first is served first, the
-    // rule a queue at a counter already follows. Everything finished sits
-    // under it, newest first, because that half is a record being read
-    // backwards from now.
+    // sits on top; everything finished sits under it. Both halves now read
+    // NEWEST FIRST — the order that just arrived is the one the owner is
+    // looking for, and it was landing at the bottom of the waiting half.
+    //
+    // THIS GIVES UP FIFO, AND THAT IS THE COST TO WATCH. The waiting half used
+    // to run oldest first, which is the rule a queue at a counter already
+    // follows: whoever ordered first is served first. Newest-first puts the
+    // longest-waiting customer at the BOTTOM of the list, which is exactly
+    // where an order gets forgotten on a busy evening. The badge on each card
+    // and the time under the name are what now have to carry that, so if
+    // orders start going stale, this sort is the first thing to look at.
     const rank = (status: OrderStatus) =>
       status === 'NEW' || status === 'CONFIRMED' || status === 'READY' ? 0 : 1;
     return [...orders].sort((a, b) => {
       const byRank = rank(a.status) - rank(b.status);
       if (byRank !== 0) return byRank;
-      return rank(a.status) === 0
-        ? a.createdAt.localeCompare(b.createdAt)
-        : b.createdAt.localeCompare(a.createdAt);
+      return b.createdAt.localeCompare(a.createdAt);
     });
   }, [orders]);
 
