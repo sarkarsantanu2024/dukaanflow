@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { BRAND_NAME } from './brand';
+import type { Locale } from './i18n';
 
 /**
  * Owner invite links.
@@ -30,17 +31,50 @@ export function hashInviteToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-/** The message the Super Admin sends. Written to be read on a phone, by a shopkeeper. */
-export function inviteMessage(shopName: string, url: string, pin: string | null): string {
-  const lines = [
-    `${shopName} — your ${BRAND_NAME} shop is ready.`,
-    '',
-    `Open this link on your phone: ${url}`,
-    '',
-    'It opens your shop app. Add your items by speaking — in Bengali, Hindi or English.',
-  ];
-  if (pin) {
-    lines.push('', `If it ever asks for a PIN, it is ${pin}.`);
-  }
+/**
+ * The message the Super Admin sends, in the shop's own language.
+ *
+ * A shopkeeper whose app is in Bengali should not be handed a paragraph of
+ * English on WhatsApp — so this reads in the shop's `locale`. The PIN is always
+ * part of it: the link signs them in on the first run, and the PIN is the way
+ * back, so it travels with the link rather than in a second message that gets
+ * lost.
+ */
+export function inviteMessage(
+  shopName: string,
+  url: string,
+  pin: string | null,
+  locale: Locale = 'en',
+): string {
+  const t = INVITE_TEXT[locale] ?? INVITE_TEXT.en;
+  const lines = [t.ready(shopName), '', t.open(url), '', t.speak];
+  if (pin) lines.push('', t.pin(pin));
   return lines.join('\n');
 }
+
+/** Per-language pieces of the invite message. `{n}` markers are filled in. */
+const INVITE_TEXT: Record<Locale, {
+  ready: (shop: string) => string;
+  open: (url: string) => string;
+  speak: string;
+  pin: (pin: string) => string;
+}> = {
+  en: {
+    ready: (shop) => `${shop} — your ${BRAND_NAME} shop is ready.`,
+    open: (url) => `Open this link on your phone: ${url}`,
+    speak: 'It opens your shop app. Add your items by speaking — in Bengali, Hindi or English.',
+    pin: (pin) => `Your PIN is ${pin} — keep it to sign in later.`,
+  },
+  bn: {
+    ready: (shop) => `${shop} — আপনার ${BRAND_NAME} দোকান তৈরি।`,
+    open: (url) => `এই লিংকটি আপনার ফোনে খুলুন: ${url}`,
+    speak: 'এটি আপনার দোকানের অ্যাপ খুলবে। কথা বলে জিনিস যোগ করুন — বাংলা, হিন্দি বা ইংরেজিতে।',
+    pin: (pin) => `আপনার PIN হল ${pin} — পরে ঢুকতে এটি রেখে দিন।`,
+  },
+  hi: {
+    ready: (shop) => `${shop} — आपकी ${BRAND_NAME} दुकान तैयार है।`,
+    open: (url) => `यह लिंक अपने फ़ोन पर खोलें: ${url}`,
+    speak: 'यह आपकी दुकान का ऐप खोलता है। बोलकर सामान जोड़ें — बंगाली, हिंदी या अंग्रेज़ी में।',
+    pin: (pin) => `आपका PIN है ${pin} — बाद में साइन इन करने के लिए इसे रखें।`,
+  },
+};

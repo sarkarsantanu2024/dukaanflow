@@ -2,15 +2,18 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
+import clsx from 'clsx';
+import { RefreshIcon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/Modal';
+import { HEADER_ACTION } from './headerStyles';
 
 /**
  * Wipes a demo shop's data so the full flow can be run again from a clean slate.
  *
- * Only rendered for demo shops — the server refuses it on any other, so this is
- * the second lock, not the only one. A plain yes/no confirm rather than
+ * Rendered as a top-bar action, in the same shape as the other header controls,
+ * and only for demo shops — the server refuses it on any other, so this is the
+ * second lock, not the only one. A plain yes/no confirm rather than
  * type-to-confirm: nothing here is irreplaceable (it is a test shop by
  * definition), and the point of the button is to reset quickly and often.
  */
@@ -41,9 +44,17 @@ export function ResetShopButton({ slug, shopName }: { slug: string; shopName: st
 
   return (
     <>
-      <Button variant="secondary" onClick={() => setAsking(true)} loading={busy}>
-        Reset shop data
-      </Button>
+      <button
+        type="button"
+        onClick={() => setAsking(true)}
+        disabled={busy}
+        aria-label="Reset shop data"
+        title="Reset shop data"
+        className={clsx(HEADER_ACTION, 'border border-amber-300 text-amber-800 hover:bg-amber-50 disabled:opacity-50')}
+      >
+        <RefreshIcon className="h-[18px] w-[18px]" />
+        <span className="hidden sm:inline">Reset data</span>
+      </button>
 
       <ConfirmDialog
         open={asking}
