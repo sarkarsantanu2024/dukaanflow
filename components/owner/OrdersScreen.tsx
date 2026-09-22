@@ -36,8 +36,10 @@ import {
   PencilIcon,
   PhoneIcon,
   PinIcon,
+  PrinterIcon,
   WhatsAppIcon,
 } from '@/components/ui/Icon';
+import { downloadBillPdf } from '@/lib/bill-pdf';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { formatPaise } from '@/lib/money';
 import {
@@ -292,9 +294,63 @@ export function OrdersScreen({
   const { confirm, dialog } = useConfirm();
   const t = ownerDict(locale);
   const [busyId, setBusyId] = useState<string | null>(null);
+  /** The order whose bill is being written, so its button cannot be double-tapped. */
+  const [billing, setBilling] = useState<string | null>(null);
   /** The order whose payment question is currently open, if any. */
   const [settling, setSettling] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab | null>(null);
+
+  /**
+   * THE BILL FOR AN ORDER.
+   *
+   * Nothing is asked for: the order already carries the customer's name and the
+   * number it was placed with, so this writes the PDF and opens their chat in
+   * one tap. The till's version has to ask, because a cash sale over the
+   * counter knows nobody — see `BillCard`.
+   *
+   * `paymentMode` is deliberately left off. The browser is not told how an
+   * order was paid, and a bill that printed "Paid by: Cash" over a delivery
+   * nobody has paid for yet would be a receipt for money that never moved.
+   */
+  async function sendBill(order: OwnerOrder) {
+    setBilling(order.id);
+    try {
+      await downloadBillPdf(
+        {
+          shopName,
+          lines: order.lines.map((line) => ({
+            name: lineName(line, locale),
+            unit: line.unit,
+            quantity: line.quantity,
+            amountPaise: line.amountPaise,
+          })),
+          totalPaise: order.totalAmountPaise,
+          at: new Date(order.createdAt),
+          customerName: order.customerName,
+        },
+        {
+          bill: t.billDoc,
+          total: t.billTotal,
+          paidBy: t.billPaidBy,
+          paymentMode: { CASH: t.sellCash, UPI: t.sellUpi, KHATA: t.sellKhata },
+          credit: `${t.billDoc} · ${shopName}`,
+        },
+        `bill-${order.id}.pdf`,
+      );
+
+      const text = `${shopName}\n${t.billDoc} · ${formatPaise(order.totalAmountPaise)}`;
+      window.open(
+        `https://wa.me/${toWhatsAppNumber(order.customerPhone)}?text=${encodeURIComponent(text)}`,
+        '_blank',
+        'noopener,noreferrer',
+      );
+      push(t.billReady, 'success');
+    } catch {
+      push(t.networkError, 'error');
+    } finally {
+      setBilling(null);
+    }
+  }
 
   /**
    * The order being cut down to what the shop actually has, and the amounts
@@ -1015,6 +1071,23 @@ export function OrdersScreen({
                   <p className="mr-auto text-lg font-bold tabular-nums text-slate-900">
                     {formatPaise(order.totalAmountPaise)}
                   </p>
+
+                  {/* THE BILL, FOR AN ORDER RATHER THAN A COUNTER SALE.
+                      The till's version has to ask who the customer is, because
+                      a cash sale knows nobody. An order already carries the
+                      name and the number it was placed with, so there is
+                      nothing to ask: one tap writes the PDF and opens their
+                      chat. */}
+                  <button
+                    type="button"
+                    onClick={() => sendBill(order)}
+                    disabled={billing === order.id}
+                    aria-label={t.billTitle}
+                    title={t.billTitle}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    <PrinterIcon className="h-[18px] w-[18px]" />
+                  </button>
 
                   {/* Reaching the customer is one tap from the order, not a
                       hunt back through WhatsApp for which message was theirs. */}

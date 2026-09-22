@@ -33,7 +33,15 @@ export type Bill = {
   shopName: string;
   lines: BillLine[];
   totalPaise: number;
-  paymentMode: 'CASH' | 'UPI' | 'KHATA';
+  /**
+   * How it was paid — omitted when nobody knows.
+   *
+   * A till sale always knows: the owner just pressed Cash, UPI or Udhaar. An
+   * order does not carry it to the browser, and a bill that printed "Paid by:
+   * Cash" over a delivery the customer has not paid for yet would be a receipt
+   * for money that never changed hands. Absent, the line is simply not drawn.
+   */
+  paymentMode?: 'CASH' | 'UPI' | 'KHATA';
   at: Date;
   customerName?: string;
 };
@@ -129,10 +137,12 @@ export async function downloadBillPdf(
   ctx.textAlign = 'left';
   y += 56;
 
-  ctx.fillStyle = '#64748b';
-  ctx.font = '24px system-ui, sans-serif';
-  ctx.fillText(`${labels.paidBy}: ${labels.paymentMode[bill.paymentMode]}`, PAD, y);
-  y += 52;
+  if (bill.paymentMode) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '24px system-ui, sans-serif';
+    ctx.fillText(`${labels.paidBy}: ${labels.paymentMode[bill.paymentMode]}`, PAD, y);
+    y += 52;
+  }
 
   ctx.fillStyle = '#cbd5e1';
   ctx.font = '20px system-ui, sans-serif';
