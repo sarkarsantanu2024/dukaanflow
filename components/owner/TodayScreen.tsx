@@ -133,6 +133,10 @@ export function TodayScreen({
           left, the way to the till on the right, in one row. */}
       <StartDayRow slug={slug} drawer={drawer} locale={locale} />
 
+      {/* The clock is not here any more: it hangs off the bottom of the shop
+          name in the sticky header, so it stays on screen on every owner
+          screen rather than only this one. See `ShopClock`. */}
+
       {/* What needs attention, worst first — or the one quiet line. */}
       {cards.length > 0 ? (
         <div className="space-y-2">

@@ -23,10 +23,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
 import { HomeIcon, SignOutIcon } from '@/components/ui/Icon';
 import { BrandMark } from '@/components/ui/BrandMark';
+import { ShopClock } from './ShopClock';
 import { Spinner } from '@/components/ui/Spinner';
 import { OwnerInstallButton } from './OwnerInstallButton';
 import { ShutterSwitch } from './ShutterSwitch';
@@ -54,6 +55,18 @@ export function OwnerHeader({
   ownerImageData: string;
 }) {
   const router = useRouter();
+
+  /**
+   * Is this already the home screen?
+   *
+   * A house icon that returns you to the screen you are looking at is a control
+   * that does nothing, and on a row this narrow it costs the shop name the
+   * width it needs. Matched on the exact path — with and without the trailing
+   * slash, because the installed app's start_url carries one (see
+   * `app/owner.webmanifest`) and would otherwise land here showing the icon.
+   */
+  const pathname = usePathname();
+  const atHome = pathname === `/owner/${slug}` || pathname === `/owner/${slug}/`;
   const { push } = useToast();
   const t = ownerDict(locale);
   const [busy, setBusy] = useState(false);
@@ -162,7 +175,12 @@ export function OwnerHeader({
           - The name in the weight a title is set in, not the weight a footnote
             is. It is the most important word on the screen for anybody holding
             this phone who is not its owner. */}
-      <div className="border-t border-slate-200/70 bg-slate-50">
+      {/* `relative` so the clock can hang off the bottom edge of this band —
+          see `ShopClock`. The band is inside the sticky header, so the badge
+          stays on screen with it as the page scrolls. */}
+      <div className="relative border-t border-slate-200/70 bg-slate-50">
+        <ShopClock />
+
         <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-3 py-2 sm:px-4">
           {ownerImageData ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -187,16 +205,26 @@ export function OwnerHeader({
           <span className="min-w-0 flex-1 truncate text-base font-bold leading-tight text-slate-900">
             {shopName}
           </span>
-          {/* The way home. "আজকের দোকান" is the screen the app opens on; from
-              any tab this returns to it, and a house is the one icon every
-              phone owner already reads as "back to the start". */}
-          <Link
-            href={`/owner/${slug}`}
-            aria-label={t.todayTitle}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"
-          >
-            <HomeIcon className="h-5 w-5" />
-          </Link>
+
+          {/* The way home, and NOT on the home screen itself — see `atHome`.
+              "আজকের দোকান" is the screen the app opens on; from any other tab
+              this returns to it, and a house is the one icon every phone owner
+              already reads as "back to the start".
+
+              The clock briefly lived here, between the shop name and this. It
+              sits on the home screen under the float instead: on a 375px phone
+              this row is the shop name, a language select, a shutter switch and
+              a sign-out, and a fifth thing left "Maa Tara Mudi D…" truncated
+              mid-word. */}
+          {!atHome && (
+            <Link
+              href={`/owner/${slug}`}
+              aria-label={t.todayTitle}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"
+            >
+              <HomeIcon className="h-5 w-5" />
+            </Link>
+          )}
         </div>
       </div>
     </header>
