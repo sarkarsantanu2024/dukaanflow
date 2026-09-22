@@ -234,7 +234,7 @@ export function OwnerHeader({
       {/* `relative` so the clock can hang off the bottom edge of this band —
           see `ShopClock`. The band is inside the sticky header, so the badge
           stays on screen with it as the page scrolls. */}
-      <div className="relative border-t border-slate-200/70 bg-slate-50">
+      <div className="relative border-t border-slate-200/70 bg-sunk">
         {/* THE HOME SCREEN ONLY. It rode on every owner screen, which put a
             wall clock over the till, the khata and the orders queue — three
             screens with a job in hand, none of which is asking what day it is.
@@ -304,7 +304,7 @@ export function OwnerHeader({
                 rather than growing past the screen when a shop has a notice, a
                 plan line and delivery terms all at once. */}
               {settingsOpen && settingsPanel && (
-                <div className="absolute right-0 top-full z-30 mt-2 w-[min(20rem,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-slate-50 p-2 shadow-float ring-1 ring-slate-200">
+                <div className="absolute right-0 top-full z-30 mt-2 w-[min(20rem,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-sunk p-2 shadow-float ring-1 ring-slate-200">
                   {settingsPanel}
                 </div>
               )}

@@ -40,7 +40,7 @@ export default function OwnerError({
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center px-4 py-16 text-center">
-      <div className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-8 shadow-sm">
+      <div className="w-full rounded-2xl border border-slate-200 bg-card px-5 py-8 shadow-sm">
         <p className="text-lg font-bold text-slate-900">কিছু একটা ভুল হয়েছে</p>
         <p className="mt-1 text-base font-semibold text-slate-700">कुछ गड़बड़ हो गई</p>
         <p className="mt-1 text-sm font-medium text-slate-500">Something went wrong</p>

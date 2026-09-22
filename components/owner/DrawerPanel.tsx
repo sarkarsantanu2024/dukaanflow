@@ -152,7 +152,7 @@ export function DrawerPanel({
   const over = drawer.differencePaise !== null && drawer.differencePaise > 0;
 
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-card">
+    <div className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
       <p className="text-sm font-semibold text-slate-900">{t.drawerTitle}</p>
 
       <dl className="mt-2 divide-y divide-slate-100 border-y border-slate-100">

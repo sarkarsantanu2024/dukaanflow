@@ -57,7 +57,7 @@ export function BrandMark({
       <span
         className={clsx(
           'inline-flex shrink-0 items-center justify-center',
-          tone === 'dark' && 'rounded-xl bg-white p-1 shadow-sm ring-1 ring-white/60',
+          tone === 'dark' && 'rounded-xl bg-card p-1 shadow-sm ring-1 ring-white/60',
         )}
       >
         <BrandLogo className="h-10 w-10" />

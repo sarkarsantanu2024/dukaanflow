@@ -54,7 +54,7 @@ export function DemoToggle({ showing, count }: { showing: boolean; count: number
         )}
       >
         <span
-          className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform"
+          className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-card shadow-sm transition-transform"
           style={{ transform: showing ? 'translateX(16px)' : 'translateX(0)' }}
         />
       </span>

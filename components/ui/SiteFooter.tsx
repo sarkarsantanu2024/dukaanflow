@@ -28,7 +28,7 @@ export function SiteFooter() {
   const support = supportDetails();
 
   return (
-    <footer className="mt-4 border-t border-slate-200 bg-white">
+    <footer className="mt-4 border-t border-slate-200 bg-card">
       {/* Centred, which is also what keeps it clear of the floating mic:
           the middle of a phone's width is where the mic — bottom right — is
           not. */}

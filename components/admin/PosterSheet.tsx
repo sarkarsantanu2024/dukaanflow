@@ -268,7 +268,7 @@ export function PosterSheet({
 
       <div
         ref={sheetRef}
-        className="print-sheet relative isolate mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl border border-slate-200 bg-white px-8 py-10 text-center shadow-card"
+        className="print-sheet relative isolate mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl border border-slate-200 bg-glass px-8 py-10 text-center shadow-raised"
       >
         {/* The watermark. Behind everything, and the QR's own white card sits
             over it — see the canvas copy for why that matters. `print-exact`
@@ -302,7 +302,7 @@ export function PosterSheet({
         <div className="mt-6 flex justify-center">
           {/* `bg-white` is load-bearing, not tidiness: it is the opaque card
               that keeps the watermark out of the code's quiet zone. */}
-          <div className="w-full max-w-[17rem] rounded-2xl border-4 border-brand-600 bg-white p-4">
+          <div className="w-full max-w-[17rem] rounded-2xl border-4 border-brand-600 bg-card p-4">
             {/* Display size via `style` — qrcode.react's inline width/height
                 would otherwise override any className. */}
             <QRCodeCanvas

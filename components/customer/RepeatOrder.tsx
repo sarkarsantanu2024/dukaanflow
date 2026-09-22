@@ -155,7 +155,7 @@ export function RepeatOrder({
         ))}
       </ul>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50 p-3">
+      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-sunk p-3">
         <button
           type="button"
           onClick={() => {

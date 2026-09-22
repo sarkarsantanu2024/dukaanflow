@@ -41,7 +41,7 @@ export default async function OwnerLoginPage({ params }: PageProps) {
         // The same head as the sign-in card: an owner who has no PIN yet is
         // still arriving at their own shop, and a bare line of text reads like
         // an error page from somewhere else.
-        <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-card">
+        <div className="w-full max-w-sm rounded-2xl border border-glass-edge bg-glass p-6 shadow-raised">
           <BrandMark className="text-sm" />
           <div className="mt-4 flex items-center gap-3">
             {shop.ownerImageData ? (

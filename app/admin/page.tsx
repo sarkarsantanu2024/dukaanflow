@@ -147,7 +147,7 @@ export default async function AdminDashboard() {
       <main className="px-4 py-5 lg:px-6">
         {/* One strip rather than four tall cards. These numbers are context, not
             the point of the page, and they were taking up a third of it. */}
-        <dl className="mb-5 flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl border border-brand-100 bg-white px-5 py-4 shadow-card">
+        <dl className="mb-5 flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl border border-brand-100 bg-glass px-5 py-4 shadow-raised">
           <Stat label="Shops" value={rows.length} />
           <Stat label="Live" value={live} />
           <Stat label="Paying" value={paying} />

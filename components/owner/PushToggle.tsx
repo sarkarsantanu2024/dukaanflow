@@ -92,7 +92,7 @@ export function PushToggle({ slug, locale }: { slug: string; locale: Locale }) {
   }
 
   return (
-    <div className="flex items-start gap-3 rounded-2xl bg-white p-4 shadow-card">
+    <div className="flex items-start gap-3 rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
       <span
         className={
           on

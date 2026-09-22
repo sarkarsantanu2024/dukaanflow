@@ -211,7 +211,7 @@ export function CheckoutSheet({
             only when there is something to explain — a shop that delivers free
             shows nothing here, as it always did. */}
         {quote.deliveryFeePaise > 0 && (
-          <dl className="mb-4 space-y-1 rounded-xl bg-slate-50 px-3 py-2 text-sm">
+          <dl className="mb-4 space-y-1 rounded-xl bg-sunk px-3 py-2 text-sm">
             <div className="flex justify-between text-slate-600">
               <dt>{t.goods}</dt>
               <dd className="tabular-nums">{formatPaise(quote.goodsPaise)}</dd>
@@ -247,13 +247,13 @@ export function CheckoutSheet({
               ))}
             </div>
           ) : (
-            <p className="rounded-xl bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-700">
+            <p className="rounded-xl bg-sunk px-4 py-3 text-center text-sm font-semibold text-slate-700">
               🏪 {t.pickup}
             </p>
           )}
 
           {!showForm && (
-            <div className="flex items-start gap-3 rounded-xl bg-slate-50 px-4 py-3">
+            <div className="flex items-start gap-3 rounded-xl bg-sunk px-4 py-3">
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {t.orderingAs}

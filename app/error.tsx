@@ -29,7 +29,7 @@ export default function AppError({
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-4 text-center">
-      <div className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-8 shadow-sm">
+      <div className="w-full rounded-2xl border border-slate-200 bg-card px-5 py-8 shadow-sm">
         <p className="text-lg font-bold text-slate-900">Something went wrong</p>
         <p className="mt-1 text-sm text-slate-600">কিছু একটা ভুল হয়েছে · कुछ गड़बड़ हो गई</p>
 

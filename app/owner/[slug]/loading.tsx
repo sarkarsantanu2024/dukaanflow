@@ -24,7 +24,7 @@ function Block({ className = '' }: { className?: string }) {
 export default function OwnerLoading() {
   return (
     <div className="min-h-dvh pb-24" aria-busy="true" aria-live="polite">
-      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95">
+      <div className="sticky top-0 z-20 border-b border-slate-200 bg-card/95">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2 sm:px-4">
           <Block className="h-7 w-28" />
           <div className="ml-auto flex gap-2">

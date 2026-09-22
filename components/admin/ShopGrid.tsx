@@ -129,7 +129,7 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by name, slug or phone"
             aria-label="Search shops"
-            className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-3 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
+            className="w-full rounded-xl border border-slate-300 bg-card py-2.5 pl-9 pr-3 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
           />
         </div>
 
@@ -143,7 +143,7 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
               className={clsx(
                 'rounded-lg px-3 py-1.5 text-sm font-semibold transition',
                 filter === tab.id
-                  ? 'bg-white text-slate-900 shadow-sm'
+                  ? 'bg-card text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900',
               )}
             >
@@ -174,7 +174,7 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                 // positioned panel anchored to a button in the footer was cut
                 // off at the card's edge, so the download simply never
                 // appeared. The footer rounds its own bottom corners instead.
-                'flex flex-col rounded-2xl border border-brand-100/70 bg-white shadow-card transition hover:border-brand-200 hover:shadow-md',
+                'flex flex-col rounded-2xl border border-brand-100/70 bg-glass shadow-raised transition hover:border-brand-200 hover:shadow-md',
                 !shop.active && 'opacity-75',
               )}
             >
@@ -330,7 +330,7 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                 </Link>
                 <Link
                   href={`/admin/shop/${shop.slug}`}
-                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-sunk"
                 >
                   Edit
                 </Link>
@@ -350,7 +350,7 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                   rel="noopener noreferrer"
                   aria-label={`Open the customer page for ${shop.name}`}
                   title="Customer shop page"
-                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-300 px-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-300 px-2 text-xs font-semibold text-slate-600 hover:bg-sunk"
                 >
                   <ExternalIcon className="h-4 w-4" />
                   Shop
@@ -361,7 +361,7 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
                   rel="noopener noreferrer"
                   aria-label={`Open the owner app for ${shop.name}`}
                   title="Owner app"
-                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-300 px-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-300 px-2 text-xs font-semibold text-slate-600 hover:bg-sunk"
                 >
                   <ExternalIcon className="h-4 w-4" />
                   Owner

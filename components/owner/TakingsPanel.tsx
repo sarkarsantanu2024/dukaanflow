@@ -148,7 +148,7 @@ export function TakingsPanel({
                 className={clsx(
                   'h-9 flex-1 rounded-full text-sm font-medium transition',
                   period === option.id
-                    ? 'bg-white text-brand-800 shadow-raised'
+                    ? 'bg-card text-brand-800 shadow-raised'
                     : 'text-white/70 hover:text-white',
                 )}
               >

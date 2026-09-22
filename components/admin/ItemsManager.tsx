@@ -1154,7 +1154,7 @@ export function ItemsManager({
       {rows.map((row, index) => (
         <div
           key={index}
-          className="rounded-2xl bg-white p-3 shadow-card"
+          className="rounded-2xl border border-glass-edge bg-glass p-3 shadow-raised"
         >
           {/* THE NAME GETS A LINE OF ITS OWN.
               It was the first cell of a four-column grid, so on a phone — and
@@ -1417,7 +1417,7 @@ export function ItemsManager({
       <li
         key={item.id}
         className={clsx(
-          'rounded-2xl bg-white p-3 shadow-card',
+          'rounded-2xl border border-glass-edge bg-glass p-3 shadow-raised',
           busyId === item.id && 'opacity-60',
         )}
       >
@@ -1681,7 +1681,7 @@ export function ItemsManager({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t.searchItems}
             aria-label={t.searchItems}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5"
+            className="w-full rounded-xl border border-slate-300 bg-card px-3 py-2.5"
           />
           {/* One category means the filter cannot change what is on screen. */}
           {categories.length > 1 && (
@@ -1689,7 +1689,7 @@ export function ItemsManager({
               value={category}
               onChange={(event) => setCategory(event.target.value)}
               aria-label={t.allCategories}
-              className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 sm:w-52"
+              className="rounded-xl border border-slate-300 bg-card px-3 py-2.5 sm:w-52"
             >
               <option value="">{t.allCategories}</option>
               {/* The value stays the stored category so filtering still works;
@@ -1727,7 +1727,7 @@ export function ItemsManager({
             row at a time, and the day they need to empty the shop is the day
             they can afford to tap Show everything. */}
         {lean ? null : selected.size > 0 ? (
-          <div className="sticky top-2 z-10 mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-card">
+          <div className="sticky top-2 z-10 mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-slate-300 bg-glass px-3 py-2 shadow-raised">
             <span className="text-sm font-semibold tabular-nums text-slate-900">
               {selected.size} {t.selectedCount}
             </span>
@@ -1771,7 +1771,7 @@ export function ItemsManager({
                own toolbar. Still not a filled red button: an owner doing their
                prices should never have "delete everything" under their thumb.
                The confirmation names the number. */
-            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-slate-200 bg-white px-3 py-2">
+            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-slate-200 bg-card px-3 py-2">
               <span className="text-sm font-medium tabular-nums text-slate-500">
                 {visible.length === items.length
                   ? `${items.length} ${items.length === 1 ? t.itemOne : t.itemMany}`
@@ -1808,13 +1808,13 @@ export function ItemsManager({
               return (
                 <div
                   key={group.key}
-                  className="overflow-hidden rounded-2xl bg-white shadow-card"
+                  className="overflow-hidden rounded-2xl border border-glass-edge bg-glass shadow-raised"
                 >
                   <button
                     type="button"
                     onClick={() => toggleCategory(group.key)}
                     aria-expanded={open}
-                    className="flex w-full items-center gap-2 px-4 py-3 text-left transition hover:bg-slate-50"
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left transition hover:bg-sunk"
                   >
                     <ChevronRightIcon
                       className={clsx(
@@ -1839,7 +1839,7 @@ export function ItemsManager({
                   </button>
 
                   {open && (
-                    <div className="border-t border-slate-100 bg-slate-50 p-2">
+                    <div className="border-t border-slate-100 bg-sunk p-2">
                       {/* WHAT IS MISSING, WHERE IT IS MISSING FROM.
                           The common-items picker lists all hundred and thirty at
                           once, which is a thing an owner does on day one and
@@ -1869,7 +1869,7 @@ export function ItemsManager({
                                     type="button"
                                     disabled={addingSuggestion === key}
                                     onClick={() => addSuggested(suggestion)}
-                                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1 text-sm font-medium text-slate-700 transition hover:border-brand-500 hover:text-brand-700 disabled:opacity-50"
+                                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-card px-2.5 py-1 text-sm font-medium text-slate-700 transition hover:border-brand-500 hover:text-brand-700 disabled:opacity-50"
                                   >
                                     <span className="text-brand-600">+</span>
                                     {starterName(suggestion, locale)}
@@ -1931,7 +1931,7 @@ export function ItemsManager({
             {clashes.map((group) => (
               <li
                 key={group[0]!.id}
-                className="rounded-full bg-white px-2.5 py-1 text-sm font-medium text-amber-900 ring-1 ring-amber-200"
+                className="rounded-full bg-card px-2.5 py-1 text-sm font-medium text-amber-900 ring-1 ring-amber-200"
               >
                 {displayName(group[0]!, locale)} × {group.length}
               </li>
@@ -1981,7 +1981,7 @@ export function ItemsManager({
             type="button"
             onClick={() => openPhoto.current?.()}
             disabled={scanning}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-brand-700 transition hover:bg-slate-50 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-card px-4 py-3 text-sm font-semibold text-brand-700 transition hover:bg-sunk disabled:opacity-60"
           >
             {scanning ? <Spinner className="h-5 w-5" /> : <CameraIcon className="h-5 w-5" />}
             {t.photoAdd}
@@ -2039,7 +2039,7 @@ export function ItemsManager({
         <button
           type="button"
           onClick={() => setDrawer('add')}
-          className="w-full rounded-2xl bg-white px-4 py-3 text-left shadow-card transition hover:bg-slate-50"
+          className="w-full rounded-2xl border border-glass-edge bg-glass px-4 py-3 text-left shadow-raised transition hover:bg-sunk"
         >
           <span className="block font-semibold text-slate-900">{t.addItem}</span>
           <span className="mt-0.5 block text-sm text-slate-500">{t.typeInstead}</span>
@@ -2050,7 +2050,7 @@ export function ItemsManager({
             key={tool.id}
             type="button"
             onClick={() => setDrawer(tool.id)}
-            className="w-full rounded-2xl bg-white px-4 py-3 text-left shadow-card transition hover:bg-slate-50"
+            className="w-full rounded-2xl border border-glass-edge bg-glass px-4 py-3 text-left shadow-raised transition hover:bg-sunk"
           >
             <span className="block font-semibold text-slate-900">{tool.label}</span>
             {tool.hint && <span className="mt-0.5 block text-sm text-slate-500">{tool.hint}</span>}

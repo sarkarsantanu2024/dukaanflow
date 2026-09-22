@@ -86,7 +86,7 @@ export function SwipeToRemove({
       <div
         style={{ transform: `translateX(${offset}px)` }}
         className={
-          'relative bg-white ' + (sliding ? '' : 'transition-transform duration-200 ease-out')
+          'relative bg-card ' + (sliding ? '' : 'transition-transform duration-200 ease-out')
         }
         onTouchStart={(event) => begin(event.touches[0]!.clientX, event.touches[0]!.clientY)}
         onTouchMove={(event) => move(event.touches[0]!.clientX, event.touches[0]!.clientY)}

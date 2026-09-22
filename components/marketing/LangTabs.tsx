@@ -58,7 +58,7 @@ export function LangTabs({
             className={clsx(
               'rounded-lg px-4 py-1.5 text-sm font-semibold transition',
               lang === option
-                ? 'bg-white text-slate-900 shadow-sm'
+                ? 'bg-card text-slate-900 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900',
             )}
           >

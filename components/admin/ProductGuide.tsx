@@ -29,14 +29,14 @@ const ACTOR_LABEL: Record<TourStep['actor'], string> = {
 const ACTOR_TONE: Record<TourStep['actor'], string> = {
   operator: 'bg-slate-100 text-slate-700',
   owner: 'bg-brand-50 text-brand-800 ring-1 ring-brand-100',
-  customer: 'bg-slate-50 text-slate-800 ring-1 ring-slate-200',
+  customer: 'bg-sunk text-slate-800 ring-1 ring-slate-200',
 };
 
 export function ProductGuide() {
   const [open, setOpen] = useState(false);
 
   return (
-    <section className="rounded-2xl border border-brand-100 bg-white p-5 shadow-card print-sheet">
+    <section className="rounded-2xl border border-brand-100 bg-glass p-5 shadow-raised print-sheet">
       <div className="flex flex-wrap items-center gap-3">
         <div className="mr-auto min-w-0">
           <h2 className="font-semibold text-slate-900">How {BRAND_NAME} works</h2>
@@ -98,7 +98,7 @@ export function ProductGuide() {
           ))}
         </ol>
 
-        <div className="mt-6 rounded-2xl bg-slate-50 p-4">
+        <div className="mt-6 rounded-2xl bg-sunk p-4">
           <h3 className="font-semibold text-slate-900">What they always ask</h3>
           <dl className="mt-3 space-y-3">
             {TOUR_ANSWERS.map((entry) => (
@@ -126,7 +126,7 @@ function Shot({ step }: { step: TourStep }) {
 
   if (failed) {
     return (
-      <div className="flex min-h-[8rem] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-center">
+      <div className="flex min-h-[8rem] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-sunk p-3 text-center">
         <p className="text-xs font-semibold text-slate-500">Screenshot missing</p>
         <p className="mt-1 break-all font-mono text-[11px] text-slate-400">
           public/tour/{step.screenshot}

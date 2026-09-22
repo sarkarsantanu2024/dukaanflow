@@ -92,7 +92,7 @@ export default async function StatementPage({ params, searchParams }: PageProps)
   const who = one ? entries[0]?.customer : null;
 
   return (
-    <div className="min-h-dvh bg-white p-6 print:p-0">
+    <div className="min-h-dvh bg-card p-6 print:p-0">
       <div className="mx-auto max-w-3xl">
         {/* Gone from the printout: nobody wants a Back link on their paper. */}
         <div className="mb-6 flex items-center gap-3 print:hidden">

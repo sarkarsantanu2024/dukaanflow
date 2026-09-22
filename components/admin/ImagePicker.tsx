@@ -163,7 +163,7 @@ export function ImagePicker({
           disabled={disabled}
           aria-label={value ? `Replace ${label}` : `Choose ${label}`}
           className={clsx(
-            'group relative shrink-0 overflow-hidden border bg-slate-50 transition',
+            'group relative shrink-0 overflow-hidden border bg-sunk transition',
             'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
             shape === 'circle' ? 'rounded-full' : 'rounded-xl',
             value ? 'border-slate-200' : 'border-dashed border-slate-300 hover:border-brand-400',
@@ -199,7 +199,7 @@ export function ImagePicker({
             type="button"
             onClick={() => input.current?.click()}
             disabled={disabled}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-lg border border-slate-300 bg-card px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-sunk disabled:opacity-50"
           >
             {value ? 'Replace' : 'Choose'}
           </button>

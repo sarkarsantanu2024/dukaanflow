@@ -234,7 +234,7 @@ export default async function ReportsPage({
             ) : (
               <div className="space-y-4">
                 {report.occasions.map((occasion) => (
-                  <div key={`${occasion.name}-${occasion.when}`} className="rounded-xl bg-slate-50 px-4 py-3">
+                  <div key={`${occasion.name}-${occasion.when}`} className="rounded-xl bg-sunk px-4 py-3">
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                       <h3 className="text-sm font-bold text-slate-900">{occasion.name}</h3>
                       <span className="text-xs tabular-nums text-slate-500">{occasion.when}</span>
@@ -386,7 +386,7 @@ export default async function ReportsPage({
 
 function ReportTitle({ report }: { report: Report }) {
   return (
-    <header className="rounded-2xl bg-white px-5 py-4 shadow-card">
+    <header className="rounded-2xl border border-glass-edge bg-glass px-5 py-4 shadow-raised">
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {BRAND_NAME} business report
       </p>
@@ -417,7 +417,7 @@ function Headline({ report }: { report: Report }) {
    * exists to explain it.
    */
   return (
-    <section className="rounded-2xl bg-white p-5 shadow-card">
+    <section className="rounded-2xl border border-glass-edge bg-glass p-5 shadow-raised">
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-4">
         <div className="col-span-2 sm:col-span-1">
           <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Revenue</dt>
@@ -503,7 +503,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="break-inside-avoid rounded-2xl bg-white px-5 py-4 shadow-card">
+    <section className="break-inside-avoid rounded-2xl border border-glass-edge bg-glass px-5 py-4 shadow-raised">
       <h2 className="text-sm font-bold text-slate-900">{title}</h2>
       {note && <p className="mb-3 mt-0.5 text-xs leading-relaxed text-slate-500">{note}</p>}
       <div className={note ? '' : 'mt-3'}>{children}</div>
@@ -562,7 +562,7 @@ function Table({ head, rows }: { head: string[]; rows: (string | number)[][] }) 
 
 function Nothing({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">{children}</p>
+    <p className="rounded-xl bg-sunk px-4 py-6 text-center text-sm text-slate-500">{children}</p>
   );
 }
 

@@ -226,7 +226,7 @@ export function UpgradeFlow({
     const waiting = open.status === 'SUBMITTED';
     return (
       <div className="space-y-4">
-        <div className="rounded-xl bg-slate-50 p-3.5">
+        <div className="rounded-xl bg-sunk p-3.5">
           <p className="text-sm font-semibold text-slate-900">
             {PLAN_SPECS[open.plan]?.name} · {open.months === 12 ? t.perYear : t.perMonth} ·{' '}
             <span className="tabular-nums">{formatPaise(open.amountPaise)}</span>
@@ -293,7 +293,7 @@ export function UpgradeFlow({
         <select
           value={plan}
           onChange={(event) => setPlan(event.target.value as Plan)}
-          className="h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-semibold text-slate-900"
+          className="h-12 w-full rounded-xl border border-slate-300 bg-card px-3 text-base font-semibold text-slate-900"
         >
           {PLAN_ORDER.map((id) => {
             const option = PLAN_SPECS[id];
@@ -311,7 +311,7 @@ export function UpgradeFlow({
       {/* The chosen plan's details, under the dropdown rather than inside it.
           A <select> option cannot hold more than one line, and "what do I get"
           is the question the dropdown raises. */}
-      <ul className="space-y-1.5 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
+      <ul className="space-y-1.5 rounded-xl bg-sunk p-3 text-sm text-slate-700">
         {spec.features.map((feature) => (
           <li key={feature} className="flex gap-2">
             <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
@@ -331,7 +331,7 @@ export function UpgradeFlow({
               onClick={() => setMonths(option)}
               className={
                 'rounded-xl border-2 px-3 py-2.5 text-left transition ' +
-                (active ? 'border-brand-600 bg-brand-50' : 'border-slate-200 bg-white')
+                (active ? 'border-brand-600 bg-brand-50' : 'border-slate-200 bg-card')
               }
             >
               <span className="block text-sm font-semibold text-slate-900">
@@ -470,7 +470,7 @@ function QrDialog({
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="relative w-full max-w-xs rounded-2xl bg-white p-4"
+        className="relative w-full max-w-xs rounded-2xl bg-card p-4"
       >
         <button
           type="button"
@@ -490,10 +490,10 @@ function QrDialog({
           <img
             src={payTo.qrImageData}
             alt={label}
-            className="mt-3 w-full rounded-xl bg-white"
+            className="mt-3 w-full rounded-xl bg-card"
           />
         ) : (
-          <p className="mt-3 rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-600">
+          <p className="mt-3 rounded-xl bg-sunk p-4 text-center text-sm text-slate-600">
             {payTo.upiId}
           </p>
         )}

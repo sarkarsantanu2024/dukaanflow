@@ -44,7 +44,7 @@ export function ReportControls({
   for (let year = latestYear; year >= FIRST_YEAR; year -= 1) years.push(year);
 
   return (
-    <div className="no-print mb-5 rounded-2xl bg-white px-4 py-4 shadow-card">
+    <div className="no-print mb-5 rounded-2xl border border-glass-edge bg-glass px-4 py-4 shadow-raised">
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-full sm:w-56">
           <Select
@@ -150,7 +150,7 @@ export function ReportControls({
           <a
             href={`/api/admin/reports?${reportSearch(query)}`}
             download
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-card px-4 text-sm font-semibold text-slate-900 transition hover:bg-sunk"
           >
             Download CSV
           </a>

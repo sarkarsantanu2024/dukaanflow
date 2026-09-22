@@ -154,7 +154,7 @@ export default async function DashboardPage() {
 
         {/* The price list and the rules, so the operator on a call has the
             answer in front of them rather than in lib/plans.ts. */}
-        <section className="rounded-2xl border border-brand-100 bg-white p-5 shadow-card">
+        <section className="rounded-2xl border border-brand-100 bg-glass p-5 shadow-raised">
           <h2 className="font-semibold text-slate-900">What we charge</h2>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full min-w-[34rem] text-sm">
@@ -290,12 +290,12 @@ function Tile({
       ? 'border-brand-200 bg-brand-50'
       : tone === 'muted'
         ? 'border-slate-200 bg-slate-50'
-        : 'border-slate-200 bg-white';
+        : 'border-slate-200 bg-card';
   const figure =
     tone === 'brand' ? 'text-brand-800' : tone === 'muted' ? 'text-slate-800' : 'text-slate-900';
 
   return (
-    <div className={`rounded-2xl border p-4 shadow-card ${ring}`}>
+    <div className={`rounded-2xl border p-4 shadow-raised ${ring}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className={`mt-1 text-2xl font-bold tabular-nums ${figure}`}>{value}</p>
       <p className="mt-1 text-xs text-slate-500">{hint}</p>
@@ -305,7 +305,7 @@ function Tile({
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-brand-100 bg-white p-5 shadow-card">
+    <section className="rounded-2xl border border-brand-100 bg-glass p-5 shadow-raised">
       <h2 className="mb-3 font-semibold text-slate-900">{title}</h2>
       {children}
     </section>
@@ -341,7 +341,7 @@ function Figure({
 
 function Rule({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-xl bg-slate-50 p-3">
+    <div className="rounded-xl bg-sunk p-3">
       <p className="text-xs font-bold uppercase tracking-wide text-slate-700">{title}</p>
       <p className="mt-1 text-xs leading-relaxed text-slate-600">{body}</p>
     </div>

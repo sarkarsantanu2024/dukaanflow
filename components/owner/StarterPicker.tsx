@@ -155,7 +155,7 @@ export function StarterPicker({
           'rounded-2xl border px-3 py-1.5 text-left text-sm font-medium transition',
           on
             ? 'border-brand-600 bg-brand-600 text-white'
-            : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
+            : 'border-slate-300 bg-card text-slate-700 hover:bg-slate-50',
           !on && full && 'cursor-not-allowed opacity-40',
         )}
       >
@@ -189,7 +189,7 @@ export function StarterPicker({
         onChange={(event) => setQuery(event.target.value)}
         placeholder={t.starterSearch}
         aria-label={t.starterSearch}
-        className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base"
+        className="mt-3 w-full rounded-xl border border-slate-300 bg-card px-3 py-2.5 text-base"
       />
 
       {matches ? (
@@ -208,7 +208,7 @@ export function StarterPicker({
             const allOn = count === items.length;
 
             return (
-              <div key={category} className="overflow-hidden rounded-xl bg-white">
+              <div key={category} className="overflow-hidden rounded-xl bg-card">
                 <div className="flex items-center gap-2 px-3 py-2.5">
                   <button
                     type="button"

@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: `${BRAND_NAME} — Link not valid` };
 export default function JoinExpiredPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-slate-100 px-4 py-10">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-card">
+      <div className="w-full max-w-sm rounded-2xl border border-glass-edge bg-glass p-6 shadow-raised">
         <p className="text-xs font-bold uppercase tracking-wide text-brand-700">{BRAND_NAME}</p>
         <h1 className="mt-1 text-xl font-bold text-slate-900">This link is not valid</h1>
         <p className="mt-2 text-sm text-slate-600">

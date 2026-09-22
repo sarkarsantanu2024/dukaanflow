@@ -136,7 +136,7 @@ export function PaymentRequestsPanel({ requests }: { requests: AdminPaymentReque
         {requests.map((row) => (
           <li
             key={row.id}
-            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card"
+            className="rounded-2xl border border-slate-200 bg-glass p-4 shadow-raised"
           >
             <div className="flex flex-wrap items-start gap-4">
               {/* The screenshot first and small. It is evidence, not content —
@@ -286,7 +286,7 @@ export function PaymentRequestsPanel({ requests }: { requests: AdminPaymentReque
                   className={
                     'rounded-lg px-3 py-1.5 text-sm font-semibold transition ' +
                     (lang === option
-                      ? 'bg-white text-slate-900 shadow-sm'
+                      ? 'bg-card text-slate-900 shadow-sm'
                       : 'text-slate-600 hover:text-slate-900')
                   }
                 >
@@ -302,7 +302,7 @@ export function PaymentRequestsPanel({ requests }: { requests: AdminPaymentReque
                 operator about to message a customer should be able to read it
                 first — and on a desktop where WhatsApp Web is not signed in,
                 copying it is the only way to send it at all. */}
-            <pre className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 font-sans text-sm text-slate-700">
+            <pre className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap rounded-xl bg-sunk p-3 font-sans text-sm text-slate-700">
               {issued.messages[lang]}
             </pre>
 

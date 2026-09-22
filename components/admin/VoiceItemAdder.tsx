@@ -474,14 +474,14 @@ export function VoiceItemAdder({
 
   if (!supported) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-card p-4 text-sm text-slate-500">
         Voice needs Chrome, Edge, or Safari. Use the form below on this browser.
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-card">
+    <div className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
       <div className="flex items-start gap-3">
         <MicButton
           listening={listening}
@@ -501,7 +501,7 @@ export function VoiceItemAdder({
                 value={lang}
                 onChange={(event) => changeLang(event.target.value as VoiceLang)}
                 aria-label={t.language}
-                className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm"
+                className="rounded-lg border border-slate-300 bg-card px-2 py-1 text-sm"
               >
                 {VOICE_LANGS.map((option) => (
                   <option key={option.value} value={option.value}>

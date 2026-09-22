@@ -182,7 +182,7 @@ export function ShopForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
+    <form onSubmit={onSubmit} className="rounded-2xl border border-glass-edge bg-glass p-5 shadow-raised sm:p-6">
       <div className="space-y-6">
         <Section title="The shop" description="What customers see when they scan the QR.">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -424,7 +424,7 @@ export function ShopForm({
 
       {/* Sticky, because on a phone the save button was three scrolls below
           whatever the admin was actually editing. */}
-      <div className="sticky bottom-0 -mx-5 mt-6 flex items-center gap-3 border-t border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky bottom-0 -mx-5 mt-6 flex items-center gap-3 border-t border-slate-200 bg-card/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:px-6">
         <Button type="submit" loading={submitting}>
           {editingSlug ? 'Save changes' : 'Create shop'}
         </Button>
