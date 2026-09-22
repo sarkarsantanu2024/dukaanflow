@@ -215,8 +215,9 @@ export function OwnerShell({
           anything see-through there shows that movement; a sheen across a 56px
           strip is a ramp nobody can see; and it is the lowest thing on the
           screen, with nothing to cast a shadow onto. Black also gives the lit
-          capsule on the selected tab the most it can possibly have to stand
-          against. */}
+          tile on the selected tab the most it can possibly have to stand
+          against — and it is why that tile's glass is layered rather than
+          blurred; see the note on it below. */}
       <nav
         aria-label="Sections"
         className="fixed inset-x-0 bottom-0 z-20 bg-black pb-[env(safe-area-inset-bottom)]"
@@ -229,42 +230,63 @@ export function OwnerShell({
                 key={tab.id}
                 href={tab.href}
                 aria-current={active ? 'page' : undefined}
-                className={clsx(
-                  'flex flex-1 flex-col items-center gap-1 py-2 text-xs transition',
-                  active ? 'text-white' : 'text-white/50 hover:text-white/80',
-                )}
+                className="flex flex-1 justify-center px-1 py-1.5 text-xs transition"
               >
                 {/* WHERE THE ACTIVE STATE ACTUALLY LIVES.
                     It was a colour change on the label alone, which on a bar of
                     four near-identical items is the weakest signal available —
                     and the first thing lost by anyone reading slowly, or
-                    glancing at a phone on a counter. The icon now sits in a lit
-                    capsule, so the selected tab differs in SHAPE as well as in
-                    shade and can be found without reading a word.
+                    glancing at a phone on a counter. The selected tab now sits
+                    in a lit TILE, so it differs in SHAPE as well as in shade and
+                    can be found without reading a word.
 
-                    A SOLID capsule, not a translucent one: over an opaque bar
-                    a 25% fill is just a slightly lighter grey, which is the
-                    weak signal this was meant to replace.
+                    THE TILE HOLDS THE LABEL TOO, and it is a rounded square
+                    rather than a pill round the icon. A capsule round the icon
+                    alone left the word outside the selection, so the lit thing
+                    and the thing it named were two objects; one block containing
+                    both is a single object that says "you are here". The radius
+                    is `rounded-2xl`, the same one every card in the product
+                    uses — the tab bar is the last place that was still speaking
+                    a different shape language.
 
-                    Sized and placed on every tab, lit only on the active one,
+                    GLASS, AND WHAT THAT CAN AND CANNOT MEAN HERE. The fill is
+                    translucent brand over the black bar, lifted by a white
+                    gradient from the top edge, a bright inset hairline along
+                    that edge, and a ring round the whole tile. There is NO
+                    `backdrop-blur`: the bar behind this is flat opaque black,
+                    so a blur would have nothing to refract and would cost a
+                    compositor layer on a cheap phone to produce no pixels. The
+                    glass here is the layering, not a blur.
+
+                    DO NOT THIN THE FILL FURTHER. At 70% over black the tile is
+                    about 2.4:1 against the bar; the solid version it replaces
+                    was 3.9:1, and the ring and the top highlight are what buy
+                    that difference back. Below roughly 60% it stops being a lit
+                    block and becomes a slightly lighter grey, which is the weak
+                    signal this whole treatment exists to replace.
+
+                    Padded and placed on every tab, lit only on the active one,
                     so nothing moves by a pixel when the selection changes. */}
                 <span
                   className={clsx(
-                    'flex h-8 w-14 items-center justify-center rounded-full transition',
-                    active && 'bg-brand-600',
+                    'flex w-full flex-col items-center gap-1 rounded-2xl px-1.5 py-1.5 transition',
+                    active
+                      ? 'bg-brand-600/70 bg-gradient-to-b from-white/20 to-transparent text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] ring-1 ring-inset ring-white/30'
+                      : 'text-white/50 hover:text-white/80',
                   )}
                 >
                   <TabIcon tab={tab.id} />
-                </span>
-                <span
-                  className={clsx(
-                    'max-w-full truncate px-1',
-                    // The label follows the icon rather than leading it: on the
-                    // one you are on it firms up, everywhere else it recedes.
-                    active ? 'font-medium' : 'font-normal',
-                  )}
-                >
-                  {tab.label}
+                  <span
+                    className={clsx(
+                      'max-w-full truncate px-1',
+                      // The label follows the icon rather than leading it: on
+                      // the one you are on it firms up, everywhere else it
+                      // recedes.
+                      active ? 'font-medium' : 'font-normal',
+                    )}
+                  >
+                    {tab.label}
+                  </span>
                 </span>
               </Link>
             );
