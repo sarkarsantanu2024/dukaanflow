@@ -17,8 +17,11 @@ export function EmptyState({
   action?: React.ReactNode;
   art?: 'shop' | 'voice';
 }) {
+  // The dashed edge is `brand-200`, not `slate-300`. On a tinted page a grey
+  // hairline is the one line on the screen that belongs to no palette, and a
+  // dashed one draws the eye precisely because it is the odd thing out.
   return (
-    <div className="rounded-2xl border border-dashed border-slate-300 bg-card px-6 py-10 text-center">
+    <div className="rounded-2xl border border-dashed border-brand-200 bg-card px-6 py-10 text-center">
       {art === 'shop' && <ShopArt className="mx-auto mb-4 h-32 w-auto max-w-[18rem]" />}
       {art === 'voice' && <VoiceArt className="mx-auto mb-4 h-28 w-auto max-w-[18rem]" />}
       <p className="text-base font-semibold text-slate-800">{title}</p>

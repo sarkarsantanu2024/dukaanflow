@@ -45,7 +45,7 @@ export function CartBar({
       className="pointer-events-auto relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white shadow-lg shadow-brand-900/30 ring-4 ring-slate-100/70 transition hover:bg-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 active:scale-95"
     >
       <CartIcon className="h-6 w-6" />
-      <span className="absolute -right-1 -top-1 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-card px-1 text-xs font-bold tabular-nums text-brand-800 ring-2 ring-brand-700">
+      <span className="absolute -right-1 -top-1 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-card px-1 text-xs font-semibold tabular-nums text-brand-800 ring-2 ring-brand-700">
         {totalItems}
       </span>
     </button>

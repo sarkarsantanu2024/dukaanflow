@@ -440,7 +440,7 @@ export function KhataScreen({
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm text-slate-500">{t.khataTotal}</p>
-            <p className="text-3xl font-bold tabular-nums text-slate-900">
+            <p className="text-3xl font-semibold tabular-nums text-slate-900">
               {formatPaise(outstandingPaise)}
             </p>
             <p className="mt-0.5 text-sm text-slate-500">{t.khataTitle}</p>
@@ -569,7 +569,7 @@ export function KhataScreen({
                   <span
                     aria-hidden
                     className={clsx(
-                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold',
+                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
                       owes
                         ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
                         : advance
@@ -626,7 +626,7 @@ export function KhataScreen({
                   >
                     <span
                       className={clsx(
-                        'block font-bold tabular-nums',
+                        'block font-semibold tabular-nums',
                         owes ? 'text-amber-800' : advance ? 'text-brand-800' : 'text-slate-400',
                       )}
                     >

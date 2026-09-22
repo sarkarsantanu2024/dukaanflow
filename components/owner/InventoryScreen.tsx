@@ -65,7 +65,7 @@ export function InventoryScreen({
     return (
       <section className="rounded-2xl border border-glass-edge bg-glass p-6 shadow-raised">
         <VoiceArt className="mx-auto mb-4 h-28 w-auto max-w-[16rem]" />
-        <h2 className="text-xl font-bold text-slate-900">{t.welcomeTitle}</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t.welcomeTitle}</h2>
         <p className="mt-2 text-slate-600">{t.welcomeBody}</p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button size="lg" onClick={() => setWelcome(false)}>

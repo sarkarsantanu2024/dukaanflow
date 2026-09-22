@@ -36,7 +36,7 @@ export function LegalPage({
       </header>
 
       <main className="mx-auto max-w-3xl px-5 py-10">
-        <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
+        <h1 className="text-3xl font-semibold text-slate-900">{title}</h1>
         <p className="mt-2 text-slate-600">{intro}</p>
         <p className="mt-1 text-sm text-slate-500">
           {COMPANY.name} · Last updated {COMPANY.policiesUpdated}
@@ -44,7 +44,7 @@ export function LegalPage({
 
         {/* `prose`-like spacing by hand: this project has no typography plugin,
             and one class of margins is cheaper than adding one. */}
-        <div className="mt-8 space-y-6 text-slate-700 [&_a]:font-semibold [&_a]:text-brand-700 [&_a]:underline [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_li]:leading-relaxed [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5">
+        <div className="mt-8 space-y-6 text-slate-700 [&_a]:font-semibold [&_a]:text-brand-700 [&_a]:underline [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-slate-900 [&_li]:leading-relaxed [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5">
           {children}
         </div>
 

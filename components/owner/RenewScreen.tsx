@@ -36,9 +36,9 @@ export function RenewScreen({
           screen is asking one question — am I paid up, and until when — and
           everything below is meaningless until that one is answered. */}
       <section className="rounded-2xl border border-slate-200 bg-card p-4">
-        <h1 className="text-lg font-bold text-slate-900">{t.renewTitle}</h1>
+        <h1 className="text-lg font-semibold text-slate-900">{t.renewTitle}</h1>
         <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-slate-700">
-          <span className="text-2xl font-bold text-slate-900">{plan.planName}</span>
+          <span className="text-2xl font-semibold text-slate-900">{plan.planName}</span>
           {/* `itemsCount`, not `blockItems` — the latter reads "for items" in
               Bengali and Hindi, a sentence fragment the roadblock completes and
               this line does not. */}

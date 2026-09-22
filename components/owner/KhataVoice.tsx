@@ -260,8 +260,8 @@ export function KhataVoice({
                   pending.sure ? 'border-slate-200 bg-slate-50' : 'border-amber-300 bg-amber-50',
                 )}
               >
-                <p className="text-base font-bold text-slate-900">{pending.customer.name}</p>
-                <p className="text-2xl font-bold tabular-nums text-slate-900">
+                <p className="text-base font-semibold text-slate-900">{pending.customer.name}</p>
+                <p className="text-2xl font-semibold tabular-nums text-slate-900">
                   {formatPaise(pending.amountPaise)}
                 </p>
 

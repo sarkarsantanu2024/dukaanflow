@@ -140,7 +140,7 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
             as an error, because the customer did nothing wrong. */}
         <main className="mx-auto max-w-lg px-4 py-10 text-center">
           <p className="text-4xl">🔎</p>
-          <h1 className="mt-3 text-xl font-bold text-slate-900">{t.trackNotFound}</h1>
+          <h1 className="mt-3 text-xl font-semibold text-slate-900">{t.trackNotFound}</h1>
           <p className="mt-1 text-slate-600">{t.trackNotFoundHint}</p>
         </main>
       </div>
@@ -181,7 +181,7 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
       <main className="mx-auto max-w-lg space-y-3 px-4 py-4">
         <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
           <p className="text-sm text-slate-500">{order.shopName}</p>
-          <h1 className="text-xl font-bold text-slate-900">{t.trackTitle}</h1>
+          <h1 className="text-xl font-semibold text-slate-900">{t.trackTitle}</h1>
           <p className="mt-0.5 text-xs text-slate-500">
             {t.trackPlaced} {formatDay(order.placedAt)} · {formatClock(order.placedAt)} ·{' '}
             {order.orderType === 'DELIVERY' ? t.delivery : t.pickup}
@@ -239,7 +239,7 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
             )}
           </ul>
 
-          <p className="mt-3 flex justify-between border-t border-slate-100 pt-3 text-base font-bold text-slate-900">
+          <p className="mt-3 flex justify-between border-t border-slate-100 pt-3 text-base font-semibold text-slate-900">
             <span>{t.total}</span>
             <span className="tabular-nums">{formatPaise(order.totalAmountPaise)}</span>
           </p>

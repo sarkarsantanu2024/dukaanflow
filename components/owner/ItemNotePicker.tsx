@@ -204,18 +204,18 @@ export function ItemNotePicker({
                           type="button"
                           aria-label={`− ${label(item, locale)}`}
                           onClick={() => change(item.id, -1)}
-                          className="h-8 w-8 rounded-md text-lg font-bold text-brand-800"
+                          className="h-8 w-8 rounded-md text-lg font-semibold text-brand-800"
                         >
                           −
                         </button>
-                        <span className="w-6 text-center text-sm font-bold tabular-nums">
+                        <span className="w-6 text-center text-sm font-semibold tabular-nums">
                           {count}
                         </span>
                         <button
                           type="button"
                           aria-label={`+ ${label(item, locale)}`}
                           onClick={() => change(item.id, 1)}
-                          className="h-8 w-8 rounded-md text-lg font-bold text-brand-800"
+                          className="h-8 w-8 rounded-md text-lg font-semibold text-brand-800"
                         >
                           +
                         </button>

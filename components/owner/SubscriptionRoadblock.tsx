@@ -65,7 +65,7 @@ export function SubscriptionRoadblock({
       <div className="mx-auto my-auto flex min-h-full max-w-md items-center">
         <div className="w-full overflow-hidden rounded-2xl bg-card shadow-xl">
           <div className={paused ? 'bg-red-600 px-5 py-4 text-white' : 'bg-chrome px-5 py-4 text-white'}>
-            <h2 id="roadblock-title" className="text-lg font-bold leading-tight">
+            <h2 id="roadblock-title" className="text-lg font-semibold leading-tight">
               {paused ? t.blockPausedTitle : t.blockTitle}
             </h2>
             <p className="mt-1.5 text-sm leading-relaxed text-white/85">

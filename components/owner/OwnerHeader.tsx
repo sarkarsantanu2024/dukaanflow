@@ -256,7 +256,7 @@ export function OwnerHeader({
           ) : (
             <span
               aria-hidden
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-base font-bold text-brand-800"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-base font-semibold text-brand-800"
             >
               {shopName.trim().charAt(0).toUpperCase()}
             </span>
@@ -266,7 +266,7 @@ export function OwnerHeader({
               picks neither; a step up settles it, and the right one wins — in
               the owner's own app the shop is the subject and the product is the
               stationery it is printed on. */}
-          <span className="min-w-0 flex-1 truncate text-base font-bold leading-tight text-slate-900">
+          <span className="min-w-0 flex-1 truncate text-base font-semibold leading-tight text-slate-900">
             {shopName}
           </span>
 
