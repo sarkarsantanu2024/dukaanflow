@@ -109,7 +109,7 @@ export function AmountStepper({
     <div className={clsx('w-full', compact ? 'space-y-2' : 'space-y-2')}>
       {/* THE AMOUNT, IN WORDS THE SHOPPER USED. The stored quantity is a
           fraction of a pack and no shopper should ever see it. */}
-      <div className="flex items-center gap-1 rounded-xl bg-white p-1 ring-1 ring-brand-200">
+      <div className="flex items-center gap-1 rounded-xl bg-card p-1 ring-1 ring-brand-200">
         <button
           type="button"
           aria-label={`− ${t.amount}`}
@@ -187,7 +187,7 @@ export function AmountStepper({
                 'rounded-full px-2.5 py-1 text-xs font-medium transition',
                 Math.abs(preset - base) < 0.001
                   ? 'bg-brand-600 text-white'
-                  : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50',
+                  : 'bg-card text-slate-600 ring-1 ring-slate-200 hover:bg-brand-50',
               )}
             >
               {baseLabel(unit, preset)}

@@ -11,7 +11,7 @@
      white things on this page — when the page itself is white too, nothing
      reads as raised and every screen flattens into one sheet of paper. */
   body {
-    @apply min-h-dvh bg-app bg-fixed text-slate-900 antialiased;
+    @apply min-h-dvh bg-aurora bg-fixed text-slate-900 antialiased;
   }
 
   /* Number inputs: hide spinners so price fields stay thumb-friendly. */
@@ -26,6 +26,93 @@
 }
 
 /* A4 poster: hide app chrome, keep only the printable sheet. */
+/*
+ * A LIGHT TRAVELLING ROUND THE TILL BUTTON'S EDGE.
+ *
+ * Two layers in one background: a flat fill painted to the PADDING box, and a
+ * conic gradient painted to the BORDER box. The border is transparent, so the
+ * only part of the conic anybody sees is the 2px ring — and rotating its start
+ * angle sends a short arc of light chasing round the outline.
+ *
+ * WHY THE CUSTOM PROPERTY HAS TO BE REGISTERED. A plain `--angle` is a string
+ * as far as CSS is concerned, and strings do not interpolate: the animation
+ * would jump from 0deg to 360deg and nothing would move. `@property` gives it a
+ * type, and a typed property animates. Where `@property` is unsupported the
+ * angle simply stays at 0 and the button keeps a still gradient edge, which is
+ * a perfectly good button — nothing breaks, it just does not travel.
+ *
+ * IT GOES ALL THE WAY ROUND, AND IT IS MULTICOLOURED. The first version was a
+ * single pale arc over about a fifth of the circumference, on a 2px border —
+ * so for most of every rotation the edge looked like an ordinary button, and
+ * the moving part was a tint of the fill it sat on. Nobody saw it move.
+ *
+ * A full conic wheel has no transparent stretch to hide in: every point of the
+ * outline is lit at every moment, and rotating it makes the whole edge travel.
+ * The border is 4px because at 2 the colour is a hairline that antialiasing
+ * eats on a low-density screen, and at 3 it was still reading as a tint.
+ *
+ * 1.6s, NOT 4s. A wheel of nine colours rotating slowly looks like a STILL
+ * gradient — the hues are close enough together that a slow turn gives the eye
+ * nothing to fix on, and the movement reads as nothing happening. Fast enough
+ * that a colour visibly travels from one side to the other is what makes it
+ * register as animation rather than decoration.
+ *
+ * The colours are deliberately NOT the brand ramp. One button in the product
+ * gets this, it is the one that opens the till, and a ring in the same blue as
+ * the fill behind it is invisible by definition. These are outside the palette
+ * so they cannot blend into it.
+ *
+ * It replaces a highlight that swept across the button's FACE. That read as a
+ * shine passing over a surface; this reads as an outline that is alive, which
+ * is the thing that draws an eye to a control without shouting at it.
+ */
+@property --ring-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes ring-travel {
+  to {
+    --ring-angle: 360deg;
+  }
+}
+
+.btn-ring {
+  background:
+    linear-gradient(var(--ring-fill), var(--ring-fill)) padding-box,
+    conic-gradient(
+        from var(--ring-angle),
+        #22d3ee,
+        #38bdf8,
+        #818cf8,
+        #c084fc,
+        #f472b6,
+        #fb923c,
+        #fbbf24,
+        #34d399,
+        #22d3ee
+      )
+      border-box;
+  border: 4px solid transparent;
+  animation: ring-travel 1.6s linear infinite;
+}
+
+/* The till button's travelling ring is decoration. Anyone who has asked their
+   phone for less movement gets a STILL multicoloured edge, which loses them
+   nothing — the button is already the largest and the only coloured thing in
+   its row.
+
+   WORTH KNOWING WHEN IT "DOES NOT ANIMATE": this media query matches whenever
+   the operating system has animations turned down, which on Windows is
+   Settings → Accessibility → Visual effects → Animation effects. A ring that
+   is plainly there but never moves is this rule doing its job, not a bug. */
+@media (prefers-reduced-motion: reduce) {
+  .btn-ring {
+    animation: none !important;
+  }
+}
+
 @media print {
   .no-print {
     display: none !important;

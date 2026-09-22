@@ -84,14 +84,14 @@ export const BRAND_WORDMARK: { head: string; tail: string } = {
  * the service worker. It was typed out in eight of those places and every one
  * of them was still the old, hotter, inaccessible green after the scale moved.
  */
-export const BRAND_GREEN = '#2f7a5e';
+export const BRAND_GREEN = '#0e7490';
 
 /**
  * The ground the app sits on — `bg-app`, and the manifests' `background_color`,
  * which is what an installed app paints while it starts. A mismatch here is
  * visible as a flash of the wrong colour every single launch.
  */
-export const BRAND_GROUND = '#f5f8f6';
+export const BRAND_GROUND = '#f0f0ee';
 
 /**
  * Where each rendition of the mark lives.

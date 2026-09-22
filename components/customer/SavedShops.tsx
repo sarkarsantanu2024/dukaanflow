@@ -52,7 +52,7 @@ export function SavedShops() {
       <h2 className="text-sm font-semibold text-slate-900">{t.savedShopsTitle}</h2>
       <ul className="mt-2 space-y-2">
         {shops.map((shop) => (
-          <li key={shop.slug} className="flex items-center gap-2 rounded-xl bg-white p-2 shadow-card">
+          <li key={shop.slug} className="flex items-center gap-2 rounded-xl border border-glass-edge bg-glass p-2 shadow-raised">
             <Link
               href={`/shop/${shop.slug}`}
               className="min-w-0 flex-1 truncate px-2 py-1.5 font-semibold text-slate-900"

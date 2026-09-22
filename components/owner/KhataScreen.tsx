@@ -505,16 +505,33 @@ export function KhataScreen({
           It needs names to match against, so it is absent on an empty book:
           the first customer is always typed, because a new one needs a phone
           number and that is not something to take from a recogniser. */}
-      {customers.length > 0 && (
-        <KhataVoice
-          customers={customers}
-          locale={locale}
-          busy={busy}
-          onCommit={(customer, kind, amountPaise) =>
-            addFor(customer as KhataCustomer, kind, amountPaise)
-          }
-        />
-      )}
+      {/* THE KHATA MIC IS HIDDEN, BY REQUEST — and this one has a cost worth
+          stating plainly, because the paragraph above is the argument against
+          doing it.
+
+          This is the screen an owner who cannot write opens most often, and the
+          mic was its only way in that was not a keyboard. Hidden, the credit
+          book is a typed form again: a name, a kind and an amount, on the one
+          record nobody else in the shop can keep on the owner's behalf.
+
+          The item list's mic and camera are untouched, so a non-reading owner
+          can still list stock by voice — it is only the khata that goes back to
+          typing.
+
+          HIDDEN, NOT DELETED. `KhataVoice`, `addFor` and the customer list are
+          all still wired to each other; restoring it is putting this back:
+
+            {customers.length > 0 && (
+              <KhataVoice
+                customers={customers}
+                locale={locale}
+                busy={busy}
+                onCommit={(customer, kind, amountPaise) =>
+                  addFor(customer as KhataCustomer, kind, amountPaise)
+                }
+              />
+            )}
+      */}
 
       {customers.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">

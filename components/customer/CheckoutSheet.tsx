@@ -187,7 +187,7 @@ export function CheckoutSheet({
         role="dialog"
         aria-modal="true"
         aria-label={t.yourOrder}
-        className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 pb-7 shadow-sheet sm:p-6 sm:pb-8"
+        className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-card p-5 pb-7 shadow-sheet sm:p-6 sm:pb-8"
       >
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300" />
 
@@ -239,7 +239,7 @@ export function CheckoutSheet({
                     'h-12 rounded-xl border-2 text-sm font-semibold transition',
                     orderType === option
                       ? 'border-brand-600 bg-brand-50 text-brand-700'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+                      : 'border-slate-200 bg-card text-slate-600 hover:border-slate-300',
                   )}
                 >
                   {option === 'DELIVERY' ? `🛵 ${t.delivery}` : `🏪 ${t.pickup}`}

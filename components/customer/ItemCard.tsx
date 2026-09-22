@@ -146,14 +146,23 @@ export function ItemCard({
   ) : (
     // A bare basket with no button around it: the row it sits in is already the
     // target, and a filled pill here advertised a second one.
+    /* IT HAS TO LOOK LIKE SOMETHING YOU CAN TURN OFF.
+       Chosen and not chosen were the same grey cart in two shades, which says
+       "this one is in the basket" and says nothing at all about a second tap
+       taking it out. Selected is now a filled brand tile — the shape every
+       toggle on a phone uses — so the row reads as pressed rather than merely
+       marked, and pressing a pressed thing is a gesture nobody has to be
+       taught. */
     <span
       aria-hidden
       className={clsx(
-        'shrink-0 pr-1 transition',
-        inBasket ? 'text-brand-600' : 'text-slate-300 group-hover:text-brand-600',
+        'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition',
+        inBasket
+          ? 'bg-brand-600 text-white shadow-sm'
+          : 'text-slate-300 group-hover:text-brand-600',
       )}
     >
-      <CartIcon className="h-6 w-6" />
+      <CartIcon className="h-5 w-5" />
     </span>
   );
 
@@ -163,12 +172,12 @@ export function ItemCard({
         // A column, so a weighed item's amount picker gets the card's full
         // width on its own row instead of being squeezed into the corner the
         // whole-number stepper fits in.
-        'group flex flex-col gap-2 rounded-2xl border p-3 shadow-card transition',
+        'group flex flex-col gap-2 rounded-2xl border p-3 shadow-raised transition',
         disabled
-          ? 'border-slate-200 bg-white opacity-60'
+          ? 'border-slate-200 bg-gradient-to-b from-slate-100 to-slate-200 opacity-60'
           : inBasket
             ? 'border-brand-400 bg-brand-50'
-            : 'border-slate-200 bg-white hover:border-brand-300 hover:shadow-md',
+            : 'border-slate-300/70 bg-gradient-to-b from-card to-sunk hover:border-brand-300 hover:shadow-float',
       )}
     >
       <div className="flex items-center gap-2">
@@ -183,9 +192,35 @@ export function ItemCard({
          * produce. The first tap still adds one of whatever the price quotes,
          * which is the amount the shopper has just read.
          */
-        disabled={disabled || atMost || (inBasket && loose)}
-        onClick={() => onChange(quantity + 1)}
-        aria-label={inBasket ? `${t.add} — ${label} (${quantity})` : `${t.add} — ${label}`}
+        /**
+         * A SECOND TAP TAKES IT BACK OUT — FOR EVERY ITEM, WEIGHED OR COUNTED.
+         *
+         * Tapping used to only ever add one, so an item put in the basket by
+         * mistake had to be counted back down in the stepper. Tapping a row
+         * that is already in the basket now clears it, which is what a tap on a
+         * chosen thing means everywhere else.
+         *
+         * WEIGHED GOODS WERE EXCLUDED AND SHOULD NOT HAVE BEEN. The rule that
+         * kept them out — "adding one more kilo to 50 g of posto is nobody's
+         * intention" — was written when a tap could only ADD. It is the exact
+         * opposite of true now: a second tap removes, and removing a weighed
+         * item is the case that needed help most. At 1 kg the stepper takes
+         * EIGHT presses to reach zero (1000 → 750 → 500 → 250 → 200 → 150 →
+         * 100 → 50 → 0), so a shopper who picked the wrong sack had no way out
+         * that anybody would find.
+         *
+         * IT CLEARS RATHER THAN DECREMENTS. Two taps to add two and a third to
+         * go back to two would be a toggle that is not a toggle; "put it back"
+         * is what a second tap expresses, and the stepper is still there for
+         * anyone who wants a count.
+         */
+        disabled={disabled || (!inBasket && atMost)}
+        onClick={() => onChange(inBasket ? 0 : quantity + 1)}
+        aria-label={inBasket ? `${label} (${quantity})` : `${t.add} — ${label}`}
+        // Says whether the thing is in the basket, which is what a second tap
+        // now acts on. Cheaper and more accurate than a new label in three
+        // languages, and screen readers announce the change on toggle.
+        aria-pressed={inBasket}
         className={clsx(
           // Stretches across the whole row and swallows the card's own padding,
           // so the tap target reaches the edges rather than stopping at the
@@ -272,7 +307,7 @@ export function ItemCard({
         // The one thing that cannot live inside the button above — buttons do
         // not nest — so it is the one case where the row's right-hand corner
         // does something other than add.
-        <div className="flex shrink-0 items-center gap-1 rounded-xl bg-white p-1 ring-1 ring-brand-200">
+        <div className="flex shrink-0 items-center gap-1 rounded-xl bg-card p-1 ring-1 ring-brand-200">
           <button
             type="button"
             aria-label={`− ${label}`}

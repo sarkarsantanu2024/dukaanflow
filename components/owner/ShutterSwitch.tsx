@@ -84,14 +84,14 @@ export function ShutterSwitch({
         // Amber, loudly, while the shop is shut. An owner who closed for the
         // afternoon and forgot is the failure this exists to prevent, and it
         // has to be readable from across a counter without being looked for.
-        open ? 'hover:bg-slate-100' : 'bg-amber-100 hover:bg-amber-200',
+        open ? 'hover:bg-white/10' : 'bg-amber-400/25 ring-1 ring-amber-300/50',
       )}
     >
       <span
         aria-hidden
         className={clsx(
           'relative h-5 w-9 shrink-0 rounded-full transition',
-          open ? 'bg-brand-600' : 'bg-slate-400',
+          open ? 'bg-brand-400' : 'bg-white/35',
         )}
       >
         <span
@@ -107,7 +107,7 @@ export function ShutterSwitch({
       <span
         className={clsx(
           'hidden truncate text-sm font-semibold sm:inline',
-          open ? 'text-slate-600' : 'text-amber-900',
+          open ? 'text-white/85' : 'text-amber-200',
         )}
       >
         {open ? t.shutterOpen : t.shutterClosed}

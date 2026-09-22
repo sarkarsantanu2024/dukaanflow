@@ -54,14 +54,15 @@ import { upiPayUrlWithAmount } from '@/lib/qr';
 import { useToast } from '@/components/ui/Toast';
 import { formatPaise, linePaise } from '@/lib/money';
 import { amountLabel, isLooseUnit, MOST_PER_LINE, roundQuantity } from '@/lib/units';
-import { CheckIcon, CloseIcon, PinIcon } from '@/components/ui/Icon';
+import { CheckIcon, CloseIcon, MicIcon, PinIcon } from '@/components/ui/Icon';
 import type { SnapshotLine } from '@/lib/order-snapshot';
 import { ownerDict } from '@/lib/owner-i18n';
 import { dict } from '@/lib/i18n';
 import { matchesSearch, translateCategory } from '@/lib/speech';
 import { isValidMobile } from '@/lib/validators';
 import type { VoiceLang } from '@/lib/speech';
-import { speak } from '@/components/voice/useVoice';
+import { speak, useVoice } from '@/components/voice/useVoice';
+import { useScrolled } from '@/components/ui/useScrolled';
 import { spokenSaleTotal } from '@/lib/spoken-money';
 import { BillCard } from './BillCard';
 import type { Bill } from '@/lib/bill-pdf';
@@ -191,6 +192,28 @@ export function SellScreen({
   const [paying, setPaying] = useState(false);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState('');
+  /**
+   * SEARCHING BY SAYING THE THING'S NAME.
+   *
+   * It writes what it heard into `query` — the same box the keyboard writes
+   * into — so the owner can see it, correct a word, or clear it. A voice search
+   * that filters without showing what it thought it heard is one nobody trusts
+   * a second time, and on this grid a wrong match is a wrong item rung up.
+   *
+   * No parsing and no matching of its own: `matchesSearch` already does that
+   * over the typed query, and giving speech a second, cleverer path would be
+   * two behaviours to keep in step.
+   */
+  /** Whether the sticky strip is floating over the list yet — see `useScrolled`. */
+  const pageScrolled = useScrolled();
+
+  const voiceSearch = useVoice({
+    lang: RECOGNITION_LANG[locale],
+    // `onPhrase` hands over the recogniser's alternatives, best first — the
+    // same shape `resolveSpokenItem` takes. The first is what it is most
+    // confident of, and that is what belongs in a box the owner can then edit.
+    onPhrase: (alternatives) => setQuery((alternatives[0] ?? '').trim()),
+  });
   const [category, setCategory] = useState('');
   const [khata, setKhata] = useState<{ name: string; phone: string; area: string } | null>(null);
   /**
@@ -715,56 +738,103 @@ export function SellScreen({
           {(sellable.length >= SEARCH_FROM || categories.length > 1) && (
             <div
               className={clsx(
-                '-mx-4 bg-slate-100/95 px-4 pb-2 pt-3 backdrop-blur',
+                '-mx-4 bg-ground/95 px-4 pb-2 pt-3 backdrop-blur',
                 // Two things cannot be stuck to the same edge. While an order
                 // is being packed IT is the thing that must stay on screen, so
                 // the filters go back to scrolling with the grid.
                 !tillOrder && 'sticky top-[3.25rem] z-10',
               )}
             >
+              {/* AN iOS-SHAPED FIELD: a soft grey fill and NO BORDER.
+                  It was a white box with a slate hairline — the shape a web
+                  form has had for twenty years, and on a tinted page a white
+                  box reads as a hole rather than as a field. A translucent
+                  black fill at 6% is the treatment every phone keyboard, every
+                  iOS search bar and every app these owners already use puts on
+                  a search box: the FILL is the field, and it darkens rather
+                  than outlines on focus.
+
+                  Translucent rather than a fixed grey so it sits correctly on
+                  whatever surface it lands on — the till's page and the
+                  shopper's are not the same colour.
+
+                  A FLEX ROW, NOT THREE ABSOLUTELY-POSITIONED THINGS.
+                  The magnifier was pinned left and the mic pinned right
+                  inside a `relative` box, and the mic landed on top of the
+                  magnifier — an absolute child whose offset does not resolve
+                  falls back to its static position, which put it at the left
+                  edge under the icon already there. A row cannot do that:
+                  each part takes its own space in order, and the field grows
+                  between them.
+
+                  The border moved to the row, so the whole thing lights up
+                  on focus rather than just the input inside it. */}
               {sellable.length >= SEARCH_FROM && (
-                <div className="relative">
-                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <div className={clsx(
+                    // AT REST IT IS PART OF THE PAGE; PINNED IT IS AN OBJECT.
+                    // A soft tint of the ground is right while the field sits
+                    // on the ground — it is quiet and it belongs. The moment the
+                    // strip is floating over a moving list, that same tint is
+                    // translucent grey with cards sliding under it, and the
+                    // field stops looking like a field. So it solidifies: an
+                    // opaque surface with an edge and a lift.
+                    'flex items-center gap-2 rounded-xl pl-3 pr-1.5 transition-[background-color,box-shadow] duration-200',
+                    pageScrolled
+                      ? 'bg-card shadow-raised ring-1 ring-slate-300/70'
+                      : 'bg-slate-900/[.06] focus-within:bg-slate-900/[.09]',
+                  )}>
+                  <SearchIcon className="pointer-events-none h-[18px] w-[18px] shrink-0 text-slate-500" />
                   <input
                     type="search"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder={t.searchItems}
                     aria-label={t.searchItems}
-                    className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-base placeholder:text-slate-400 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
+                    className="min-w-0 flex-1 bg-transparent py-2 text-base text-slate-900 placeholder:text-slate-500 focus:outline-none"
                   />
+                  {/* FINDING A THING BY SAYING ITS NAME.
+                      Typing "ছোলার ডাল" on a phone keyboard is the slowest
+                      thing on this screen, and the owner this product is for is
+                      often the one least able to do it quickly. The mic writes
+                      into the SAME query box rather than doing anything of its
+                      own, so what it heard is visible, editable and clearable —
+                      a voice search that acts without showing its work is one
+                      nobody trusts twice.
+
+                      On the right, where a control belongs: the left of a
+                      search field is where its icon lives, and two glyphs
+                      stacked in one corner is what the previous attempt did.
+
+                      Only rendered where the browser has speech at all. */}
+                  {voiceSearch.supported && (
+                    <button
+                      type="button"
+                      onClick={voiceSearch.toggle}
+                      aria-label={t.searchItems}
+                      aria-pressed={voiceSearch.listening}
+                      className={clsx(
+                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition',
+                        voiceSearch.listening
+                          ? 'bg-red-500 text-white'
+                          : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
+                      )}
+                    >
+                      <MicIcon className="h-5 w-5" />
+                    </button>
+                  )}
                 </div>
               )}
 
-              {/* Two chips are needed before there is a choice to make: with a
-                  single category, "All" and that category list the same items,
-                  so the row reads as broken rather than as absent. */}
-              {categories.length > 1 && (
-                <div className="mt-2 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
-                  {[
-                    { value: '', label: t.allCategories },
-                    ...categories.map((name) => ({
-                      value: name,
-                      label: translateCategory(name, locale),
-                    })),
-                  ].map((option) => (
-                    <button
-                      key={option.value || 'all'}
-                      type="button"
-                      onClick={() => setCategory(option.value)}
-                      aria-pressed={category === option.value}
-                      className={clsx(
-                        'shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition',
-                        category === option.value
-                          ? 'bg-brand-600 text-white'
-                          : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100',
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* THE CATEGORY CHIPS ARE GONE, BY REQUEST.
+                  They sat under the search box and narrowed the grid by
+                  "চাল-আটা", "ডাল" and so on. Search does the same job in one
+                  gesture and without a horizontal scroll nobody discovers, and
+                  the mic now means an owner can narrow the list by saying the
+                  thing's name.
+
+                  `category` and `categories` are still computed and still
+                  filter `visible` — nothing in the data path changed — so
+                  putting the row back is putting this block back. */}
             </div>
           )}
 
