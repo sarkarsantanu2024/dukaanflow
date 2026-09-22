@@ -80,12 +80,12 @@ export function OwnerLoginForm({
         ) : (
           <span
             aria-hidden
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-xl font-bold text-brand-800"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-xl font-semibold text-brand-800"
           >
             {shopName.trim().charAt(0).toUpperCase()}
           </span>
         )}
-        <h1 className="min-w-0 text-2xl font-bold leading-tight text-slate-900">{shopName}</h1>
+        <h1 className="min-w-0 text-2xl font-semibold leading-tight text-slate-900">{shopName}</h1>
       </div>
 
       <p className="mt-2 text-sm text-slate-500">{t.pinHint}</p>

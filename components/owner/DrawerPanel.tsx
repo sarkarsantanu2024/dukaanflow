@@ -176,7 +176,7 @@ export function DrawerPanel({
 
       <div className="mt-3 flex items-baseline justify-between gap-3">
         <p className="font-semibold text-slate-700">{t.drawerExpected}</p>
-        <p className="text-2xl font-bold tabular-nums text-slate-900">
+        <p className="text-2xl font-semibold tabular-nums text-slate-900">
           {formatPaise(drawer.expectedPaise)}
         </p>
       </div>

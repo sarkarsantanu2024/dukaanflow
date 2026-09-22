@@ -216,7 +216,7 @@ export function CartDrawer({
             <div className="flex items-center gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-slate-500">{t.total}</p>
-                <p className="text-xl font-bold tabular-nums text-slate-900">
+                <p className="text-xl font-semibold tabular-nums text-slate-900">
                   {formatPaise(quote ? quote.totalPaise : totalPaise)}
                 </p>
               </div>
@@ -305,7 +305,7 @@ export function CartDrawer({
                       type="button"
                       aria-label="−"
                       onClick={() => onSetQuantity(line.id, line.quantity - 1)}
-                      className="h-9 w-9 rounded-lg text-lg font-bold text-brand-800 transition hover:bg-brand-100"
+                      className="h-9 w-9 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-100"
                     >
                       −
                     </button>
@@ -335,13 +335,13 @@ export function CartDrawer({
                       onKeyDown={(event) => {
                         if (event.key === 'Enter') event.currentTarget.blur();
                       }}
-                      className="w-9 rounded-lg bg-transparent text-center font-bold tabular-nums text-slate-900 focus:bg-white focus:outline-none"
+                      className="w-9 rounded-lg bg-transparent text-center font-semibold tabular-nums text-slate-900 focus:bg-white focus:outline-none"
                     />
                     <button
                       type="button"
                       aria-label="+"
                       onClick={() => onSetQuantity(line.id, line.quantity + 1)}
-                      className="h-9 w-9 rounded-lg text-lg font-bold text-brand-800 transition hover:bg-brand-100"
+                      className="h-9 w-9 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-100"
                     >
                       +
                     </button>

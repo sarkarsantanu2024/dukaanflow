@@ -876,8 +876,8 @@ export function SellScreen({
         >
           <div className="w-full max-w-md rounded-t-2xl bg-card p-5 sm:rounded-2xl">
             <div className="flex items-center gap-3">
-              <h3 className="text-lg font-bold text-slate-900">{t.sellTakePayment}</h3>
-              <p className="ml-auto text-2xl font-bold tabular-nums text-brand-700">
+              <h3 className="text-lg font-semibold text-slate-900">{t.sellTakePayment}</h3>
+              <p className="ml-auto text-2xl font-semibold tabular-nums text-brand-700">
                 {formatPaise(payablePaise)}
               </p>
               <button

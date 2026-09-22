@@ -172,7 +172,7 @@ export function Drawer({
         )}
       >
         <div className="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-card px-4 py-3">
-          <h2 className="mr-auto truncate font-bold text-slate-900">{title}</h2>
+          <h2 className="mr-auto truncate font-semibold text-slate-900">{title}</h2>
           {action}
           <button
             type="button"

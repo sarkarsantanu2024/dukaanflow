@@ -94,7 +94,7 @@ export function BillCard({
     <div className="rounded-2xl border border-brand-200 bg-brand-50/60 p-3">
       <div className="flex items-baseline gap-2">
         <p className="font-semibold text-slate-900">{t.billTitle}</p>
-        <p className="ml-auto text-sm font-bold tabular-nums text-slate-900">
+        <p className="ml-auto text-sm font-semibold tabular-nums text-slate-900">
           {formatPaise(bill.totalPaise)}
         </p>
       </div>

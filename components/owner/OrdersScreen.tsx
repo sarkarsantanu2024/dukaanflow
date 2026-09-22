@@ -722,11 +722,11 @@ export function OrdersScreen({
       <dl className="flex items-center gap-5 rounded-2xl border border-glass-edge bg-glass px-4 py-3 shadow-raised">
         <div>
           <dt className="text-xs text-slate-500">{t.ordersToday}</dt>
-          <dd className="text-xl font-bold tabular-nums text-slate-900">{today.count}</dd>
+          <dd className="text-xl font-semibold tabular-nums text-slate-900">{today.count}</dd>
         </div>
         <div>
           <dt className="text-xs text-slate-500">{t.ordersTakings}</dt>
-          <dd className="text-xl font-bold tabular-nums text-slate-900">
+          <dd className="text-xl font-semibold tabular-nums text-slate-900">
             {formatPaise(today.takingsPaise)}
           </dd>
         </div>
@@ -734,7 +734,7 @@ export function OrdersScreen({
           <dt className="text-xs text-slate-500">{t.ordersWaiting}</dt>
           <dd
             className={clsx(
-              'text-xl font-bold tabular-nums',
+              'text-xl font-semibold tabular-nums',
               waiting > 0 ? 'text-amber-600' : 'text-slate-400',
             )}
           >
@@ -926,11 +926,11 @@ export function OrdersScreen({
                                     [line.itemId]: Math.max(0, reviseStep(line.unit, next, -1)),
                                   }))
                                 }
-                                className="h-8 w-8 rounded text-lg font-bold text-slate-700"
+                                className="h-8 w-8 rounded text-lg font-semibold text-slate-700"
                               >
                                 −
                               </button>
-                              <span className="w-16 text-center font-bold tabular-nums">
+                              <span className="w-16 text-center font-semibold tabular-nums">
                                 {lineAmount({ unit: line.unit, quantity: next })}
                               </span>
                               <button
@@ -946,7 +946,7 @@ export function OrdersScreen({
                                     ),
                                   }))
                                 }
-                                className="h-8 w-8 rounded text-lg font-bold text-slate-700 disabled:opacity-30"
+                                className="h-8 w-8 rounded text-lg font-semibold text-slate-700 disabled:opacity-30"
                               >
                                 +
                               </button>
@@ -1068,7 +1068,7 @@ export function OrdersScreen({
                   its own, because it is the one act here with no undo. */}
               <div className="mt-3 border-t border-slate-100 pt-3">
                 <div className="flex items-center gap-2">
-                  <p className="mr-auto text-lg font-bold tabular-nums text-slate-900">
+                  <p className="mr-auto text-lg font-semibold tabular-nums text-slate-900">
                     {formatPaise(order.totalAmountPaise)}
                   </p>
 

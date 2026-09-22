@@ -57,10 +57,16 @@
  * that a colour visibly travels from one side to the other is what makes it
  * register as animation rather than decoration.
  *
- * The colours are deliberately NOT the brand ramp. One button in the product
- * gets this, it is the one that opens the till, and a ring in the same blue as
- * the fill behind it is invisible by definition. These are outside the palette
- * so they cannot blend into it.
+ * The colours are deliberately NOT the brand ramp. A ring in the same blue as
+ * the fill behind it is invisible by definition, so these sit outside the
+ * palette where they cannot blend into it.
+ *
+ * ONE BUTTON PER APP, AND NO MORE. The owner's is the one that opens the till;
+ * the customer's is Place order. Both are the moment where the deciding is over
+ * and only the commit is left. Put a second one on either screen and the ring
+ * stops saying "this one" and becomes decoration — which is the whole reason it
+ * earns the movement. The customer's is drawn only while the button is
+ * actually pressable; see CheckoutSheet.
  *
  * It replaces a highlight that swept across the button's FACE. That read as a
  * shine passing over a surface; this reads as an outline that is alive, which

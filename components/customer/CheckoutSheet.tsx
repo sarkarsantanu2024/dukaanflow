@@ -91,6 +91,18 @@ export function CheckoutSheet({
    */
   const basketShort = basketShortfallPaise(minBasketPaise, totalAmountPaise);
 
+  /**
+   * Whether Place order can actually be pressed right now.
+   *
+   * Only used to decide whether the travelling ring is drawn: a lit, moving
+   * edge on a button that refuses the tap is the interface inviting somebody to
+   * do something it will not let them do. The `disabled` attribute below is
+   * computed from the same two conditions — this one adds `submitting`, because
+   * a ring still chasing round a button that has already been pressed reads as
+   * "press me", not as "working".
+   */
+  const canPlaceOrder = !belowMinimum && basketShort === 0 && !submitting;
+
   const {
     register,
     handleSubmit,
@@ -192,10 +204,10 @@ export function CheckoutSheet({
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300" />
 
         <div className="mb-5 flex items-center gap-3">
-          <h2 className="text-lg font-bold text-slate-900">{t.yourOrder}</h2>
+          <h2 className="text-lg font-semibold text-slate-900">{t.yourOrder}</h2>
           <p className="ml-auto text-sm text-slate-500">
             {totalItems} {t.items} ·{' '}
-            <span className="font-bold text-slate-900">{formatPaise(quote.totalPaise)}</span>
+            <span className="font-semibold text-slate-900">{formatPaise(quote.totalPaise)}</span>
           </p>
           <button
             type="button"
@@ -367,6 +379,11 @@ export function CheckoutSheet({
               variant="primary"
               size="lg"
               fullWidth
+              // The counterpart of the owner's till button. These are the two
+              // moments in the product where a person has finished deciding and
+              // the only thing left is to commit — one per app, and never two on
+              // a screen at once, or the ring stops meaning "this one".
+              className={clsx(canPlaceOrder && 'btn-ring [--ring-fill:theme(colors.brand.600)]')}
               disabled={belowMinimum || basketShort > 0}
               loading={submitting}
             >

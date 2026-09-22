@@ -108,7 +108,7 @@ export function Modal({
         <div className="flex shrink-0 items-start gap-3">
           <h2
             className={clsx(
-              'mr-auto text-lg font-bold leading-snug',
+              'mr-auto text-lg font-semibold leading-snug',
               tone === 'danger' ? 'text-red-700' : tone === 'success' ? 'text-brand-700' : 'text-slate-900',
             )}
           >

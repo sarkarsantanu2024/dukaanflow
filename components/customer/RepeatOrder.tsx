@@ -139,7 +139,7 @@ export function RepeatOrder({
             {/* The amount for anything weighed — a chip reading "0.25" is the
                 stored fraction of a pack, which is meaningless to a shopper.
                 Counted items keep the plain number they always had. */}
-            <span className="flex h-7 min-w-[1.75rem] shrink-0 items-center justify-center rounded-lg bg-brand-100 px-1.5 text-sm font-bold tabular-nums text-brand-800">
+            <span className="flex h-7 min-w-[1.75rem] shrink-0 items-center justify-center rounded-lg bg-brand-100 px-1.5 text-sm font-semibold tabular-nums text-brand-800">
               {amountLabel(item.unit, quantity) ?? quantity}
             </span>
             <span className="min-w-0 flex-1">

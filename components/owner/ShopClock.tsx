@@ -86,8 +86,8 @@ export function ShopClock() {
     <div className="pointer-events-none absolute inset-x-0 top-full z-10 flex justify-center">
       <span className="inline-flex items-center gap-2 rounded-b-xl bg-brand-600 px-4 py-1.5 shadow-lg shadow-brand-900/20">
         <ClockIcon aria-hidden className="h-4 w-4 shrink-0 text-brand-200" />
-        <span className="text-xs font-bold text-brand-50">{date}</span>
-        <span className="text-sm font-bold tabular-nums leading-none text-white">{time}</span>
+        <span className="text-xs font-semibold text-brand-50">{date}</span>
+        <span className="text-sm font-semibold tabular-nums leading-none text-white">{time}</span>
       </span>
     </div>
   );

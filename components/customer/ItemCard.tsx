@@ -234,7 +234,7 @@ export function ItemCard({
         <span className="min-w-0 flex-1">
         <span className="block truncate font-semibold text-slate-900">{label}</span>
         <span className="mt-1 flex flex-wrap items-center gap-2">
-          <span className="text-base font-bold text-brand-700">{formatPaise(item.pricePaise)}</span>
+          <span className="text-base font-semibold text-brand-700">{formatPaise(item.pricePaise)}</span>
           {item.unit && <span className="text-sm text-slate-500">/ {item.unit}</span>}
           {/* AVAILABLE, OR NOT AVAILABLE — nothing else about the shelf.
               This used to read "any amount" on weighed rows, to say that the
@@ -312,7 +312,7 @@ export function ItemCard({
             type="button"
             aria-label={`− ${label}`}
             onClick={() => onChange(quantity - 1)}
-            className="h-9 w-9 rounded-lg text-lg font-bold text-brand-800 transition hover:bg-brand-50"
+            className="h-9 w-9 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-50"
           >
             −
           </button>
@@ -348,7 +348,7 @@ export function ItemCard({
             onKeyDown={(event) => {
               if (event.key === 'Enter') event.currentTarget.blur();
             }}
-            className="w-9 rounded-lg bg-transparent text-center font-bold tabular-nums text-slate-900 focus:bg-brand-50 focus:outline-none"
+            className="w-9 rounded-lg bg-transparent text-center font-semibold tabular-nums text-slate-900 focus:bg-brand-50 focus:outline-none"
           />
           {/* The stepper stops at what the shop has.
               A counted item cannot be asked for beyond its count — the order
@@ -360,7 +360,7 @@ export function ItemCard({
             aria-label={`+ ${label}`}
             disabled={atMost}
             onClick={() => onChange(quantity + 1)}
-            className="h-9 w-9 rounded-lg text-lg font-bold text-brand-800 transition hover:bg-brand-50 disabled:opacity-40"
+            className="h-9 w-9 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-50 disabled:opacity-40"
           >
             +
           </button>

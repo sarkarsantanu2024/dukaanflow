@@ -213,7 +213,7 @@ export function UpgradeFlow({
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-100">
           <CheckIcon className="h-8 w-8 text-brand-700" />
         </span>
-        <p className="mt-4 text-lg font-bold text-slate-900">{t.upgradeDone}</p>
+        <p className="mt-4 text-lg font-semibold text-slate-900">{t.upgradeDone}</p>
         <p className="mt-1 text-sm text-slate-600">{t.upgradeDoneHint}</p>
       </div>
     );
@@ -253,7 +253,7 @@ export function UpgradeFlow({
               placeholder="––––"
               // Big, spaced and centred: four digits read off another app, typed
               // one-handed. This is not a form field, it is a keypad target.
-              className="w-full rounded-xl border-2 border-slate-300 py-3 text-center text-3xl font-bold tracking-[0.5em] tabular-nums focus:border-brand-600 focus:outline-none"
+              className="w-full rounded-xl border-2 border-slate-300 py-3 text-center text-3xl font-semibold tracking-[0.5em] tabular-nums focus:border-brand-600 focus:outline-none"
             />
           </label>
           <Button type="submit" fullWidth size="lg" loading={busy} disabled={code.length !== 4}>
@@ -337,7 +337,7 @@ export function UpgradeFlow({
               <span className="block text-sm font-semibold text-slate-900">
                 {option === 12 ? t.perYear : t.perMonth}
               </span>
-              <span className="block text-lg font-bold tabular-nums text-brand-700">
+              <span className="block text-lg font-semibold tabular-nums text-brand-700">
                 ₹{priceForMonths(plan, option).toLocaleString('en-IN')}
               </span>
               {option === 12 && (
@@ -354,7 +354,7 @@ export function UpgradeFlow({
       <div className="rounded-xl border border-slate-200 p-3.5">
         <p className="flex flex-wrap items-baseline justify-between gap-2">
           <span className="text-sm font-medium text-slate-700">{t.upgradeToPay}</span>
-          <span className="text-xl font-bold tabular-nums text-brand-700">
+          <span className="text-xl font-semibold tabular-nums text-brand-700">
             ₹{priceRupees.toLocaleString('en-IN')}
           </span>
         </p>

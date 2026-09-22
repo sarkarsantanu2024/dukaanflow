@@ -114,7 +114,7 @@ export function AmountStepper({
           type="button"
           aria-label={`− ${t.amount}`}
           onClick={() => setBase(base - step)}
-          className="h-9 w-9 shrink-0 rounded-lg text-lg font-bold text-brand-800 transition hover:bg-brand-50"
+          className="h-9 w-9 shrink-0 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-50"
         >
           −
         </button>
@@ -138,7 +138,7 @@ export function AmountStepper({
               }
             }}
             aria-label={t.amount}
-            className="min-w-0 flex-1 rounded-lg border border-brand-300 px-2 py-1 text-center text-sm font-bold tabular-nums"
+            className="min-w-0 flex-1 rounded-lg border border-brand-300 px-2 py-1 text-center text-sm font-semibold tabular-nums"
           />
         ) : (
           // Tapping the amount lets it be typed. A shopper who wants 80 g of
@@ -151,7 +151,7 @@ export function AmountStepper({
               setDraft(String(base));
             }}
             aria-live="polite"
-            className="min-w-0 flex-1 rounded-lg px-1 py-1 text-center text-sm font-bold tabular-nums text-slate-900 underline decoration-dotted decoration-slate-300 underline-offset-4"
+            className="min-w-0 flex-1 rounded-lg px-1 py-1 text-center text-sm font-semibold tabular-nums text-slate-900 underline decoration-dotted decoration-slate-300 underline-offset-4"
           >
             {baseLabel(unit, base)}
           </button>
@@ -162,7 +162,7 @@ export function AmountStepper({
           aria-label={`+ ${t.amount}`}
           disabled={base >= most}
           onClick={() => setBase(base + step)}
-          className="h-9 w-9 shrink-0 rounded-lg text-lg font-bold text-brand-800 transition hover:bg-brand-50 disabled:opacity-40"
+          className="h-9 w-9 shrink-0 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-50 disabled:opacity-40"
         >
           +
         </button>
