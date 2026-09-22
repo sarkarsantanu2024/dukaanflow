@@ -25,7 +25,8 @@ import { formatPaise } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
 import type { Drawer, Takings } from '@/lib/takings';
-import { DrawerPanel } from './DrawerPanel';
+// `DrawerPanel` is no longer rendered here — see the note at the reckoning
+// below. Restoring it needs this import back as well as the line itself.
 
 type Period = 'today' | 'month';
 
@@ -74,12 +75,23 @@ export function TakingsPanel({
 
   return (
     <div className="space-y-3">
-      {/* THE DRAWER COMES FIRST, and before anything else on the first morning.
-          Until the float is in, the reckoning below is the only thing this
-          screen can honestly show — so the ask sits at the top, where an owner
-          opening up meets it, rather than under a table they have not read
-          yet. */}
-      {period === 'today' && <DrawerPanel slug={slug} drawer={drawer} locale={locale} hideEntry />}
+      {/* THE DRAWER RECONCILIATION IS GONE FROM HERE, BY REQUEST.
+          It showed the float, the cash sales, the cash collected and what the
+          till ought therefore to hold, with a box to type what was actually
+          counted. The owner asked for it off the home screen: the opening
+          float is still asked for at the top (`StartDayRow`), which is the
+          part that cannot be reconstructed later, and the day's money is the
+          table below.
+
+          `DrawerPanel` itself is untouched and still used with `hideEntry`
+          off elsewhere, so restoring this is putting the line back:
+
+            {period === 'today' && <DrawerPanel slug={slug} drawer={drawer} locale={locale} hideEntry />}
+
+          The counted-cash figure it wrote is the one thing that stops being
+          recordable from this screen — nothing else read it, so nothing else
+          breaks, but a shop that wants to reconcile at closing no longer can
+          from here. */}
 
       {/* Two periods, as a switch rather than a date picker: a shopkeeper
           closing up has one question, and a calendar is four taps of answering
