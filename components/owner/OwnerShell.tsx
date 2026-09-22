@@ -11,6 +11,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import clsx from 'clsx';
 import { ownerDict } from '@/lib/owner-i18n';
 import { useHtmlLang } from '@/components/ui/useHtmlLang';
@@ -120,6 +121,16 @@ export function OwnerShell({
 }) {
   const t = ownerDict(locale);
   const pathname = usePathname();
+  /** Same test `OwnerHeader` uses, so the padding and the badge agree. */
+  const atHome = pathname === `/owner/${slug}` || pathname === `/owner/${slug}/`;
+  /**
+   * The once-a-shop settings tray, opened by the gear beside the shop's name.
+   *
+   * The state is here rather than in `MoreDrawer` because the thing that opens
+   * it is in the header and the thing that draws it is in `main` — two
+   * components either side of this one.
+   */
+  const [settingsOpen, setSettingsOpen] = useState(false);
   // The owner's app speaks the shop's language; the document should say so.
   useHtmlLang(locale);
 
@@ -141,9 +152,40 @@ export function OwnerShell({
         shopName={shopName}
         ownerClosed={ownerClosed}
         ownerImageData={ownerImageData}
+        onOpenSettings={showSettings ? () => setSettingsOpen((was) => !was) : undefined}
+        settingsOpen={settingsOpen}
+        onCloseSettings={() => setSettingsOpen(false)}
+        settingsPanel={
+          showSettings ? (
+            <MoreDrawer
+              slug={slug}
+              locale={locale}
+              settings={settings}
+              open={settingsOpen}
+              onClose={() => setSettingsOpen(false)}
+            />
+          ) : null
+        }
       />
 
-      <main className="mx-auto max-w-3xl space-y-4 px-4 py-4">
+      {/* `pt-12`, not `py-4`. The clock badge hangs off the bottom of the
+          sticky header and is absolutely positioned, so it reserves no height
+          of its own — without this the first card on every screen starts
+          underneath it and its heading is half covered. Twelve and not seven:
+          the badge is about 28px tall, so 28px of padding leaves the card
+          touching its bottom edge, which reads as a mistake rather than a
+          layout. This is the badge plus a real gap.
+
+          Here rather than on each screen, so no screen can forget it. */}
+      <main
+        className={clsx(
+          'mx-auto max-w-3xl space-y-4 px-4 pb-4',
+          // The clearance follows the badge. It only hangs off the header on
+          // the home screen now, so only the home screen pays for it; every
+          // other screen starts where the header ends.
+          atHome ? 'pt-12' : 'pt-4',
+        )}
+      >
         {/* First thing under the header, because everything below it may be a
             cached copy and nothing else on the page would say so. */}
         <OfflineBanner label={t.offline} hint={t.offlineHint} />
@@ -156,14 +198,30 @@ export function OwnerShell({
             ONLY on the home screen. See `showSettings`: repeating this block at
             the foot of every screen made each one end in admin the owner had to
             scroll past. */}
-        {showSettings && <MoreDrawer slug={slug} locale={locale} settings={settings} />}
+        {/* The settings are NOT here any more. They drop out of the gear in
+            the header — see `settingsPanel` below — rather than sitting at the
+            foot of the page an owner has just scrolled. */}
       </main>
 
+      {/* THE TAB BAR IS DARK, and it carries the same `gloss` as the rest of
+          the product's dark surfaces rather than a flat black — one hue, three
+          depths. It was `chrome`, the brand blue, which made the bar itself a
+          block of colour and left the SELECTED tab nothing to be coloured
+          against. A dark bar is a ground; the tab you are on is the only lit
+          thing on it.
+
+          PURE BLACK, flat and opaque. No gradient, no translucency, no shadow.
+          A bar pinned to the bottom has the whole page sliding under it, so
+          anything see-through there shows that movement; a sheen across a 56px
+          strip is a ramp nobody can see; and it is the lowest thing on the
+          screen, with nothing to cast a shadow onto. Black also gives the lit
+          capsule on the selected tab the most it can possibly have to stand
+          against. */}
       <nav
         aria-label="Sections"
-        className="fixed inset-x-0 bottom-0 z-20 bg-chrome pb-[env(safe-area-inset-bottom)] shadow-chrome"
+        className="fixed inset-x-0 bottom-0 z-20 bg-black pb-[env(safe-area-inset-bottom)]"
       >
-        <div className="mx-auto flex max-w-3xl">
+        <div className="mx-auto flex max-w-3xl px-1">
           {tabs.map((tab) => {
             const active = pathname.startsWith(tab.href);
             return (
@@ -172,12 +230,42 @@ export function OwnerShell({
                 href={tab.href}
                 aria-current={active ? 'page' : undefined}
                 className={clsx(
-                  'flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-semibold transition',
-                  active ? 'text-white' : 'text-brand-200/70 hover:text-white',
+                  'flex flex-1 flex-col items-center gap-1 py-2 text-xs transition',
+                  active ? 'text-white' : 'text-white/50 hover:text-white/80',
                 )}
               >
-                <TabIcon tab={tab.id} />
-                <span className="max-w-full truncate px-1">{tab.label}</span>
+                {/* WHERE THE ACTIVE STATE ACTUALLY LIVES.
+                    It was a colour change on the label alone, which on a bar of
+                    four near-identical items is the weakest signal available —
+                    and the first thing lost by anyone reading slowly, or
+                    glancing at a phone on a counter. The icon now sits in a lit
+                    capsule, so the selected tab differs in SHAPE as well as in
+                    shade and can be found without reading a word.
+
+                    A SOLID capsule, not a translucent one: over an opaque bar
+                    a 25% fill is just a slightly lighter grey, which is the
+                    weak signal this was meant to replace.
+
+                    Sized and placed on every tab, lit only on the active one,
+                    so nothing moves by a pixel when the selection changes. */}
+                <span
+                  className={clsx(
+                    'flex h-8 w-14 items-center justify-center rounded-full transition',
+                    active && 'bg-brand-600',
+                  )}
+                >
+                  <TabIcon tab={tab.id} />
+                </span>
+                <span
+                  className={clsx(
+                    'max-w-full truncate px-1',
+                    // The label follows the icon rather than leading it: on the
+                    // one you are on it firms up, everywhere else it recedes.
+                    active ? 'font-medium' : 'font-normal',
+                  )}
+                >
+                  {tab.label}
+                </span>
               </Link>
             );
           })}

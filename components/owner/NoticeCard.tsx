@@ -27,6 +27,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { handledExpiredSession } from './sessionGuard';
+import { BellIcon } from '@/components/ui/Icon';
 import { ownerDict } from '@/lib/owner-i18n';
 import { noticeState } from '@/lib/notice';
 import { formatDay } from '@/lib/time';
@@ -114,22 +115,38 @@ export function NoticeCard({
     <section
       className={
         state === 'live'
-          ? 'rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3'
-          : 'rounded-2xl bg-white px-4 py-3 shadow-card'
+          ? 'border-l-4 border-amber-400 bg-amber-50 px-4 py-3'
+          : 'px-4 py-3.5'
       }
     >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="text-sm font-semibold text-slate-900">{t.noticeTitle}</span>
-        {!editing && (
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="ml-auto text-sm font-semibold text-brand-700 underline"
-          >
+      {/* THE WHOLE ROW OPENS IT, not the one underlined word at its end.
+          "লিখুন" was a 40px target at the far right of a settings list, which
+          is the hardest thing on the panel to hit and the easiest to miss
+          entirely — an owner who taps the row, the bell or the words "খদ্দেরদের
+          জন্য নোটিশ" got nothing at all and concluded the row was a label.
+
+          A plain `<div>` while editing, because a form inside a button is
+          neither valid nor operable — the fields would swallow their own
+          clicks. The word stays on the right as the affordance; it is just no
+          longer the only part that works. */}
+      {editing ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <BellIcon className="h-5 w-5 shrink-0 text-slate-400" />
+          <span className="-ml-1 text-sm font-medium text-slate-800">{t.noticeTitle}</span>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="-m-1 flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg p-1 text-left transition hover:bg-brand-50"
+        >
+          <BellIcon className="h-5 w-5 shrink-0 text-slate-400" />
+          <span className="-ml-1 text-sm font-medium text-slate-800">{t.noticeTitle}</span>
+          <span className="ml-auto text-sm font-medium text-brand-700 underline">
             {noticeText ? t.noticeChange : t.noticeWrite}
-          </button>
-        )}
-      </div>
+          </span>
+        </button>
+      )}
 
       {!editing &&
         (noticeText ? (

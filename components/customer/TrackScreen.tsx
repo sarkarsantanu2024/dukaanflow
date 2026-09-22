@@ -121,9 +121,9 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
   }, [waiting, router]);
 
   const header = (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-20 bg-[#00546b]">
       <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5">
-        <BrandMark className="text-sm" />
+        <BrandMark tone="dark" className="text-sm" />
         <div className="ml-auto">
           <LangToggle value={locale} onChange={changeLocale} />
         </div>
@@ -179,7 +179,7 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
       {header}
 
       <main className="mx-auto max-w-lg space-y-3 px-4 py-4">
-        <section className="rounded-2xl bg-white p-4 shadow-card">
+        <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
           <p className="text-sm text-slate-500">{order.shopName}</p>
           <h1 className="text-xl font-bold text-slate-900">{t.trackTitle}</h1>
           <p className="mt-0.5 text-xs text-slate-500">
@@ -202,7 +202,7 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
           </section>
         )}
 
-        <section className="rounded-2xl bg-white p-4 shadow-card">
+        <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
           <ul className="space-y-1.5 text-sm">
             {order.lines.map((line, index) => (
               <li key={index} className="flex justify-between gap-3 text-slate-700">
@@ -261,7 +261,7 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
 
         <Link
           href={`/shop/${order.shopSlug}`}
-          className="block rounded-xl bg-white px-4 py-3 text-center text-sm font-semibold text-brand-700 shadow-card"
+          className="block rounded-xl border border-glass-edge bg-glass px-4 py-3 text-center text-sm font-medium text-brand-700 shadow-raised"
         >
           {t.trackOrderAgain}
         </Link>

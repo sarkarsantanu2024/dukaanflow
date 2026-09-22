@@ -97,7 +97,7 @@ export function RepeatOrder({
   const count = available.length;
 
   return (
-    <section className="mt-6 overflow-hidden rounded-2xl border border-brand-200 bg-white">
+    <section className="mt-6 overflow-hidden rounded-2xl border border-glass-edge bg-glass shadow-raised">
       {/* Folded shut. Down here below the menu it is a thing the shopper can
           go and look for, not a panel that greets them with somebody else's
           shopping — and the summary line is enough to decide whether opening

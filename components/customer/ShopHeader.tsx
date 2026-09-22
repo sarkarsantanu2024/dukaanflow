@@ -32,6 +32,7 @@ import { SHOP_TYPE_LABELS } from '@/lib/validators';
 import { upiPayUrl } from '@/lib/qr';
 import { LangToggle } from './LangToggle';
 import { BrandMark } from '@/components/ui/BrandMark';
+import { AlponaMotif } from '@/components/ui/Ornament';
 import { formatClockRange } from '@/lib/hours';
 import { ClockIcon, PinIcon, RupeeIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import type { Locale } from '@/lib/i18n';
@@ -83,10 +84,27 @@ export function ShopHeader({
       {/* The same bar the console has: white, sticky, hairline beneath. This
           one line does most of the work of making the page feel like part of
           the product a shopkeeper was shown. */}
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+      {/* THE SAME BAR THE OWNER HAS. A shopper who is handed a QR code and an
+          owner who is handed a phone should be looking at one product, and the
+          top bar is the largest single thing that says so. `#00546b` carries
+          white at 8.5:1, so everything on it is light. */}
+      {/* NOT STICKY ON THE SHOPPER'S PAGE, and that is the difference between
+          the two apps. The owner reaches for the language switch and the
+          shutter mid-task, so their bar stays pinned. A shopper reads a list
+          and orders from it: past the first screen the only thing they want
+          held is the search, and a brand bar above it costs 52px of a 667px
+          phone for a logo they have already seen.
+
+          IT IS PURE CSS, WHICH IS WHY IT IS SMOOTH. No scroll listener, no
+          transform, nothing animating — the bar is ordinary content that
+          scrolls off, and the strip below it is `sticky`. The owner's app had a
+          version of this that slid the header out of the way on a scroll
+          handler; it stuttered on every phone it was tried on and was removed.
+          This one cannot stutter, because nothing is being driven. */}
+      <header className="z-20 bg-[#00546b]">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
-          <BrandMark className="text-sm" />
-          <span className="hidden text-xs text-slate-400 sm:inline">Scan → Select → Order</span>
+          <BrandMark tone="dark" className="text-sm" />
+          <span className="hidden text-xs text-white/60 sm:inline">Scan → Select → Order</span>
           {/* The push lives on the toggle itself, not on the tagline. The
               tagline is hidden below `sm`, and with `ml-auto` on it the toggle
               simply sat against the logo on every phone — which is where this
@@ -109,8 +127,23 @@ export function ShopHeader({
           underneath. Contact is two round buttons, because a shopper taps
           WhatsApp — they do not read the number off the screen. */}
       <div className="mx-auto max-w-6xl px-4 pt-3">
-        <div className="rounded-2xl bg-white p-3 shadow-card">
-          <div className="flex items-center gap-3">
+        {/* THE DARK CARD, the same `hero` the owner's money panel wears.
+            It is the one object on the storefront that is about the SHOP rather
+            than about the goods, and on a page that is otherwise a light grid
+            of item cards that distinction is worth a colour. It is also the
+            first thing a stranger looks at when deciding whether to hand this
+            shop money — a solid, deliberate object reads as a business; a pale
+            card reads as a row in a list.
+
+            Card-sized, which is the licence for a gradient here — see `hero`
+            in the Tailwind config. Everything on it is therefore light. */}
+        <div className="relative overflow-hidden rounded-2xl bg-hero p-3 shadow-float">
+          {/* The same alpona the owner's money panel carries, at the same
+              weight, so the two dark cards are recognisably one family rather
+              than two things that happen to be the same colour. */}
+          <AlponaMotif className="pointer-events-none absolute -right-6 -top-10 h-36 w-36 text-white/10" />
+
+          <div className="relative flex items-center gap-3">
             {/* BOTH PICTURES, IN THE SPACE OF ONE.
                 The shopfront says "this is the shop you are standing in"; the
                 owner's face says who the money is going to, and a shopper
@@ -123,12 +156,12 @@ export function ShopHeader({
                 <img
                   src={shop.ownerImageData}
                   alt=""
-                  className="h-16 w-16 rounded-xl object-cover ring-1 ring-slate-200"
+                  className="h-16 w-16 rounded-xl object-cover ring-1 ring-white/25"
                 />
               ) : (
                 <span
                   aria-hidden
-                  className="flex h-16 w-16 items-center justify-center rounded-xl bg-brand-100 text-2xl font-bold text-brand-800"
+                  className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/15 text-2xl font-medium text-white ring-1 ring-white/20"
                 >
                   {shop.name.trim().charAt(0).toUpperCase()}
                 </span>
@@ -137,10 +170,10 @@ export function ShopHeader({
             </span>
 
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lg font-bold leading-tight text-slate-900">
+              <h1 className="truncate text-lg font-medium leading-tight text-white">
                 {shop.name}
               </h1>
-              <p className="truncate text-xs text-slate-500">
+              <p className="truncate text-xs text-brand-100">
                 {SHOP_TYPE_LABELS[shop.type]}
                 {shop.ownerName && ` · ${shop.ownerName}`}
               </p>
@@ -154,22 +187,22 @@ export function ShopHeader({
                 href={`tel:+91${shop.phone}`}
                 // A 16px-tall tap target is a number you can read and cannot
                 // hit. The padding grows the target without growing the text.
-                className="inline-flex min-h-11 items-center text-xs font-semibold tabular-nums text-slate-600 hover:text-brand-700"
+                className="inline-flex min-h-11 items-center text-xs font-medium tabular-nums text-white hover:text-brand-100"
               >
                 +91 {shop.phone}
               </a>
 
               {(shop.address || hours) && (
-                <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-brand-100">
                   {shop.address && (
                     <span className="flex min-w-0 items-center gap-1">
-                      <PinIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <PinIcon className="h-3.5 w-3.5 shrink-0 text-brand-200" />
                       <span className="truncate">{shop.address}</span>
                     </span>
                   )}
                   {hours && (
                     <span className="flex items-center gap-1">
-                      <ClockIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <ClockIcon className="h-3.5 w-3.5 shrink-0 text-brand-200" />
                       <span className="tabular-nums">{hours}</span>
                     </span>
                   )}

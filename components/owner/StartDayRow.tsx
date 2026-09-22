@@ -68,7 +68,7 @@ export function StartDayRow({
   }
 
   return (
-    <div className="rounded-2xl border border-brand-200 bg-brand-50 p-4">
+    <div className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
       <p className="font-semibold text-slate-900">{t.drawerStartTitle}</p>
       <p className="mt-0.5 text-sm text-slate-600">{t.drawerStartHint}</p>
 
@@ -82,13 +82,13 @@ export function StartDayRow({
             onBlur={saveOpening}
             disabled={busy}
             aria-label={t.drawerStartTitle}
-            className="h-12 w-full rounded-xl border border-slate-300 pl-6 pr-2 text-base tabular-nums"
+            className="h-11 w-full rounded-xl border border-brand-200 bg-sunk pl-6 pr-2 text-sm font-medium tabular-nums"
           />
         </label>
         <Link
           href={`/owner/${slug}/sell`}
           onClick={saveOpening}
-          className="flex h-12 items-center justify-center gap-2 rounded-xl bg-brand-600 text-base font-bold text-white transition hover:bg-brand-700 active:scale-[0.99]"
+          className="btn-ring flex h-11 items-center justify-center gap-2 rounded-full text-sm font-medium text-white shadow-raised transition hover:brightness-110 active:scale-[0.99] [--ring-fill:theme(colors.brand.600)]"
         >
           <CartIcon className="h-5 w-5" />
           {t.todaySellNow}

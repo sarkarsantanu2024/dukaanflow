@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { SearchIcon } from '@/components/ui/Icon';
+import { MicIcon, SearchIcon } from '@/components/ui/Icon';
+import { useVoice } from '@/components/voice/useVoice';
+import { useScrolled } from '@/components/ui/useScrolled';
+import type { VoiceLang } from '@/lib/speech';
 import { ShopHeader, type ShopSummary } from './ShopHeader';
 import { ItemCard, itemName, sellsAnyAmount, type CustomerItem } from './ItemCard';
 import { CartBar } from './CartBar';
@@ -85,6 +88,13 @@ type Cart = Record<string, number>;
 /**
  * How many items a shop needs before a search box earns its place on its page.
  */
+/** The shop's language, as the recogniser names it. */
+const SEARCH_LANG: Record<Locale, VoiceLang> = {
+  en: 'en-IN',
+  hi: 'hi-IN',
+  bn: 'bn-IN',
+};
+
 const SEARCH_FROM = 15;
 
 export function StoreFront({ shop, items }: { shop: ShopSummary; items: CustomerItem[] }) {
@@ -95,6 +105,24 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   const [locale, setLocale] = useState<Locale>('bn');
   const [cart, setCart] = useState<Cart>({});
   const [query, setQuery] = useState('');
+  /**
+   * Searching the shop by saying the thing's name.
+   *
+   * It writes what it heard into `query` — the same box the keyboard writes
+   * into — so the shopper can see it, fix a word, or clear it. Nothing is added
+   * to the basket and nothing is bought: that is the floating mic's job, and
+   * keeping the two apart is what makes having both on one screen safe.
+   */
+  /** Whether the sticky strip is floating over the list yet — see `useScrolled`. */
+  const pageScrolled = useScrolled();
+
+  const voiceSearch = useVoice({
+    lang: SEARCH_LANG[locale],
+    // The recogniser hands over its alternatives, best first. The first is what
+    // it is most confident of, and that is what belongs in a box the shopper
+    // can then edit.
+    onPhrase: (alternatives) => setQuery((alternatives[0] ?? '').trim()),
+  });
   const [category, setCategory] = useState<string>('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -456,7 +484,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
                 categories narrow what is below them, so they sit above it.
 
                 Sticky, so both are still reachable ten items down. */}
-            <div className="sticky top-[3.25rem] z-10 -mx-4 bg-slate-100/95 px-4 pb-2 pt-3 backdrop-blur">
+            <div className="sticky top-0 z-10 -mx-4 bg-ground/95 px-4 pb-2 pt-3 backdrop-blur">
               {/* SEARCH ONLY WHEN THERE IS SOMETHING TO SEARCH.
                   A shop with a dozen items fits in a screen and a half of
                   scrolling, which is faster than typing and needs nothing
@@ -468,50 +496,68 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
                   because a filter that cannot change anything reads as
                   broken rather than as absent. */}
               {items.length >= SEARCH_FROM && (
-              <div className="relative">
-                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <div className={clsx(
+                    // AT REST IT IS PART OF THE PAGE; PINNED IT IS AN OBJECT.
+                    // A soft tint of the ground is right while the field sits
+                    // on the ground — it is quiet and it belongs. The moment the
+                    // strip is floating over a moving list, that same tint is
+                    // translucent grey with cards sliding under it, and the
+                    // field stops looking like a field. So it solidifies: an
+                    // opaque surface with an edge and a lift.
+                    'flex items-center gap-2 rounded-xl pl-3 pr-1.5 transition-[background-color,box-shadow] duration-200',
+                    pageScrolled
+                      ? 'bg-card shadow-raised ring-1 ring-slate-300/70'
+                      : 'bg-slate-900/[.06] focus-within:bg-slate-900/[.09]',
+                  )}>
+                <SearchIcon className="pointer-events-none h-[18px] w-[18px] shrink-0 text-slate-500" />
                 <input
                   type="search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder={t.search}
                   aria-label={t.search}
-                  className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-base placeholder:text-slate-400 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
+                  className="min-w-0 flex-1 bg-transparent py-2 text-base text-slate-900 placeholder:text-slate-500 focus:outline-none"
                 />
+                {/* FINDING A THING BY SAYING ITS NAME — the same control the
+                    till has, for the same reason and then some: a shopper on a
+                    phone they barely type on, standing in a shop, looking for
+                    one thing among sixty.
+
+                    IT IS NOT THE VOICE ORDER. The floating mic below builds a
+                    basket from a spoken sentence; this only fills the search
+                    box, so nothing is added and nothing is bought by accident.
+                    Two mics on one screen is worth it precisely because they
+                    do different things — and this one shows its work in a box
+                    the shopper can edit or clear.
+
+                    Only rendered where the browser has speech at all. */}
+                {voiceSearch.supported && (
+                  <button
+                    type="button"
+                    onClick={voiceSearch.toggle}
+                    aria-label={t.search}
+                    aria-pressed={voiceSearch.listening}
+                    className={clsx(
+                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition',
+                      voiceSearch.listening
+                        ? 'bg-red-500 text-white'
+                        : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
+                    )}
+                  >
+                    <MicIcon className="h-5 w-5" />
+                  </button>
+                )}
               </div>
               )}
 
-              {/* Two chips are needed before there is a choice to make. With a
-                  single category, "All" and that category list exactly the same
-                  items, so the row is a control that cannot change anything —
-                  which reads as broken rather than as absent. */}
-              {categories.length > 1 && (
-                <div className="mt-2 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
-                  {[
-                    { value: '', label: t.all },
-                    // The value stays the stored category so filtering still
-                    // works; only what the shopper reads is translated.
-                    ...categories.map((c) => ({ value: c, label: translateCategory(c, locale) })),
-                  ].map(
-                    (option) => (
-                      <button
-                        key={option.value || 'all'}
-                        type="button"
-                        onClick={() => setCategory(option.value)}
-                        aria-pressed={category === option.value}
-                        className={clsx(
-                          'shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition',
-                          category === option.value
-                            ? 'bg-brand-600 text-white'
-                            : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100',
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    ),
-                  )}
-                </div>
-              )}
+              {/* THE CATEGORY CHIPS ARE GONE, BY REQUEST — the same change the
+                  till got. Search does the same narrowing in one gesture,
+                  without a horizontal scroll nobody discovers, and the mic above
+                  means a shopper can do it by saying the thing's name.
+
+                  `category` and `categories` are still computed and still filter
+                  `visibleItems`, so nothing in the data path changed and putting
+                  the row back is putting this block back. */}
             </div>
 
             {/* What the search actually did. Without this a shopper who typed

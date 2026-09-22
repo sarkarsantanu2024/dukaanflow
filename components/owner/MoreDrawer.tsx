@@ -25,9 +25,8 @@
  * line until somebody wants it.
  */
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRightIcon } from '@/components/ui/Icon';
+import { ChevronRightIcon, RupeeIcon } from '@/components/ui/Icon';
 import { NoticeCard } from './NoticeCard';
 import { DeliveryCard } from './DeliveryCard';
 import { DELIVERY_AVAILABLE } from '@/lib/delivery';
@@ -50,41 +49,46 @@ export function MoreDrawer({
   slug,
   locale,
   settings,
+  open,
+  onClose,
 }: {
   slug: string;
   locale: Locale;
   settings: OwnerSettings;
+  /**
+   * OPENED FROM THE HEADER NOW, not from a line at the foot of the screen.
+   *
+   * This owned its own open/closed state and rendered a full-width "আরও সেটিং"
+   * row under everything else — a permanent line on every home screen for
+   * things a shop sets once in its life. The gear beside the shop's name says
+   * the same thing in 36px, so the state lives in `OwnerShell` and this only
+   * draws the tray.
+   */
+  open: boolean;
+  onClose: () => void;
 }) {
   const t = ownerDict(locale);
-  const [open, setOpen] = useState(false);
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-2 rounded-2xl bg-white px-4 py-3 text-left shadow-card transition hover:bg-slate-50"
-      >
-        <span className="font-semibold text-slate-700">{t.moreSettings}</span>
-        <ChevronRightIcon className="ml-auto h-4 w-4 shrink-0 text-slate-400" />
-      </button>
-    );
-  }
+  // Closed is nothing at all. The gear in the header is the whole of its
+  // presence on a screen nobody came here to configure.
+  if (!open) return null;
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => setOpen(false)}
-        className="flex w-full items-center gap-2 rounded-2xl bg-white px-4 py-3 text-left shadow-card transition hover:bg-slate-50"
-      >
-        <span className="font-semibold text-slate-700">{t.moreSettings}</span>
-        <ChevronRightIcon className="ml-auto h-4 w-4 shrink-0 rotate-90 text-slate-400" />
-      </button>
+      {/* NO HEADING. The panel hangs off the gear that opened it, an arm's
+          length above — a title repeating "settings" under a settings icon is
+          a row spent saying what the shopper already pressed. Escape and a tap
+          outside close it; see `OwnerHeader`. */}
 
-      {/* The settings sit in an indented tray under the header, so they read as
-          belonging to "More settings" rather than as loose cards of their own. */}
-      <div className="ml-3 mt-2 space-y-2 border-l-2 border-slate-200 pl-3">
+      {/* ONE CARD, HAIRLINES BETWEEN THE ROWS — the shape a settings list has
+          on every phone, rather than a stack of separate cards with gaps. It
+          was an indented tray with a left rule, which made sense when this sat
+          in the page under a row it belonged to; in a dropdown the panel IS the
+          grouping, so the rule and the indent were saying it twice.
+
+          `divide-y` rather than borders on each child, so a row can be added or
+          removed without anyone having to remember which one is last. */}
+      <div className="divide-y divide-slate-200 overflow-hidden rounded-xl bg-card">
       {/* THE PERMANENT WAY TO PAY US, moved off the header.
           `PlanBanner` only appears in the last week of a trial or near a
           catalogue limit, and the roadblock only once an owner is already
@@ -92,9 +96,12 @@ export function MoreDrawer({
           to a payment screen that does not depend on something going wrong. */}
       <Link
         href={`/owner/${slug}/renew`}
-        className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 shadow-card transition hover:bg-slate-50"
+        className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-brand-50"
       >
-        <span className="font-semibold text-slate-700">{t.renewOpen}</span>
+        {/* The icon is what makes a list of rows scannable rather than read —
+            an owner finds "plan" by its shape long before they finish the word. */}
+        <RupeeIcon className="h-5 w-5 shrink-0 text-slate-400" />
+        <span className="font-medium text-slate-700">{t.renewOpen}</span>
         <ChevronRightIcon className="ml-auto h-4 w-4 shrink-0 text-slate-400" />
       </Link>
 

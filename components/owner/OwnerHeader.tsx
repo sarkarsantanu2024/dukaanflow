@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * The owner app's top bar — the same bar the shop page has, with the shop's own
@@ -21,18 +21,19 @@
  * customer sees on the storefront, at the size of a line rather than a card.
  */
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useToast } from '@/components/ui/Toast';
-import { HomeIcon, SignOutIcon } from '@/components/ui/Icon';
-import { BrandMark } from '@/components/ui/BrandMark';
-import { ShopClock } from './ShopClock';
-import { Spinner } from '@/components/ui/Spinner';
-import { OwnerInstallButton } from './OwnerInstallButton';
-import { ShutterSwitch } from './ShutterSwitch';
-import { ownerDict } from '@/lib/owner-i18n';
-import { LOCALE_LABELS, LOCALES, type Locale } from '@/lib/i18n';
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/Toast";
+import clsx from "clsx";
+import { GearIcon, HomeIcon, SignOutIcon } from "@/components/ui/Icon";
+import { BrandMark } from "@/components/ui/BrandMark";
+import { ShopClock } from "./ShopClock";
+import { Spinner } from "@/components/ui/Spinner";
+import { OwnerInstallButton } from "./OwnerInstallButton";
+import { ShutterSwitch } from "./ShutterSwitch";
+import { ownerDict } from "@/lib/owner-i18n";
+import { LOCALE_LABELS, LOCALES, type Locale } from "@/lib/i18n";
 
 export function OwnerHeader({
   slug,
@@ -40,6 +41,10 @@ export function OwnerHeader({
   shopName,
   ownerClosed,
   ownerImageData,
+  onOpenSettings,
+  settingsOpen = false,
+  onCloseSettings,
+  settingsPanel,
 }: {
   slug: string;
   locale: Locale;
@@ -53,6 +58,16 @@ export function OwnerHeader({
    * storefront uses, so one shop does not have two different faces.
    */
   ownerImageData: string;
+  /**
+   * Opens the once-a-shop settings tray, or undefined where this screen does
+   * not carry them — see `showSettings` in `OwnerShell`. Undefined draws no
+   * gear at all rather than a gear that does nothing.
+   */
+  onOpenSettings?: () => void;
+  settingsOpen?: boolean;
+  onCloseSettings?: () => void;
+  /** The settings themselves, drawn inside the dropdown. */
+  settingsPanel?: React.ReactNode;
 }) {
   const router = useRouter();
 
@@ -66,19 +81,52 @@ export function OwnerHeader({
    * `app/owner.webmanifest`) and would otherwise land here showing the icon.
    */
   const pathname = usePathname();
-  const atHome = pathname === `/owner/${slug}` || pathname === `/owner/${slug}/`;
+  const atHome =
+    pathname === `/owner/${slug}` || pathname === `/owner/${slug}/`;
   const { push } = useToast();
   const t = ownerDict(locale);
   const [busy, setBusy] = useState(false);
 
+
+  /**
+   * A DROPDOWN HAS TO CLOSE THE WAY EVERY OTHER DROPDOWN DOES.
+   *
+   * Escape, and a tap anywhere outside it. Without both, the only way out is
+   * the gear you opened it with — which is the one thing a panel covering the
+   * screen makes hard to find again.
+   *
+   * `mousedown` rather than `click`: a tap that starts outside and ends inside
+   * should still close it, and waiting for `click` lets the panel swallow the
+   * event first.
+   */
+  const settingsRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!settingsOpen || !onCloseSettings) return;
+    function onPointer(event: MouseEvent | TouchEvent) {
+      if (!settingsRef.current?.contains(event.target as Node))
+        onCloseSettings!();
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onCloseSettings!();
+    }
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("touchstart", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("touchstart", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [settingsOpen, onCloseSettings]);
+
   async function signOut() {
     setBusy(true);
     try {
-      await fetch('/api/owner/logout', { method: 'POST' });
+      await fetch("/api/owner/logout", { method: "POST" });
       router.replace(`/owner/${slug}/login`);
       router.refresh();
     } catch {
-      push(t.networkError, 'error');
+      push(t.networkError, "error");
       setBusy(false);
     }
   }
@@ -90,25 +138,29 @@ export function OwnerHeader({
   async function changeLocale(next: Locale) {
     try {
       await fetch(`/api/owner/${slug}/locale`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locale: next }),
       });
       router.refresh();
     } catch {
-      push(t.networkError, 'error');
+      push(t.networkError, "error");
     }
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-3xl items-center gap-1.5 px-3 py-2 sm:px-4">
+    <header className="sticky top-0 z-20 bg-[#00546b]">
+      <div className="mx-auto flex max-w-3xl items-center px-3 py-2">
         {/* The mark leads home, where a logo leads everywhere else. It used to
             go to the item list on the reasoning that stock is where an owner
             starts their day — but the day's takings, the waiting orders and who
             owes now live on the home screen, so that is the answer to "take me
             back". The item list is one tap away on the tab bar. */}
-        <BrandMark href={`/owner/${slug}`} className="mr-auto text-sm" />
+        <BrandMark
+          href={`/owner/${slug}`}
+          tone="dark"
+          className="mr-auto text-sm"
+        />
 
         {/* One control instead of three buttons. A native select is also the
             one thing on this bar that a shopkeeper's phone already knows how
@@ -120,7 +172,7 @@ export function OwnerHeader({
           id="owner-language"
           value={locale}
           onChange={(event) => changeLocale(event.target.value as Locale)}
-          className="h-9 shrink-0 rounded-lg border border-slate-300 bg-white px-2 text-sm font-semibold text-slate-700"
+          className="h-6 shrink-0 rounded-lg border border-white/20 bg-white/10 px-2 text-sm font-medium text-white"
         >
           {LOCALES.map((option) => (
             <option key={option} value={option}>
@@ -148,9 +200,13 @@ export function OwnerHeader({
           disabled={busy}
           aria-label={t.signOut}
           title={t.signOut}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/75 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
         >
-          {busy ? <Spinner className="h-4 w-4" /> : <SignOutIcon className="h-5 w-5" />}
+          {busy ? (
+            <Spinner className="h-4 w-4" />
+          ) : (
+            <SignOutIcon className="h-5 w-5" />
+          )}
         </button>
       </div>
 
@@ -179,7 +235,15 @@ export function OwnerHeader({
           see `ShopClock`. The band is inside the sticky header, so the badge
           stays on screen with it as the page scrolls. */}
       <div className="relative border-t border-slate-200/70 bg-slate-50">
-        <ShopClock />
+        {/* THE HOME SCREEN ONLY. It rode on every owner screen, which put a
+            wall clock over the till, the khata and the orders queue — three
+            screens with a job in hand, none of which is asking what day it is.
+            The home screen is the one where every figure means "today", so it
+            is the one place the date earns its space.
+
+            `atHome` is the same test the way-home icon uses, so the two can
+            never disagree about which screen this is. */}
+        {atHome && <ShopClock />}
 
         <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-3 py-2 sm:px-4">
           {ownerImageData ? (
@@ -206,6 +270,47 @@ export function OwnerHeader({
             {shopName}
           </span>
 
+          {/* THE SETTINGS, AS A GEAR RATHER THAN A ROW.
+              They were a full-width "আরও সেটিং" line at the foot of the home
+              screen — a permanent row, on the screen an owner opens twenty
+              times a day, for things a shop sets once in its life: the notice,
+              the delivery terms, the way to pay. A gear beside the shop's own
+              name is where a phone owner already looks for "settings for this
+              thing", and it costs 36px instead of a row.
+
+              Only where the screen carries them, so it is never a control that
+              does nothing. */}
+          {onOpenSettings && (
+            <div className="relative shrink-0" ref={settingsRef}>
+              <button
+                type="button"
+                onClick={onOpenSettings}
+                aria-expanded={settingsOpen}
+                aria-label={t.moreSettings}
+                title={t.moreSettings}
+                className={clsx(
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition",
+                  settingsOpen
+                    ? "bg-slate-200 text-slate-800"
+                    : "text-slate-400 hover:bg-slate-200 hover:text-slate-800",
+                )}
+              >
+                <GearIcon className="h-5 w-5" />
+              </button>
+
+              {/* THE PANEL HANGS OFF THE GEAR, and is anchored to its RIGHT edge
+                so it can never run off the side of a 375px phone. Width is
+                capped to the viewport for the same reason, and it scrolls
+                rather than growing past the screen when a shop has a notice, a
+                plan line and delivery terms all at once. */}
+              {settingsOpen && settingsPanel && (
+                <div className="absolute right-0 top-full z-30 mt-2 w-[min(20rem,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-slate-50 p-2 shadow-float ring-1 ring-slate-200">
+                  {settingsPanel}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* The way home, and NOT on the home screen itself — see `atHome`.
               "আজকের দোকান" is the screen the app opens on; from any other tab
               this returns to it, and a house is the one icon every phone owner
@@ -220,7 +325,7 @@ export function OwnerHeader({
             <Link
               href={`/owner/${slug}`}
               aria-label={t.todayTitle}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition "
             >
               <HomeIcon className="h-5 w-5" />
             </Link>

@@ -247,7 +247,7 @@ export function CartDrawer({
         <>
           <ul className="space-y-2">
             {lines.map((line) => (
-              <li key={line.id} className="rounded-2xl bg-white p-3 shadow-card">
+              <li key={line.id} className="rounded-2xl border border-glass-edge bg-glass p-3 shadow-raised">
                 <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-slate-900">{line.label}</p>

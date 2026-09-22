@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { ownerDict } from '@/lib/owner-i18n';
 import { BellIcon, BoxIcon, CheckIcon, RupeeIcon, TruckIcon } from '@/components/ui/Icon';
 import { StartDayRow } from './StartDayRow';
+import { QuietShopArt } from '@/components/ui/Ornament';
 import { TakingsPanel } from './TakingsPanel';
 import type { Locale } from '@/lib/i18n';
 import type { Drawer, Takings } from '@/lib/takings';
@@ -47,12 +48,28 @@ type Tone = 'red' | 'emerald' | 'amber' | 'sky' | 'yellow';
  * the glyph change.
  */
 const CHIP: Record<Tone, string> = {
-  red: 'bg-red-50 text-red-600',
-  emerald: 'bg-emerald-50 text-emerald-600',
-  amber: 'bg-amber-50 text-amber-600',
-  sky: 'bg-sky-50 text-sky-600',
-  yellow: 'bg-yellow-50 text-yellow-700',
+  red: 'bg-red-100 text-red-600 ring-1 ring-red-200',
+  emerald: 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200',
+  amber: 'bg-amber-100 text-amber-600 ring-1 ring-amber-200',
+  sky: 'bg-sky-100 text-sky-600 ring-1 ring-sky-200',
+  yellow: 'bg-yellow-100 text-yellow-700 ring-1 ring-yellow-200',
 };
+
+/**
+ * THE CARDS ARE PLAIN WHITE, AND THE PAGE BEHIND THEM IS NOT.
+ *
+ * They were tinted a moment ago, each card washed with its own hue, which was
+ * solving the right problem in the wrong place. The screen read as flat because
+ * the GROUND was white — near enough that a white card on it had no edge — and
+ * tinting five cards to get that edge back gave the screen five competing
+ * colours and a busier surface than it started with.
+ *
+ * `bg-app` is properly green now, so a white card is an object again with no
+ * help at all. Colour stays where it carries meaning — the icon tile — and the
+ * card itself is quiet. That is also the honest version for somebody who does
+ * not read quickly: one strong colour per row is a signal, five washes is
+ * wallpaper.
+ */
 
 function fill(template: string, n: number): string {
   return template.replace('{n}', String(n));
@@ -76,19 +93,31 @@ function ActionCard({
     <Link
       href={href}
       className={clsx(
-        'flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-card transition',
-        'hover:border-brand-300 hover:shadow-md active:scale-[0.99]',
+        // `rounded-3xl` and `p-4`: the radius and the air are most of what
+        // separates an interface that looks made from one that looks assembled.
+        // No border — on a green ground the shadow is the edge, and a hairline
+        // as well reads as a box drawn round a card.
+        'flex items-center gap-3 rounded-2xl border border-glass-edge bg-glass p-3 shadow-raised transition',
+        'hover:shadow-float active:scale-[0.99]',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
       )}
     >
+      {/* A step larger, and ringed. The icon is the fastest thing on the card
+          to recognise and the slowest thing to read, so it gets the size. */}
       <span
         aria-hidden
-        className={clsx('flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl', CHIP[tone])}
+        className={clsx('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg', CHIP[tone])}
       >
         {icon}
       </span>
-      <span className="min-w-0 flex-1 text-base font-semibold text-slate-900">{label}</span>
-      <span className="shrink-0 rounded-lg bg-brand-50 px-3 py-1.5 text-sm font-bold text-brand-700">
+      <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-slate-900">{label}</span>
+      {/* A full pill in the brand colour: the one thing on the card to press,
+          and it should look pressable from across a counter.
+          BACK TO `text-sm` AND TIGHTER PADDING. At `text-base` with `px-4` the
+          pill took enough of a 375px row that "১টি Order অপেক্ষা করছে" broke
+          across two lines beside it. The label is the news and the pill is the
+          way to act on it, so when the row is tight the pill gives way. */}
+      <span className="shrink-0 rounded-full bg-brand-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm">
         {action}
       </span>
     </Link>
@@ -145,9 +174,16 @@ export function TodayScreen({
           ))}
         </div>
       ) : (
-        <p className="rounded-2xl border border-slate-200 bg-white p-4 text-center text-sm text-slate-500 shadow-card">
-          {t.todayAllQuiet}
-        </p>
+        // NOTHING NEEDS YOU, SAID AS A PICTURE FIRST.
+        // This was one grey sentence on a white card, which is the single worst
+        // thing on the screen for an owner who does not read quickly: the one
+        // moment the app has nothing to show them, it said so in words alone.
+        // A shuttered shop with bare shelves carries it without being read, and
+        // the sentence stays underneath for everyone else.
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-glass-edge bg-glass p-6 text-center shadow-raised">
+          <QuietShopArt className="h-16 w-20 text-brand-600" />
+          <p className="text-sm font-medium text-slate-600">{t.todayAllQuiet}</p>
+        </div>
       )}
 
       {/* Today's and this month's takings, and the drawer reconciliation once a

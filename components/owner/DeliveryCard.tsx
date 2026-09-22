@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { handledExpiredSession } from './sessionGuard';
+import { TruckIcon } from '@/components/ui/Icon';
 import { ownerDict } from '@/lib/owner-i18n';
 import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import type { Locale } from '@/lib/i18n';
@@ -105,19 +106,29 @@ export function DeliveryCard({
         .join(' · ');
 
   return (
-    <section className="rounded-2xl bg-white px-4 py-3 shadow-card">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="text-sm font-semibold text-slate-900">{t.deliveryTitle}</span>
-        {!editing && deliveryEnabled && (
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="ml-auto text-sm font-semibold text-brand-700 underline"
-          >
+    <section className="px-4 py-3.5">
+      {/* The whole row opens it — same reason as the notice row above: the one
+          underlined word at the far right was the hardest target on the panel
+          to hit. A shop that does not deliver has nothing to open, so there it
+          stays a plain heading rather than a control that leads nowhere. */}
+      {!editing && deliveryEnabled ? (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="-m-1 flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg p-1 text-left transition hover:bg-brand-50"
+        >
+          <TruckIcon className="h-5 w-5 shrink-0 text-slate-400" />
+          <span className="-ml-1 text-sm font-medium text-slate-800">{t.deliveryTitle}</span>
+          <span className="ml-auto text-sm font-medium text-brand-700 underline">
             {t.noticeChange}
-          </button>
-        )}
-      </div>
+          </span>
+        </button>
+      ) : (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <TruckIcon className="h-5 w-5 shrink-0 text-slate-400" />
+          <span className="-ml-1 text-sm font-medium text-slate-800">{t.deliveryTitle}</span>
+        </div>
+      )}
 
       {!editing && <p className="mt-1 text-sm text-slate-500">{summary}</p>}
 
