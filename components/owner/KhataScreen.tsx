@@ -426,7 +426,7 @@ export function KhataScreen({
       {/* Just the credit book now — who owes the shop. The day's takings and the
           cash drawer that used to sit behind a "হিসাব" tab here have moved to the
           home screen, so this screen has one job and no tab to choose it. */}
-      <div className="rounded-2xl bg-white p-4 shadow-card">
+      <div className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
         {/* THE TWO EXPORTS MOVED UP HERE, AS ICONS.
             They were a pair of wide labelled buttons and a line of hint text on
             their own row under the total — which on a 375px phone stacked into
@@ -454,7 +454,7 @@ export function KhataScreen({
                 href={`/api/owner/${slug}/khata/export`}
                 aria-label={t.khataExportCsv}
                 title={`${t.khataExportCsv} — ${t.khataExportHint}`}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-sunk hover:text-slate-900"
               >
                 <SheetIcon className="h-5 w-5" />
               </a>
@@ -469,7 +469,7 @@ export function KhataScreen({
                 disabled={building !== null}
                 aria-label={t.khataExportPdf}
                 title={`${t.khataExportPdf} — ${t.khataExportHint}`}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-sunk hover:text-slate-900 disabled:opacity-50"
               >
                 {building === 'all' ? (
                   <Spinner className="h-5 w-5" />
@@ -534,7 +534,7 @@ export function KhataScreen({
       */}
 
       {customers.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-card p-6 text-center">
           <p className="font-semibold text-slate-800">{t.khataNobody}</p>
           <p className="mt-1 text-sm text-slate-500">{t.khataNobodyHint}</p>
         </div>
@@ -547,7 +547,7 @@ export function KhataScreen({
             const ageing = owes ? owingFor(customer.owingSince, t) : null;
 
             return (
-              <li key={customer.id} className="rounded-2xl bg-white shadow-card">
+              <li key={customer.id} className="rounded-2xl border border-glass-edge bg-glass shadow-raised">
                 {/* THE TWO THINGS DONE TO A DEBTOR, ON THE ROW ITSELF.
                     Reminding somebody and handing them their statement were
                     both a tap inside the expanded row — so chasing five people
@@ -749,7 +749,7 @@ export function KhataScreen({
               having gone missing, and this is the one state a shopkeeper is
               actually pleased to see. */}
           {listed.length === 0 && (
-            <li className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
+            <li className="rounded-2xl border border-dashed border-slate-300 bg-card p-6 text-center">
               <p className="font-semibold text-slate-800">{t.khataAllSettled}</p>
             </li>
           )}
@@ -761,13 +761,13 @@ export function KhataScreen({
           type="button"
           onClick={() => setShowSettled((current) => !current)}
           aria-expanded={showSettled}
-          className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50"
+          className="mt-2 w-full rounded-xl border border-slate-200 bg-card px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-sunk"
         >
           {showSettled ? t.khataHideSettled : `${t.khataShowSettled} (${settled.length})`}
         </button>
       )}
 
-      <section className="rounded-2xl bg-white p-4 shadow-card">
+      <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
         {/* This form is for somebody not in the book yet. Anyone already
             listed above is settled on their own row, where their balancePaise is —
             which is what the old "+ Gave goods / Got payment" link was
@@ -953,7 +953,7 @@ function SettleRow({
               aria-pressed={mode === option}
               className={clsx(
                 'h-10 px-2.5 text-xs font-semibold transition',
-                mode === option ? 'bg-slate-900 text-white' : 'bg-white text-slate-600',
+                mode === option ? 'bg-slate-900 text-white' : 'bg-card text-slate-600',
               )}
             >
               {option === 'CASH' ? t.takingsCash : t.takingsUpi}

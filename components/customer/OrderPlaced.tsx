@@ -105,7 +105,7 @@ export function OrderPlaced({
           here has said no for good. So the wording promises exactly one thing
           and nothing else: they will be told when it is ready. */}
       {canAsk && (
-        <div className="mt-3 rounded-xl bg-slate-50 p-3">
+        <div className="mt-3 rounded-xl bg-sunk p-3">
           <p className="font-semibold text-slate-900">
             {orderType === 'PICKUP' ? t.notifyTitlePickup : t.notifyTitle}
           </p>

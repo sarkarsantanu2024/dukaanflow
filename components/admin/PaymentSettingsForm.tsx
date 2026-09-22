@@ -62,7 +62,7 @@ export function PaymentSettingsForm({ initial }: { initial: PaymentSettings }) {
   }
 
   return (
-    <form onSubmit={save} className="max-w-xl space-y-5 rounded-2xl bg-white p-5 shadow-card">
+    <form onSubmit={save} className="max-w-xl space-y-5 rounded-2xl border border-glass-edge bg-glass p-5 shadow-raised">
       <Field
         label="Your UPI id"
         hint="name@bank"

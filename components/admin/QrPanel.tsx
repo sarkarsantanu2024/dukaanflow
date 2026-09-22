@@ -33,7 +33,7 @@ function QrBlock({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div ref={holderRef} className="w-full max-w-[12rem] rounded-2xl bg-white p-3 ring-1 ring-slate-200">
+      <div ref={holderRef} className="w-full max-w-[12rem] rounded-2xl bg-card p-3 ring-1 ring-slate-200">
         {/*
           `size` is the canvas resolution — 512px keeps the downloaded PNG crisp
           on an A4 poster. Display size must go through `style`, not className:
@@ -89,7 +89,7 @@ export function QrPanel({
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <section className="rounded-2xl bg-white p-4 shadow-card">
+      <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
         <h2 className="mb-3 font-semibold text-slate-900">Shop QR</h2>
         <QrBlock value={link} fileName={qrFileName(slug, 'shop')} caption={link} />
         <Button variant="ghost" size="sm" fullWidth className="mt-3" onClick={copyLink}>
@@ -97,7 +97,7 @@ export function QrPanel({
         </Button>
       </section>
 
-      <section className="rounded-2xl bg-white p-4 shadow-card">
+      <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
         <h2 className="mb-3 font-semibold text-slate-900">Payment QR (UPI)</h2>
 
         <div className="mb-4 space-y-2">
@@ -129,7 +129,7 @@ export function QrPanel({
             <img
               src={upiQrData}
               alt={`${shopName} payment QR`}
-              className="mx-auto w-full max-w-[220px] rounded-xl border border-slate-200 bg-white p-2"
+              className="mx-auto w-full max-w-[220px] rounded-xl border border-slate-200 bg-card p-2"
             />
             <figcaption className="mt-2 text-sm text-slate-500">
               The shop&rsquo;s own payment QR. Replace or remove it in the form on the left.
@@ -142,7 +142,7 @@ export function QrPanel({
             caption="Customer scans, types the amount, pays the shop directly."
           />
         ) : (
-          <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-500">
+          <p className="rounded-xl bg-sunk p-4 text-center text-sm text-slate-500">
             Enter a UPI ID like <span className="font-mono">ramu@okaxis</span> to generate the
             payment QR, or upload the shop&rsquo;s own from the form on the left.
           </p>

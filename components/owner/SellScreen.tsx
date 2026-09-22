@@ -667,7 +667,7 @@ export function SellScreen({
             <button
               type="button"
               onClick={leaveOrder}
-              className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600"
+              className="shrink-0 rounded-lg border border-slate-300 bg-card px-3 py-1.5 text-xs font-semibold text-slate-600"
             >
               {t.orderTillLeave}
             </button>
@@ -685,7 +685,7 @@ export function SellScreen({
                     aria-pressed={done}
                     className={clsx(
                       'flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition',
-                      done ? 'border-brand-200 bg-brand-50' : 'border-slate-200 bg-white',
+                      done ? 'border-brand-200 bg-brand-50' : 'border-slate-200 bg-card',
                     )}
                   >
                     <span
@@ -724,7 +724,7 @@ export function SellScreen({
       )}
 
       {sellable.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-center text-sm text-slate-500">
+        <p className="rounded-2xl border border-dashed border-slate-300 bg-card p-4 text-center text-sm text-slate-500">
           {t.sellMissingItem}
         </p>
       ) : (
@@ -874,7 +874,7 @@ export function SellScreen({
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md rounded-t-2xl bg-white p-5 sm:rounded-2xl">
+          <div className="w-full max-w-md rounded-t-2xl bg-card p-5 sm:rounded-2xl">
             <div className="flex items-center gap-3">
               <h3 className="text-lg font-bold text-slate-900">{t.sellTakePayment}</h3>
               <p className="ml-auto text-2xl font-bold tabular-nums text-brand-700">
@@ -902,7 +902,7 @@ export function SellScreen({
                 rather than types — that beats the shop's static printed code,
                 which is kept only as the fallback when there is no UPI ID. */}
             {upiId ? (
-              <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-slate-50 p-4">
+              <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-sunk p-4">
                 <QRCodeCanvas
                   value={upiPayUrlWithAmount(upiId, shopName, payablePaise)}
                   size={168}
@@ -912,7 +912,7 @@ export function SellScreen({
                 <p className="text-sm text-slate-600">{t.sellScanToPay}</p>
               </div>
             ) : upiQrData ? (
-              <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-slate-50 p-4">
+              <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-sunk p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={upiQrData} alt="UPI QR" className="h-42 w-42 max-w-[10.5rem]" />
                 <p className="text-sm text-slate-600">{t.sellScanToPay}</p>
@@ -1005,14 +1005,14 @@ export function SellScreen({
                     onChange={(event) => setKhata({ ...khata, area: event.target.value })}
                     placeholder={t.khataArea}
                     aria-label={t.khataArea}
-                    className="col-span-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-base"
+                    className="col-span-2 rounded-lg border border-amber-300 bg-card px-3 py-2 text-base"
                   />
                   <input
                     value={khata.name}
                     onChange={(event) => setKhata({ ...khata, name: event.target.value })}
                     placeholder={t.khataCustomer}
                     aria-label={t.khataCustomer}
-                    className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-base"
+                    className="rounded-lg border border-amber-300 bg-card px-3 py-2 text-base"
                   />
                   <input
                     value={khata.phone}
@@ -1027,7 +1027,7 @@ export function SellScreen({
                     aria-label={t.khataPhone}
                     aria-invalid={phoneRejected || undefined}
                     className={clsx(
-                      'rounded-lg border bg-white px-3 py-2 text-base',
+                      'rounded-lg border bg-card px-3 py-2 text-base',
                       phoneRejected ? 'border-red-500 ring-1 ring-red-500' : 'border-amber-300',
                     )}
                   />

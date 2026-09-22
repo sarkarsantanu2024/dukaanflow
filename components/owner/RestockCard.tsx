@@ -166,7 +166,7 @@ export function RestockCard({
   // Items tab — one quiet line, and out of the way.
   if (wanted.length === 0) {
     return (
-      <section className="rounded-2xl bg-white px-4 py-3 shadow-card">
+      <section className="rounded-2xl border border-glass-edge bg-glass px-4 py-3 shadow-raised">
         <p className="text-sm font-semibold text-slate-900">{t.restockTitle}</p>
         <p className="mt-1 text-sm text-slate-500">{t.restockNone}</p>
       </section>
@@ -174,7 +174,7 @@ export function RestockCard({
   }
 
   return (
-    <section className="rounded-2xl bg-white px-4 py-3 shadow-card">
+    <section className="rounded-2xl border border-glass-edge bg-glass px-4 py-3 shadow-raised">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <p className="text-sm font-semibold text-slate-900">{t.restockTitle}</p>
         <p className="text-sm tabular-nums text-slate-500">

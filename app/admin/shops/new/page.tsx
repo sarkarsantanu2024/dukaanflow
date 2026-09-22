@@ -25,7 +25,7 @@ export default function NewShopPage() {
           <ShopForm />
         </div>
 
-        <aside className="space-y-4 rounded-2xl bg-white p-5 shadow-card lg:sticky lg:top-[4.25rem]">
+        <aside className="space-y-4 rounded-2xl border border-glass-edge bg-glass p-5 shadow-raised lg:sticky lg:top-[4.25rem]">
           <ShopArt className="h-28 w-full" />
           <h2 className="font-semibold text-slate-900">What happens after this</h2>
           <ol className="space-y-3">

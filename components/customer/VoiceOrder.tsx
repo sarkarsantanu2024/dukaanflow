@@ -320,7 +320,7 @@ export function VoiceOrder({
           sibling it was 20rem wide and shoved the search and basket buttons
           across the screen every time the mic had something to say. */}
       {speaking && (
-        <div className="absolute bottom-full right-0 mb-3 w-[min(20rem,calc(100vw-2rem))] rounded-2xl bg-white p-3 shadow-lg ring-1 ring-slate-200">
+        <div className="absolute bottom-full right-0 mb-3 w-[min(20rem,calc(100vw-2rem))] rounded-2xl bg-card p-3 shadow-lg ring-1 ring-slate-200">
           <div className="flex items-start gap-2">
             <p className="min-w-0 flex-1 text-sm font-semibold text-slate-900">
               {listening ? t.voiceListening : t.voiceOrder}
@@ -385,7 +385,7 @@ export function VoiceOrder({
                 <button
                   type="button"
                   onClick={() => setSuggestions([])}
-                  className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  className="h-10 rounded-xl border border-slate-300 bg-card px-4 text-sm font-semibold text-slate-700 hover:bg-sunk"
                 >
                   {t.voiceNo}
                 </button>

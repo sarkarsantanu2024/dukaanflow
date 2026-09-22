@@ -79,7 +79,7 @@ export function ShopReportMenu({ slug, shopName }: { slug: string; shopName: str
         aria-expanded={open}
         aria-label={`Download a sales report for ${shopName}`}
         title="Sales report"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-600 hover:bg-sunk"
       >
         <DownloadIcon className="h-4 w-4" />
       </button>
@@ -99,7 +99,7 @@ export function ShopReportMenu({ slug, shopName }: { slug: string; shopName: str
 
           <div
             role="menu"
-            className="absolute bottom-full right-0 z-50 mb-1 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+            className="absolute bottom-full right-0 z-50 mb-1 w-56 overflow-hidden rounded-xl border border-slate-200 bg-card py-1 shadow-lg"
           >
             <p className="px-3 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
               Sales report (CSV)
@@ -125,7 +125,7 @@ export function ShopReportMenu({ slug, shopName }: { slug: string; shopName: str
               role="menuitem"
               href={`/admin/reports?${entries[1].search}`}
               onClick={() => setOpen(false)}
-              className="block border-t border-slate-100 px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+              className="block border-t border-slate-100 px-3 py-2 text-sm font-medium text-slate-500 hover:bg-sunk hover:text-slate-900"
             >
               Another period…
             </a>

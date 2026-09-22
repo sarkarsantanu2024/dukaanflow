@@ -80,7 +80,7 @@ function ProblemList({ lang }: { lang: 'en' | 'bn' }) {
           // Tinted, not white: this section sits on white between two others,
           // and a white card on a white ground is a border pretending to be a
           // card.
-          className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+          className="rounded-2xl border border-slate-200 bg-sunk p-5"
         >
           {/* The complaint is the heading and the fix is the smaller line under
               it, not the other way round. A shopkeeper scanning this page has to
@@ -122,7 +122,7 @@ export default function PricingPage() {
             <div className="mt-7 flex flex-wrap gap-3">
               <a
                 href="#plans"
-                className="inline-flex h-12 items-center rounded-xl bg-white px-6 font-semibold text-brand-700 transition hover:bg-white/90"
+                className="inline-flex h-12 items-center rounded-xl bg-card px-6 font-semibold text-brand-700 transition hover:bg-white/90"
               >
                 See the plans
               </a>
@@ -170,8 +170,8 @@ export default function PricingPage() {
                 key={id}
                 className={
                   featured
-                    ? 'relative rounded-2xl border-2 border-brand-600 bg-white p-6 shadow-card'
-                    : 'rounded-2xl border border-slate-200 bg-white p-6'
+                    ? 'relative rounded-2xl border-2 border-brand-600 bg-glass p-6 shadow-raised'
+                    : 'rounded-2xl border border-slate-200 bg-card p-6'
                 }
               >
                 {featured && (
@@ -207,7 +207,7 @@ export default function PricingPage() {
 
                 <p className="mt-1 text-sm text-slate-500">{spec.tagline}</p>
 
-                <p className="mt-5 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                <p className="mt-5 rounded-lg bg-sunk px-3 py-2 text-sm font-semibold text-slate-700">
                   {catalogueSize(spec.id)}
                 </p>
 
@@ -323,7 +323,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="border-t border-slate-100 bg-slate-50 px-4 py-16">
+      <section className="border-t border-slate-100 bg-sunk px-4 py-16">
         <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
           <div>
             <h2 className="text-3xl font-bold text-slate-900">How it works</h2>
@@ -334,7 +334,7 @@ export default function PricingPage() {
             />
           </div>
 
-          <div className="rounded-3xl bg-white p-6 shadow-card">
+          <div className="rounded-3xl border border-glass-edge bg-glass p-6 shadow-raised">
             <VoiceArt className="h-36 w-full" />
             <p className="mt-4 text-center text-slate-600">
               &ldquo;চাল এক কেজি ৬৮ টাকা&rdquo; — and the item is listed, priced, and live on your

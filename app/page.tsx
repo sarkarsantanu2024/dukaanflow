@@ -96,7 +96,7 @@ export default function LandingPage() {
         </Link>
         <Link
           href="/admin"
-          className="rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
+          className="rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:bg-sunk"
         >
           Admin sign in
         </Link>

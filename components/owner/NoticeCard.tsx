@@ -183,7 +183,7 @@ export function NoticeCard({
             aria-label={t.noticeLabel}
             maxLength={200}
             rows={2}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base"
+            className="w-full rounded-lg border border-slate-300 bg-card px-3 py-2 text-base"
           />
           <p className="text-xs text-slate-500">{t.noticeHint}</p>
 

@@ -140,7 +140,7 @@ export function OwnerAccessPanel({
   }
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-card">
+    <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
       <h2 className="font-semibold text-slate-900">Owner access</h2>
       <p className="mt-1 text-sm text-slate-600">
         Lets this shop&apos;s owner update their own prices, stock and voice listings from their
@@ -185,7 +185,7 @@ export function OwnerAccessPanel({
       )}
 
       {invite && (
-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="mt-3 rounded-xl border border-slate-200 bg-sunk p-3">
           <p className="text-sm font-semibold text-slate-800">
             Invite link created — it never expires
           </p>

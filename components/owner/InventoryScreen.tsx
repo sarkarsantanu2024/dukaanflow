@@ -63,7 +63,7 @@ export function InventoryScreen({
 
   if (welcome) {
     return (
-      <section className="rounded-2xl bg-white p-6 shadow-card">
+      <section className="rounded-2xl border border-glass-edge bg-glass p-6 shadow-raised">
         <VoiceArt className="mx-auto mb-4 h-28 w-auto max-w-[16rem]" />
         <h2 className="text-xl font-bold text-slate-900">{t.welcomeTitle}</h2>
         <p className="mt-2 text-slate-600">{t.welcomeBody}</p>
@@ -127,7 +127,7 @@ export function InventoryScreen({
           wanted to change their notice had to know to go to a tab about
           something else. What is left below is a summary of this screen's own
           list, which is the one thing that genuinely belongs to it. */}
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-2xl bg-white px-4 py-3 shadow-card">
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-2xl border border-glass-edge bg-glass px-4 py-3 shadow-raised">
         <p className="font-semibold tabular-nums text-slate-900">
           {items.length} <span className="font-normal text-slate-500">{t.itemsCount}</span>
           <span className="font-normal text-slate-400">

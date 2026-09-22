@@ -25,8 +25,8 @@ export function LegalPage({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-dvh bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-dvh bg-sunk">
+      <header className="border-b border-slate-200 bg-card">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
           <BrandMark href="/" className="text-base" />
           <Link href="/pricing" className="text-sm font-semibold text-brand-700 hover:underline">

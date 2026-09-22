@@ -87,7 +87,7 @@ export function AccountForm() {
   }
 
   return (
-    <form onSubmit={submit} className="max-w-lg space-y-4 rounded-2xl bg-white p-5 shadow-card">
+    <form onSubmit={submit} className="max-w-lg space-y-4 rounded-2xl border border-glass-edge bg-glass p-5 shadow-raised">
       <Input
         label="Username"
         required

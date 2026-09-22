@@ -35,7 +35,7 @@ export function RenewScreen({
       {/* WHERE THEY STAND, first and in plain words. An owner opening this
           screen is asking one question — am I paid up, and until when — and
           everything below is meaningless until that one is answered. */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+      <section className="rounded-2xl border border-slate-200 bg-card p-4">
         <h1 className="text-lg font-bold text-slate-900">{t.renewTitle}</h1>
         <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-slate-700">
           <span className="text-2xl font-bold text-slate-900">{plan.planName}</span>
@@ -75,7 +75,7 @@ export function RenewScreen({
         </p>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+      <section className="rounded-2xl border border-slate-200 bg-card p-4">
         <UpgradeFlow
           slug={slug}
           locale={locale}

@@ -199,7 +199,7 @@ function Tile({
     'flex h-16 flex-col items-center justify-center gap-1 rounded-xl border px-1 text-center text-xs font-semibold leading-tight transition',
     tone === 'primary' && 'border-brand-600 bg-brand-600 text-white hover:bg-brand-700',
     tone === 'amber' && 'border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100',
-    tone === 'plain' && 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
+    tone === 'plain' && 'border-slate-300 bg-card text-slate-700 hover:bg-slate-50',
     disabled && 'opacity-50',
   );
 
@@ -698,7 +698,7 @@ export function OrdersScreen({
 
   if (orders.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-card p-8 text-center">
         <p className="font-semibold text-slate-800">{t.noOrders}</p>
         <p className="mt-1 text-sm text-slate-500">{t.noOrdersHint}</p>
       </div>
@@ -719,7 +719,7 @@ export function OrdersScreen({
     <div className="space-y-3">
       {/* Today at a glance. Three numbers, no chart — this gets read standing
           up, between customers. */}
-      <dl className="flex items-center gap-5 rounded-2xl bg-white px-4 py-3 shadow-card">
+      <dl className="flex items-center gap-5 rounded-2xl border border-glass-edge bg-glass px-4 py-3 shadow-raised">
         <div>
           <dt className="text-xs text-slate-500">{t.ordersToday}</dt>
           <dd className="text-xl font-bold tabular-nums text-slate-900">{today.count}</dd>
@@ -814,7 +814,7 @@ export function OrdersScreen({
           card already says what state it is in. */}
 
       {visible.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-card p-8 text-center">
           <p className="text-sm text-slate-500">{t.noOrdersHere}</p>
         </div>
       ) : (
@@ -823,7 +823,7 @@ export function OrdersScreen({
             <li
               key={order.id}
               className={clsx(
-                'rounded-2xl bg-white p-4 shadow-card',
+                'rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised',
                 busyId === order.id && 'opacity-60',
                 order.status === 'CANCELLED' && 'opacity-70',
                 // A new order gets an edge you can find without reading — the
@@ -898,7 +898,7 @@ export function OrdersScreen({
                       return (
                         <li
                           key={`${order.id}-revise-${index}`}
-                          className="flex items-center gap-2 rounded-lg bg-white px-2.5 py-2"
+                          className="flex items-center gap-2 rounded-lg bg-card px-2.5 py-2"
                         >
                           <span className="min-w-0 flex-1 truncate text-sm text-slate-700">
                             {lineName(line, locale)}
@@ -968,7 +968,7 @@ export function OrdersScreen({
                         setRevising(null);
                         setRevision({});
                       }}
-                      className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700"
+                      className="h-10 rounded-lg border border-slate-300 bg-card px-3 text-sm font-semibold text-slate-700"
                     >
                       {t.reviseCancel}
                     </button>
@@ -1084,7 +1084,7 @@ export function OrdersScreen({
                     disabled={billing === order.id}
                     aria-label={t.billTitle}
                     title={t.billTitle}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-sunk disabled:opacity-50"
                   >
                     <PrinterIcon className="h-[18px] w-[18px]" />
                   </button>
@@ -1095,7 +1095,7 @@ export function OrdersScreen({
                     href={`tel:+91${order.customerPhone}`}
                     aria-label={t.callCustomer}
                     title={t.callCustomer}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-slate-50"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-sunk"
                   >
                     <PhoneIcon className="h-[18px] w-[18px]" />
                   </a>
@@ -1144,7 +1144,7 @@ export function OrdersScreen({
                      at the only moment the owner knows the answer. Plain
                      buttons rather than a dialog: this is a phone held in one
                      hand across a counter. */
-                  <div className="mt-3 rounded-xl bg-slate-50 p-3">
+                  <div className="mt-3 rounded-xl bg-sunk p-3">
                     <p className="text-sm font-semibold text-slate-700">{t.paymentAsk}</p>
 
                     {/* The same code the till shows, on the order itself.
@@ -1153,7 +1153,7 @@ export function OrdersScreen({
                         had to re-enter the whole order over there — and that
                         second record is the double count. */}
                     {(upiId || upiQrData) && (
-                      <div className="mt-2 flex flex-col items-center gap-1.5 rounded-lg bg-white p-3">
+                      <div className="mt-2 flex flex-col items-center gap-1.5 rounded-lg bg-card p-3">
                         {upiId ? (
                           <QRCodeCanvas
                             value={upiPayUrlWithAmount(upiId, shopName, order.totalAmountPaise)}
@@ -1174,7 +1174,7 @@ export function OrdersScreen({
                         type="button"
                         disabled={busyId === order.id}
                         onClick={() => setStatus(order.id, 'COMPLETED', true, 'CASH')}
-                        className="h-11 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-800 disabled:opacity-50"
+                        className="h-11 rounded-xl border border-slate-300 bg-card text-sm font-semibold text-slate-800 disabled:opacity-50"
                       >
                         {t.sellCash}
                       </button>

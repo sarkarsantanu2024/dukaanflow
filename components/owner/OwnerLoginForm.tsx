@@ -59,7 +59,7 @@ export function OwnerLoginForm({
   }
 
   return (
-    <form onSubmit={submit} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-card">
+    <form onSubmit={submit} className="w-full max-w-sm rounded-2xl border border-glass-edge bg-glass p-6 shadow-raised">
       {/* The product's own mark, not a word in small caps. This is the first
           screen an owner ever opens, usually from a WhatsApp link, and it has
           to look like the thing they were shown at their counter. */}

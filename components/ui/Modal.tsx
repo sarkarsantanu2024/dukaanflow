@@ -95,7 +95,7 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         className={clsx(
-          'relative flex w-full animate-fade-in flex-col rounded-2xl bg-white p-5 shadow-sheet',
+          'relative flex w-full animate-fade-in flex-col rounded-2xl bg-card p-5 shadow-sheet',
           full
             ? // h-full rather than min-h: the panel is a flex column whose body
               // scrolls, and that only works if the panel itself has a fixed

@@ -30,7 +30,7 @@ export function EarningsTable({
   const peak = Math.max(1, ...rows.map((row) => row.totalPaise));
 
   return (
-    <section className="rounded-2xl border border-brand-100 bg-white p-5 shadow-card">
+    <section className="rounded-2xl border border-brand-100 bg-glass p-5 shadow-raised">
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <h2 className="mr-auto font-semibold text-slate-900">Earnings</h2>
         <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
@@ -43,7 +43,7 @@ export function EarningsTable({
               className={clsx(
                 'rounded-lg px-3 py-1.5 text-sm font-semibold capitalize transition',
                 view === option
-                  ? 'bg-white text-slate-900 shadow-sm'
+                  ? 'bg-card text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900',
               )}
             >

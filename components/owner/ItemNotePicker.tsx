@@ -155,7 +155,7 @@ export function ItemNotePicker({
       )}
 
       {open && (
-        <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+        <div className="mt-2 rounded-xl border border-slate-200 bg-sunk p-2">
           {items.length >= SEARCH_FROM && (
             <div className="relative">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -165,7 +165,7 @@ export function ItemNotePicker({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t.searchItems}
                 aria-label={t.searchItems}
-                className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-base"
+                className="w-full rounded-lg border border-slate-300 bg-card py-2 pl-9 pr-3 text-base"
               />
             </div>
           )}
@@ -173,7 +173,7 @@ export function ItemNotePicker({
           {/* Capped in height and scrolled: a hundred-item kirana would
               otherwise push the two buttons that finish this form off the
               bottom of the screen. */}
-          <ul className="mt-2 max-h-56 divide-y divide-slate-100 overflow-y-auto rounded-lg bg-white">
+          <ul className="mt-2 max-h-56 divide-y divide-slate-100 overflow-y-auto rounded-lg bg-card">
             {visible.length === 0 ? (
               <li className="px-3 py-4 text-center text-sm text-slate-500">{t.noMatch}</li>
             ) : (

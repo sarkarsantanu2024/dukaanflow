@@ -94,7 +94,7 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
                   // one question navigation exists to answer, so it gets the
                   // strongest contrast available rather than the subtlest.
                   active
-                    ? 'bg-white text-brand-800 shadow-sm'
+                    ? 'bg-card text-brand-800 shadow-sm'
                     : 'text-brand-50/85 hover:bg-white/15 hover:text-white',
                 )}
               >

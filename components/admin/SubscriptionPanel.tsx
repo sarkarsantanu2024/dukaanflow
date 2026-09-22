@@ -301,7 +301,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
   }
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-card">
+    <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
       {dialog}
 
       {/* ---- 1. WHERE THIS SHOP STANDS ----
@@ -330,7 +330,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
         </span>
       </div>
 
-      <div className="mt-3 rounded-xl bg-slate-50 p-3">
+      <div className="mt-3 rounded-xl bg-sunk p-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
           In force today
         </p>
@@ -449,7 +449,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             <select
               value={plan}
               onChange={(event) => setPlan(event.target.value as Plan)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5"
+              className="w-full rounded-xl border border-slate-300 bg-card px-3 py-2.5"
             >
               {PLAN_ORDER.map((id) => (
                 <option key={id} value={id}>
@@ -485,7 +485,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
                   'rounded-xl border-2 px-3 py-2 text-left transition',
                   monthCount === option
                     ? 'border-brand-600 bg-brand-50'
-                    : 'border-slate-200 bg-white hover:border-slate-300',
+                    : 'border-slate-200 bg-card hover:border-slate-300',
                 )}
               >
                 <span className="block text-sm font-semibold text-slate-900">
@@ -599,7 +599,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
               max={5000}
               value={listedItems}
               onChange={(event) => setListedItems(event.target.value)}
-              className="w-32 rounded-xl border border-slate-300 bg-white px-3 py-2 tabular-nums"
+              className="w-32 rounded-xl border border-slate-300 bg-card px-3 py-2 tabular-nums"
             />
           </label>
 

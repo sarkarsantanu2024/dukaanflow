@@ -171,7 +171,7 @@ export function Drawer({
           'motion-reduce:animate-none',
         )}
       >
-        <div className="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
+        <div className="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-card px-4 py-3">
           <h2 className="mr-auto truncate font-bold text-slate-900">{title}</h2>
           {action}
           <button
@@ -194,7 +194,7 @@ export function Drawer({
         {footer && (
           // The phone's home indicator sits over the last few millimetres of
           // the screen, and this is where the primary button lives.
-          <div className="shrink-0 border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
+          <div className="shrink-0 border-t border-slate-200 bg-card px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
             {footer}
           </div>
         )}

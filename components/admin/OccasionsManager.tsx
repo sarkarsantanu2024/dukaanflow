@@ -135,7 +135,7 @@ export function OccasionsManager({
   return (
     <div className="space-y-5">
       {/* ------------------------------------------------ add ------------- */}
-      <section className="rounded-2xl bg-white px-5 py-4 shadow-card">
+      <section className="rounded-2xl border border-glass-edge bg-glass px-5 py-4 shadow-raised">
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-full sm:w-64">
             <Input
@@ -190,7 +190,7 @@ export function OccasionsManager({
             className={
               option === year
                 ? 'rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white'
-                : 'rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 shadow-card hover:text-slate-900'
+                : 'rounded-lg bg-glass px-3 py-1.5 text-sm font-semibold text-slate-600 shadow-raised hover:text-slate-900'
             }
           >
             {option}
@@ -199,9 +199,9 @@ export function OccasionsManager({
       </div>
 
       {/* ------------------------------------------------ the list -------- */}
-      <section className="rounded-2xl bg-white px-5 py-4 shadow-card">
+      <section className="rounded-2xl border border-glass-edge bg-glass px-5 py-4 shadow-raised">
         {occasions.length === 0 ? (
-          <p className="rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+          <p className="rounded-xl bg-sunk px-4 py-8 text-center text-sm text-slate-500">
             Nothing on the calendar yet. Press{' '}
             <strong>Load the {catalogueSize} common Indian occasions</strong> above — they arrive
             with their dates and need nothing else.

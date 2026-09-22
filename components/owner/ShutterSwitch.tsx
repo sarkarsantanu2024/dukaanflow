@@ -96,7 +96,7 @@ export function ShutterSwitch({
       >
         <span
           className={clsx(
-            'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all',
+            'absolute top-0.5 h-4 w-4 rounded-full bg-card shadow transition-all',
             open ? 'left-[1.15rem]' : 'left-0.5',
           )}
         />

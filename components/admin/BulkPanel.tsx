@@ -52,7 +52,7 @@ export function BulkPanel({ slug }: { slug: string }) {
   }
 
   return (
-    <form onSubmit={submit} className="rounded-2xl bg-white p-4 shadow-card">
+    <form onSubmit={submit} className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
       <h2 className="font-semibold text-slate-900">Bulk update</h2>
       <p className="mt-1 text-sm text-slate-500">
         One line per item: <span className="font-mono">Name Unit = value</span>. Invalid lines are
@@ -71,7 +71,7 @@ export function BulkPanel({ slug }: { slug: string }) {
             aria-pressed={mode === option}
             className={clsx(
               'rounded-lg px-4 py-1.5 text-sm font-semibold transition',
-              mode === option ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
+              mode === option ? 'bg-card text-slate-900 shadow-sm' : 'text-slate-500',
             )}
           >
             {option === 'price' ? 'Prices' : 'Stock'}
@@ -102,7 +102,7 @@ export function BulkPanel({ slug }: { slug: string }) {
       </Button>
 
       {result && (
-        <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm">
+        <div className="mt-4 rounded-xl bg-sunk p-3 text-sm">
           <p className="font-medium text-slate-800">
             ✅ {result.updated} updated · ➕ {result.created} created · ⚠️ {result.failed} failed
           </p>

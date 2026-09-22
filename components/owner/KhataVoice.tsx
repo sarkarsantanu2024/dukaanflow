@@ -205,7 +205,7 @@ export function KhataVoice({
   const yes =
     'h-10 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60';
   const no =
-    'h-10 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50';
+    'h-10 rounded-xl border border-slate-300 bg-card px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50';
 
   return (
     <div className="no-print pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-3xl flex-col items-end gap-3 px-4">
@@ -214,7 +214,7 @@ export function KhataVoice({
             as a sibling it would be 20rem wide and shove the mic across the
             screen every time it had something to say. */}
         {speaking && (
-          <div className="absolute bottom-full right-0 mb-3 w-[min(20rem,calc(100vw-2rem))] rounded-2xl bg-white p-3 shadow-lg ring-1 ring-slate-200">
+          <div className="absolute bottom-full right-0 mb-3 w-[min(20rem,calc(100vw-2rem))] rounded-2xl bg-card p-3 shadow-lg ring-1 ring-slate-200">
             <div className="flex items-start gap-2">
               <p className="min-w-0 flex-1 text-sm font-semibold text-slate-900">
                 {voice.listening ? t.khataVoiceListening : t.khataVoiceTap}

@@ -62,7 +62,7 @@ export function FloatingTools({
             disabled={photoBusy}
             aria-label={photoLabel}
             title={photoLabel}
-            className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-brand-700 shadow-lg transition hover:bg-slate-50 disabled:opacity-60"
+            className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-card text-brand-700 shadow-lg transition hover:bg-sunk disabled:opacity-60"
           >
             {photoBusy ? <Spinner className="h-5 w-5" /> : <CameraIcon className="h-6 w-6" />}
           </button>

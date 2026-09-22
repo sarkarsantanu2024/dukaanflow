@@ -18,7 +18,7 @@ export function EmptyState({
   art?: 'shop' | 'voice';
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-card px-6 py-10 text-center">
       {art === 'shop' && <ShopArt className="mx-auto mb-4 h-32 w-auto max-w-[18rem]" />}
       {art === 'voice' && <VoiceArt className="mx-auto mb-4 h-28 w-auto max-w-[18rem]" />}
       <p className="text-base font-semibold text-slate-800">{title}</p>

@@ -5,7 +5,7 @@ import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 
 const BASE =
-  'w-full rounded-xl border bg-white px-3 py-2.5 text-base text-slate-900 placeholder:text-slate-400 ' +
+  'w-full rounded-xl border bg-card px-3 py-2.5 text-base text-slate-900 placeholder:text-slate-400 ' +
   'focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600 disabled:bg-slate-100';
 
 function borderFor(error?: string) {

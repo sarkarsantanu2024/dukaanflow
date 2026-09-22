@@ -40,7 +40,7 @@ export default async function CustomersPage() {
       <AdminHeader title="Customers" eyebrow="Across every shop" backHref="/admin" />
 
       <main className="px-4 py-5 lg:px-6">
-        <div className="overflow-x-auto rounded-2xl bg-white shadow-card">
+        <div className="overflow-x-auto rounded-2xl border border-glass-edge bg-glass shadow-raised">
           <table className="w-full min-w-[40rem] text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">

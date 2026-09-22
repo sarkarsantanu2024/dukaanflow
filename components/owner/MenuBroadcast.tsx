@@ -68,7 +68,7 @@ export function MenuBroadcast({
   if (items.length === 0) return null;
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-card">
+    <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
       <h2 className="font-semibold text-slate-900">{t.menuTitle}</h2>
       <p className="mt-0.5 text-sm text-slate-500">{t.menuHint}</p>
 
@@ -85,7 +85,7 @@ export function MenuBroadcast({
                 'rounded-full border px-3 py-1.5 text-sm font-medium transition',
                 on
                   ? 'border-brand-600 bg-brand-600 text-white'
-                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
+                  : 'border-slate-300 bg-card text-slate-700 hover:bg-slate-50',
               )}
             >
               {label(item, locale)}
@@ -94,7 +94,7 @@ export function MenuBroadcast({
         })}
       </div>
 
-      <pre className="mt-3 max-h-44 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 font-sans text-sm text-slate-700">
+      <pre className="mt-3 max-h-44 overflow-auto whitespace-pre-wrap rounded-xl bg-sunk p-3 font-sans text-sm text-slate-700">
         {message}
       </pre>
 
@@ -130,7 +130,7 @@ export function MenuBroadcast({
                 href={`https://wa.me/91${customer.phone}?text=${encodeURIComponent(message)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-card px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-sunk"
               >
                 <WhatsAppIcon className="h-3.5 w-3.5 text-[#25D366]" />
                 {customer.name || customer.phone}

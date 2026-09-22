@@ -30,7 +30,7 @@ export function LangToggle({
             // which on a phone is a mis-tap into whatever sits under it.
             'inline-flex min-h-[40px] min-w-[44px] items-center justify-center rounded-full px-3 text-xs font-semibold transition',
             value === locale
-              ? 'bg-white text-slate-900 shadow-sm'
+              ? 'bg-card text-slate-900 shadow-sm'
               : 'text-slate-500 hover:text-slate-800',
           )}
         >
