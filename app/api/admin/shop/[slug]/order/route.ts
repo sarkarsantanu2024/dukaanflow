@@ -102,6 +102,21 @@ export async function PATCH(request: Request, { params }: Context) {
     // order later moved somewhere else.
     data: {
       status,
+      /**
+       * THE MOMENT THE GOODS WENT OUT, stamped here and nowhere else.
+       *
+       * This is the day the money belongs to — see `takingsBetween`. An order
+       * placed at 11pm Monday and handed over Tuesday morning is Tuesday's
+       * takings, because Tuesday is when the shopkeeper had the cash in their
+       * hand, and Monday's figures were closed and read hours ago.
+       *
+       * Cleared when an order leaves COMPLETED, for the same reason
+       * `paymentReceived` is: an order moved back to preparing has not been
+       * handed over, and a stale completion date would keep its money in a day
+       * it never belonged to. Re-completing it stamps the new day, which is
+       * correct — that is when it actually went out.
+       */
+      completedAt: status === 'COMPLETED' ? new Date() : null,
       paymentReceived: status === 'COMPLETED' ? paymentReceived : false,
       /**
        * How the money came in, INCLUDING when it did not.

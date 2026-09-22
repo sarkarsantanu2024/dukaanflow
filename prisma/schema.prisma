@@ -590,10 +590,27 @@ model Order {
   /// cannot both write a row — the second trips the constraint and is replayed.
   idempotencyKey   String?     @unique @db.Uuid
   createdAt        DateTime    @default(now())
+  /// WHEN THE GOODS ACTUALLY CHANGED HANDS, which is the day the money belongs
+  /// to.
+  ///
+  /// Takings used to window orders on `createdAt`, so an order placed at 11pm
+  /// on Monday and delivered Tuesday morning counted as Monday's money — and
+  /// Tuesday, the day the shopkeeper actually took the cash, showed nothing for
+  /// it. `takingsBetween` reads this instead.
+  ///
+  /// Nullable, and deliberately NOT backfilled: every order completed before
+  /// this column existed has none, and `takingsBetween` falls back to
+  /// `createdAt` for exactly those, so old days keep reporting what they always
+  /// reported. Cleared if an order is moved back out of COMPLETED.
+  ///
+  /// The yearly rollup still windows on `createdAt` on purpose: it answers when
+  /// demand happened, not when money landed.
+  completedAt      DateTime?
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@index([shopId, createdAt])
+  @@index([shopId, completedAt])
   @@index([status])
   @@index([shopId, customerArea])
 }

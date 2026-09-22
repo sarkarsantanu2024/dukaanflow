@@ -109,10 +109,33 @@ export async function takingsBetween(shopId: string, from: Date, to: Date): Prom
       select: { totalAmountPaise: true, paymentMode: true },
     }),
     prisma.order.findMany({
+      /**
+       * AN ORDER'S MONEY BELONGS TO THE DAY IT WENT OUT, NOT THE DAY IT WAS
+       * PLACED.
+       *
+       * This windowed on `createdAt`, which meant an order taken at 11pm on
+       * Monday and delivered Tuesday morning counted as Monday's takings —
+       * against a Monday figure the owner had already read and closed — while
+       * Tuesday, when they actually took the cash, showed nothing for it.
+       *
+       * So a completed order is matched on `completedAt`, and everything else
+       * on `createdAt`, which is the right date for each: a pending order has
+       * taken no money yet and belongs, as waiting work, to the day somebody
+       * asked for it.
+       *
+       * THE NULL BRANCH IS THE HISTORY, NOT AN EDGE CASE. Orders completed
+       * before `completedAt` existed carry none and are deliberately not
+       * backfilled, so they keep falling through to `createdAt` and every day
+       * already reported keeps reporting the same figure it always did. Delete
+       * that branch and every past day silently empties.
+       */
       where: {
         shopId,
-        createdAt: { gte: from, lt: to },
         status: { not: 'CANCELLED' },
+        OR: [
+          { completedAt: { gte: from, lt: to } },
+          { completedAt: null, createdAt: { gte: from, lt: to } },
+        ],
       },
       select: { totalAmountPaise: true, paymentMode: true, paymentReceived: true, status: true },
     }),
