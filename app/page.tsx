@@ -20,7 +20,7 @@ import {
 import { SiteFooter } from '@/components/ui/SiteFooter';
 import { BackToTop } from '@/components/marketing/BackToTop';
 import { MobileMenu } from '@/components/marketing/MobileMenu';
-import { BRAND_LOGO, BRAND_NAME } from '@/lib/brand';
+import { BRAND_LOGO, BRAND_NAME, BRAND_WORDMARK } from '@/lib/brand';
 import { SAFETY } from '@/lib/marketing-copy';
 import { LangTabs } from '@/components/marketing/LangTabs';
 import { ProblemList, StepList } from '@/components/marketing/StoryLists';
@@ -456,28 +456,32 @@ export default function LandingPage() {
           still loading. */}
       <header className="sticky top-0 z-30 bg-black">
         <div className="mx-auto flex max-w-[100rem] items-center gap-4 px-5 py-3 sm:px-8 lg:px-12">
-          {/* THE FULL LOCKUP, because this is the one place with room for it.
-              Everywhere inside the product the mark is drawn beside the name
-              set in type — that is what survives a 360px bar. A marketing
-              header is the opposite case: nothing is competing for the width,
-              and the supplied artwork (the leaf through the H, the red on
-              "khata") says more about the brand in one line than type can. */}
-          {/* On a white plate: the dark green of "Halk" all but disappears on
-              the black bar. */}
+          {/* THE MARK ON A SMALL WHITE TILE, THE NAME IN TYPE. The supplied
+              lockup is drawn for a light ground: its dark green "Halk" all but
+              vanishes on black, and putting the whole lockup on a white plate
+              made a slab. Only the illustration needs the tile, the way an app
+              icon has one. The name is set in white with "khata" in the
+              logo's red, which reads on black where it would not on green. */}
           <Link
             href="/"
             aria-label={`${BRAND_NAME} — home`}
-            className="shrink-0 rounded-xl bg-white px-3 py-1.5"
+            className="inline-flex shrink-0 items-center gap-2.5"
           >
-            <Image
-              src={BRAND_LOGO.lockup}
-              alt={BRAND_NAME}
-              width={1926}
-              height={513}
-              priority
-              sizes="200px"
-              className="h-9 w-auto sm:h-10"
-            />
+            <span className="inline-flex rounded-xl bg-white p-1">
+              <Image
+                src={BRAND_LOGO.master}
+                alt=""
+                width={468}
+                height={468}
+                priority
+                sizes="40px"
+                className="h-9 w-9 sm:h-10 sm:w-10"
+              />
+            </span>
+            <span className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+              {BRAND_WORDMARK.head}
+              <span className="text-accent-400">{BRAND_WORDMARK.tail}</span>
+            </span>
           </Link>
           {/* The section you are reading is marked as you scroll — see
               `SectionNav`. Four words that never change are decoration; a bar
