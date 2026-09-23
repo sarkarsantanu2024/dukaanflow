@@ -8,8 +8,11 @@
  * in three languages with the right units — the owner ticks what they sell and
  * is left with the one job only they can do, which is setting their own prices.
  *
- * Everything lands out of stock at ₹1 for exactly that reason: nothing reaches
- * a customer until the owner has said what it costs.
+ * Items land priced, in stock and on sale, at the catalogue's typical retail
+ * for the pack size — see `app/api/admin/shop/[slug]/starter/route.ts` for why
+ * that beats the ₹1 placeholder this used to add. Every chip therefore shows
+ * the price it will arrive at, because that number is the owner's to correct
+ * and they cannot correct one they were never shown.
  *
  * The list is long on purpose — a kirana catalogue that only offered thirty
  * things would send the owner straight back to dictating. Long lists need
@@ -26,6 +29,8 @@ import { useToast } from '@/components/ui/Toast';
 import { ownerDict } from '@/lib/owner-i18n';
 import { starterName, starterOtherNames, type StarterItem } from '@/lib/starter-catalogue';
 import { translateCategory } from '@/lib/speech';
+import { formatPaise } from '@/lib/money';
+import { rateUnit } from '@/lib/units';
 import type { Locale } from '@/lib/i18n';
 
 export function StarterPicker({
@@ -34,6 +39,7 @@ export function StarterPicker({
   locale,
   remaining,
   onDismiss,
+  inDrawer = false,
 }: {
   slug: string;
   catalogue: StarterItem[];
@@ -44,8 +50,18 @@ export function StarterPicker({
    * to one error — the worst possible first five minutes.
    */
   remaining?: number;
-  /** Omitted inside a drawer, where the drawer's own close is the way out. */
+  /** How the owner leaves without taking anything; the drawer's close, on that side. */
   onDismiss?: () => void;
+  /**
+   * Is this inside a drawer rather than on the owner's Items tab?
+   *
+   * It decides one thing and it is not cosmetic: how far off the bottom the
+   * Add bar sticks. On the Items tab it has to clear the app's fixed tab bar,
+   * and a drawer has no tab bar — so the same offset left the bar hovering
+   * three-quarters of an inch above the bottom edge with the list sliding
+   * through the gap underneath it, which is exactly as broken as it sounds.
+   */
+  inDrawer?: boolean;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -161,10 +177,7 @@ export function StarterPicker({
       >
         {/* Both languages, because the operator reading this list and the
             shopkeeper they are doing it for do not read the same one, and a
-            chip that says only "Rice" is unverifiable to one of them.
-            The unit is deliberately absent: pack size is the shop's own
-            decision and is set on the item afterwards, so showing it here was
-            offering a fact the picker has no business asserting. */}
+            chip that says only "চাল" is unverifiable to one of them. */}
         <span className="block leading-tight">{starterName(item, locale)}</span>
         <span
           className={clsx(
@@ -173,6 +186,26 @@ export function StarterPicker({
           )}
         >
           {starterOtherNames(item, locale).join(' · ')}
+        </span>
+        {/* THE PRICE IT WILL ARRIVE AT, AND WHAT THAT PRICE IS FOR.
+            These items are added priced and on sale — the whole point of the
+            list — so the chip was asking the owner to agree to a number it
+            was not showing them. A suggested price nobody saw is the one most
+            likely to go out to a customer uncorrected. Shown as a rate, so
+            "₹55 / kg" reads as the shop's own board would. */}
+        <span
+          className={clsx(
+            'mt-0.5 block text-xs font-semibold tabular-nums leading-tight',
+            on ? 'text-white/85' : 'text-slate-600',
+          )}
+        >
+          {formatPaise(item.pricePaise)}
+          {rateUnit(item.unit) && (
+            <span className={clsx('font-normal', on ? 'text-white/70' : 'text-slate-400')}>
+              {' '}
+              / {rateUnit(item.unit)}
+            </span>
+          )}
         </span>
       </button>
     );
@@ -261,9 +294,17 @@ export function StarterPicker({
           carries the count and the room left, which are the two facts that
           decide whether to tick one more.
 
-          The offset clears the owner app's fixed tab bar; inside a drawer there
-          is no tab bar, and sitting a little above the edge costs nothing. */}
-      <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-10 -mx-4 mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-brand-200 bg-brand-50/95 px-4 pb-1 pt-3 backdrop-blur">
+          The offset clears the owner app's fixed tab bar. Inside a drawer
+          there is no tab bar to clear, and keeping the offset there parked the
+          bar in mid-air with chips scrolling underneath it. */}
+      <div
+        className={clsx(
+          'sticky z-10 -mx-4 -mb-4 mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-brand-200 bg-brand-50/95 px-4 pt-3 backdrop-blur',
+          inDrawer
+            ? 'bottom-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))]'
+            : 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))] pb-3',
+        )}
+      >
         <Button onClick={add} loading={busy} disabled={picked.size === 0}>
           {t.starterAdd}
           {picked.size > 0 ? ` (${picked.size})` : ''}

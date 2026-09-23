@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { CameraIcon, ChevronRightIcon, TrashIcon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Input } from '@/components/ui/Input';
+import { Input, PriceRateField } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/useConfirm';
@@ -23,7 +23,7 @@ import {
 } from '@/lib/starter-catalogue';
 import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import { suggestNames, translateCategory } from '@/lib/speech';
-import { parseStockAmount, stockAmountLabel, unitsFor, UNIT_LIST_ID } from '@/lib/units';
+import { parseStockAmount, rateUnit, stockAmountLabel, unitsFor, UNIT_LIST_ID } from '@/lib/units';
 import { Drawer } from '@/components/ui/Drawer';
 import { FloatingTools } from './FloatingTools';
 import { useSimpleMode } from '@/components/owner/SimpleMode';
@@ -152,18 +152,6 @@ function stockLabel(unit: string, quantity: number): string {
 }
 
 /**
- * The pack size read as a rate beside the price, so "₹120" says "₹120 / kg"
- * rather than leaving the owner to pair it with the box next door. A leading
- * "1" is dropped — "1 kg" is priced per kg, not per one-kilo — while a real
- * quantity stays: "500 g" is the rate for 500 g. Blank when there is no unit.
- */
-function priceUnitSuffix(unit: string): string {
-  const u = unit.trim();
-  const one = u.match(/^1\s+(.+)$/);
-  return one ? one[1] : u;
-}
-
-/**
  * The item's own unit, written faintly inside the stock box.
  *
  * "কত আছে" was three boxes along from the only thing that said what to measure
@@ -181,7 +169,7 @@ function priceUnitSuffix(unit: string): string {
 function stockUnitHint(unit: string, text: string): string {
   const typed = text.trim();
   if (typed && !/^\d+(?:\.\d+)?$/.test(typed)) return '';
-  return priceUnitSuffix(unit);
+  return rateUnit(unit);
 }
 
 const EMPTY_NEW_ITEM: NewItem = {
@@ -1181,44 +1169,43 @@ export function ItemsManager({
           <div
             className={clsx(
               'mt-2 grid gap-2',
-              // Three short boxes and the width of the remove button, so every
-              // row's boxes line up with the row above whether or not it has
-              // one. In simple mode the pack size is not asked for, so its
-              // column goes with it rather than being left as a gap.
-              lean
-                ? 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.5rem]'
-                : 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2.5rem]',
+              // Two boxes and the width of the remove button, so every row's
+              // boxes line up with the row above whether or not it has one.
+              // The price carries its own pack size now, so there is no third
+              // column to drop in simple mode — the rate half of the box goes
+              // instead, and the row keeps its shape either way.
+              'grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_2.5rem]',
             )}
           >
-            <Input
-              label={index === 0 ? t.price : undefined}
-              aria-label={t.price}
-              type="text"
-              inputMode="decimal"
-              value={row.price}
-              onChange={(event) => updateRow(index, { price: event.target.value })}
-              error={rowErrors[index]?.price}
-              placeholder="68"
-            />
-            {/* LEAN: the name and the price, and nothing else.
+            {/* The price and the pack size it is a price for, in one box.
+                LEAN: the name and the price, and nothing else.
                 "চাল · ৬৮ · কী?" is where a first-time owner stops, because a
-                pack size is the one box of the three whose question they have
-                not been asked before — and leaving it empty is already the
-                right answer for everything sold loose off a scale. The item
-                saves without it, the row on the list has a pack-size box that
-                can be filled in later, and an owner who wants it on the way in
-                taps Show everything. */}
-            {!lean && (
-              <Input
-                label={index === 0 ? t.unit : undefined}
-                aria-label={t.unit}
-                list={UNIT_LIST_ID}
-                value={row.unit}
-                onChange={(event) => updateRow(index, { unit: event.target.value })}
-                error={rowErrors[index]?.unit}
-                placeholder={units[0]}
-              />
-            )}
+                pack size is the one question of the three they have not been
+                asked before — and leaving it empty is already the right answer
+                for everything sold loose off a scale. The item saves without
+                it, the row on the list can take one later, and an owner who
+                wants it on the way in taps Show everything. */}
+            <PriceRateField
+              label={index === 0 ? t.price : undefined}
+              error={rowErrors[index]?.price ?? rowErrors[index]?.unit}
+              price={{
+                value: row.price,
+                onChange: (value) => updateRow(index, { price: value }),
+                placeholder: '68',
+                'aria-label': t.price,
+              }}
+              unit={
+                lean
+                  ? undefined
+                  : {
+                      value: row.unit,
+                      onChange: (value) => updateRow(index, { unit: value }),
+                      listId: UNIT_LIST_ID,
+                      placeholder: rateUnit(units[0] ?? ''),
+                      'aria-label': t.unit,
+                    }
+              }
+            />
 
             {/* HOW MUCH IS ON THE SHELF, ASKED WHILE THE ITEM IS BEING ADDED.
                 It was only on the saved row, so an owner listing forty things
@@ -1411,8 +1398,6 @@ export function ItemsManager({
    * sixty cards this used to be.
    */
   function itemRow(item: AdminItem) {
-    // The unit shown as a rate on the price field — see `priceUnitSuffix`.
-    const priceUnit = priceUnitSuffix(unitDrafts[item.id] ?? item.unit);
     return (
       <li
         key={item.id}
@@ -1516,57 +1501,32 @@ export function ItemsManager({
         </div>
 
         <div className="mt-2.5 flex items-end gap-2">
-          <label className="relative min-w-0 flex-1">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">
-              ₹
-            </span>
-            {/* `decimal` rather than `number`: paise mean the field
-                now takes "12.50", and a number spinner on a phone
-                offers a keypad without a decimal point on some
-                Android keyboards. */}
-            <input
-              type="text"
-              inputMode="decimal"
-              aria-label={`${t.price} — ${displayName(item, locale)}`}
-              value={priceDrafts[item.id] ?? paiseToInput(item.pricePaise)}
-              onChange={(event) =>
-                setPriceDrafts((current) => ({ ...current, [item.id]: event.target.value }))
-              }
-              onBlur={() => commitPrice(item)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') event.currentTarget.blur();
+          {/* ONE BOX: the price and what it is a price for. The pack size used
+              to be a second box beside this one, saying "1 kg" next to a price
+              box that already said "/ kg" — the same fact twice, the second
+              time looking like another price field. The rate IS the control
+              now; see `PriceRateField`. */}
+          <div className="min-w-0 flex-1">
+            <PriceRateField
+              price={{
+                value: priceDrafts[item.id] ?? paiseToInput(item.pricePaise),
+                onChange: (value) =>
+                  setPriceDrafts((current) => ({ ...current, [item.id]: value })),
+                onBlur: () => commitPrice(item),
+                'aria-label': `${t.price} — ${displayName(item, locale)}`,
               }}
-              className={clsx(
-                'h-10 w-full rounded-lg border border-slate-300 pl-6 text-left text-sm tabular-nums',
-                priceUnit ? 'pr-12' : 'pr-2',
-              )}
+              unit={{
+                value: unitDrafts[item.id] ?? item.unit,
+                onChange: (value) =>
+                  setUnitDrafts((current) => ({ ...current, [item.id]: value })),
+                onBlur: () => commitUnit(item),
+                listId: UNIT_LIST_ID,
+                placeholder: t.unit,
+                'aria-label': `${t.unit} — ${displayName(item, locale)}`,
+              }}
             />
-            {/* The unit as a rate — "/ kg", "/ 500 g" — so the price reads on its
-                own. Faded and non-interactive: it is context, not a control. */}
-            {priceUnit && (
-              <span className="pointer-events-none absolute right-2.5 top-1/2 max-w-[3.5rem] -translate-y-1/2 truncate text-xs text-slate-400">
-                / {priceUnit}
-              </span>
-            )}
-          </label>
+          </div>
 
-          {/* Pack size, editable in place and suggested from what this
-              kind of shop actually sells in. */}
-          <input
-            type="text"
-            list={UNIT_LIST_ID}
-            aria-label={`${t.unit} — ${displayName(item, locale)}`}
-            placeholder={t.unit}
-            value={unitDrafts[item.id] ?? item.unit}
-            onChange={(event) =>
-              setUnitDrafts((current) => ({ ...current, [item.id]: event.target.value }))
-            }
-            onBlur={() => commitUnit(item)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') event.currentTarget.blur();
-            }}
-            className="h-10 w-full min-w-0 flex-1 rounded-lg border border-slate-300 px-2.5 text-sm"
-          />
 
           {/* WHAT IS ON THE SHELF IS THE OWNER'S WORD.
               The console keeps the catalogue — the names, the prices,

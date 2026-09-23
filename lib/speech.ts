@@ -1331,6 +1331,13 @@ const CATEGORY_VOCAB: Vocab[] = [
   { en: 'Baby Care', hi: 'बच्चों का सामान', bn: 'শিশুদের জিনিস' },
   { en: 'Puja Items', hi: 'पूजा का सामान', bn: 'পুজোর জিনিস' },
   { en: 'Stationery', hi: 'स्टेशनरी', bn: 'খাতা-কলম' },
+  // The aisles the third tranche of the starter catalogue added. A category
+  // missing from here is not a small fault: it reaches the customer as an
+  // English filter chip on a Bengali shop page.
+  { en: 'Packaged Food', hi: 'पैकेज्ड फ़ूड', bn: 'প্যাকেটজাত খাবার' },
+  { en: 'Frozen Food', hi: 'फ्रोज़न फ़ूड', bn: 'হিমায়িত খাবার' },
+  { en: 'Electricals', hi: 'बिजली का सामान', bn: 'বিদ্যুতের জিনিস' },
+  { en: 'Pet Care', hi: 'पालतू का सामान', bn: 'পোষ্যের জিনিস' },
 ];
 
 const CATEGORY_BY_FORM = new Map<string, Vocab>();

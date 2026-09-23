@@ -46,6 +46,22 @@ export function unitsFor(type: ShopType): string[] {
 export const UNIT_LIST_ID = 'halkhata-units';
 
 /**
+ * A pack size read as a RATE: what "₹120" is ₹120 per.
+ *
+ * A leading "1" goes — a price per one kilo is a price per kilo — while a real
+ * quantity stays, because "500 g" is the rate for 500 g and saying "per g"
+ * would be a hundredfold lie. Blank in, blank out: an item with no pack size
+ * has no rate to report, and the price stands on its own.
+ *
+ * Display only. What the shop stores is what the owner typed.
+ */
+export function rateUnit(unit: string): string {
+  const trimmed = unit.trim();
+  const one = trimmed.match(/^1\s+(.+)$/);
+  return one ? one[1]! : trimmed;
+}
+
+/**
  * The canonical spelling of a unit, so two ways of typing one thing become one
  * item rather than two rows a customer cannot tell apart.
  *

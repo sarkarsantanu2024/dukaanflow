@@ -34,6 +34,15 @@
  * the number of shops — so it is the right place to be generous. Only the items
  * an owner actually ticks ever become rows.
  *
+ * NAMES ARE THE THING SOLD, NOT THE SHELF IT SITS ON. "Rice", "Atta", "Milk",
+ * "Tea", "Detergent" were all in here once, and every one of them reads as a
+ * heading rather than as something a customer can put in a basket: a shop page
+ * offering "Rice" has told the shopper nothing, and the owner cannot price it,
+ * because miniket and gobindobhog are not one price. So the generic entries are
+ * gone or specific now — Whole Wheat Atta, Cow Milk, CTC Tea, Detergent Powder —
+ * which is also how every quick-commerce app the same customer uses names them.
+ * A new entry that could plausibly be a category heading is the wrong entry.
+ *
  * Regional note: this leans Bengali/Eastern-Indian because that is where the
  * first shops are. Gobindobhog rice, panch phoron and jhinge belong on a
  * Kolkata kirana's list and would be noise in Gujarat. When the product moves,
@@ -61,10 +70,9 @@ export type StarterItem = {
 
 const GROCERY: StarterItem[] = [
   // Rice & Atta
-  { name: 'Rice', nameBn: 'চাল', nameHi: 'चावल', unit: '1 kg', pricePaise: 5500, category: 'Rice & Atta' },
   { name: 'Basmati Rice', nameBn: 'বাসমতি চাল', nameHi: 'बासमती चावल', unit: '1 kg', pricePaise: 13000, category: 'Rice & Atta' },
   { name: 'Gobindobhog Rice', nameBn: 'গোবিন্দভোগ চাল', nameHi: 'गोबिंदभोग चावल', unit: '1 kg', pricePaise: 11000, category: 'Rice & Atta' },
-  { name: 'Atta', nameBn: 'আটা', nameHi: 'आटा', unit: '1 kg', pricePaise: 4500, category: 'Rice & Atta' },
+  { name: 'Whole Wheat Atta', nameBn: 'গমের আটা', nameHi: 'गेहूं का आटा', unit: '1 kg', pricePaise: 4500, category: 'Rice & Atta' },
   { name: 'Maida', nameBn: 'ময়দা', nameHi: 'मैदा', unit: '500 g', pricePaise: 2800, category: 'Rice & Atta' },
   { name: 'Suji', nameBn: 'সুজি', nameHi: 'सूजी', unit: '500 g', pricePaise: 3000, category: 'Rice & Atta' },
   { name: 'Besan', nameBn: 'বেসন', nameHi: 'बेसन', unit: '500 g', pricePaise: 6000, category: 'Rice & Atta' },
@@ -83,7 +91,7 @@ const GROCERY: StarterItem[] = [
   { name: 'Rajma', nameBn: 'রাজমা', nameHi: 'राजमा', unit: '500 g', pricePaise: 7000, category: 'Dal & Pulses' },
   { name: 'Kabuli Chana', nameBn: 'কাবুলি ছোলা', nameHi: 'काबुली चना', unit: '500 g', pricePaise: 6000, category: 'Dal & Pulses' },
   { name: 'Kala Chana', nameBn: 'কালো ছোলা', nameHi: 'काला चना', unit: '500 g', pricePaise: 4500, category: 'Dal & Pulses' },
-  { name: 'Matar', nameBn: 'মটর', nameHi: 'मटर', unit: '500 g', pricePaise: 4000, category: 'Dal & Pulses' },
+  { name: 'Dry Green Peas', nameBn: 'শুকনো মটর', nameHi: 'सूखी मटर', unit: '500 g', pricePaise: 4000, category: 'Dal & Pulses' },
   // Staples, not Dal & Pulses. What a kirana sells as "soyabean" is the dried
   // nugget — soya badi — which is cooked as a vegetable or a curry and never as
   // a dal. Botanically it is a legume and that is how it got filed here; a
@@ -93,7 +101,7 @@ const GROCERY: StarterItem[] = [
 
   // Staples
   { name: 'Sugar', nameBn: 'চিনি', nameHi: 'चीनी', unit: '1 kg', pricePaise: 4800, category: 'Staples' },
-  { name: 'Salt', nameBn: 'নুন', nameHi: 'नमक', unit: '1 kg', pricePaise: 2500, category: 'Staples' },
+  { name: 'Iodised Salt', nameBn: 'আয়োডিনযুক্ত নুন', nameHi: 'आयोडीन नमक', unit: '1 kg', pricePaise: 2500, category: 'Staples' },
   { name: 'Jaggery', nameBn: 'গুড়', nameHi: 'गुड़', unit: '500 g', pricePaise: 4500, category: 'Staples' },
   { name: 'Honey', nameBn: 'মধু', nameHi: 'शहद', unit: '250 g', pricePaise: 13000, category: 'Staples' },
 
@@ -103,7 +111,7 @@ const GROCERY: StarterItem[] = [
   { name: 'Soyabean Oil', nameBn: 'সয়াবিন তেল', nameHi: 'सोयाबीन तेल', unit: '1 l', pricePaise: 14000, category: 'Oil & Ghee' },
   { name: 'Rice Bran Oil', nameBn: 'রাইস ব্রান তেল', nameHi: 'राइस ब्रान तेल', unit: '1 l', pricePaise: 15500, category: 'Oil & Ghee' },
   { name: 'Coconut Oil', nameBn: 'নারকেল তেল', nameHi: 'नारियल तेल', unit: '200 ml', pricePaise: 9000, category: 'Oil & Ghee' },
-  { name: 'Ghee', nameBn: 'ঘি', nameHi: 'घी', unit: '500 g', pricePaise: 32000, category: 'Oil & Ghee' },
+  { name: 'Desi Ghee', nameBn: 'দেশি ঘি', nameHi: 'देसी घी', unit: '500 g', pricePaise: 32000, category: 'Oil & Ghee' },
   { name: 'Vanaspati', nameBn: 'ডালডা', nameHi: 'डालडा', unit: '500 g', pricePaise: 9000, category: 'Oil & Ghee' },
 
   // Spices
@@ -141,7 +149,7 @@ const GROCERY: StarterItem[] = [
   { name: 'Bitter Gourd', nameBn: 'করলা', nameHi: 'करेला', unit: '250 g', pricePaise: 2000, category: 'Vegetables' },
   { name: 'Lady Finger', nameBn: 'ঢেঁড়স', nameHi: 'भिंडी', unit: '500 g', pricePaise: 3000, category: 'Vegetables' },
   { name: 'Carrot', nameBn: 'গাজর', nameHi: 'गाजर', unit: '500 g', pricePaise: 2500, category: 'Vegetables' },
-  { name: 'Beans', nameBn: 'বিনস', nameHi: 'बीन्स', unit: '250 g', pricePaise: 2000, category: 'Vegetables' },
+  { name: 'French Beans', nameBn: 'ফরাসি বিন', nameHi: 'फ्रेंच बीन्स', unit: '250 g', pricePaise: 2000, category: 'Vegetables' },
   { name: 'Capsicum', nameBn: 'ক্যাপসিকাম', nameHi: 'शिमला मिर्च', unit: '250 g', pricePaise: 2500, category: 'Vegetables' },
   { name: 'Cucumber', nameBn: 'শসা', nameHi: 'खीरा', unit: '500 g', pricePaise: 2000, category: 'Vegetables' },
   { name: 'Radish', nameBn: 'মুলো', nameHi: 'मूली', unit: '500 g', pricePaise: 1500, category: 'Vegetables' },
@@ -166,32 +174,30 @@ const GROCERY: StarterItem[] = [
   { name: 'Coconut', nameBn: 'নারকেল', nameHi: 'नारियल', unit: '1 pc', pricePaise: 4500, category: 'Fruits' },
 
   // Dairy
-  { name: 'Milk', nameBn: 'দুধ', nameHi: 'दूध', unit: '500 ml', pricePaise: 3000, category: 'Dairy' },
+  { name: 'Cow Milk', nameBn: 'গরুর দুধ', nameHi: 'गाय का दूध', unit: '500 ml', pricePaise: 3000, category: 'Dairy' },
   { name: 'Curd', nameBn: 'দই', nameHi: 'दही', unit: '400 g', pricePaise: 4000, category: 'Dairy' },
   { name: 'Paneer', nameBn: 'পনির', nameHi: 'पनीर', unit: '200 g', pricePaise: 9000, category: 'Dairy' },
-  { name: 'Butter', nameBn: 'মাখন', nameHi: 'मक्खन', unit: '100 g', pricePaise: 6000, category: 'Dairy' },
-  { name: 'Cheese', nameBn: 'চিজ', nameHi: 'चीज़', unit: '200 g', pricePaise: 14500, category: 'Dairy' },
-  { name: 'Egg', nameBn: 'ডিম', nameHi: 'अंडा', unit: '6 pc', pricePaise: 4500, category: 'Dairy' },
+  { name: 'Table Butter', nameBn: 'টেবিল মাখন', nameHi: 'टेबल बटर', unit: '100 g', pricePaise: 6000, category: 'Dairy' },
+  { name: 'Cheese Block', nameBn: 'চিজ ব্লক', nameHi: 'चीज़ ब्लॉक', unit: '200 g', pricePaise: 14500, category: 'Dairy' },
+  { name: 'Poultry Egg', nameBn: 'পোলট্রি ডিম', nameHi: 'पोल्ट्री अंडा', unit: '6 pc', pricePaise: 4500, category: 'Dairy' },
   { name: 'Milk Powder', nameBn: 'গুঁড়ো দুধ', nameHi: 'मिल्क पाउडर', unit: '500 g', pricePaise: 29000, category: 'Dairy' },
   { name: 'Condensed Milk', nameBn: 'কনডেন্সড মিল্ক', nameHi: 'कंडेंस्ड मिल्क', unit: '400 g', pricePaise: 13000, category: 'Dairy' },
 
   // Tea & Coffee
-  { name: 'Tea', nameBn: 'চা', nameHi: 'चाय', unit: '250 g', pricePaise: 14000, category: 'Tea & Coffee' },
+  { name: 'CTC Tea', nameBn: 'সিটিসি চা', nameHi: 'सीटीसी चाय', unit: '250 g', pricePaise: 14000, category: 'Tea & Coffee' },
   { name: 'Green Tea', nameBn: 'গ্রিন টি', nameHi: 'ग्रीन टी', unit: '25 pc', pricePaise: 15000, category: 'Tea & Coffee' },
-  { name: 'Coffee', nameBn: 'কফি', nameHi: 'कॉफ़ी', unit: '50 g', pricePaise: 16000, category: 'Tea & Coffee' },
-  { name: 'Health Drink', nameBn: 'হেলথ ড্রিংক', nameHi: 'हेल्थ ड्रिंक', unit: '500 g', pricePaise: 27000, category: 'Tea & Coffee' },
+  { name: 'Malt Health Drink', nameBn: 'মল্ট হেলথ ড্রিংক', nameHi: 'माल्ट हेल्थ ड्रिंक', unit: '500 g', pricePaise: 27000, category: 'Tea & Coffee' },
 
   // Snacks
-  { name: 'Biscuit Pack', nameBn: 'বিস্কুট প্যাকেট', nameHi: 'बिस्कुट पैकेट', unit: '', pricePaise: 2000, category: 'Snacks' },
-  { name: 'Bread', nameBn: 'পাউরুটি', nameHi: 'ब्रेड', unit: '', pricePaise: 4500, category: 'Snacks' },
+  { name: 'Glucose Biscuit', nameBn: 'গ্লুকোজ বিস্কুট', nameHi: 'ग्लूकोज़ बिस्कुट', unit: '1 packet', pricePaise: 2000, category: 'Snacks' },
+  { name: 'White Bread', nameBn: 'সাদা পাউরুটি', nameHi: 'सफ़ेद ब्रेड', unit: '1 packet', pricePaise: 4500, category: 'Snacks' },
   { name: 'Namkeen', nameBn: 'নমকিন', nameHi: 'नमकीन', unit: '200 g', pricePaise: 5000, category: 'Snacks' },
   { name: 'Chanachur', nameBn: 'চানাচুর', nameHi: 'चनाचूर', unit: '200 g', pricePaise: 4500, category: 'Snacks' },
-  { name: 'Chips', nameBn: 'চিপস', nameHi: 'चिप्स', unit: '', pricePaise: 2000, category: 'Snacks' },
-  { name: 'Instant Noodles', nameBn: 'ইনস্ট্যান্ট নুডলস', nameHi: 'इंस्टेंट नूडल्स', unit: '', pricePaise: 1500, category: 'Snacks' },
+  { name: 'Potato Chips', nameBn: 'আলুর চিপস', nameHi: 'आलू चिप्स', unit: '1 packet', pricePaise: 2000, category: 'Snacks' },
+  { name: 'Instant Noodles', nameBn: 'ইনস্ট্যান্ট নুডলস', nameHi: 'इंस्टेंट नूडल्स', unit: '1 packet', pricePaise: 1500, category: 'Snacks' },
   { name: 'Papad', nameBn: 'পাঁপড়', nameHi: 'पापड़', unit: '200 g', pricePaise: 6000, category: 'Snacks' },
-  { name: 'Chocolate', nameBn: 'চকোলেট', nameHi: 'चॉकलेट', unit: '', pricePaise: 2000, category: 'Snacks' },
+  { name: 'Milk Chocolate', nameBn: 'মিল্ক চকোলেট', nameHi: 'मिल्क चॉकलेट', unit: '1 pc', pricePaise: 2000, category: 'Snacks' },
   { name: 'Rusk', nameBn: 'রাস্ক', nameHi: 'रस्क', unit: '200 g', pricePaise: 4500, category: 'Snacks' },
-  { name: 'Sauce', nameBn: 'সস', nameHi: 'सॉस', unit: '200 g', pricePaise: 6000, category: 'Snacks' },
 
   // Dry Fruits
   { name: 'Almond', nameBn: 'কাঠবাদাম', nameHi: 'बादाम', unit: '100 g', pricePaise: 11000, category: 'Dry Fruits' },
@@ -201,25 +207,24 @@ const GROCERY: StarterItem[] = [
   { name: 'Dates', nameBn: 'খেজুর', nameHi: 'खजूर', unit: '250 g', pricePaise: 9000, category: 'Dry Fruits' },
 
   // Household
-  { name: 'Detergent', nameBn: 'ডিটারজেন্ট', nameHi: 'डिटर्जेंट', unit: '1 kg', pricePaise: 12000, category: 'Household' },
-  { name: 'Dishwash Bar', nameBn: 'বাসন মাজার সাবান', nameHi: 'बर्तन साबुन', unit: '', pricePaise: 2000, category: 'Household' },
+  { name: 'Dishwash Bar', nameBn: 'বাসন মাজার সাবান', nameHi: 'बर्तन साबुन', unit: '1 pc', pricePaise: 2000, category: 'Household' },
   { name: 'Phenyl', nameBn: 'ফিনাইল', nameHi: 'फिनाइल', unit: '500 ml', pricePaise: 7000, category: 'Household' },
   { name: 'Toilet Cleaner', nameBn: 'টয়লেট ক্লিনার', nameHi: 'टॉयलेट क्लीनर', unit: '500 ml', pricePaise: 9500, category: 'Household' },
   { name: 'Broom', nameBn: 'ঝাঁটা', nameHi: 'झाड़ू', unit: '1 pc', pricePaise: 6000, category: 'Household' },
-  { name: 'Agarbatti', nameBn: 'ধূপকাঠি', nameHi: 'अगरबत्ती', unit: '', pricePaise: 3000, category: 'Household' },
-  { name: 'Candle', nameBn: 'মোমবাতি', nameHi: 'मोमबत्ती', unit: '', pricePaise: 2000, category: 'Household' },
-  { name: 'Matchbox', nameBn: 'দেশলাই', nameHi: 'माचिस', unit: '', pricePaise: 200, category: 'Household' },
-  { name: 'Garbage Bag', nameBn: 'আবর্জনার ব্যাগ', nameHi: 'कचरा बैग', unit: '', pricePaise: 6000, category: 'Household' },
+  { name: 'Agarbatti', nameBn: 'ধূপকাঠি', nameHi: 'अगरबत्ती', unit: '1 packet', pricePaise: 3000, category: 'Household' },
+  { name: 'Candle', nameBn: 'মোমবাতি', nameHi: 'मोमबत्ती', unit: '1 pc', pricePaise: 2000, category: 'Household' },
+  { name: 'Matchbox', nameBn: 'দেশলাই', nameHi: 'माचिस', unit: '1 pc', pricePaise: 200, category: 'Household' },
+  { name: 'Garbage Bag', nameBn: 'আবর্জনার ব্যাগ', nameHi: 'कचरा बैग', unit: '1 packet', pricePaise: 6000, category: 'Household' },
 
   // Personal Care
-  { name: 'Bath Soap', nameBn: 'স্নানের সাবান', nameHi: 'नहाने का साबुन', unit: '', pricePaise: 4000, category: 'Personal Care' },
+  { name: 'Bath Soap', nameBn: 'স্নানের সাবান', nameHi: 'नहाने का साबुन', unit: '1 pc', pricePaise: 4000, category: 'Personal Care' },
   { name: 'Toothpaste', nameBn: 'টুথপেস্ট', nameHi: 'टूथपेस्ट', unit: '100 g', pricePaise: 6000, category: 'Personal Care' },
   { name: 'Toothbrush', nameBn: 'টুথব্রাশ', nameHi: 'टूथब्रश', unit: '1 pc', pricePaise: 3000, category: 'Personal Care' },
-  { name: 'Shampoo', nameBn: 'শ্যাম্পু', nameHi: 'शैम्पू', unit: '', pricePaise: 9000, category: 'Personal Care' },
+  { name: 'Hair Shampoo', nameBn: 'চুলের শ্যাম্পু', nameHi: 'हेयर शैम्पू', unit: '1 bottle', pricePaise: 9000, category: 'Personal Care' },
   { name: 'Hair Oil', nameBn: 'চুলের তেল', nameHi: 'बालों का तेल', unit: '200 ml', pricePaise: 11000, category: 'Personal Care' },
-  { name: 'Face Cream', nameBn: 'ফেস ক্রিম', nameHi: 'फेस क्रीम', unit: '', pricePaise: 8000, category: 'Personal Care' },
+  { name: 'Face Cream', nameBn: 'ফেস ক্রিম', nameHi: 'फेस क्रीम', unit: '1 pc', pricePaise: 8000, category: 'Personal Care' },
   { name: 'Razor', nameBn: 'রেজার', nameHi: 'रेजर', unit: '1 pc', pricePaise: 3000, category: 'Personal Care' },
-  { name: 'Sanitary Pad', nameBn: 'স্যানিটারি প্যাড', nameHi: 'सैनिटरी पैड', unit: '', pricePaise: 5000, category: 'Personal Care' },
+  { name: 'Sanitary Pad', nameBn: 'স্যানিটারি প্যাড', nameHi: 'सैनिटरी पैड', unit: '1 packet', pricePaise: 5000, category: 'Personal Care' },
 
   /* ----------------------------------------------------------------------
    * THE SECOND TRANCHE, taking this list to three hundred.
@@ -333,7 +338,7 @@ const GROCERY: StarterItem[] = [
   { name: 'Assam Tea', nameBn: 'আসাম চা', nameHi: 'असम चाय', unit: '250 g', pricePaise: 14000, category: 'Tea & Coffee' },
   { name: 'Masala Tea', nameBn: 'মশলা চা', nameHi: 'मसाला चाय', unit: '250 g', pricePaise: 16000, category: 'Tea & Coffee' },
   { name: 'Instant Coffee', nameBn: 'ইনস্ট্যান্ট কফি', nameHi: 'इंस्टेंट कॉफ़ी', unit: '50 g', pricePaise: 18000, category: 'Tea & Coffee' },
-  { name: 'Soft Drink', nameBn: 'কোল্ড ড্রিংক', nameHi: 'कोल्ड ड्रिंक', unit: '600 ml', pricePaise: 4000, category: 'Beverages' },
+  { name: 'Cola Soft Drink', nameBn: 'কোলা কোল্ড ড্রিংক', nameHi: 'कोला कोल्ड ड्रिंक', unit: '600 ml', pricePaise: 4000, category: 'Beverages' },
   { name: 'Fruit Juice', nameBn: 'ফলের রস', nameHi: 'फलों का रस', unit: '1 l', pricePaise: 11000, category: 'Beverages' },
   { name: 'Mineral Water', nameBn: 'মিনারেল ওয়াটার', nameHi: 'मिनरल वाटर', unit: '1 l', pricePaise: 2000, category: 'Beverages' },
   { name: 'Soda', nameBn: 'সোডা', nameHi: 'सोडा', unit: '750 ml', pricePaise: 2500, category: 'Beverages' },
@@ -351,8 +356,8 @@ const GROCERY: StarterItem[] = [
   { name: 'Wafer', nameBn: 'ওয়েফার', nameHi: 'वेफर', unit: '75 g', pricePaise: 2000, category: 'Snacks' },
   { name: 'Candy', nameBn: 'ক্যান্ডি', nameHi: 'कैंडी', unit: '100 g', pricePaise: 2500, category: 'Snacks' },
   { name: 'Chewing Gum', nameBn: 'চুইংগাম', nameHi: 'च्युइंग गम', unit: '10 pc', pricePaise: 1000, category: 'Snacks' },
-  { name: 'Jam', nameBn: 'জ্যাম', nameHi: 'जैम', unit: '200 g', pricePaise: 8000, category: 'Snacks' },
-  { name: 'Pickle', nameBn: 'আচার', nameHi: 'अचार', unit: '200 g', pricePaise: 6000, category: 'Snacks' },
+  { name: 'Mixed Fruit Jam', nameBn: 'মিক্সড ফ্রুট জ্যাম', nameHi: 'मिक्स फ्रूट जैम', unit: '200 g', pricePaise: 8000, category: 'Snacks' },
+  { name: 'Mango Pickle', nameBn: 'আমের আচার', nameHi: 'आम का अचार', unit: '200 g', pricePaise: 6000, category: 'Snacks' },
   { name: 'Peanut', nameBn: 'চিনাবাদাম', nameHi: 'मूंगफली', unit: '250 g', pricePaise: 4000, category: 'Snacks' },
   { name: 'Roasted Chana', nameBn: 'ভাজা ছোলা', nameHi: 'भुना चना', unit: '250 g', pricePaise: 4000, category: 'Snacks' },
   { name: 'Pistachio', nameBn: 'পেস্তা', nameHi: 'पिस्ता', unit: '100 g', pricePaise: 12000, category: 'Dry Fruits' },
@@ -414,6 +419,313 @@ const GROCERY: StarterItem[] = [
   { name: 'Envelope', nameBn: 'খাম', nameHi: 'लिफ़ाफ़ा', unit: '10 pc', pricePaise: 2000, category: 'Stationery' },
   { name: 'Sattu', nameBn: 'ছাতু', nameHi: 'सत्तू', unit: '500 g', pricePaise: 6000, category: 'Rice & Atta' },
   { name: 'Jhal Muri Masala', nameBn: 'ঝালমুড়ির মশলা', nameHi: 'झालमुड़ी मसाला', unit: '100 g', pricePaise: 3000, category: 'Spices' },
+
+  /* ----------------------------------------------------------------------
+   * THE THIRD TRANCHE, taking this list past five hundred.
+   *
+   * Three hundred covered the kitchen and stopped there. What an owner still
+   * had to dictate was everything a kirana sells that is not an ingredient:
+   * the ketchup and the pasta, the bulb and the battery, the bucket and the
+   * mop, the diapers, the dog food, the mishti on the counter at Puja. A list
+   * that is generous about dal and silent about detergent is not a list of
+   * what the shop sells.
+   *
+   * Measured against what a quick-commerce app puts in front of the same
+   * customer — Blinkit, Zepto, Instamart — because that is the shelf a
+   * shopper's expectation is set by now, whether or not the kirana likes it.
+   * Where they carry a thing no para shop stocks, it is left out; where they
+   * carry a thing every para shop stocks and this list had forgotten, it is
+   * here.
+   *
+   * Five headings are new. Packaged Food, Frozen Food, Sweets, Electricals
+   * and Pet Care are real aisles and were landing under "Other" — each one
+   * needs a matching entry in `CATEGORY_VOCAB` in `lib/speech.ts`, or the
+   * customer's filter chip reads in English on a Bengali shop page.
+   *
+   * WHAT IS DELIBERATELY ABSENT: cigarettes, bidi, gutkha and pan masala.
+   * Every kirana sells them and no Halkhata storefront will list them — an
+   * online sale is a delivery to somebody whose age nobody checked, which is
+   * a line this product does not need to be near. An owner who wants them can
+   * still type them in; they will not be suggested.
+   *
+   * THE PRICES ARE A STARTING POINT AND NOTHING MORE — see the note at the
+   * top of this file.
+   * -------------------------------------------------------------------- */
+
+  // Rice & Atta
+  { name: 'Multigrain Atta', nameBn: 'মাল্টিগ্রেন আটা', nameHi: 'मल्टीग्रेन आटा', unit: '1 kg', pricePaise: 6500, category: 'Rice & Atta' },
+  { name: 'Ragi Flour', nameBn: 'রাগি আটা', nameHi: 'रागी आटा', unit: '500 g', pricePaise: 4500, category: 'Rice & Atta' },
+  { name: 'Bajra Flour', nameBn: 'বাজরার আটা', nameHi: 'बाजरे का आटा', unit: '500 g', pricePaise: 3500, category: 'Rice & Atta' },
+  { name: 'Jowar Flour', nameBn: 'জোয়ারের আটা', nameHi: 'ज्वार का आटा', unit: '500 g', pricePaise: 3800, category: 'Rice & Atta' },
+  { name: 'Makai Atta', nameBn: 'ভুট্টার আটা', nameHi: 'मक्के का आटा', unit: '500 g', pricePaise: 3500, category: 'Rice & Atta' },
+  { name: 'Barley', nameBn: 'যব', nameHi: 'जौ', unit: '500 g', pricePaise: 4000, category: 'Rice & Atta' },
+  { name: 'Brown Rice', nameBn: 'ব্রাউন রাইস', nameHi: 'ब्राउन चावल', unit: '1 kg', pricePaise: 9000, category: 'Rice & Atta' },
+  { name: 'Idli Rice', nameBn: 'ইডলি চাল', nameHi: 'इडली चावल', unit: '1 kg', pricePaise: 6500, category: 'Rice & Atta' },
+  { name: 'Kalijira Rice', nameBn: 'কালিজিরা চাল', nameHi: 'कालीजीरा चावल', unit: '1 kg', pricePaise: 14000, category: 'Rice & Atta' },
+  { name: 'Banskathi Rice', nameBn: 'বাঁশকাঠি চাল', nameHi: 'बांसकाठी चावल', unit: '1 kg', pricePaise: 5500, category: 'Rice & Atta' },
+
+  // Dal & Pulses
+  { name: 'Chilka Moong Dal', nameBn: 'ছিলকা মুগ ডাল', nameHi: 'छिलका मूंग दाल', unit: '500 g', pricePaise: 6500, category: 'Dal & Pulses' },
+  { name: 'Chitra Rajma', nameBn: 'চিত্রা রাজমা', nameHi: 'चित्रा राजमा', unit: '500 g', pricePaise: 8000, category: 'Dal & Pulses' },
+  { name: 'Moth Bean', nameBn: 'মটকি ডাল', nameHi: 'मोठ', unit: '500 g', pricePaise: 6000, category: 'Dal & Pulses' },
+  { name: 'Horse Gram', nameBn: 'কুলথি কলাই', nameHi: 'कुलथी', unit: '500 g', pricePaise: 5000, category: 'Dal & Pulses' },
+  { name: 'Soya Granules', nameBn: 'সয়া দানা', nameHi: 'सोया ग्रेन्यूल्स', unit: '200 g', pricePaise: 3000, category: 'Dal & Pulses' },
+  { name: 'Sprouts Mix', nameBn: 'অঙ্কুর মিক্স', nameHi: 'स्प्राउट्स मिक्स', unit: '250 g', pricePaise: 4500, category: 'Dal & Pulses' },
+
+  // Staples
+  { name: 'Brown Sugar', nameBn: 'ব্রাউন সুগার', nameHi: 'ब्राउन शुगर', unit: '500 g', pricePaise: 4000, category: 'Staples' },
+  { name: 'Jaggery Powder', nameBn: 'গুড়ের গুঁড়ো', nameHi: 'गुड़ पाउडर', unit: '500 g', pricePaise: 6000, category: 'Staples' },
+  { name: 'Nolen Gur', nameBn: 'নলেন গুড়', nameHi: 'नोलेन गुड़', unit: '500 g', pricePaise: 12000, category: 'Staples' },
+  { name: 'Patali Gur', nameBn: 'পাটালি গুড়', nameHi: 'पाटाली गुड़', unit: '500 g', pricePaise: 10000, category: 'Staples' },
+  { name: 'Black Salt', nameBn: 'বিট নুন', nameHi: 'काला नमक', unit: '100 g', pricePaise: 2000, category: 'Staples' },
+  { name: 'Sugar Free Sweetener', nameBn: 'সুগার ফ্রি', nameHi: 'शुगर फ्री', unit: '100 pc', pricePaise: 15000, category: 'Staples' },
+  { name: 'Food Colour', nameBn: 'খাবার রং', nameHi: 'खाने का रंग', unit: '25 g', pricePaise: 2000, category: 'Staples' },
+  { name: 'Rose Water', nameBn: 'গোলাপ জল', nameHi: 'गुलाब जल', unit: '100 ml', pricePaise: 4000, category: 'Staples' },
+  { name: 'Kewra Water', nameBn: 'কেওড়া জল', nameHi: 'केवड़ा जल', unit: '100 ml', pricePaise: 4500, category: 'Staples' },
+  { name: 'Vanilla Essence', nameBn: 'ভ্যানিলা এসেন্স', nameHi: 'वनीला एसेंस', unit: '20 ml', pricePaise: 3000, category: 'Staples' },
+  { name: 'Cocoa Powder', nameBn: 'কোকো পাউডার', nameHi: 'कोको पाउडर', unit: '100 g', pricePaise: 9000, category: 'Staples' },
+  { name: 'Icing Sugar', nameBn: 'আইসিং সুগার', nameHi: 'आइसिंग शुगर', unit: '250 g', pricePaise: 5000, category: 'Staples' },
+
+  // Oil & Ghee
+  { name: 'Kachi Ghani Mustard Oil', nameBn: 'কাঁচি ঘানি সরিষার তেল', nameHi: 'कच्ची घानी सरसों तेल', unit: '1 l', pricePaise: 18000, category: 'Oil & Ghee' },
+  { name: 'Refined Oil', nameBn: 'রিফাইন্ড তেল', nameHi: 'रिफाइंड तेल', unit: '1 l', pricePaise: 14000, category: 'Oil & Ghee' },
+  { name: 'Cow Ghee', nameBn: 'গরুর ঘি', nameHi: 'गाय का घी', unit: '200 g', pricePaise: 16000, category: 'Oil & Ghee' },
+
+  // Spices
+  { name: 'Cumin Powder', nameBn: 'জিরে গুঁড়ো', nameHi: 'जीरा पाउडर', unit: '100 g', pricePaise: 5000, category: 'Spices' },
+  { name: 'Coriander Powder', nameBn: 'ধনে গুঁড়ো', nameHi: 'धनिया पाउडर', unit: '100 g', pricePaise: 3500, category: 'Spices' },
+  { name: 'Kashmiri Chilli Powder', nameBn: 'কাশ্মীরি লঙ্কা গুঁড়ো', nameHi: 'कश्मीरी मिर्च पाउडर', unit: '100 g', pricePaise: 6000, category: 'Spices' },
+  { name: 'Turmeric Whole', nameBn: 'গোটা হলুদ', nameHi: 'साबुत हल्दी', unit: '100 g', pricePaise: 4000, category: 'Spices' },
+  { name: 'Ginger Powder', nameBn: 'শুঁঠ', nameHi: 'सोंठ', unit: '100 g', pricePaise: 5000, category: 'Spices' },
+  { name: 'Black Cardamom', nameBn: 'বড় এলাচ', nameHi: 'बड़ी इलायची', unit: '50 g', pricePaise: 9000, category: 'Spices' },
+  { name: 'Saffron', nameBn: 'জাফরান', nameHi: 'केसर', unit: '1 g', pricePaise: 25000, category: 'Spices' },
+  { name: 'Sesame Seed', nameBn: 'তিল', nameHi: 'तिल', unit: '100 g', pricePaise: 3000, category: 'Spices' },
+  { name: 'Flax Seed', nameBn: 'তিসি', nameHi: 'अलसी', unit: '100 g', pricePaise: 3000, category: 'Spices' },
+  { name: 'Radhuni', nameBn: 'রাঁধুনি', nameHi: 'राधुनी', unit: '50 g', pricePaise: 2500, category: 'Spices' },
+  { name: 'Shahi Jeera', nameBn: 'শাহি জিরে', nameHi: 'शाही जीरा', unit: '50 g', pricePaise: 6000, category: 'Spices' },
+  { name: 'Pav Bhaji Masala', nameBn: 'পাও ভাজি মশলা', nameHi: 'पाव भाजी मसाला', unit: '100 g', pricePaise: 7000, category: 'Spices' },
+  { name: 'Chana Masala', nameBn: 'ছোলার মশলা', nameHi: 'छोले मसाला', unit: '100 g', pricePaise: 6000, category: 'Spices' },
+  { name: 'Sambar Masala', nameBn: 'সাম্বার মশলা', nameHi: 'सांभर मसाला', unit: '100 g', pricePaise: 7000, category: 'Spices' },
+
+  // Vegetables
+  { name: 'Raw Banana', nameBn: 'কাঁচকলা', nameHi: 'कच्चा केला', unit: '4 pc', pricePaise: 3000, category: 'Vegetables' },
+  { name: 'Broccoli', nameBn: 'ব্রকোলি', nameHi: 'ब्रोकली', unit: '250 g', pricePaise: 4000, category: 'Vegetables' },
+  { name: 'Lettuce', nameBn: 'লেটুস', nameHi: 'लेट्यूस', unit: '1 pc', pricePaise: 4000, category: 'Vegetables' },
+  { name: 'Baby Corn', nameBn: 'বেবি কর্ন', nameHi: 'बेबी कॉर्न', unit: '200 g', pricePaise: 4000, category: 'Vegetables' },
+  { name: 'Note Shak', nameBn: 'নটে শাক', nameHi: 'चौलाई साग', unit: '1 bunch', pricePaise: 1500, category: 'Vegetables' },
+  { name: 'Kolmi Shak', nameBn: 'কলমি শাক', nameHi: 'कलमी साग', unit: '1 bunch', pricePaise: 1500, category: 'Vegetables' },
+  { name: 'Stem Amaranth', nameBn: 'ডাঁটা', nameHi: 'डंठल', unit: '250 g', pricePaise: 2000, category: 'Vegetables' },
+  { name: 'Green Mango', nameBn: 'কাঁচা আম', nameHi: 'कच्चा आम', unit: '500 g', pricePaise: 4000, category: 'Vegetables' },
+  { name: 'Shallot', nameBn: 'ছোট পেঁয়াজ', nameHi: 'छोटा प्याज', unit: '250 g', pricePaise: 4000, category: 'Vegetables' },
+  { name: 'Chandramukhi Potato', nameBn: 'চন্দ্রমুখী আলু', nameHi: 'चंद्रमुखी आलू', unit: '1 kg', pricePaise: 3500, category: 'Vegetables' },
+  { name: 'Jyoti Potato', nameBn: 'জ্যোতি আলু', nameHi: 'ज्योति आलू', unit: '1 kg', pricePaise: 2800, category: 'Vegetables' },
+  { name: 'Amla', nameBn: 'আমলকি', nameHi: 'आंवला', unit: '250 g', pricePaise: 3000, category: 'Vegetables' },
+  { name: 'Turnip', nameBn: 'শালগম', nameHi: 'शलजम', unit: '500 g', pricePaise: 2500, category: 'Vegetables' },
+  { name: 'Knol Khol', nameBn: 'ওলকপি', nameHi: 'गांठ गोभी', unit: '500 g', pricePaise: 2500, category: 'Vegetables' },
+
+  // Fruits
+  { name: 'Pomelo', nameBn: 'বাতাবি লেবু', nameHi: 'चकोतरा', unit: '1 pc', pricePaise: 5000, category: 'Fruits' },
+  { name: 'Star Fruit', nameBn: 'কামরাঙা', nameHi: 'कमरख', unit: '500 g', pricePaise: 4000, category: 'Fruits' },
+  { name: 'Bel', nameBn: 'বেল', nameHi: 'बेल', unit: '1 pc', pricePaise: 4000, category: 'Fruits' },
+  { name: 'Dragon Fruit', nameBn: 'ড্রাগন ফল', nameHi: 'ड्रैगन फ्रूट', unit: '1 pc', pricePaise: 8000, category: 'Fruits' },
+  { name: 'Kiwi', nameBn: 'কিউই', nameHi: 'कीवी', unit: '3 pc', pricePaise: 9000, category: 'Fruits' },
+  { name: 'Strawberry', nameBn: 'স্ট্রবেরি', nameHi: 'स्ट्रॉबेरी', unit: '200 g', pricePaise: 10000, category: 'Fruits' },
+  { name: 'Green Apple', nameBn: 'সবুজ আপেল', nameHi: 'हरा सेब', unit: '500 g', pricePaise: 12000, category: 'Fruits' },
+  { name: 'Black Grapes', nameBn: 'কালো আঙুর', nameHi: 'काले अंगूर', unit: '500 g', pricePaise: 7000, category: 'Fruits' },
+  { name: 'Tender Coconut', nameBn: 'ডাব', nameHi: 'नारियल पानी', unit: '1 pc', pricePaise: 5000, category: 'Fruits' },
+  { name: 'Peach', nameBn: 'পিচ ফল', nameHi: 'आड़ू', unit: '500 g', pricePaise: 12000, category: 'Fruits' },
+  { name: 'Himsagar Mango', nameBn: 'হিমসাগর আম', nameHi: 'हिमसागर आम', unit: '1 kg', pricePaise: 12000, category: 'Fruits' },
+  { name: 'Langra Mango', nameBn: 'ল্যাংড়া আম', nameHi: 'लंगड़ा आम', unit: '1 kg', pricePaise: 10000, category: 'Fruits' },
+
+  // Dairy
+  { name: 'Toned Milk', nameBn: 'টোনড দুধ', nameHi: 'टोंड दूध', unit: '1 l', pricePaise: 5600, category: 'Dairy' },
+  { name: 'Full Cream Milk', nameBn: 'ফুল ক্রিম দুধ', nameHi: 'फुल क्रीम दूध', unit: '1 l', pricePaise: 6800, category: 'Dairy' },
+  { name: 'Greek Yogurt', nameBn: 'গ্রিক দই', nameHi: 'ग्रीक योगर्ट', unit: '100 g', pricePaise: 4000, category: 'Dairy' },
+  { name: 'Fruit Yoghurt', nameBn: 'ফ্রুট দই', nameHi: 'फ्रूट योगर्ट', unit: '100 g', pricePaise: 3000, category: 'Dairy' },
+  { name: 'Cheese Slice', nameBn: 'চিজ স্লাইস', nameHi: 'चीज़ स्लाइस', unit: '200 g', pricePaise: 15000, category: 'Dairy' },
+  { name: 'Cheese Spread', nameBn: 'চিজ স্প্রেড', nameHi: 'चीज़ स्प्रेड', unit: '180 g', pricePaise: 14000, category: 'Dairy' },
+  { name: 'Tofu', nameBn: 'টোফু', nameHi: 'टोफू', unit: '200 g', pricePaise: 8000, category: 'Dairy' },
+  { name: 'Chena', nameBn: 'ছানা', nameHi: 'छेना', unit: '250 g', pricePaise: 6000, category: 'Dairy' },
+  { name: 'Country Egg', nameBn: 'দেশি ডিম', nameHi: 'देसी अंडा', unit: '6 pc', pricePaise: 7000, category: 'Dairy' },
+  { name: 'Duck Egg', nameBn: 'হাঁসের ডিম', nameHi: 'बतख का अंडा', unit: '6 pc', pricePaise: 7000, category: 'Dairy' },
+
+  // Tea & Coffee
+  { name: 'Lemon Tea Premix', nameBn: 'লেবু চা প্রিমিক্স', nameHi: 'नींबू चाय प्रीमिक्स', unit: '200 g', pricePaise: 12000, category: 'Tea & Coffee' },
+  { name: 'Tulsi Green Tea', nameBn: 'তুলসী গ্রিন টি', nameHi: 'तुलसी ग्रीन टी', unit: '25 pc', pricePaise: 18000, category: 'Tea & Coffee' },
+  { name: 'Filter Coffee Powder', nameBn: 'ফিল্টার কফি পাউডার', nameHi: 'फिल्टर कॉफ़ी पाउडर', unit: '200 g', pricePaise: 14000, category: 'Tea & Coffee' },
+  { name: 'Drinking Chocolate', nameBn: 'ড্রিংকিং চকোলেট', nameHi: 'ड्रिंकिंग चॉकलेट', unit: '200 g', pricePaise: 15000, category: 'Tea & Coffee' },
+  { name: 'Iced Tea Mix', nameBn: 'আইসড টি মিক্স', nameHi: 'आइस्ड टी मिक्स', unit: '400 g', pricePaise: 18000, category: 'Tea & Coffee' },
+
+  // Beverages
+  { name: 'Water Jar', nameBn: 'জলের জার', nameHi: 'पानी का जार', unit: '20 l', pricePaise: 8000, category: 'Beverages' },
+  { name: 'Packaged Coconut Water', nameBn: 'প্যাকেট ডাবের জল', nameHi: 'पैक्ड नारियल पानी', unit: '200 ml', pricePaise: 4000, category: 'Beverages' },
+  { name: 'Rose Sharbat', nameBn: 'গোলাপ শরবত', nameHi: 'गुलाब शरबत', unit: '750 ml', pricePaise: 20000, category: 'Beverages' },
+  { name: 'Mango Drink', nameBn: 'আমের পানীয়', nameHi: 'आम का ड्रिंक', unit: '600 ml', pricePaise: 4500, category: 'Beverages' },
+  { name: 'ORS Drink', nameBn: 'ওআরএস পানীয়', nameHi: 'ओआरएस ड्रिंक', unit: '200 ml', pricePaise: 2500, category: 'Beverages' },
+
+  // Snacks
+  { name: 'Digestive Biscuit', nameBn: 'ডাইজেস্টিভ বিস্কুট', nameHi: 'डाइजेस्टिव बिस्कुट', unit: '250 g', pricePaise: 6000, category: 'Snacks' },
+  { name: 'Cream Cracker', nameBn: 'ক্রিম ক্র্যাকার', nameHi: 'क्रीम क्रैकर', unit: '200 g', pricePaise: 4000, category: 'Snacks' },
+  { name: 'Cookies', nameBn: 'কুকিজ', nameHi: 'कुकीज़', unit: '250 g', pricePaise: 12000, category: 'Snacks' },
+  { name: 'Khari Biscuit', nameBn: 'খারি বিস্কুট', nameHi: 'खारी बिस्कुट', unit: '250 g', pricePaise: 8000, category: 'Snacks' },
+  { name: 'Toast Biscuit', nameBn: 'টোস্ট বিস্কুট', nameHi: 'टोस्ट बिस्कुट', unit: '400 g', pricePaise: 7000, category: 'Snacks' },
+  { name: 'Nankhatai', nameBn: 'নানখাতাই', nameHi: 'नानखताई', unit: '200 g', pricePaise: 5000, category: 'Snacks' },
+  { name: 'Corn Puffs', nameBn: 'কর্ন পাফ', nameHi: 'कॉर्न पफ', unit: '100 g', pricePaise: 2000, category: 'Snacks' },
+  { name: 'Bhel Mix', nameBn: 'ভেলপুরি মিক্স', nameHi: 'भेल मिक्स', unit: '200 g', pricePaise: 4000, category: 'Snacks' },
+  { name: 'Sev', nameBn: 'সেভ', nameHi: 'सेव', unit: '200 g', pricePaise: 4500, category: 'Snacks' },
+  { name: 'Energy Bar', nameBn: 'এনার্জি বার', nameHi: 'एनर्जी बार', unit: '1 pc', pricePaise: 4000, category: 'Snacks' },
+  { name: 'Dark Chocolate', nameBn: 'ডার্ক চকোলেট', nameHi: 'डार्क चॉकलेट', unit: '100 g', pricePaise: 15000, category: 'Snacks' },
+  { name: 'Lollipop', nameBn: 'ললিপপ', nameHi: 'लॉलीपॉप', unit: '1 pc', pricePaise: 500, category: 'Snacks' },
+  { name: 'Brown Bread', nameBn: 'ব্রাউন ব্রেড', nameHi: 'ब्राउन ब्रेड', unit: '1 pc', pricePaise: 5500, category: 'Snacks' },
+  { name: 'Pav', nameBn: 'পাভ', nameHi: 'पाव', unit: '6 pc', pricePaise: 3000, category: 'Snacks' },
+  { name: 'Bun', nameBn: 'বান', nameHi: 'बन', unit: '1 pc', pricePaise: 1500, category: 'Snacks' },
+  { name: 'Dry Cake', nameBn: 'ড্রাই কেক', nameHi: 'ड्राई केक', unit: '200 g', pricePaise: 5000, category: 'Snacks' },
+
+  // Sweets — the counter jar and the Puja box. A kirana that sells nothing
+  // else sweet still sells chikki and a tin of rosogolla.
+  { name: 'Rasgulla', nameBn: 'রসগোল্লা', nameHi: 'रसगुल्ला', unit: '1 kg', pricePaise: 20000, category: 'Sweets' },
+  { name: 'Gulab Jamun', nameBn: 'গোলাপ জাম', nameHi: 'गुलाब जामुन', unit: '1 kg', pricePaise: 22000, category: 'Sweets' },
+  { name: 'Sandesh', nameBn: 'সন্দেশ', nameHi: 'संदेश', unit: '1 pc', pricePaise: 2000, category: 'Sweets' },
+  { name: 'Laddu', nameBn: 'লাড্ডু', nameHi: 'लड्डू', unit: '1 pc', pricePaise: 2000, category: 'Sweets' },
+  { name: 'Soan Papdi', nameBn: 'সোন পাপড়ি', nameHi: 'सोन पापड़ी', unit: '250 g', pricePaise: 6000, category: 'Sweets' },
+  { name: 'Peanut Chikki', nameBn: 'চিনাবাদামের চিক্কি', nameHi: 'मूंगफली चिक्की', unit: '100 g', pricePaise: 3000, category: 'Sweets' },
+  { name: 'Til Chikki', nameBn: 'তিলের চিক্কি', nameHi: 'तिल चिक्की', unit: '100 g', pricePaise: 3000, category: 'Sweets' },
+  { name: 'Kaju Barfi', nameBn: 'কাজু বরফি', nameHi: 'काजू बर्फी', unit: '250 g', pricePaise: 25000, category: 'Sweets' },
+  { name: 'Jalebi', nameBn: 'জিলিপি', nameHi: 'जलेबी', unit: '250 g', pricePaise: 6000, category: 'Sweets' },
+
+  // Packaged Food — the aisle a kirana has had for twenty years and this
+  // list had no heading for: the bottle, the packet and the tin.
+  { name: 'Tomato Ketchup', nameBn: 'টমেটো কেচাপ', nameHi: 'टमाटो केचप', unit: '500 g', pricePaise: 11000, category: 'Packaged Food' },
+  { name: 'Mayonnaise', nameBn: 'মেয়োনিজ', nameHi: 'मेयोनीज़', unit: '250 g', pricePaise: 9000, category: 'Packaged Food' },
+  { name: 'Chilli Sauce', nameBn: 'চিলি সস', nameHi: 'चिली सॉस', unit: '200 g', pricePaise: 5000, category: 'Packaged Food' },
+  { name: 'Soy Sauce', nameBn: 'সয়া সস', nameHi: 'सोया सॉस', unit: '200 ml', pricePaise: 5000, category: 'Packaged Food' },
+  { name: 'Schezwan Chutney', nameBn: 'শেজোয়ান চাটনি', nameHi: 'शेज़वान चटनी', unit: '250 g', pricePaise: 9000, category: 'Packaged Food' },
+  { name: 'Peanut Butter', nameBn: 'পিনাট বাটার', nameHi: 'पीनट बटर', unit: '340 g', pricePaise: 18000, category: 'Packaged Food' },
+  { name: 'Chocolate Spread', nameBn: 'চকোলেট স্প্রেড', nameHi: 'चॉकलेट स्प्रेड', unit: '290 g', pricePaise: 22000, category: 'Packaged Food' },
+  { name: 'Pasta', nameBn: 'পাস্তা', nameHi: 'पास्ता', unit: '500 g', pricePaise: 7000, category: 'Packaged Food' },
+  { name: 'Macaroni', nameBn: 'ম্যাকারনি', nameHi: 'मैकरोनी', unit: '400 g', pricePaise: 5000, category: 'Packaged Food' },
+  { name: 'Cup Noodles', nameBn: 'কাপ নুডলস', nameHi: 'कप नूडल्स', unit: '1 pc', pricePaise: 5000, category: 'Packaged Food' },
+  { name: 'Hakka Noodles', nameBn: 'হাক্কা নুডলস', nameHi: 'हक्का नूडल्स', unit: '400 g', pricePaise: 6000, category: 'Packaged Food' },
+  { name: 'Instant Soup', nameBn: 'ইনস্ট্যান্ট স্যুপ', nameHi: 'इंस्टेंट सूप', unit: '1 pc', pricePaise: 5000, category: 'Packaged Food' },
+  { name: 'Idli Dosa Batter', nameBn: 'ইডলি দোসার ব্যাটার', nameHi: 'इडली डोसा बैटर', unit: '1 kg', pricePaise: 7000, category: 'Packaged Food' },
+  { name: 'Gulab Jamun Mix', nameBn: 'গোলাপ জাম মিক্স', nameHi: 'गुलाब जामुन मिक्स', unit: '200 g', pricePaise: 6500, category: 'Packaged Food' },
+  { name: 'Cake Mix', nameBn: 'কেক মিক্স', nameHi: 'केक मिक्स', unit: '250 g', pricePaise: 9000, category: 'Packaged Food' },
+  { name: 'Instant Upma Mix', nameBn: 'ইনস্ট্যান্ট উপমা মিক্স', nameHi: 'इंस्टेंट उपमा मिक्स', unit: '200 g', pricePaise: 5000, category: 'Packaged Food' },
+  { name: 'Ready Meal', nameBn: 'রেডি মিল', nameHi: 'रेडी मील', unit: '300 g', pricePaise: 12000, category: 'Packaged Food' },
+  { name: 'Mango Chutney', nameBn: 'আমের চাটনি', nameHi: 'आम की चटनी', unit: '200 g', pricePaise: 5000, category: 'Packaged Food' },
+  { name: 'Sweet Corn Tin', nameBn: 'সুইট কর্ন টিন', nameHi: 'स्वीट कॉर्न टिन', unit: '400 g', pricePaise: 8000, category: 'Packaged Food' },
+  { name: 'Baked Beans', nameBn: 'বেকড বিনস', nameHi: 'बेक्ड बीन्स', unit: '415 g', pricePaise: 11000, category: 'Packaged Food' },
+  { name: 'Pasta Sauce', nameBn: 'পাস্তা সস', nameHi: 'पास्ता सॉस', unit: '400 g', pricePaise: 14000, category: 'Packaged Food' },
+  { name: 'Muesli', nameBn: 'মিউসলি', nameHi: 'म्यूसली', unit: '500 g', pricePaise: 22000, category: 'Packaged Food' },
+
+  // Frozen Food — only for a shop with a freezer, which is why it is its own
+  // heading rather than mixed into the packets a shelf can hold.
+  { name: 'Frozen Peas', nameBn: 'ফ্রোজেন মটরশুঁটি', nameHi: 'फ्रोज़न मटर', unit: '500 g', pricePaise: 9000, category: 'Frozen Food' },
+  { name: 'Frozen Paratha', nameBn: 'ফ্রোজেন পরোটা', nameHi: 'फ्रोज़न पराठा', unit: '5 pc', pricePaise: 9000, category: 'Frozen Food' },
+  { name: 'French Fries', nameBn: 'ফ্রেঞ্চ ফ্রাই', nameHi: 'फ्रेंच फ्राइज़', unit: '400 g', pricePaise: 12000, category: 'Frozen Food' },
+  { name: 'Veg Nuggets', nameBn: 'ভেজ নাগেটস', nameHi: 'वेज नगेट्स', unit: '300 g', pricePaise: 12000, category: 'Frozen Food' },
+  { name: 'Chicken Nuggets', nameBn: 'চিকেন নাগেটস', nameHi: 'चिकन नगेट्स', unit: '300 g', pricePaise: 18000, category: 'Frozen Food' },
+  { name: 'Frozen Momo', nameBn: 'ফ্রোজেন মোমো', nameHi: 'फ्रोज़न मोमो', unit: '10 pc', pricePaise: 13000, category: 'Frozen Food' },
+  { name: 'Frozen Corn', nameBn: 'ফ্রোজেন ভুট্টা', nameHi: 'फ्रोज़न कॉर्न', unit: '500 g', pricePaise: 9000, category: 'Frozen Food' },
+  { name: 'Fish Finger', nameBn: 'ফিশ ফিঙ্গার', nameHi: 'फिश फिंगर', unit: '300 g', pricePaise: 20000, category: 'Frozen Food' },
+
+  // Dry Fruits
+  { name: 'Sunflower Seed', nameBn: 'সূর্যমুখী বীজ', nameHi: 'सूरजमुखी बीज', unit: '100 g', pricePaise: 4000, category: 'Dry Fruits' },
+  { name: 'Pumpkin Seed', nameBn: 'কুমড়োর বীজ', nameHi: 'कद्दू के बीज', unit: '100 g', pricePaise: 5000, category: 'Dry Fruits' },
+  { name: 'Chia Seed', nameBn: 'চিয়া বীজ', nameHi: 'चिया बीज', unit: '100 g', pricePaise: 5000, category: 'Dry Fruits' },
+  { name: 'Dry Dates', nameBn: 'কাবলি খেজুর', nameHi: 'छुहारा', unit: '250 g', pricePaise: 8000, category: 'Dry Fruits' },
+  { name: 'Mixed Dry Fruits', nameBn: 'মিক্সড ড্রাই ফ্রুট', nameHi: 'मिक्स ड्राई फ्रूट', unit: '250 g', pricePaise: 25000, category: 'Dry Fruits' },
+
+  // Household
+  { name: 'Bucket', nameBn: 'বালতি', nameHi: 'बाल्टी', unit: '1 pc', pricePaise: 15000, category: 'Household' },
+  { name: 'Mug', nameBn: 'মগ', nameHi: 'मग', unit: '1 pc', pricePaise: 4000, category: 'Household' },
+  { name: 'Mop', nameBn: 'মপ', nameHi: 'मॉप', unit: '1 pc', pricePaise: 20000, category: 'Household' },
+  { name: 'Floor Wiper', nameBn: 'মেঝের ওয়াইপার', nameHi: 'फ़र्श वाइपर', unit: '1 pc', pricePaise: 15000, category: 'Household' },
+  { name: 'Toilet Brush', nameBn: 'টয়লেট ব্রাশ', nameHi: 'टॉयलेट ब्रश', unit: '1 pc', pricePaise: 9000, category: 'Household' },
+  { name: 'Dustbin', nameBn: 'ডাস্টবিন', nameHi: 'डस्टबिन', unit: '1 pc', pricePaise: 20000, category: 'Household' },
+  { name: 'Clothesline Rope', nameBn: 'কাপড়ের দড়ি', nameHi: 'कपड़े की रस्सी', unit: '1 pc', pricePaise: 6000, category: 'Household' },
+  { name: 'Cloth Clip', nameBn: 'কাপড়ের ক্লিপ', nameHi: 'कपड़े की क्लिप', unit: '12 pc', pricePaise: 3000, category: 'Household' },
+  { name: 'Steel Scrubber', nameBn: 'স্টিলের স্ক্রাবার', nameHi: 'स्टील स्क्रबर', unit: '1 pc', pricePaise: 1500, category: 'Household' },
+  { name: 'Duster Cloth', nameBn: 'ঝাড়ন', nameHi: 'डस्टर कपड़ा', unit: '1 pc', pricePaise: 4000, category: 'Household' },
+  { name: 'Sponge Wipe', nameBn: 'স্পঞ্জ', nameHi: 'स्पंज', unit: '1 pc', pricePaise: 3000, category: 'Household' },
+  { name: 'Glass Cleaner', nameBn: 'কাচ পরিষ্কারক', nameHi: 'ग्लास क्लीनर', unit: '500 ml', pricePaise: 10000, category: 'Household' },
+  { name: 'Washing Soda', nameBn: 'ওয়াশিং সোডা', nameHi: 'वाशिंग सोडा', unit: '500 g', pricePaise: 3000, category: 'Household' },
+  { name: 'Detergent Bar', nameBn: 'কাপড় কাচার সাবান', nameHi: 'कपड़े धोने का साबुन', unit: '1 pc', pricePaise: 2000, category: 'Household' },
+  { name: 'Fabric Conditioner', nameBn: 'ফ্যাব্রিক কন্ডিশনার', nameHi: 'फ़ैब्रिक कंडीशनर', unit: '400 ml', pricePaise: 12000, category: 'Household' },
+  { name: 'Cling Film', nameBn: 'ক্লিং ফিল্ম', nameHi: 'क्लिंग फिल्म', unit: '1 pc', pricePaise: 7000, category: 'Household' },
+  { name: 'Carry Bag', nameBn: 'ক্যারি ব্যাগ', nameHi: 'कैरी बैग', unit: '100 pc', pricePaise: 6000, category: 'Household' },
+  { name: 'Paper Cup', nameBn: 'কাগজের কাপ', nameHi: 'पेपर कप', unit: '50 pc', pricePaise: 5000, category: 'Household' },
+  { name: 'Paper Plate', nameBn: 'কাগজের প্লেট', nameHi: 'पेपर प्लेट', unit: '25 pc', pricePaise: 6000, category: 'Household' },
+  { name: 'Disposable Spoon', nameBn: 'প্লাস্টিকের চামচ', nameHi: 'डिस्पोजेबल चम्मच', unit: '25 pc', pricePaise: 3000, category: 'Household' },
+  { name: 'Lighter', nameBn: 'লাইটার', nameHi: 'लाइटर', unit: '1 pc', pricePaise: 2000, category: 'Household' },
+  { name: 'Face Tissue', nameBn: 'টিস্যু পেপার', nameHi: 'टिशू पेपर', unit: '100 pc', pricePaise: 7000, category: 'Household' },
+  { name: 'Shoe Polish', nameBn: 'জুতোর পালিশ', nameHi: 'जूता पॉलिश', unit: '40 g', pricePaise: 5000, category: 'Household' },
+
+  // Electricals — the bulb and the battery, which every para shop sells and
+  // nobody buys anywhere else at nine at night.
+  { name: 'LED Bulb', nameBn: 'এলইডি বাল্ব', nameHi: 'एलईडी बल्ब', unit: '1 pc', pricePaise: 10000, category: 'Electricals' },
+  { name: 'Tube Light', nameBn: 'টিউব লাইট', nameHi: 'ट्यूब लाइट', unit: '1 pc', pricePaise: 25000, category: 'Electricals' },
+  { name: 'Torch', nameBn: 'টর্চ', nameHi: 'टॉर्च', unit: '1 pc', pricePaise: 15000, category: 'Electricals' },
+  { name: 'Battery', nameBn: 'ব্যাটারি', nameHi: 'बैटरी', unit: '2 pc', pricePaise: 4000, category: 'Electricals' },
+  { name: 'Extension Cord', nameBn: 'এক্সটেনশন কর্ড', nameHi: 'एक्सटेंशन कॉर्ड', unit: '1 pc', pricePaise: 25000, category: 'Electricals' },
+  { name: 'Insulation Tape', nameBn: 'ইনসুলেশন টেপ', nameHi: 'इंसुलेशन टेप', unit: '1 pc', pricePaise: 2000, category: 'Electricals' },
+  { name: 'Bulb Holder', nameBn: 'বাল্ব হোল্ডার', nameHi: 'बल्ब होल्डर', unit: '1 pc', pricePaise: 4000, category: 'Electricals' },
+  { name: 'Electric Plug', nameBn: 'ইলেকট্রিক প্লাগ', nameHi: 'इलेक्ट्रिक प्लग', unit: '1 pc', pricePaise: 4000, category: 'Electricals' },
+
+  // Personal Care
+  { name: 'Face Wash', nameBn: 'ফেস ওয়াশ', nameHi: 'फेस वाश', unit: '100 g', pricePaise: 12000, category: 'Personal Care' },
+  { name: 'Body Lotion', nameBn: 'বডি লোশন', nameHi: 'बॉडी लोशन', unit: '200 ml', pricePaise: 15000, category: 'Personal Care' },
+  { name: 'Sunscreen', nameBn: 'সানস্ক্রিন', nameHi: 'सनस्क्रीन', unit: '50 g', pricePaise: 20000, category: 'Personal Care' },
+  { name: 'Mehendi', nameBn: 'মেহেন্দি', nameHi: 'मेहंदी', unit: '100 g', pricePaise: 4000, category: 'Personal Care' },
+  { name: 'Shaving Blade', nameBn: 'শেভিং ব্লেড', nameHi: 'शेविंग ब्लेड', unit: '5 pc', pricePaise: 3000, category: 'Personal Care' },
+  { name: 'Perfume', nameBn: 'পারফিউম', nameHi: 'परफ्यूम', unit: '30 ml', pricePaise: 15000, category: 'Personal Care' },
+  { name: 'Nail Polish', nameBn: 'নেলপলিশ', nameHi: 'नेल पॉलिश', unit: '1 pc', pricePaise: 5000, category: 'Personal Care' },
+  { name: 'Hair Band', nameBn: 'হেয়ার ব্যান্ড', nameHi: 'हेयर बैंड', unit: '6 pc', pricePaise: 3000, category: 'Personal Care' },
+  { name: 'Hair Clip', nameBn: 'চুলের ক্লিপ', nameHi: 'हेयर क्लिप', unit: '6 pc', pricePaise: 3000, category: 'Personal Care' },
+  { name: 'Band Aid', nameBn: 'ব্যান্ড এইড', nameHi: 'बैंड एड', unit: '10 pc', pricePaise: 4000, category: 'Personal Care' },
+  { name: 'Cotton Roll', nameBn: 'তুলো', nameHi: 'रुई', unit: '50 g', pricePaise: 4000, category: 'Personal Care' },
+  { name: 'Pain Balm', nameBn: 'ব্যথার বাম', nameHi: 'दर्द बाम', unit: '10 ml', pricePaise: 5000, category: 'Personal Care' },
+  { name: 'ORS Powder', nameBn: 'ওআরএস পাউডার', nameHi: 'ओआरएस पाउडर', unit: '21 g', pricePaise: 2500, category: 'Personal Care' },
+  { name: 'Mouthwash', nameBn: 'মাউথওয়াশ', nameHi: 'माउथवाश', unit: '250 ml', pricePaise: 12000, category: 'Personal Care' },
+  { name: 'Tongue Cleaner', nameBn: 'জিভ ছোলা', nameHi: 'जीभी', unit: '1 pc', pricePaise: 2000, category: 'Personal Care' },
+  { name: 'Tooth Powder', nameBn: 'দাঁতের মাজন', nameHi: 'दंत मंजन', unit: '100 g', pricePaise: 4000, category: 'Personal Care' },
+  { name: 'Shower Gel', nameBn: 'শাওয়ার জেল', nameHi: 'शावर जेल', unit: '250 ml', pricePaise: 18000, category: 'Personal Care' },
+  { name: 'Wet Wipes', nameBn: 'ওয়েট ওয়াইপস', nameHi: 'वेट वाइप्स', unit: '30 pc', pricePaise: 6000, category: 'Personal Care' },
+
+  // Baby Care
+  { name: 'Baby Wipes', nameBn: 'বেবি ওয়াইপস', nameHi: 'बेबी वाइप्स', unit: '72 pc', pricePaise: 15000, category: 'Baby Care' },
+  { name: 'Baby Shampoo', nameBn: 'বেবি শ্যাম্পু', nameHi: 'बेबी शैम्पू', unit: '100 ml', pricePaise: 13000, category: 'Baby Care' },
+  { name: 'Feeding Bottle', nameBn: 'ফিডিং বোতল', nameHi: 'फीडिंग बोतल', unit: '1 pc', pricePaise: 25000, category: 'Baby Care' },
+  { name: 'Baby Cream', nameBn: 'বেবি ক্রিম', nameHi: 'बेबी क्रीम', unit: '50 g', pricePaise: 10000, category: 'Baby Care' },
+  { name: 'Baby Detergent', nameBn: 'বেবি ডিটারজেন্ট', nameHi: 'बेबी डिटर्जेंट', unit: '500 ml', pricePaise: 20000, category: 'Baby Care' },
+
+  // Puja Items
+  { name: 'Dhunuchi', nameBn: 'ধুনুচি', nameHi: 'धुनुची', unit: '1 pc', pricePaise: 5000, category: 'Puja Items' },
+  { name: 'Alta', nameBn: 'আলতা', nameHi: 'आलता', unit: '1 pc', pricePaise: 1500, category: 'Puja Items' },
+  { name: 'Chandan', nameBn: 'চন্দন', nameHi: 'चंदन', unit: '50 g', pricePaise: 5000, category: 'Puja Items' },
+  { name: 'Havan Samagri', nameBn: 'হবন সামগ্রী', nameHi: 'हवन सामग्री', unit: '200 g', pricePaise: 6000, category: 'Puja Items' },
+  { name: 'Roli', nameBn: 'রোলি', nameHi: 'रोली', unit: '50 g', pricePaise: 2000, category: 'Puja Items' },
+  { name: 'Batasha', nameBn: 'বাতাসা', nameHi: 'बताशा', unit: '200 g', pricePaise: 3000, category: 'Puja Items' },
+
+  // Stationery
+  { name: 'Drawing Book', nameBn: 'আঁকার খাতা', nameHi: 'ड्राइंग बुक', unit: '1 pc', pricePaise: 4000, category: 'Stationery' },
+  { name: 'Ruler', nameBn: 'স্কেল', nameHi: 'स्केल', unit: '1 pc', pricePaise: 1000, category: 'Stationery' },
+  { name: 'Geometry Box', nameBn: 'জ্যামিতি বাক্স', nameHi: 'ज्यामिति बॉक्स', unit: '1 pc', pricePaise: 12000, category: 'Stationery' },
+  { name: 'Crayons', nameBn: 'ক্রেয়ন', nameHi: 'क्रेयॉन', unit: '12 pc', pricePaise: 6000, category: 'Stationery' },
+  { name: 'Sketch Pen', nameBn: 'স্কেচ পেন', nameHi: 'स्केच पेन', unit: '12 pc', pricePaise: 8000, category: 'Stationery' },
+  { name: 'Marker', nameBn: 'মার্কার', nameHi: 'मार्कर', unit: '1 pc', pricePaise: 3000, category: 'Stationery' },
+  { name: 'Stapler', nameBn: 'স্টেপলার', nameHi: 'स्टेपलर', unit: '1 pc', pricePaise: 8000, category: 'Stationery' },
+  { name: 'Stapler Pin', nameBn: 'স্টেপলার পিন', nameHi: 'स्टेपलर पिन', unit: '1 pc', pricePaise: 2000, category: 'Stationery' },
+  { name: 'Safety Pin', nameBn: 'সেফটি পিন', nameHi: 'सेफ्टी पिन', unit: '12 pc', pricePaise: 1000, category: 'Stationery' },
+  { name: 'File Folder', nameBn: 'ফাইল ফোল্ডার', nameHi: 'फ़ाइल फ़ोल्डर', unit: '1 pc', pricePaise: 3000, category: 'Stationery' },
+  { name: 'Chart Paper', nameBn: 'চার্ট পেপার', nameHi: 'चार्ट पेपर', unit: '1 pc', pricePaise: 1500, category: 'Stationery' },
+
+  // Pet Care
+  { name: 'Dog Food', nameBn: 'কুকুরের খাবার', nameHi: 'कुत्ते का खाना', unit: '1 kg', pricePaise: 30000, category: 'Pet Care' },
+  { name: 'Cat Food', nameBn: 'বিড়ালের খাবার', nameHi: 'बिल्ली का खाना', unit: '1 kg', pricePaise: 35000, category: 'Pet Care' },
+  { name: 'Dog Biscuit', nameBn: 'কুকুরের বিস্কুট', nameHi: 'कुत्ते का बिस्कुट', unit: '250 g', pricePaise: 12000, category: 'Pet Care' },
+  { name: 'Bird Feed', nameBn: 'পাখির খাবার', nameHi: 'पक्षी का दाना', unit: '500 g', pricePaise: 8000, category: 'Pet Care' },
+  { name: 'Fish Food', nameBn: 'মাছের খাবার', nameHi: 'मछली का खाना', unit: '100 g', pricePaise: 8000, category: 'Pet Care' },
 ];
 
 const RESTAURANT: StarterItem[] = [
@@ -774,7 +1086,19 @@ const HEAD_WORDS: { category: string; words: string[] }[] = [
   },
   {
     category: 'Household',
-    words: ['detergent', 'surf', 'phenyl', 'broom', 'jharu', 'matchbox', 'deshlai', 'candle', 'agarbatti', 'battery'],
+    words: ['detergent', 'surf', 'phenyl', 'broom', 'jharu', 'matchbox', 'deshlai', 'candle', 'agarbatti'],
+  },
+  // 'battery' used to sit in Household, from before there was anywhere better
+  // for it. A torch cell is not a cleaning product, and the shop that sells it
+  // keeps it with the bulbs.
+  {
+    category: 'Electricals',
+    words: ['bulb', 'battery', 'cell', 'tubelight', 'torch', 'wire', 'plug', 'switch', 'বাল্ব', 'बल्ब'],
+  },
+  { category: 'Baby Care', words: ['baby', 'bebi', 'বেবি', 'बेबी', 'diaper', 'ডায়াপার', 'डायपर'] },
+  {
+    category: 'Packaged Food',
+    words: ['sauce', 'sos', 'সস', 'सॉस', 'ketchup', 'chutney', 'চাটনি', 'चटनी', 'pasta', 'spread'],
   },
   { category: 'Vegetables', words: ['sabji', 'sabzi', 'সবজি', 'सब्ज़ी', 'veg', 'vegetable'] },
   { category: 'Fruits', words: ['fruit', 'ful', 'ফল', 'फल'] },
