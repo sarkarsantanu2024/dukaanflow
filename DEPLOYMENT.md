@@ -27,7 +27,7 @@ Fill in:
 ```env
 DATABASE_URL="postgresql://…-pooler….neon.tech/halkhata?sslmode=require"
 DIRECT_URL="postgresql://…….neon.tech/halkhata?sslmode=require"
-NEXT_PUBLIC_BASE_URL="https://dukaanflow.vercel.app"
+NEXT_PUBLIC_BASE_URL="https://halkhata.nexvoratechnologies.co.in"
 ```
 
 Generate the three secrets:
@@ -53,7 +53,7 @@ node -e "console.log(JSON.stringify(require('web-push').generateVAPIDKeys()))"
 `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` is who a push service contacts if it
 has a problem with our traffic. It takes a `mailto:` or an `https:` URL and
 refuses an empty string; **use the site's own URL** —
-`https://dukaanflow.vercel.app`. It is already public, it keeps a personal or
+`https://halkhata.nexvoratechnologies.co.in`. It is already public, it keeps a personal or
 work mailbox out of a header sent to Google and Mozilla on every notification,
 and it does not go stale when somebody changes job.
 
@@ -126,7 +126,7 @@ process, not a setting:
 - <http://localhost:3000/admin> — sign in with the password you hashed.
 
 Note that QR codes and shop links generated here point at
-`https://dukaanflow.vercel.app`, because that is what `NEXT_PUBLIC_BASE_URL`
+`https://halkhata.nexvoratechnologies.co.in`, because that is what `NEXT_PUBLIC_BASE_URL`
 says. That is intentional — a printed QR must work for a customer in the street,
 not only on the machine that generated it. To make QRs point at your laptop for
 a scanning test, temporarily set `NEXT_PUBLIC_BASE_URL="http://localhost:3000"`
@@ -153,20 +153,20 @@ git push -u origin main
    `prisma generate`, which Vercel's build cache would otherwise skip).
 2. Add environment variables (Production **and** Preview):
 
-   | Name | Value |
-   | --- | --- |
-   | `DATABASE_URL` | Neon **pooled** string |
-   | `DIRECT_URL` | Neon **direct** string |
-   | `ADMIN_USERNAME` | the login name, e.g. `admin` (plain text) |
-   | `ADMIN_PASSWORD_HASH` | output of `npm run hash` |
-   | `COOKIE_SECRET` | 64 hex characters |
-   | `NEXT_PUBLIC_BASE_URL` | `https://dukaanflow.vercel.app` (no trailing slash) |
-   | `NEXT_PUBLIC_SUPPORT_PHONE` | your WhatsApp number, digits only with country code |
-   | `CRON_SECRET` | 64 hex characters — without it the nightly purge never runs |
-   | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `publicKey` from the pair above |
-   | `VAPID_PRIVATE_KEY` | `privateKey` from the pair above |
-   | `VAPID_SUBJECT` | `mailto:you@example.com` |
-   | `ANTHROPIC_API_KEY` | optional — only for "Add by photo" |
+   | Name                           | Value                                                            |
+   | ------------------------------ | ---------------------------------------------------------------- |
+   | `DATABASE_URL`                 | Neon **pooled** string                                           |
+   | `DIRECT_URL`                   | Neon **direct** string                                           |
+   | `ADMIN_USERNAME`               | the login name, e.g. `admin` (plain text)                        |
+   | `ADMIN_PASSWORD_HASH`          | output of `npm run hash`                                         |
+   | `COOKIE_SECRET`                | 64 hex characters                                                |
+   | `NEXT_PUBLIC_BASE_URL`         | `https://halkhata.nexvoratechnologies.co.in` (no trailing slash) |
+   | `NEXT_PUBLIC_SUPPORT_PHONE`    | your WhatsApp number, digits only with country code              |
+   | `CRON_SECRET`                  | 64 hex characters — without it the nightly purge never runs      |
+   | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `publicKey` from the pair above                                  |
+   | `VAPID_PRIVATE_KEY`            | `privateKey` from the pair above                                 |
+   | `VAPID_SUBJECT`                | `mailto:you@example.com`                                         |
+   | `ANTHROPIC_API_KEY`            | optional — only for "Add by photo"                               |
 
 3. Deploy.
 
@@ -230,7 +230,7 @@ the phone.
 
 ## 9. Generate the first QR
 
-1. Sign in at <https://dukaanflow.vercel.app/admin>.
+1. Sign in at <https://halkhata.nexvoratechnologies.co.in/admin>.
 2. **+ Add shop** — name, WhatsApp number (10 digits), address, UPI ID. The slug
    auto-fills from the name and stays editable.
 3. **Items** — add them one by one, or paste the whole list into **Bulk update**:
@@ -293,7 +293,7 @@ customers, which do not grow with trade.
 
 **The rollup runs first, and the order is not negotiable.** The same cron rolls
 each year's trade up into `ItemPeriodStat` (per item, per year, and per occasion
-inside it) and `AreaPeriodStat` (per pincode, per year) *before* deleting the
+inside it) and `AreaPeriodStat` (per pincode, per year) _before_ deleting the
 rows those totals came from. Reverse the two and a shop's first year is deleted
 before it is ever summarised — and unlike raw rows, a summary cannot be
 recomputed from nothing afterwards. This is what makes "did Durga Puja sell

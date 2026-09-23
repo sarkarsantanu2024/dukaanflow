@@ -1,4 +1,45 @@
-import type { NextConfig } from 'next';
+import type { NextConfig } from "next";
+
+/**
+ * THE OLD ADDRESS FORWARDS TO THE NEW ONE — BUT ONLY ONCE THE NEW ONE IS LIVE.
+ *
+ * `dukaanflow.vercel.app` is printed under every QR taped to a counter, so it
+ * must stay attached to this project for good (never rename the project). What
+ * changes is that a visit to it lands on the canonical address instead, path
+ * and query intact, so `/shop/<slug>` from an old poster opens the same shop.
+ *
+ * The switch is `NEXT_PUBLIC_BASE_URL`. While it still names the old host this
+ * list is empty; set it to the new domain only after that domain serves the
+ * app, redeploy, and the forwarding turns on in the same build. Pointing it at
+ * a domain that does not answer yet would send every QR scan to a dead page.
+ *
+ * NOT FORWARDED: `/api/*` — a request already in flight from an open tab, a
+ * cron, or a webhook would be turned into a cross-origin hop it cannot follow
+ * (and a POST loses its cookies) — and `/admin-sw.js`, because a browser will
+ * not accept a redirected service-worker script, and the worker installed on
+ * the old origin has to be able to update itself.
+ */
+const LEGACY_HOST = "dukaanflow.vercel.app";
+
+function legacyHostRedirects() {
+  const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "");
+  if (!base) return [];
+  let host: string;
+  try {
+    host = new URL(base).host;
+  } catch {
+    return [];
+  }
+  if (host === LEGACY_HOST) return [];
+  return [
+    {
+      source: "/:path((?!api/|admin-sw\\.js$).*)",
+      has: [{ type: "host" as const, value: LEGACY_HOST }],
+      destination: `${base}/:path`,
+      permanent: true,
+    },
+  ];
+}
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -17,7 +58,7 @@ const nextConfig: NextConfig = {
    * Unset — which is every real build, local and on Vercel — this is exactly
    * the default.
    */
-  distDir: process.env.NEXT_DIST_DIR || '.next',
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   /**
    * `/pricing` IS NOW PART OF THE FRONT PAGE, NOT A PAGE OF ITS OWN.
    *
@@ -39,22 +80,30 @@ const nextConfig: NextConfig = {
    * be broken by a change to a page file.
    */
   async redirects() {
-    return [{ source: '/pricing', destination: '/#plans', permanent: true }];
+    return [
+      // First, so an old `/pricing` link goes straight to the new host's
+      // `/pricing`, which then answers with `/#plans` itself.
+      ...legacyHostRedirects(),
+      { source: "/pricing", destination: "/#plans", permanent: true },
+    ];
   },
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: "/:path*",
         headers: [
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           // `microphone=(self)`, not `()`: voice entry and voice ordering need
           // the mic on our own origin, and an empty allowlist blocks it for
           // everyone including us — no site permission toggle can override a
           // Permissions-Policy header. Camera and geolocation stay off, and
           // `self` still denies every embedded third-party frame.
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(self), geolocation=()",
+          },
         ],
       },
     ];

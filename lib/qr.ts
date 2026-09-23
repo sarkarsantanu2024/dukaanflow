@@ -1,11 +1,11 @@
 /** Pure URL builders. QR rendering itself happens client-side via qrcode.react. */
 
 export function baseUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, '');
+  const configured = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "");
   // Fall back to production rather than localhost: a QR is a physical artefact
   // that outlives the session that printed it, so a misconfigured environment
   // should yield a working code, not one pointing at someone's laptop.
-  return configured || 'https://dukaanflow.vercel.app';
+  return configured || "https://halkhata.nexvoratechnologies.co.in";
 }
 
 export function shopUrl(slug: string): string {
@@ -18,12 +18,12 @@ export function shopUrl(slug: string): string {
  * no reconciliation problem.
  */
 export function upiPayUrl(upiId: string, shopName: string): string {
-  const params = new URLSearchParams({ pa: upiId, pn: shopName, cu: 'INR' });
+  const params = new URLSearchParams({ pa: upiId, pn: shopName, cu: "INR" });
   return `upi://pay?${params.toString()}`;
 }
 
 /** Filesystem-safe download name. */
-export function qrFileName(slug: string, kind: 'shop' | 'upi'): string {
+export function qrFileName(slug: string, kind: "shop" | "upi"): string {
   return `halkhata-${slug}-${kind}-qr.png`;
 }
 
@@ -37,12 +37,16 @@ export function qrFileName(slug: string, kind: 'shop' | 'upi'): string {
  * eventually disagree about the payee name or the currency, and the symptom
  * would be a customer's app showing the wrong shop.
  */
-export function upiPayUrlWithAmount(upiId: string, shopName: string, amount: number): string {
+export function upiPayUrlWithAmount(
+  upiId: string,
+  shopName: string,
+  amount: number,
+): string {
   const params = new URLSearchParams({
     pa: upiId,
     pn: shopName,
     am: String(amount),
-    cu: 'INR',
+    cu: "INR",
   });
   return `upi://pay?${params.toString()}`;
 }
