@@ -101,10 +101,16 @@ export function ShopHeader({
           version of this that slid the header out of the way on a scroll
           handler; it stuttered on every phone it was tried on and was removed.
           This one cannot stutter, because nothing is being driven. */}
-      <header className="z-20 bg-[#00546b]">
+      <header className="z-20 bg-chrome">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
           <BrandMark tone="dark" className="text-sm" />
-          <span className="hidden text-xs text-white/60 sm:inline">Scan → Select → Order</span>
+          {/* The retired tagline used to sit here. "Scan → Select → Order" is
+              a true description of the product and a sentence every competitor
+              can write without changing a word; the landing page stopped
+              leading with it long before this bar did. */}
+          <span lang="bn" className="hidden text-xs text-white/60 sm:inline">
+            দোকান সাজান মুখে বলে
+          </span>
           {/* The push lives on the toggle itself, not on the tagline. The
               tagline is hidden below `sm`, and with `ml-auto` on it the toggle
               simply sat against the logo on every phone — which is where this

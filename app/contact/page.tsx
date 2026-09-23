@@ -67,7 +67,7 @@ export default function ContactPage() {
       <h2>Also here</h2>
       <p>
         <a href="/terms">Terms of Service</a> · <a href="/refund">Refunds &amp; cancellation</a> ·{' '}
-        <a href="/pricing">Pricing</a>
+        <a href="/#plans">Pricing</a>
       </p>
     </LegalPage>
   );

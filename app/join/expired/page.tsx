@@ -15,7 +15,7 @@ export default function JoinExpiredPage() {
           fresh link, or sign in with your shop PIN.
         </p>
         <Link
-          href="/pricing"
+          href="/#plans"
           className="mt-4 inline-flex h-11 items-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700"
         >
           About {BRAND_NAME}

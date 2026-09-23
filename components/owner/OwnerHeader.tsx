@@ -149,16 +149,22 @@ export function OwnerHeader({
   }
 
   return (
-    <header className="sticky top-0 z-20 bg-[#00546b]">
+    <header className="sticky top-0 z-20 bg-chrome">
       <div className="mx-auto flex max-w-3xl items-center px-3 py-2">
         {/* The mark leads home, where a logo leads everywhere else. It used to
             go to the item list on the reasoning that stock is where an owner
             starts their day — but the day's takings, the waiting orders and who
             owes now live on the home screen, so that is the answer to "take me
             back". The item list is one tap away on the tab bar. */}
+        {/* MARK ONLY, no name. This bar carries the shop's own name, a clock
+            and a bell on a 360px phone, and "Halkhata" beside all of that is
+            the one thing on it the owner already knows — they are inside the
+            app. The link keeps its accessible name, so a screen reader still
+            hears where it goes. */}
         <BrandMark
           href={`/owner/${slug}`}
           tone="dark"
+          name={false}
           className="mr-auto text-sm"
         />
 

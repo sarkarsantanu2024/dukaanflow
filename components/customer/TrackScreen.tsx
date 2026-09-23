@@ -121,7 +121,7 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
   }, [waiting, router]);
 
   const header = (
-    <header className="sticky top-0 z-20 bg-[#00546b]">
+    <header className="sticky top-0 z-20 bg-chrome">
       <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5">
         <BrandMark tone="dark" className="text-sm" />
         <div className="ml-auto">

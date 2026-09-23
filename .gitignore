@@ -17,3 +17,9 @@ yarn-error.log*
 next-env.d.ts
 khata-backup-*.json
 .next-*/
+
+# Screenshots from scripts/responsive-check.mjs, and the separate build
+# directory a verification build uses so it cannot kill a running dev server.
+.responsive/
+.next-verify/
+.dev.log

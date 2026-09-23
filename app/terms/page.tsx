@@ -59,7 +59,7 @@ export default function TermsPage() {
       <h2>Payment, and what happens when it stops</h2>
       <p>
         Plans are priced per shop by how many items you list, and are set out on the{' '}
-        <a href="/pricing">pricing page</a>, which is the only place prices are stated.{' '}
+        <a href="/#plans">pricing section</a>, which is the only place prices are stated.{' '}
         <strong>Prices and plan limits can change.</strong> A change will not alter a period you
         have already paid for, and we will tell shopkeepers in the app before a new price applies
         to them.
