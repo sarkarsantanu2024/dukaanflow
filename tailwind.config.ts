@@ -10,46 +10,51 @@ const config: Config = {
     extend: {
       colors: {
         /**
-         * BLUE AND GREY. The green is gone, and so is the orange that briefly
-         * replaced it.
+         * GREEN AND GREY — the green of the logotype. The blue is gone.
          *
-         * THE VIVID BLUE CANNOT CARRY TEXT, and that is the one fact this ramp
-         * is built around. The reference blue — #2596b8, the water colour of
-         * the dashboard this came from — measures 3.42:1 against white. Not "a
-         * bit low": it fails normal text. Every product that uses a cyan like
-         * this either puts dark text on it or quietly fails AA.
+         * THE MARK IS THE BRIEF. The wordmark sets "Hal" in a deep shop-front
+         * green with a leaf through the H, and "khata" in red, over a green
+         * kirana with a red-and-white awning. An interface painted a different
+         * hue from the logo above it is not a design decision, it is two
+         * brands; so the ramp is the mark's green, sampled and then adjusted
+         * only as far as contrast demanded.
          *
-         * So the ramp splits the job in two:
+         * THE RED IS NOT IN THIS RAMP, AND MUST NOT BE PUT IN IT. Red in this
+         * product means "unpaid, something is wrong", and amber means "money
+         * the shop does not have yet". Those two states have to be able to
+         * shout, and they cannot shout over a brand wearing the same colour —
+         * a red button that means "save" next to a red badge that means "owes
+         * you ₹400" is how a shopkeeper learns to stop reading either. The red
+         * belongs to the logo, and to the states. (The same states also carry
+         * WORDS, not colour alone, which is what keeps them legible to the
+         * red-green colour blindness a green-and-red identity would otherwise
+         * be careless about.)
          *
-         *   `500` IS the reference blue. It is for FILLS THAT CARRY NO SMALL
-         *         TEXT — icon tiles, the active pill, a big figure, an accent
-         *         edge. It is the colour the product looks like.
-         *   `600` is deepened to #0e7490, measured at 5.36:1, so white text on
-         *         a primary button passes AA. Every existing `bg-brand-600`
-         *         call site stays accessible without being touched.
-         *   `700` is 7.27:1 — blue text on a light surface, AAA.
-         *   `800` at 9.11:1 carries the chrome and the rails.
+         * A VIVID GREEN CANNOT CARRY SMALL TEXT, which is the same fact the
+         * blue ramp was built around and the reason the split below survives
+         * the change unaltered. Measured against white:
+         *
+         *   `500` #058742, 4.61:1 — THE GREEN AS SUPPLIED. Fills, icon tiles,
+         *         the active pill, a big figure, an accent edge, and large
+         *         text. It is the colour the product looks like.
+         *   `600` #047a3c, 5.45:1 — white text on a primary button passes AA
+         *         at any size, which the supplied green only just does.
+         *   `700` #046b35, 6.65:1 — brand text on cream or white.
+         *   `800` #045c2d, 8.16:1 — the chrome, the rails, a wide dark bar.
          *
          * Do not brighten 600 or 700 without re-measuring.
-         *
-         * BLUE BUYS BACK SOMETHING THE ORANGE HAD SPENT. Red means "unpaid,
-         * something is wrong" and amber means "money the shop does not have
-         * yet"; against an orange brand both were neighbours and neither could
-         * shout. A cool brand puts the whole warm half of the wheel back in the
-         * hands of the two states that need it, which is worth more here than
-         * any hue preference — this is an app about who has paid.
          */
         brand: {
-          50: '#eff8fc',
-          100: '#d6eef7',
-          200: '#aedded',
-          300: '#74c5de',
-          400: '#3ea9ca',
-          500: '#2596b8',
-          600: '#0e7490',
-          700: '#155e75',
-          800: '#164e63',
-          900: '#0d3b4a',
+          50: '#eefaf3',
+          100: '#d6f0e2',
+          200: '#a3ddbd',
+          300: '#55c489',
+          400: '#17a155',
+          500: '#058742',
+          600: '#047a3c',
+          700: '#046b35',
+          800: '#045c2d',
+          900: '#034a24',
         },
 
         /**
@@ -91,6 +96,83 @@ const config: Config = {
          * Kept in step with the base of `aurora` below by hand; they are the
          * same colour stated in the two forms Tailwind needs.
          */
+        /**
+         * THE PAPER THE PUBLIC PAGES ARE PRINTED ON.
+         *
+         * THE THIRD COLOUR, and the one that does the most work. Green and red
+         * on a cool grey read as a corporate site that happens to have an
+         * Indian logo on it; the same two on a warm cream read as a shop —
+         * paper, a paper bag, the page of a khata. It is also what lets the
+         * banner carry the identity WITHOUT the deep green panel: the hero can
+         * be light and still be unmistakably this brand, because the ground
+         * itself is branded.
+         *
+         * slate-900 measures 16.19:1 on it, so every word on a cream band is
+         * as readable as it was on white. Marketing surfaces only — the
+         * product's own screens keep their neutral greys, because a shopkeeper
+         * reading a khata at nine at night needs the quietest ground there is.
+         */
+        cream: '#f9f3eb',
+
+        /**
+         * THE LOGO'S RED, AS A RAMP — FOR THE MARKETING PAGES AND THE MARK.
+         *
+         * The identity is two colours: the shop-front green and the red of its
+         * awning. A site painted only in the green is not wearing the logo, it
+         * is wearing half of it, and the half that is missing is the half that
+         * makes the mark look Indian rather than corporate.
+         *
+         * SO WHERE THE EARLIER RULE STANDS, AND WHERE IT DOES NOT. Inside the
+         * product red means "unpaid, something is wrong" and amber means
+         * "money not in yet", and a brand wearing either would stop those
+         * states being able to shout — that is still true and still binding on
+         * every screen an owner works in. A MARKETING PAGE HAS NO STATES. No
+         * balance is owed on it, nothing is out of stock, nothing has failed;
+         * there is nothing for red to be confused with, and the colour is free
+         * to do what it does in the logo, which is carry the accent.
+         *
+         * The line is therefore not "never red" but WHERE: `app/page.tsx`,
+         * `app/pricing/page.tsx`, the legal and marketing furniture, and the
+         * wordmark. Not the console, not the owner app, not the storefront.
+         *
+         * Measured against white:
+         *   `500` #e81822, 4.58:1 — THE RED AS SUPPLIED. Fills: the awning
+         *         stripe, a rule, an icon tile, a dot, a large figure.
+         *   `600` #d1101d, 5.52:1 — white text on it passes AA at any size, so
+         *         it can be a button or a ribbon.
+         *   `700` #b80d19, 6.75:1 — red text on cream or white.
+         */
+        accent: {
+          50: '#fdeced',
+          100: '#fbd4d6',
+          200: '#f5a2a6',
+          300: '#ef6970',
+          400: '#ec3b45',
+          500: '#e81822',
+          600: '#d1101d',
+          700: '#b80d19',
+          800: '#9e0a15',
+          900: '#7d0710',
+        },
+
+        /**
+         * THE LOGOTYPE'S RED, AND NOTHING ELSE'S.
+         *
+         * The mark sets "khata" in the red of the shop's awning, so the
+         * wordmark in the header has to be able to say it too. It is a
+         * DELIBERATELY SEPARATE TOKEN rather than a `brand-*` step, because
+         * everything in the brand ramp is a colour the interface may reach for
+         * and this is not: red carries "unpaid, something is wrong" everywhere
+         * else in the product, and the moment a button or a chip wears this,
+         * that meaning starts to leak. One call site — `BrandMark` — and it
+         * should stay that way.
+         *
+         * `accent-700` (#b80d19) rather than the supplied #e81822: 6.75:1
+         * against white, where the supplied red measures 4.58 and would set
+         * the name in text that only just passes at the size it is used.
+         */
+        wordmark: '#b80d19',
+
         ground: '#eef1f2',
         card: '#fbfbfa',
         sunk: '#e7e7e4',
@@ -140,7 +222,7 @@ const config: Config = {
          *
          * The OWNER's top bar no longer uses this — it takes `gloss` below.
          */
-        chrome: 'linear-gradient(#164e63, #164e63)',
+        chrome: 'linear-gradient(#045c2d, #045c2d)',
         /**
          * The ground everything sits on: one soft tint, never plain white and
          * never a wash that changes colour as the page scrolls.
@@ -186,7 +268,7 @@ const config: Config = {
          * point of which carries white comfortably; the light fills hold dark
          * text for the same reason in reverse.
          */
-        hero: 'linear-gradient(135deg, #155e75 0%, #164e63 55%, #0d3b4a 100%)',
+        hero: 'linear-gradient(135deg, #0a6132 0%, #084d28 55%, #05331b 100%)',
 
         /**
          * THE TOP BAR: dark blue-grey, with a sheen. NOT BLACK.
@@ -264,10 +346,10 @@ const config: Config = {
         // 16–22rem are comparable to the screen itself, so the colour actually
         // pools and moves. Opacities roughly doubled for the same reason.
         aurora: [
-          'radial-gradient(22rem 18rem at 6% -6%, rgba(37,150,184,.42), transparent 66%)',
-          'radial-gradient(18rem 16rem at 98% 10%, rgba(116,197,222,.45), transparent 66%)',
-          'radial-gradient(20rem 18rem at 86% 92%, rgba(21,94,117,.30), transparent 64%)',
-          'radial-gradient(18rem 16rem at -4% 84%, rgba(174,221,237,.50), transparent 66%)',
+          'radial-gradient(22rem 18rem at 6% -6%, rgba(5,135,66,.34), transparent 66%)',
+          'radial-gradient(18rem 16rem at 98% 10%, rgba(85,196,137,.38), transparent 66%)',
+          'radial-gradient(20rem 18rem at 86% 92%, rgba(4,107,53,.24), transparent 64%)',
+          'radial-gradient(18rem 16rem at -4% 84%, rgba(163,221,189,.42), transparent 66%)',
           'linear-gradient(#eef1f2, #eef1f2)',
         ].join(','),
       },
@@ -331,6 +413,27 @@ const config: Config = {
           to: { opacity: '0', transform: 'translateY(-10px) scale(0.96)' },
         },
 
+        /* ----------------------------------------------------------------
+         * THE LANDING PAGE'S HERO, AND NOWHERE ELSE.
+         *
+         * Motion inside the product is functional — a drawer that slides has
+         * told you where it came from. These three exist to show a stranger
+         * the journey in ten seconds, which is a job only the marketing page
+         * has. They must never appear on a till.
+         * ---------------------------------------------------------------- */
+
+        /** A chip landing on the phone: the item that was just spoken. */
+        'chip-in': {
+          from: { opacity: '0', transform: 'translateY(10px) scale(0.92)' },
+          to: { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        /** The mic listening, and the bell ringing: one ring going out. */
+        ripple: {
+          from: { opacity: '.55', transform: 'scale(.72)' },
+          to: { opacity: '0', transform: 'scale(1.9)' },
+        },
+        /** The bar that runs while a step is on screen. */
+        'step-fill': { from: { transform: 'scaleX(0)' }, to: { transform: 'scaleX(1)' } },
       },
       animation: {
         // The easing is the decelerating curve panels want: quick to start,
@@ -343,6 +446,12 @@ const config: Config = {
         // product decelerates the same way.
         'toast-in': 'toast-in 300ms cubic-bezier(0.32, 0.72, 0, 1)',
         'toast-out': 'toast-out 220ms cubic-bezier(0.32, 0.72, 0, 1) forwards',
+
+        // Hero only. The chip uses the same settling curve as everything else
+        // so the page does not suddenly move in a different accent.
+        'chip-in': 'chip-in 420ms cubic-bezier(0.32, 0.72, 0, 1) backwards',
+        ripple: 'ripple 1.8s ease-out infinite',
+        'step-fill': 'step-fill var(--step-ms, 4200ms) linear forwards',
       },
     },
   },

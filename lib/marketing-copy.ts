@@ -18,12 +18,30 @@ export type Bilingual = { en: string; bn: string };
 /** One step of getting started, in the order it happens. */
 export const STEPS: Bilingual[] = [
   {
-    en: 'We set up your shop and print your QR — send us the name, number and address.',
-    bn: 'আমরা আপনার দোকান তৈরি করে QR ছাপিয়ে দিই — শুধু নাম, ফোন নম্বর আর ঠিকানা পাঠান।',
+    en: 'Call us with your shop’s name, phone number and address. We build the shop and print your QR.',
+    bn: 'ফোন করে দোকানের নাম, নম্বর আর ঠিকানা বলুন। আমরা দোকান তৈরি করে QR ছাপিয়ে দিই।',
   },
   {
-    en: 'You get a link on WhatsApp. Open it, and your shop app is ready. Nothing to download from a store.',
-    bn: 'হোয়াটসঅ্যাপে একটা লিংক পাবেন। খুললেই আপনার দোকানের অ্যাপ তৈরি। প্লে স্টোর থেকে কিছু নামাতে হবে না।',
+    /**
+     * THIS STEP USED TO READ LIKE A SCAM, and it was the one step a new
+     * shopkeeper had to trust.
+     *
+     * "You get a link on WhatsApp. Open it, and your shop app is ready" is,
+     * word for word, what every fraud in India sounds like — an unexpected
+     * message, a link, and something that installs itself. A shopkeeper who
+     * has been warned about exactly that by their bank reads it as a warning,
+     * not as an instruction, and the more careful they are the less likely
+     * they are to continue.
+     *
+     * So the link stops being the subject of the sentence. What the shopkeeper
+     * is told is the thing that is true and reassuring: it opens in the
+     * browser they already have, there is nothing to install, nothing to
+     * remember, and the handover happens with a person they have spoken to —
+     * to a number they gave us, never out of the blue. See `SAFETY` below,
+     * which says in plain words what we will never ask them for.
+     */
+    en: 'Your shop opens in the phone’s own browser — nothing to install, no password to remember. We set it up with you, on the number you gave us.',
+    bn: 'আপনার দোকান ফোনের নিজের ব্রাউজারেই খোলে — কিছু নামাতে হয় না, পাসওয়ার্ড মনে রাখতে হয় না। আপনার দেওয়া নম্বরেই আমরা সঙ্গে থেকে চালু করে দিই।',
   },
   {
     en: 'Add your items by speaking, in your own language. Your phone reads each one back.',
@@ -39,6 +57,39 @@ export const STEPS: Bilingual[] = [
   {
     en: 'Mark it ready, WhatsApp the customer, take the money, and tick it paid. You keep every rupee.',
     bn: 'তৈরি হলে দাগ দিন, খদ্দেরকে হোয়াটসঅ্যাপ করুন, টাকা নিন, পেইড টিক করুন। পুরো টাকাটাই আপনার।',
+  },
+];
+
+/**
+ * WHAT WE WILL NEVER ASK FOR — said out loud, on the public pages.
+ *
+ * A shopkeeper being offered a shop app by a company they have not heard of is
+ * right to be suspicious, and the honest response to that is not softer
+ * marketing but a plain list of the things a fraud would ask for and we do
+ * not. It costs nothing to promise, because none of it is anything the product
+ * has ever needed: Halkhata never touches the money from an order, so it has
+ * no reason to know a PIN, a card or a bank password, ever.
+ *
+ * KEEP THIS TRUE. If some future feature genuinely needs one of these, the
+ * line comes off this list before the feature ships — a promise on a public
+ * page that quietly stopped being true is worse than never making it.
+ */
+export const SAFETY: Bilingual[] = [
+  {
+    en: 'We never ask for your OTP, UPI PIN, card number or bank password. Nobody from here ever will.',
+    bn: 'আমরা কখনও আপনার OTP, UPI পিন, কার্ড নম্বর বা ব্যাঙ্কের পাসওয়ার্ড চাই না। এখান থেকে কেউ কখনও চাইবে না।',
+  },
+  {
+    en: 'Customers pay you — in cash, or straight into your own UPI. The money never comes to us.',
+    bn: 'খদ্দের টাকা দেয় আপনাকেই — নগদে, নয়তো সোজা আপনার নিজের UPI-তে। টাকা আমাদের কাছে আসে না।',
+  },
+  {
+    en: 'There is nothing to install. Your shop runs in the browser your phone already has.',
+    bn: 'কিছু নামাতে হবে না। আপনার ফোনে যে ব্রাউজার আছে, দোকান তাতেই চলে।',
+  },
+  {
+    en: 'You can stop any month. Your khata and your reports come out as PDF or CSV whenever you want them.',
+    bn: 'যে কোনও মাসে বন্ধ করতে পারেন। খাতা আর হিসাব যখন খুশি PDF বা CSV করে নিয়ে নিতে পারেন।',
   },
 ];
 

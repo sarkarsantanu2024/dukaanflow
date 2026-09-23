@@ -84,7 +84,7 @@ export const BRAND_WORDMARK: { head: string; tail: string } = {
  * the service worker. It was typed out in eight of those places and every one
  * of them was still the old, hotter, inaccessible green after the scale moved.
  */
-export const BRAND_GREEN = '#0e7490';
+export const BRAND_GREEN = '#047a3c';
 
 /**
  * The ground the app sits on — `bg-app`, and the manifests' `background_color`,
@@ -110,6 +110,22 @@ export const BRAND_LOGO = {
   icon192: '/brand/halkhata-logo-192.png',
   icon512: '/brand/halkhata-logo-512.png',
   maskable512: '/brand/halkhata-logo-maskable-512.png',
+
+  /**
+   * The full lockup — the shop-front mark AND the word "Halkhata" beside it,
+   * as one piece of artwork. Everything above is the mark alone.
+   *
+   * THE TWO ARE NOT INTERCHANGEABLE. A square icon has to be the mark: a
+   * launcher tile, a favicon or a notification icon given a 1926×513 lockup
+   * scales it until the whole name is four illegible pixels tall. The lockup
+   * is for places with a line's worth of width and no text beside it — a
+   * marketing header, a social card, the top of a printed poster.
+   *
+   * `square` beside it is the mark as supplied, before the renditions are cut
+   * from it — the input `scripts/build-brand-icons.ts` takes.
+   */
+  lockup: '/brand/halkhata-lockup.png',
+  square: '/brand/halkhata-mark.png',
 } as const;
 
 /** Alt text wherever the mark is rendered as an image rather than decoration. */
