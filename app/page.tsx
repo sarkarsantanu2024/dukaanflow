@@ -18,8 +18,8 @@ import {
   WhatsAppIcon,
 } from '@/components/ui/Icon';
 import { SiteFooter } from '@/components/ui/SiteFooter';
-import { AwningStripe } from '@/components/marketing/AwningStripe';
 import { BackToTop } from '@/components/marketing/BackToTop';
+import { MobileMenu } from '@/components/marketing/MobileMenu';
 import { BRAND_LOGO, BRAND_NAME } from '@/lib/brand';
 import { SAFETY } from '@/lib/marketing-copy';
 import { LangTabs } from '@/components/marketing/LangTabs';
@@ -199,7 +199,7 @@ function PhoneShot({
       </div>
       {/* `currentColor`, so one component serves the pale band and the dark
           one — the caption takes the colour of whatever section it is in. */}
-      <figcaption className="mt-3 text-center text-sm font-medium opacity-80">
+      <figcaption className="mt-3 text-center text-base font-medium opacity-80">
         {caption}
       </figcaption>
     </figure>
@@ -249,7 +249,7 @@ function SectionArt({
         />
       </div>
       {caption && (
-        <figcaption className="mt-3 text-center text-sm text-slate-600">{caption}</figcaption>
+        <figcaption className="mt-3 text-center text-base text-slate-600">{caption}</figcaption>
       )}
     </figure>
   );
@@ -454,7 +454,7 @@ export default function LandingPage() {
       {/* THE BAR THAT SAYS THIS IS A PRODUCT AND NOT A SPLASH SCREEN.
           A page with one headline and two buttons reads as an app that is
           still loading. */}
-      <header className="sticky top-0 z-30 border-b border-glass-edge bg-glass backdrop-blur">
+      <header className="sticky top-0 z-30 bg-black">
         <div className="mx-auto flex max-w-[100rem] items-center gap-4 px-5 py-3 sm:px-8 lg:px-12">
           {/* THE FULL LOCKUP, because this is the one place with room for it.
               Everywhere inside the product the mark is drawn beside the name
@@ -462,7 +462,13 @@ export default function LandingPage() {
               header is the opposite case: nothing is competing for the width,
               and the supplied artwork (the leaf through the H, the red on
               "khata") says more about the brand in one line than type can. */}
-          <Link href="/" aria-label={`${BRAND_NAME} — home`} className="shrink-0">
+          {/* On a white plate: the dark green of "Halk" all but disappears on
+              the black bar. */}
+          <Link
+            href="/"
+            aria-label={`${BRAND_NAME} — home`}
+            className="shrink-0 rounded-xl bg-white px-3 py-1.5"
+          >
             <Image
               src={BRAND_LOGO.lockup}
               alt={BRAND_NAME}
@@ -476,11 +482,11 @@ export default function LandingPage() {
           {/* The section you are reading is marked as you scroll — see
               `SectionNav`. Four words that never change are decoration; a bar
               that answers "where am I in this page" is a map. */}
-          <SectionNav items={NAV} className="ml-auto hidden items-center gap-7 lg:flex" />
+          <SectionNav items={NAV} className="ml-auto hidden items-center gap-2 lg:flex" />
           <div className="ml-auto flex items-center gap-2 lg:ml-6">
             <Link
               href="/admin"
-              className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-card sm:inline-flex"
+              className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white sm:inline-flex"
             >
               Admin sign in
             </Link>
@@ -495,7 +501,6 @@ export default function LandingPage() {
             )}
           </div>
         </div>
-        <AwningStripe />
       </header>
 
       <main className="flex-1">
@@ -578,7 +583,7 @@ export default function LandingPage() {
 
               <p lang="bn" className="mx-auto mt-5 max-w-md text-xl text-slate-800 lg:mx-0">
                 বলুন — জিনিসটা দামসহ তালিকায় উঠে গেল, খদ্দের দেখতে পেল।
-                <span className="mt-1 block text-base text-slate-600">
+                <span className="mt-1 block text-lg text-slate-600">
                   বাংলা, হিন্দি বা ইংরেজিতে। টাইপ করতে হবে না।
                 </span>
               </p>
@@ -617,7 +622,7 @@ export default function LandingPage() {
 
               {/* The four objections that decide it, answered before they are
                   asked. Every one is a fact about the product, not a boast. */}
-              <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-slate-600 lg:justify-start">
+              <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-base text-slate-600 lg:justify-start">
                 {[
                   `${TRIAL_DAYS} days free, no advance`,
                   'No commission, ever',
@@ -682,7 +687,7 @@ export default function LandingPage() {
                 >
                   {stat.value}
                 </dd>
-                <dt className="mt-1 text-sm leading-snug text-slate-600">{stat.label}</dt>
+                <dt className="mt-1 text-base leading-snug text-slate-600">{stat.label}</dt>
               </div>
             ))}
           </dl>
@@ -705,7 +710,7 @@ export default function LandingPage() {
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
                     <CheckIcon className="h-4 w-4" />
                   </span>
-                  <p className="text-sm leading-relaxed text-slate-700">
+                  <p className="text-base leading-relaxed text-slate-700">
                     {line.en}
                     <span lang="bn" className="mt-1 block text-slate-500">
                       {line.bn}
@@ -758,7 +763,7 @@ export default function LandingPage() {
                   <p lang="bn" className="mt-0.5 text-sm font-semibold text-brand-700">
                     {feature.bn}
                   </p>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{feature.body}</p>
+                  <p className="mt-2 text-base leading-relaxed text-slate-600">{feature.body}</p>
                 </div>
               );
             })}
@@ -955,7 +960,7 @@ export default function LandingPage() {
                   >
                     {planItems(plan.id)} items
                   </p>
-                  <p className={clsx('mt-1 text-sm', popular ? 'text-white/75' : 'text-slate-500')}>
+                  <p className={clsx('mt-1 text-base', popular ? 'text-white/75' : 'text-slate-500')}>
                     {plan.tagline}
                   </p>
                 </div>
@@ -971,7 +976,7 @@ export default function LandingPage() {
             <h3 className="text-lg font-bold text-slate-900">Every plan includes all of it</h3>
             <ul className="mt-4 grid gap-x-8 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {EVERY_PLAN_INCLUDES.map((feature) => (
-                <li key={feature} className="flex gap-2.5 text-sm text-slate-700">
+                <li key={feature} className="flex gap-2.5 text-base text-slate-700">
                   <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
                   {feature}
                 </li>
@@ -985,7 +990,7 @@ export default function LandingPage() {
                 <p className="font-semibold text-slate-900">
                   Do not want to list the items yourself?
                 </p>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-base text-slate-600">
                   We will catalogue the shop for you at{' '}
                   <strong className="text-brand-700">
                     {formatPaise(LISTING_PAISE_PER_ITEM)} an item
@@ -995,7 +1000,7 @@ export default function LandingPage() {
               </div>
               <div>
                 <p className="font-semibold text-slate-900">If you stop paying</p>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-base text-slate-600">
                   Your shop page and QR keep working for {AUTO_PAUSE_DAYS} days and nothing is
                   ever deleted. Pay by UPI, by the month or the year, no contract, stop whenever
                   you like.
@@ -1004,7 +1009,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <p className="mt-6 text-center text-sm text-slate-500">
+          <p className="mt-6 text-center text-base text-slate-500">
             Customers pay you in cash or straight into your own UPI. {BRAND_NAME} never touches
             the money from an order.
           </p>
@@ -1034,7 +1039,7 @@ export default function LandingPage() {
                     +
                   </span>
                 </summary>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">{entry.a}</p>
+                <p className="mt-3 text-base leading-relaxed text-slate-600">{entry.a}</p>
               </details>
             ))}
           </div>
@@ -1089,6 +1094,7 @@ export default function LandingPage() {
           thing on every page, which is what makes it the right place for them. */}
       <StickyCta whatsapp={whatsapp} />
       <BackToTop />
+      <MobileMenu items={NAV} whatsapp={whatsapp} />
       <SiteFooter />
     </div>
   );
