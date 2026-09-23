@@ -58,8 +58,9 @@ export function BackToTop() {
       className={clsx(
         // BOTTOM RIGHT, where a thumb already is and where every page that
         // has one of these puts it. Above the sticky WhatsApp bar on a phone,
-        // which owns the bottom edge.
-        'fixed bottom-24 right-4 z-40 sm:bottom-6 sm:right-6 inline-flex items-center gap-2 rounded-full border border-glass-edge',
+        // which owns the bottom edge. Below `lg` it also stacks above the
+        // floating menu button (`MobileMenu`).
+        'fixed bottom-40 right-4 z-40 sm:bottom-24 sm:right-6 lg:bottom-6 inline-flex items-center gap-2 rounded-full border border-glass-edge',
         'bg-glass px-4 py-3 text-sm font-semibold text-slate-700 shadow-float backdrop-blur',
         'transition duration-200 hover:bg-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
         // Clear of a phone's home bar.

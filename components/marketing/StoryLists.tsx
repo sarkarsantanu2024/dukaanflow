@@ -64,7 +64,7 @@ export function ProblemList({ lang }: { lang: 'en' | 'bn' }) {
           </div>
           <div className="flex gap-3 border-l-4 border-brand-500 bg-brand-50/70 p-5">
             <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />
-            <p className="text-sm leading-relaxed text-slate-700">{row.answer[lang]}</p>
+            <p className="text-base leading-relaxed text-slate-700">{row.answer[lang]}</p>
           </div>
         </li>
       ))}

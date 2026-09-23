@@ -80,24 +80,16 @@ export function SectionNav({ items, className }: { items: NavItem[]; className?:
             href={item.href}
             aria-current={on ? true : undefined}
             className={clsx(
-              'relative rounded-lg px-1 py-1 text-sm transition-colors',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
+              'rounded-full px-3 py-1.5 text-sm font-semibold transition-colors',
+              // Light on the black header bar. The section you are in is a
+              // filled pill: a green underline all but vanished on black.
+              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
               on
-                ? 'font-semibold text-brand-700'
-                : 'font-medium text-slate-600 hover:text-brand-700',
+                ? 'bg-white text-slate-900'
+                : 'text-slate-300 hover:bg-white/10 hover:text-white',
             )}
           >
             {item.label}
-            {/* The underline is a child rather than a border so it can sit off
-                the text's own box and line up with the header's bottom edge
-                whatever the label's length. */}
-            <span
-              aria-hidden
-              className={clsx(
-                'absolute inset-x-1 -bottom-[13px] h-0.5 rounded-full bg-brand-600 transition-opacity',
-                on ? 'opacity-100' : 'opacity-0',
-              )}
-            />
           </a>
         );
       })}
