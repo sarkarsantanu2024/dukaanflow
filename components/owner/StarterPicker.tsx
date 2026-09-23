@@ -25,6 +25,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
+import { DrawerFooter } from '@/components/ui/Drawer';
 import { useToast } from '@/components/ui/Toast';
 import { ownerDict } from '@/lib/owner-i18n';
 import { starterName, starterOtherNames, type StarterItem } from '@/lib/starter-catalogue';
@@ -286,47 +287,51 @@ export function StarterPicker({
         </div>
       )}
 
-      {/* Stuck to the bottom of the screen rather than to the end of the list.
-          This catalogue is a hundred items over a dozen groups, so the moment
-          the owner opens a second group the Add button scrolls away — leaving
-          them ticking chips with no visible way to commit them, and no running
-          count of what they have ticked. The bar follows them down instead, and
+      {/* The bar the owner commits from, always in front of them.
+          This catalogue is five hundred items over a dozen groups, so the
+          moment the owner opens a second group an Add button at the end of the
+          list is gone — leaving them ticking chips with no visible way to
+          commit them, and no running count of what they have ticked. It
           carries the count and the room left, which are the two facts that
           decide whether to tick one more.
 
-          The offset clears the owner app's fixed tab bar. Inside a drawer
-          there is no tab bar to clear, and keeping the offset there parked the
-          bar in mid-air with chips scrolling underneath it. */}
-      <div
-        className={clsx(
-          'sticky z-10 -mx-4 -mb-4 mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-brand-200 bg-brand-50/95 px-4 pt-3 backdrop-blur',
-          inDrawer
-            ? 'bottom-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))]'
-            : 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))] pb-3',
-        )}
-      >
-        <Button onClick={add} loading={busy} disabled={picked.size === 0}>
-          {t.starterAdd}
-          {picked.size > 0 ? ` (${picked.size})` : ''}
-        </Button>
-        {onDismiss && (
-          <Button variant="ghost" size="sm" onClick={onDismiss}>
-            {t.starterSkip}
+          INSIDE A DRAWER IT IS THE DRAWER'S OWN FOOTER, not a sticky child of
+          the scrolling list: opaque, on the panel's bottom edge, with nothing
+          showing through it and nothing sliding underneath. `DrawerFooter`
+          puts it there and renders it in place everywhere else, so the sticky
+          version below is only ever the one on the Items tab, where the offset
+          it needs is the app's fixed tab bar. */}
+      <DrawerFooter>
+        <div
+          className={clsx(
+            'flex flex-wrap items-center gap-x-3 gap-y-2',
+            !inDrawer &&
+              'sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-10 -mx-4 -mb-4 mt-3 border-t border-brand-200 bg-brand-50 px-4 pb-3 pt-3',
+          )}
+        >
+          <Button onClick={add} loading={busy} disabled={picked.size === 0}>
+            {t.starterAdd}
+            {picked.size > 0 ? ` (${picked.size})` : ''}
           </Button>
-        )}
+          {onDismiss && (
+            <Button variant="ghost" size="sm" onClick={onDismiss}>
+              {t.starterSkip}
+            </Button>
+          )}
 
-        {/* Room left, shown only when it is finite and worth knowing about. */}
-        {Number.isFinite(room) && (
-          <p
-            className={clsx(
-              'ml-auto text-xs',
-              full ? 'font-semibold text-amber-700' : 'text-slate-500',
-            )}
-          >
-            {full ? t.starterFull : `${room - picked.size} ${t.starterRoomLeft}`}
-          </p>
-        )}
-      </div>
+          {/* Room left, shown only when it is finite and worth knowing about. */}
+          {Number.isFinite(room) && (
+            <p
+              className={clsx(
+                'ml-auto text-xs',
+                full ? 'font-semibold text-amber-700' : 'text-slate-500',
+              )}
+            >
+              {full ? t.starterFull : `${room - picked.size} ${t.starterRoomLeft}`}
+            </p>
+          )}
+        </div>
+      </DrawerFooter>
     </section>
   );
 }

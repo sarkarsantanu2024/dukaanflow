@@ -17,11 +17,28 @@ type Toast = { id: number; message: string; tone: ToastTone; leaving?: boolean }
  * it either: red and green are the one pair a colour-blind reader cannot
  * separate, so the shape carries the meaning and the colour agrees with it.
  */
-const TONE: Record<ToastTone, { ring: string; chip: string; Icon: typeof CheckIcon }> = {
-  success: { ring: 'bg-brand-700', chip: 'bg-brand-500', Icon: CheckIcon },
-  error: { ring: 'bg-red-700', chip: 'bg-red-500', Icon: CloseIcon },
-  info: { ring: 'bg-slate-800', chip: 'bg-slate-600', Icon: BellIcon },
+const TONE: Record<ToastTone, { chip: string; Icon: typeof CheckIcon }> = {
+  success: { chip: 'bg-brand-500', Icon: CheckIcon },
+  error: { chip: 'bg-red-500', Icon: CloseIcon },
+  info: { chip: 'bg-slate-600', Icon: BellIcon },
 };
+
+/**
+ * ONE GROUND FOR EVERY TOAST, AND IT IS BLACK.
+ *
+ * The pill used to take the colour of its tone — green for success, red for
+ * error — which made it a different object each time and, worse, put a green
+ * pill on top of a green header. On the owner's Items screen that is a dark
+ * green bar landing on a dark green bar: the message stops looking like a
+ * message and starts looking like part of the chrome, which is the one thing a
+ * four-second notice cannot afford.
+ *
+ * Black belongs to nothing else in this app, so a black pill is always the
+ * thing that just arrived, on any screen, over any header, in either app. The
+ * tone still shows — in the icon and its chip, which is where a colour-blind
+ * reader was already being asked to read it from.
+ */
+const TOAST_GROUND = 'bg-slate-900';
 
 const ToastContext = createContext<{ push: (message: string, tone?: ToastTone) => void } | null>(
   null,
@@ -61,7 +78,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         className="pointer-events-none fixed inset-x-0 top-3 z-[100] flex flex-col items-center gap-2 px-4"
       >
         {toasts.map((toast) => {
-          const { ring, chip, Icon } = TONE[toast.tone];
+          const { chip, Icon } = TONE[toast.tone];
           return (
             <div
               key={toast.id}
@@ -71,7 +88,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 // app rather than part of it — the radius and the lift are what
                 // say so, and without them it reads as a broken header.
                 'pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl px-3 py-2.5 shadow-float',
-                ring,
+                TOAST_GROUND,
                 toast.leaving ? 'animate-toast-out' : 'animate-toast-in',
               )}
             >

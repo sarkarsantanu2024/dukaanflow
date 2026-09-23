@@ -16,7 +16,8 @@
  * outside must not throw away an edit in progress.
  */
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 
 /**
@@ -29,6 +30,38 @@ const DrawerCloseContext = createContext<(() => void) | null>(null);
 
 export function useDrawerClose(): (() => void) | null {
   return useContext(DrawerCloseContext);
+}
+
+/**
+ * Where a drawer's bottom bar actually belongs.
+ *
+ * STICKY DOES NOT WORK IN HERE, AND IT FAILS IN THE SAME WAY EVERY TIME. The
+ * panel's content is a padded scroll box, so a bar stuck to the bottom of it
+ * has to span that padding with negative margins — and those same margins push
+ * the stuck position below the scrollport, which leaves rows of the list
+ * showing underneath the bar and a translucent bar showing the list through
+ * itself. Both of those are visible at once, and they read as a broken panel.
+ *
+ * So a bar goes into the panel's own footer region instead: a sibling of the
+ * scroll area, opaque, always on the bottom edge, and the list scrolls in what
+ * is left. `DrawerFooter` puts it there from anywhere inside the drawer,
+ * however deep, without every panel having to thread a `footer` prop back up
+ * through the component that owns the state the bar needs.
+ *
+ * Outside a drawer it renders its children where they stand, so a component
+ * used both ways does not need to know which it is in.
+ */
+const DrawerFooterContext = createContext<{ host: HTMLElement | null } | null>(null);
+
+export function DrawerFooter({ children }: { children: React.ReactNode }) {
+  const region = useContext(DrawerFooterContext);
+  // Not in a drawer: render where it stands.
+  if (!region) return <>{children}</>;
+  // In a drawer, but the footer region has not been measured into state yet —
+  // which is true for exactly one render. Rendering the bar inline for that
+  // render would flash it in the middle of the list, so it waits.
+  if (!region.host) return null;
+  return createPortal(children, region.host);
 }
 
 export function Drawer({
@@ -84,6 +117,15 @@ export function Drawer({
   // would drift out of step with it.
   const [mounted, setMounted] = useState(open);
   const [leaving, setLeaving] = useState(false);
+  /**
+   * The footer region, once it is in the DOM. Held in state rather than a ref
+   * because a portal has to render INTO it — and a ref's `.current` filling in
+   * does not re-render the tree that would do the rendering.
+   */
+  const [footerHost, setFooterHost] = useState<HTMLDivElement | null>(null);
+  // Wrapped in an object so a child can tell "there is no drawer here" from
+  // "there is a drawer and its footer is one render away".
+  const footerRegion = useMemo(() => ({ host: footerHost }), [footerHost]);
 
   useEffect(() => {
     if (open) {
@@ -188,16 +230,30 @@ export function Drawer({
 
         {/* The drawer scrolls, not the page. */}
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          <DrawerCloseContext.Provider value={onClose}>{children}</DrawerCloseContext.Provider>
+          <DrawerCloseContext.Provider value={onClose}>
+            <DrawerFooterContext.Provider value={footerRegion}>
+              {children}
+            </DrawerFooterContext.Provider>
+          </DrawerCloseContext.Provider>
         </div>
 
-        {footer && (
-          // The phone's home indicator sits over the last few millimetres of
-          // the screen, and this is where the primary button lives.
-          <div className="shrink-0 border-t border-slate-200 bg-card px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
-            {footer}
-          </div>
-        )}
+        {/* THE FOOTER IS ALWAYS HERE, and hides itself when nothing has been
+            put in it — `empty:hidden`, so a panel with no bar does not end in
+            a stray hairline. It takes both the `footer` prop and anything a
+            child sends through `DrawerFooter`, which is what makes the fix a
+            global one: no panel has to lift its bar's state up to the drawer
+            to get a bar that behaves.
+
+            Opaque, and outside the scroll area, so nothing shows through it or
+            slides under it. The bottom padding clears the phone's home
+            indicator, which sits over the last few millimetres of the screen —
+            exactly where the primary button lives. */}
+        <div
+          ref={setFooterHost}
+          className="shrink-0 border-t border-slate-200 bg-card px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 empty:hidden"
+        >
+          {footer}
+        </div>
       </div>
     </div>
   );
