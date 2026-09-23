@@ -14,6 +14,7 @@ import { ItemsManager, type AdminItem } from '@/components/admin/ItemsManager';
 import { RestockCard } from './RestockCard';
 import type { ShopType } from '@prisma/client';
 import { StarterPicker } from './StarterPicker';
+import { Drawer } from '@/components/ui/Drawer';
 import { ownerDict } from '@/lib/owner-i18n';
 import { VoiceArt } from '@/components/ui/ShopArt';
 import { alreadyOwned, ownedNames, type StarterItem } from '@/lib/starter-catalogue';
@@ -42,8 +43,8 @@ export function InventoryScreen({
 }) {
   const t = ownerDict(locale);
   const [welcome, setWelcome] = useState(showWelcome);
-  // Offered while the shop is still small; a stocked shop does not need it.
-  const [starter, setStarter] = useState(items.length < 5);
+  // The common-items catalogue opens in a drawer, and it starts closed.
+  const [picker, setPicker] = useState(false);
 
   const outOfStock = items.filter((item) => !item.inStock).length;
 
@@ -104,20 +105,54 @@ export function InventoryScreen({
           quiet line on a shop whose shelves are full. */}
       <RestockCard shopName={shopName} items={items} locale={locale} />
 
-      {/* Kept in simple mode, and on purpose. This is the one card here that
-          does work FOR the owner rather than asking something of them: one tap
-          and a shop that has nothing in it has sixty items, priced. It also
-          stops offering itself once the shop has five, so it is never part of
-          what a working owner scrolls past. */}
-      {starter && unlisted.length > 0 && (
+      {/* THE CATALOGUE IS NOW ONE CLOSED LINE, AND IT OPENS A DRAWER.
+          It used to unfold on the tab itself: a heading, a search box and a
+          dozen category rows, five hundred items deep, sitting under the list
+          on every load while the shop was young. That is a screen and a half
+          of something the owner is not doing right now, between them and
+          everything below it.
+
+          Closed, it costs one row and says what is behind it. Opened, it gets
+          the whole drawer — which is also the right shape for the job, because
+          ticking eighty chips wants the screen, not a box halfway down a page.
+          It is offered for the life of the shop rather than only while the
+          shop has fewer than five items: a row this quiet never gets in the
+          way, and a shop that adds a new line of goods in year two should not
+          have to dictate it. */}
+      {unlisted.length > 0 && (
+        <section className="overflow-hidden rounded-2xl border border-brand-200 bg-brand-50/60">
+          <button
+            type="button"
+            onClick={() => setPicker(true)}
+            aria-expanded={picker}
+            className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-brand-50"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold text-slate-900">{t.starterTitle}</span>
+              <span className="mt-0.5 block text-sm text-slate-600">{t.starterHint}</span>
+            </span>
+            <span className="shrink-0 rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold tabular-nums text-white">
+              {unlisted.length}
+            </span>
+            <span aria-hidden className="shrink-0 text-slate-400">
+              ▸
+            </span>
+          </button>
+        </section>
+      )}
+
+      {/* `inDrawer`, so the picker's own Add bar sits on the drawer's bottom
+          edge instead of clearing a tab bar that is not there. */}
+      <Drawer open={picker} title={t.starterTitle} onClose={() => setPicker(false)}>
         <StarterPicker
           slug={slug}
           catalogue={unlisted}
           locale={locale}
           remaining={Math.max(0, itemLimit - items.length)}
-          onDismiss={() => setStarter(false)}
+          onDismiss={() => setPicker(false)}
+          inDrawer
         />
-      )}
+      </Drawer>
 
       {/* THE SETTINGS THAT USED TO BE HERE HAVE MOVED, and off this tab
           entirely. The customer notice, the delivery terms and the smallest
