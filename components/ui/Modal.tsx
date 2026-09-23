@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * One dialog, centred, for everything the product needs to say or ask.
@@ -6,7 +6,7 @@
  * It replaces `window.confirm` and `window.alert`, which were doing this job
  * badly: a browser dialog is pinned to the top of the screen out of thumb
  * reach, renders in the browser's language rather than the shop's, cannot show
- * a price or a name in bold, and on Android says "dukaanflow.vercel.app says"
+ * a price or a name in bold, and on Android says "halkhata.nexvoratechnologies.co.in says"
  * above every question — which reads like a warning from somewhere else rather
  * than a question from the app the owner is holding.
  *
@@ -15,10 +15,10 @@
  * open, because a dialog you can scroll the page behind is one people miss.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import clsx from 'clsx';
-import { Button } from './Button';
-import { CloseIcon } from './Icon';
+import { useEffect, useRef, useState } from "react";
+import clsx from "clsx";
+import { Button } from "./Button";
+import { CloseIcon } from "./Icon";
 
 export function Modal({
   open,
@@ -27,8 +27,8 @@ export function Modal({
   onClose,
   /** Rendered under the message. Omit for a dialog that only says something. */
   footer,
-  tone = 'normal',
-  size = 'sm',
+  tone = "normal",
+  size = "sm",
 }: {
   open: boolean;
   title: string;
@@ -36,7 +36,7 @@ export function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   /** `danger` colours the heading for something destructive. */
-  tone?: 'normal' | 'danger' | 'success';
+  tone?: "normal" | "danger" | "success";
   /**
    * `sm` is a question. `md` is a dialog somebody works in — a form with fields
    * and a picture in it — and it scrolls its own body rather than the page, so
@@ -49,29 +49,29 @@ export function Modal({
    * inside a page, with the shopkeeper's own shop visible around the edges as a
    * distraction from the one thing they came to do.
    */
-  size?: 'sm' | 'md' | 'full';
+  size?: "sm" | "md" | "full";
 }) {
-  const full = size === 'full';
+  const full = size === "full";
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     // The action, not the cancel — the common answer should be the one already
     // under the finger.
-    panelRef.current?.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+    panelRef.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
 
     // Escape still closes — a keyboard affordance, not a stray tap. What no
     // longer closes it is a tap on the backdrop: an answer this dialog is asking
     // for must be given on a button, not lost to a misplaced tap outside it.
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === "Escape") onClose();
     };
-    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener("keydown", onKeyDown);
     };
   }, [open, onClose]);
 
@@ -80,14 +80,17 @@ export function Modal({
   return (
     <div
       className={clsx(
-        'fixed inset-0 z-50 flex items-center justify-center',
-        full ? 'p-[10px]' : 'p-4',
+        "fixed inset-0 z-50 flex items-center justify-center",
+        full ? "p-[10px]" : "p-4",
       )}
     >
       {/* Backdrop, but NOT a way out: a tap here no longer closes the dialog,
           so an answer cannot be lost to a misplaced tap. The X and the buttons
           are the ways out. */}
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
+        aria-hidden="true"
+      />
 
       <div
         ref={panelRef}
@@ -95,21 +98,28 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         className={clsx(
-          'relative flex w-full animate-fade-in flex-col rounded-2xl bg-card p-5 shadow-sheet',
+          "relative flex w-full animate-fade-in flex-col rounded-2xl bg-card p-5 shadow-sheet",
           full
             ? // h-full rather than min-h: the panel is a flex column whose body
               // scrolls, and that only works if the panel itself has a fixed
               // height to divide up. Left to grow it would push the footer off
               // the bottom of the screen.
-              'h-full max-w-none'
-            : clsx('max-h-[calc(100dvh-2rem)]', size === 'md' ? 'max-w-md' : 'max-w-sm'),
+              "h-full max-w-none"
+            : clsx(
+                "max-h-[calc(100dvh-2rem)]",
+                size === "md" ? "max-w-md" : "max-w-sm",
+              ),
         )}
       >
         <div className="flex shrink-0 items-start gap-3">
           <h2
             className={clsx(
-              'mr-auto text-lg font-semibold leading-snug',
-              tone === 'danger' ? 'text-red-700' : tone === 'success' ? 'text-brand-700' : 'text-slate-900',
+              "mr-auto text-lg font-semibold leading-snug",
+              tone === "danger"
+                ? "text-red-700"
+                : tone === "success"
+                  ? "text-brand-700"
+                  : "text-slate-900",
             )}
           >
             {title}
@@ -151,7 +161,7 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel,
-  cancelLabel = 'Cancel',
+  cancelLabel = "Cancel",
   danger = false,
   busy = false,
   onConfirm,
@@ -172,14 +182,14 @@ export function ConfirmDialog({
       open={open}
       title={title}
       onClose={busy ? () => {} : onCancel}
-      tone={danger ? 'danger' : 'normal'}
+      tone={danger ? "danger" : "normal"}
       footer={
         <>
           <Button variant="secondary" onClick={onCancel} disabled={busy}>
             {cancelLabel}
           </Button>
           <Button
-            variant={danger ? 'danger' : 'primary'}
+            variant={danger ? "danger" : "primary"}
             onClick={onConfirm}
             loading={busy}
             data-autofocus={danger ? undefined : true}
@@ -200,7 +210,7 @@ export function ConfirmDialog({
  * `window.prompt` was doing this and doing it badly. It is a single unstyled
  * line with no way to show which name is expected in bold, it cannot disable
  * its own OK button, so the only feedback for a typo was the action silently
- * not happening — and on Android it is prefixed with "dukaanflow.vercel.app
+ * not happening — and on Android it is prefixed with "halkhata.nexvoratechnologies.co.in
  * says", which reads as a warning from somewhere else rather than a question
  * from the app in the operator's hand.
  *
@@ -215,7 +225,7 @@ export function TypeToConfirmDialog({
   expected,
   inputLabel,
   confirmLabel,
-  cancelLabel = 'Cancel',
+  cancelLabel = "Cancel",
   busy = false,
   onConfirm,
   onCancel,
@@ -232,12 +242,12 @@ export function TypeToConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const [typed, setTyped] = useState('');
+  const [typed, setTyped] = useState("");
 
   // Reopening must not inherit the last attempt, or a second delete would
   // already be armed the moment the dialog appeared.
   useEffect(() => {
-    if (open) setTyped('');
+    if (open) setTyped("");
   }, [open]);
 
   const matches = typed === expected;
@@ -253,7 +263,12 @@ export function TypeToConfirmDialog({
           <Button variant="secondary" onClick={onCancel} disabled={busy}>
             {cancelLabel}
           </Button>
-          <Button variant="danger" onClick={onConfirm} loading={busy} disabled={!matches}>
+          <Button
+            variant="danger"
+            onClick={onConfirm}
+            loading={busy}
+            disabled={!matches}
+          >
             {confirmLabel}
           </Button>
         </>
@@ -261,12 +276,14 @@ export function TypeToConfirmDialog({
     >
       {message}
       <label className="mt-3 block">
-        <span className="mb-1 block text-sm font-medium text-slate-700">{inputLabel}</span>
+        <span className="mb-1 block text-sm font-medium text-slate-700">
+          {inputLabel}
+        </span>
         <input
           value={typed}
           onChange={(event) => setTyped(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter' && matches && !busy) onConfirm();
+            if (event.key === "Enter" && matches && !busy) onConfirm();
           }}
           autoComplete="off"
           autoCorrect="off"

@@ -14,14 +14,14 @@ everything.
 
 ## What it is — and deliberately is not
 
-| Included | Excluded on purpose |
-| --- | --- |
-| QR shop page, live total, orders in the app | Delivery tracking |
-| Super Admin CRUD for shops and items | Loyalty, CRM, coupons |
-| Owner app: sell, items, orders — in 3 languages | WhatsApp Business API |
-| Voice listing and a counter till with UPI QR | Owner self-signup, email accounts |
-| Shop QR + UPI payment QR + A4 printable poster | Payment gateway (UPI + manual record instead) |
-| Subscription plans metered by catalogue size | Commission on orders — ever |
+| Included                                        | Excluded on purpose                           |
+| ----------------------------------------------- | --------------------------------------------- |
+| QR shop page, live total, orders in the app     | Delivery tracking                             |
+| Super Admin CRUD for shops and items            | Loyalty, CRM, coupons                         |
+| Owner app: sell, items, orders — in 3 languages | WhatsApp Business API                         |
+| Voice listing and a counter till with UPI QR    | Owner self-signup, email accounts             |
+| Shop QR + UPI payment QR + A4 printable poster  | Payment gateway (UPI + manual record instead) |
+| Subscription plans metered by catalogue size    | Commission on orders — ever                   |
 
 Keeping this list short is the product.
 
@@ -35,11 +35,11 @@ software. Orders, customers and QR scans are unlimited on every plan: charging a
 shop more for selling more is not a partnership, and a commission model is
 exactly what small shops fear about going online.
 
-| Plan | Items | Price |
-| --- | --- | --- |
-| Free | 25 | ₹0 |
-| Starter | 150 | ₹199/month |
-| Pro | 2,000 | ₹499/month |
+| Plan    | Items | Price      |
+| ------- | ----- | ---------- |
+| Free    | 25    | ₹0         |
+| Starter | 150   | ₹199/month |
+| Pro     | 2,000 | ₹499/month |
 
 Every shop starts on 14 days of Pro. Payment is UPI, recorded by the Super Admin
 in the shop's Subscription panel — [`app/api/admin/shop/[slug]/subscription`](app/api/admin/shop/%5Bslug%5D/subscription/route.ts)
@@ -51,7 +51,7 @@ that can create an item — the form, voice, the starter catalogue and the bulk
 paste. Two rules keep it humane:
 
 - **Editing is not adding.** A shop at its limit can still correct a price;
-  only *new* items are refused.
+  only _new_ items are refused.
 - **A lapsed shop keeps trading.** Its QR, its page and its customers carry on
   working; only item editing stops, and only after a 7-day grace period. Taking
   a live shop offline over a late payment costs the owner real sales, and nobody
@@ -216,7 +216,7 @@ npm run dev
 > then rejected. Write it as `"\$2a\$12\$…"` in `.env`; paste the **raw** hash
 > (no backslashes) into Vercel, where values are never expanded.
 
-Live: <https://dukaanflow.vercel.app>
+Live: <https://halkhata.nexvoratechnologies.co.in>
 
 Locally the dev server answers on `localhost:3000`:
 
@@ -224,7 +224,7 @@ Locally the dev server answers on `localhost:3000`:
 - Admin: <http://localhost:3000/admin>
 
 Generated QR codes and shop links always use `NEXT_PUBLIC_BASE_URL`
-(`https://dukaanflow.vercel.app`), never the address you happen to be browsing —
+(`https://halkhata.nexvoratechnologies.co.in`), never the address you happen to be browsing —
 a printed QR has to work for a customer in the street.
 
 Seeded shops: **Ramu Grocery** (Rice ₹68, Dal ₹82, Mustard Oil ₹165, Biscuit ₹20)
@@ -233,21 +233,21 @@ Momo ₹70). The seed is idempotent — re-running refreshes prices, never dupli
 
 ## Scripts
 
-| Command | Does |
-| --- | --- |
-| `npm run dev` | Dev server |
-| `npm run build` | `prisma generate` + production build |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run hash -- "pw"` | Print `ADMIN_PASSWORD_HASH` |
-| `npm run db:migrate` / `db:deploy` | Migrate (dev / prod) |
-| `npm run db:seed` | Seed sample shops |
-| `npx tsx scripts/backfill-item-names.ts` | Fill Bengali/Hindi item names (`--write`) |
-| `npx tsx scripts/fix-legacy-stock.ts` | Put Re 1 starter items back in stock (`--write`) |
-| `npm run purge` | Delete each shop's orders/sales past its subscription year (`-- --write`) |
-| `npm run rollup` | Roll a year up into the permanent stat tables (`-- 2026`) |
-| `npm run demo` | Create the demo grocery shop (`-- --orders`, `-- --remove`) |
-| `npm run vercel:env` | Print deployment-ready env values |
-| `npm run db:studio` | Prisma Studio |
+| Command                                  | Does                                                                      |
+| ---------------------------------------- | ------------------------------------------------------------------------- |
+| `npm run dev`                            | Dev server                                                                |
+| `npm run build`                          | `prisma generate` + production build                                      |
+| `npm run typecheck`                      | `tsc --noEmit`                                                            |
+| `npm run hash -- "pw"`                   | Print `ADMIN_PASSWORD_HASH`                                               |
+| `npm run db:migrate` / `db:deploy`       | Migrate (dev / prod)                                                      |
+| `npm run db:seed`                        | Seed sample shops                                                         |
+| `npx tsx scripts/backfill-item-names.ts` | Fill Bengali/Hindi item names (`--write`)                                 |
+| `npx tsx scripts/fix-legacy-stock.ts`    | Put Re 1 starter items back in stock (`--write`)                          |
+| `npm run purge`                          | Delete each shop's orders/sales past its subscription year (`-- --write`) |
+| `npm run rollup`                         | Roll a year up into the permanent stat tables (`-- 2026`)                 |
+| `npm run demo`                           | Create the demo grocery shop (`-- --orders`, `-- --remove`)               |
+| `npm run vercel:env`                     | Print deployment-ready env values                                         |
+| `npm run db:studio`                      | Prisma Studio                                                             |
 
 ---
 
@@ -282,7 +282,7 @@ Order Type: Delivery
 Thank you.
 ```
 
-WhatsApp treats `* _ ~ \`` as formatting, so admin-entered shop and item names are
+WhatsApp treats `\* \_ ~ \`` as formatting, so admin-entered shop and item names are
 neutralised before they reach the message — a stray asterisk cannot reflow an order.
 
 > **One deviation from the original spec:** the `Order Type: Delivery` line. The
@@ -311,7 +311,7 @@ instead”, because on a phone the mic is the primary control.
 
 **Khata** — the udhaar book. The most-asked-for thing in this market, and built
 to look like the paper book it replaces: a name, what they took, what they paid,
-what is left. Two verbs — *gave goods* and *got payment* — because that is the
+what is left. Two verbs — _gave goods_ and _got payment_ — because that is the
 whole vocabulary a shopkeeper uses for it. Selling on credit is a payment mode
 at the till, so goods leaving on udhaar records the sale and the debt in one
 action. Each name carries a WhatsApp reminder with the amount already written.
@@ -336,7 +336,7 @@ Three things live here that are worth naming:
   away, and the one a kirana gives most often. A customer asks for 2 kg of
   basmati and the sack has 1 kg: the owner cuts the line, the total and the
   delivery charge are recomputed, the difference goes back on the shelf, and the
-  customer is told by push *and* by a pre-written WhatsApp message that stays on
+  customer is told by push _and_ by a pre-written WhatsApp message that stays on
   the card until it is sent. Quantities may only go **down** — putting something
   into somebody's order on their behalf is the shop deciding what a customer
   buys, and the server refuses it.
@@ -384,7 +384,7 @@ visits, and an owner who has to grant it every morning stops using voice by the
 third day. On iPhone the card says which Share-sheet taps to make, because
 Safari offers no install prompt to hook.
 
-Because that link arrives *inside WhatsApp*, whose browser refuses the
+Because that link arrives _inside WhatsApp_, whose browser refuses the
 microphone, the owner app detects that webview and says so in the owner's
 language rather than letting voice fail silently
 ([`OpenInChromeNotice`](components/owner/OpenInChromeNotice.tsx)). Without it,
@@ -446,7 +446,7 @@ which is the only reason a year-over-year comparison is possible at all.
 
 **The order queue** — three states an owner works through: **Order placed** →
 **Preparing** → **Completed**, plus Cancelled. Completing asks one question,
-*has the customer paid?*, at the only moment the owner knows the answer.
+_has the customer paid?_, at the only moment the owner knows the answer.
 
 **Unpaid means khata.** Answering "not yet" posts the order total to that
 customer's credit book as a DEBIT in the same breath — goods that left the shop
@@ -510,7 +510,7 @@ rather than creating a misspelt twin); matching is fuzzy, so "tomatto" still
 resolves; a near-but-not-certain match is read back for a spoken yes/no before
 anything is saved; and every save keeps an Undo for the session. The parser
 ([`lib/speech.ts`](lib/speech.ts)) resolves the price as the last number that is
-*not* followed by a unit word — so "rice 1 kg 68" prices the item at ₹68, never
+_not_ followed by a unit word — so "rice 1 kg 68" prices the item at ₹68, never
 ₹1 — and refuses rather than guesses when no price was heard. Number words
 ("sixty eight") and Devanagari/Bengali digits are converted first.
 
@@ -569,7 +569,7 @@ The shopper's language need not match the shopkeeper's: a bidirectional synonym
 table in [`lib/speech.ts`](lib/speech.ts) covers everyday kirana vocabulary, so
 "দুই কেজি চাল" and "दो किलो चावल" both find an item typed as **Rice**. Items
 outside the table still match on their own name. Note that Indic vowel signs are
-combining *marks*, not letters — the matching regexes keep `\p{M}`, or "चावल"
+combining _marks_, not letters — the matching regexes keep `\p{M}`, or "चावल"
 would be shredded into "च व ल" and match nothing.
 
 Both mics use the browser's built-in `SpeechRecognition` and `speechSynthesis` —
@@ -592,7 +592,7 @@ Name and address are optional; phone is required and normalised — `+91 98765 4
 Items screen, not by the operator: both move with the price of petrol and with
 who is free to run the round this week. All three fields default to zero, which
 is free delivery with no minimum — what nearly every kirana does inside its own
-para. The basket shows the charge and any shortfall *before* the checkout form,
+para. The basket shows the charge and any shortfall _before_ the checkout form,
 because a customer who agrees to ₹240 and is then billed ₹270 has been surprised
 by their own shop. Pickup is never charged and never blocked. One function,
 [`quoteDelivery`](lib/delivery.ts), is used by the basket, the checkout and the
@@ -613,7 +613,7 @@ ordered from" list on the landing page, kept in that browser's own storage. An
 account would fix it and cost more orders than it fixes.
 
 **A bad signal is survivable** — the service worker keeps the last version of
-each page and every hashed build asset. Pages are network-first *always*: nobody
+each page and every hashed build asset. Pages are network-first _always_: nobody
 is shown yesterday's page while today's is reachable, `/api` is never cached in
 either direction, and a strip at the top says so whenever the connection is
 gone. If the Place order button cannot reach the server after three tries, the
