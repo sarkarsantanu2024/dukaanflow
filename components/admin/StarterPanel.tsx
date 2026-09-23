@@ -37,6 +37,9 @@ export function StarterPanel({
       locale="en"
       remaining={remaining}
       onDismiss={close ?? undefined}
+      // No tab bar to clear on this side, so the Add bar sits on the drawer's
+      // own bottom edge rather than hovering above it.
+      inDrawer
     />
   );
 }
