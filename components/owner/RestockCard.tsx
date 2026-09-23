@@ -161,6 +161,14 @@ export function RestockCard({
     }
   }
 
+  // A SHOP WITH NO ITEMS AT ALL GETS NOTHING HERE, not even the quiet line.
+  // "Nothing has run out, everything is in stock" is true of an empty shop in
+  // the way that it is true of an empty room, and the first screen an owner
+  // ever sees should say one thing: add your first item. A card about
+  // reordering from a supplier, above a list that does not exist yet, is the
+  // clearest possible signal that this app was not built for today.
+  if (items.length === 0) return null;
+
   // Nothing out of stock is the good case and it does not need a card. A shop
   // with full shelves should not be shown an empty list every time it opens the
   // Items tab — one quiet line, and out of the way.
