@@ -9,7 +9,9 @@ import { ConfirmDialog } from '@/components/ui/Modal';
 import { HEADER_ACTION } from './headerStyles';
 
 /**
- * Wipes a demo shop's data so the full flow can be run again from a clean slate.
+ * Wipes a demo shop back to the day it was made, so the full flow can be run
+ * again from a genuinely clean slate — empty item list, empty khata, no money
+ * recorded, subscription back on a fresh trial.
  *
  * Rendered as a top-bar action, in the same shape as the other header controls,
  * and only for demo shops — the server refuses it on any other, so this is the
@@ -61,10 +63,11 @@ export function ResetShopButton({ slug, shopName }: { slug: string; shopName: st
         title="Reset this shop's data?"
         message={
           <>
-            Clears every order, counter sale, khata entry, customer and cash-day
-            for <strong>{shopName}</strong>, and puts its items back to in-stock
-            and not-counted. The shop, its PIN and its item list stay. Good for
-            running the flow again; there is no undo.
+            Puts <strong>{shopName}</strong> back to the day it was made. Clears
+            every order, counter sale, khata entry, customer, cash-day, report
+            rollup, recorded payment and item — and puts the subscription back to
+            a fresh Pro trial, forgetting any custom price. Only the shop itself
+            stays: its name, QR link, settings and owner PIN. There is no undo.
           </>
         }
         confirmLabel="Reset data"
