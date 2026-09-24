@@ -121,6 +121,11 @@ type OwnerDictionary = {
   noMatch: string;
 
   itemsCount: string;
+  /** "Up to {n} items" — the one line that differs between plans. */
+  planUpTo: string;
+  planUnlimitedItems: string;
+  /** What every plan includes, in this language. Mirrors `EVERY_PLAN_INCLUDES`. */
+  planIncludes: string[];
   outOfStockCount: string;
   ofLimit: string;
 
@@ -772,6 +777,20 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noMatch: 'No items match that search',
 
     itemsCount: 'items',
+    planUpTo: 'Up to {n} items',
+    planUnlimitedItems: 'Unlimited items',
+    planIncludes: [
+      'QR shop page and printable poster',
+      'Voice listing in English, Hindi and Bengali',
+      'Unlimited QR orders, straight into your app',
+      'A notification on your phone for every new order',
+      'Udhaar khata with WhatsApp reminders',
+      'Counter sales and the day’s cash drawer',
+      'Order history in the app',
+      'Bulk price and stock updates',
+      'Storefront and owner photos',
+      'Support on WhatsApp',
+    ],
     outOfStockCount: 'out of stock',
     ofLimit: 'of',
 
@@ -1317,6 +1336,20 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noMatch: 'কিছু পাওয়া যায়নি',
 
     itemsCount: 'টি জিনিস',
+    planUpTo: '{n}টি পর্যন্ত জিনিস',
+    planUnlimitedItems: 'যত খুশি জিনিস',
+    planIncludes: [
+      'QR দোকান-পাতা আর ছাপানো পোস্টার',
+      'বাংলা, হিন্দি আর ইংরেজিতে মুখে বলে জিনিস তোলা',
+      'যত খুশি QR অর্ডার, সোজা আপনার অ্যাপে',
+      'প্রতিটি নতুন অর্ডারে ফোনে নোটিফিকেশন',
+      'উধার খাতা, WhatsApp-এ মনে করানো সহ',
+      'কাউন্টারের বিক্রি আর দিনের ক্যাশ',
+      'অ্যাপে অর্ডারের পুরনো হিসেব',
+      'একসাথে দাম আর স্টক বদলানো',
+      'দোকান আর মালিকের ছবি',
+      'WhatsApp-এ সাহায্য',
+    ],
     outOfStockCount: 'টি শেষ',
     ofLimit: '/',
 
@@ -1415,6 +1448,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
       revisedMissing: 'নিচের জিনিসগুলো এখন নেই। পরদিন জানিয়ে দেব:',
       newTotal: 'নতুন মোট',
       was: 'আগে',
+      unitLocale: 'bn',
     },
     noOrdersHere: 'এখানে এখন কিছু নেই',
     delivery: 'ডেলিভারি',
@@ -1845,6 +1879,20 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     noMatch: 'कोई सामान नहीं मिला',
 
     itemsCount: 'सामान',
+    planUpTo: '{n} सामान तक',
+    planUnlimitedItems: 'जितना चाहें उतना सामान',
+    planIncludes: [
+      'QR दुकान-पेज और छपने वाला पोस्टर',
+      'हिंदी, बांग्ला और अंग्रेज़ी में बोलकर सामान जोड़ना',
+      'जितने चाहें QR ऑर्डर, सीधे आपके ऐप में',
+      'हर नए ऑर्डर पर फ़ोन में नोटिफ़िकेशन',
+      'उधार खाता, WhatsApp पर याद दिलाने के साथ',
+      'काउंटर की बिक्री और दिन का कैश',
+      'ऐप में ऑर्डर का पुराना हिसाब',
+      'एक साथ दाम और स्टॉक बदलना',
+      'दुकान और मालिक की फ़ोटो',
+      'WhatsApp पर मदद',
+    ],
     outOfStockCount: 'खत्म',
     ofLimit: '/',
 
@@ -1943,6 +1991,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
       revisedMissing: 'नीचे का सामान अभी नहीं है। अगले दिन बता देंगे:',
       newTotal: 'नया कुल',
       was: 'पहले',
+      unitLocale: 'hi',
     },
     noOrdersHere: 'यहाँ अभी कुछ नहीं',
     delivery: 'डिलीवरी',

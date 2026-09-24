@@ -601,6 +601,14 @@ model Order {
   /// so the replay is one indexed lookup and two requests racing on one key
   /// cannot both write a row — the second trips the constraint and is replayed.
   idempotencyKey   String?     @unique @db.Uuid
+  /// The language the customer shopped in: "en", "bn", "hi", or "" on orders
+  /// placed before this was kept.
+  ///
+  /// The owner's messages to the customer used to go out in the OWNER's
+  /// language, because the order never said what the customer read. A shopper
+  /// who ordered in English was then written to in Hindi. The order now carries
+  /// it, and the messages and the bill follow the customer.
+  locale           String      @default("")
   createdAt        DateTime    @default(now())
   /// WHEN THE GOODS ACTUALLY CHANGED HANDS, which is the day the money belongs
   /// to.

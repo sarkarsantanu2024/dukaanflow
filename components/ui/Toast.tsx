@@ -109,6 +109,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** The toast pusher where there is one, or null — for controls used both inside and outside a provider. */
+export function useToastIfAny() {
+  return useContext(ToastContext);
+}
+
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) throw new Error('useToast must be used inside <ToastProvider>');

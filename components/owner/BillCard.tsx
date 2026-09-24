@@ -89,6 +89,7 @@ export function BillCard({
     paidBy: t.billPaidBy,
     paymentMode: { CASH: t.sellCash, UPI: t.sellUpi, KHATA: t.sellKhata },
     credit: `${t.billDoc} · ${bill.shopName}`,
+    unitLocale: t.customerWords.unitLocale,
   };
 
   // Ten digits, accepting Bengali and Hindi keyboards and a pasted +91.
@@ -101,7 +102,7 @@ export function BillCard({
     name.trim(),
     '',
     ...bill.lines.map((line) => {
-      const detail = lineDetail(line);
+      const detail = lineDetail(line, labels.unitLocale);
       if (line.quantity <= 0) return `• ${line.name}${line.note ? ` — ${line.note}` : ''}`;
       return `• ${line.name}${detail ? ` — ${detail}` : ''} = ${formatPaise(line.amountPaise)}${line.note ? ` (${line.note})` : ''}`;
     }),

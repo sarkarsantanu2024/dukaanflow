@@ -17,9 +17,12 @@
  */
 
 import clsx from 'clsx';
+import { useEffect } from 'react';
 import { useVoice } from './useVoice';
+import { voiceErrorText } from './errors';
 import { MicIcon } from '@/components/ui/Icon';
-import type { Locale } from '@/lib/i18n';
+import { useToastIfAny } from '@/components/ui/Toast';
+import { dict, type Locale } from '@/lib/i18n';
 import type { VoiceLang } from '@/lib/speech';
 
 const SEARCH_LANG: Record<Locale, VoiceLang> = {
@@ -44,7 +47,10 @@ export function SearchMic({
    * still lands on the item. Without it the first guess is used as heard.
    */
   resolve?: (alternatives: string[]) => string;
-  /** The accessible name — the search box's own label reads right. */
+  /**
+   * The search box's own label. Kept for callers; the mic is announced as
+   * "search by voice" so a screen reader can tell the two controls apart.
+   */
   label: string;
   className?: string;
 }) {
@@ -53,16 +59,25 @@ export function SearchMic({
     onPhrase: (alternatives) => onText(resolve ? resolve(alternatives) : (alternatives[0] ?? '').trim()),
   });
 
+  // A blocked mic used to do nothing at all when tapped. Say why, once per failure.
+  const toast = useToastIfAny();
+  const t = dict(locale);
+  useEffect(() => {
+    if (voice.errorCode) toast?.push(voiceErrorText(voice.errorCode, t), 'error');
+    // Only a new failure is news; `t` and `toast` change with nothing to say.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voice.errorCode]);
+
   if (!voice.supported) return null;
 
   return (
     <button
       type="button"
       onClick={voice.toggle}
-      aria-label={label}
+      aria-label={`${t.searchByVoice} — ${label}`}
       aria-pressed={voice.listening}
       className={clsx(
-        'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition',
+        'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition',
         voice.listening
           ? 'bg-red-500 text-white'
           : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',

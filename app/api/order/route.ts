@@ -55,6 +55,7 @@ export async function POST(request: Request) {
     orderType,
     items,
     idempotencyKey,
+    locale,
   } = parsed.data;
 
   /**
@@ -353,6 +354,7 @@ export async function POST(request: Request) {
         // second request racing on the same key trips the unique constraint and
         // its whole transaction rolls back — the stock it decremented included.
         idempotencyKey,
+        locale: locale ?? '',
       },
       select: { id: true },
     });

@@ -25,6 +25,8 @@
  * has to survive contact with a supplier standing at the counter.
  */
 
+// The shop's calendar day (IST), not UTC's: at 00:35 IST the UTC date is still yesterday.
+import { formatIsoDay } from '@/lib/time';
 import type { Locale } from './i18n';
 
 /**
@@ -146,5 +148,5 @@ export function restockFilename(shopName: string, on: Date): string {
     .replace(/[^a-zA-Z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .toLowerCase();
-  return `order-list-${safe || 'shop'}-${on.toISOString().slice(0, 10)}.pdf`;
+  return `order-list-${safe || 'shop'}-${formatIsoDay(on)}.pdf`;
 }

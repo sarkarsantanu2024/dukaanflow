@@ -34,7 +34,7 @@ import { ownerDict } from '@/lib/owner-i18n';
 import { starterName, starterOtherNames, type StarterItem } from '@/lib/starter-catalogue';
 import { matchesSearch, translateCategory } from '@/lib/speech';
 import { formatPaise } from '@/lib/money';
-import { rateUnit } from '@/lib/units';
+import { localUnit, rateUnit } from '@/lib/units';
 import type { Locale } from '@/lib/i18n';
 
 export function StarterPicker({
@@ -211,7 +211,7 @@ export function StarterPicker({
           {rateUnit(item.unit) && (
             <span className={clsx('font-normal', on ? 'text-white/70' : 'text-slate-400')}>
               {' '}
-              / {rateUnit(item.unit)}
+              / {localUnit(rateUnit(item.unit), locale)}
             </span>
           )}
         </span>

@@ -27,7 +27,7 @@ export function LangToggle({
       value={value}
       onChange={(event) => onChange(event.target.value as Locale)}
       aria-label="Language"
-      className="h-8 shrink-0 cursor-pointer rounded-lg border border-white/30 bg-white/10 px-2 text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
+      className="h-10 shrink-0 cursor-pointer rounded-lg border border-white/30 bg-white/10 px-2 text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
     >
       {LOCALES.map((locale) => (
         <option key={locale} value={locale} className="bg-white text-slate-900">

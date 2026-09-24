@@ -37,10 +37,14 @@
  * a seconds counter is a moving thing on a screen somebody is trying to read.
  */
 
+import type { Locale } from '@/lib/i18n';
 import { useEffect, useState } from 'react';
 import { ClockIcon } from '@/components/ui/Icon';
 
-export function ShopClock() {
+/** The date is written in the owner's language: "Thu Sept" sat in a Bengali header. */
+const DATE_LOCALE: Record<Locale, string> = { en: 'en-IN', bn: 'bn-IN', hi: 'hi-IN' };
+
+export function ShopClock({ locale = 'en' }: { locale?: Locale }) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -66,12 +70,14 @@ export function ShopClock() {
 
   if (!now) return null;
 
-  const date = now.toLocaleDateString('en-IN', {
+  const date = now.toLocaleDateString(DATE_LOCALE[locale], {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
+    timeZone: 'Asia/Kolkata',
   });
-  const time = now.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+  // The time stays in the digits and am/pm every clock in the shop shows.
+  const time = now.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });
 
   return (
     // `top-full` puts its top edge flush against the band's bottom border, so

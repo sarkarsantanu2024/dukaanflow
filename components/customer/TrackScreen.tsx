@@ -29,7 +29,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatPaise } from '@/lib/money';
 import { billPdfBlob } from '@/lib/bill-pdf';
-import { amountLabel, isLooseUnit } from '@/lib/units';
+import { amountLabel, isLooseUnit, localUnit } from '@/lib/units';
 import { formatClock, formatDay } from '@/lib/time';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { LangToggle } from './LangToggle';
@@ -204,8 +204,8 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
     ...order.lines.map((line) => {
       const amount = amountLabel(line.unit, line.quantity);
       const what = amount
-        ? `${lineName(line, locale)} ${amount}`
-        : `${lineName(line, locale)}${line.unit ? ` ${line.unit}` : ''} ×${line.quantity}`;
+        ? `${lineName(line, locale)} ${localUnit(amount, locale)}`
+        : `${lineName(line, locale)}${line.unit ? ` ${localUnit(line.unit, locale)}` : ''} ×${line.quantity}`;
       return `• ${what} = ${formatPaise(line.amountPaise)}`;
     }),
     '',
@@ -235,6 +235,7 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
           paidBy: '',
           paymentMode: { CASH: '', UPI: '', KHATA: '' },
           credit: order.shopName,
+          unitLocale: locale,
         },
       );
       const file = new File([blob], `order-${order.id.slice(0, 8)}.pdf`, { type: 'application/pdf' });
@@ -290,12 +291,12 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
                       a kilo bought at a kilo's rate. For a weighed line the
                       amount says everything; for a counted one the pack size
                       is what "× 2" is two of. */}
-                  {line.unit && !isLooseUnit(line.unit) ? ` · ${line.unit}` : ''}{' '}
+                  {line.unit && !isLooseUnit(line.unit) ? ` · ${localUnit(line.unit, locale)}` : ''}{' '}
                   {/* The amount, where the item is sold by weight: "× 0.05"
                       is what a fractional quantity looks like as a multiplier,
                       and the customer needs to read back the 50 g they
                       asked for. */}
-                  {amountLabel(line.unit, line.quantity) ?? `× ${line.quantity}`}
+                  {localUnit(amountLabel(line.unit, line.quantity) ?? `× ${line.quantity}`, locale)}
                 </span>
                 <span className="shrink-0 tabular-nums">{formatPaise(line.amountPaise)}</span>
               </li>

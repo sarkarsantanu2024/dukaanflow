@@ -79,8 +79,11 @@ export function ShutterSwitch({
       disabled={busy}
       onClick={toggle}
       title={open ? t.shutterCloseAction : t.shutterOpenAction}
+      // The words beside the switch are hidden on a phone, so without this it
+      // had no name at all there — a screen reader said only "switch".
+      aria-label={open ? t.shutterOpen : t.shutterClosed}
       className={clsx(
-        'inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-2 transition disabled:opacity-60',
+        'inline-flex h-10 shrink-0 items-center gap-2 rounded-lg px-2 transition disabled:opacity-60',
         // Amber, loudly, while the shop is shut. An owner who closed for the
         // afternoon and forgot is the failure this exists to prevent, and it
         // has to be readable from across a counter without being looked for.

@@ -29,3 +29,16 @@ export function useHtmlLang(locale: Locale): void {
     };
   }, [locale]);
 }
+
+const CLOSE: Record<string, string> = { en: 'Close', bn: 'বন্ধ করুন', hi: 'बंद करें' };
+
+/**
+ * "Close" in the language the page is in, for the shared Drawer and Modal,
+ * which are used by every screen and told no language. They render through a
+ * portal after mount, so the page's `<html lang>` (set above) is already there
+ * to read. A screen reader used to hear "Close" in English on Bengali screens.
+ */
+export function closeLabel(): string {
+  if (typeof document === 'undefined') return CLOSE.en!;
+  return CLOSE[document.documentElement.lang] ?? CLOSE.en!;
+}

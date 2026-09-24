@@ -18,6 +18,8 @@ type Dictionary = {
   menu: string;
   inStock: string;
   outOfStock: string;
+  /** The kind of shop, under its name. */
+  shopTypes: Record<'GROCERY' | 'RESTAURANT' | 'TEA_STALL' | 'ROLL_MOMO' | 'HOME_KITCHEN' | 'BAKERY' | 'OTHER', string>;
   add: string;
   items: string;
   total: string;
@@ -41,6 +43,8 @@ type Dictionary = {
   orderPlacedTitle: string;
   orderPlacedHint: string;
   orderPlacedDone: string;
+  /** Beside the short order number on the order-placed popup. */
+  orderPlacedNumber: string;
   area: string;
   areaPlaceholder: string;
   savedForNextTime: string;
@@ -58,6 +62,8 @@ type Dictionary = {
   emptyShopHint: string;
   noResults: string;
   search: string;
+  /** The mic in the search box. Not the box's own name: they do different things. */
+  searchByVoice: string;
   /** The bell: what the shop has done with this phone's orders. */
   bellTitle: string;
   bellEmpty: string;
@@ -231,6 +237,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     menu: 'Menu',
     inStock: 'In stock',
     outOfStock: 'Out of stock',
+    shopTypes: { GROCERY: 'Grocery / Kirana', RESTAURANT: 'Restaurant', TEA_STALL: 'Tea Stall', ROLL_MOMO: 'Roll & Momo', HOME_KITCHEN: 'Home Kitchen', BAKERY: 'Bakery', OTHER: 'Shop' },
     add: 'Add',
     items: 'items',
     total: 'Total',
@@ -253,6 +260,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     orderPlacedTitle: 'Order sent to the shop',
     orderPlacedHint: 'The shop has your order. They will call you or message you on WhatsApp when it is ready.',
     orderPlacedDone: 'Done',
+    orderPlacedNumber: 'Order no.',
     area: 'Area',
     areaPlaceholder: 'Bazaar side, near the school',
     savedForNextTime: 'Saved on this phone — next time you only tap Place order.',
@@ -269,6 +277,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     emptyShopHint: 'This shop has not added items. Please check back soon.',
     noResults: 'No items match your search',
     search: 'Search items',
+    searchByVoice: 'Search by voice',
     bellTitle: 'Updates from the shop',
     bellEmpty: 'Nothing yet. When the shop changes, turns away or completes your order, it shows here.',
     bellClearAll: 'Clear all',
@@ -389,6 +398,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     menu: 'তালিকা',
     inStock: 'আছে',
     outOfStock: 'শেষ',
+    shopTypes: { GROCERY: 'মুদির দোকান', RESTAURANT: 'রেস্টুরেন্ট', TEA_STALL: 'চায়ের দোকান', ROLL_MOMO: 'রোল আর মোমো', HOME_KITCHEN: 'ঘরের রান্না', BAKERY: 'বেকারি', OTHER: 'দোকান' },
     add: 'যোগ করুন',
     items: 'টি জিনিস',
     total: 'মোট',
@@ -411,6 +421,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     orderPlacedTitle: 'অর্ডার দোকানে পৌঁছে গেছে',
     orderPlacedHint: 'দোকান অর্ডারটি পেয়েছে। তৈরি হলে ওঁরা ফোন বা WhatsApp করবেন।',
     orderPlacedDone: 'ঠিক আছে',
+    orderPlacedNumber: 'অর্ডার নং',
     area: 'পাড়া',
     areaPlaceholder: 'বাজারের দিকে, স্কুলের কাছে',
     savedForNextTime: 'এই ফোনে সেভ হয়ে গেল — পরের বার শুধু অর্ডার দিন।',
@@ -427,6 +438,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     emptyShopHint: 'দোকানটি এখনও জিনিস যোগ করেনি। একটু পরে দেখুন।',
     noResults: 'কিছু পাওয়া যায়নি',
     search: 'জিনিস খুঁজুন',
+    searchByVoice: 'বলে খুঁজুন',
     bellTitle: 'দোকানের খবর',
     bellEmpty: 'এখনও কিছু নেই। দোকান অর্ডার বদলালে, নিতে না পারলে বা সম্পূর্ণ করলে এখানে দেখাবে।',
     bellClearAll: 'সব মুছুন',
@@ -540,6 +552,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
       pickup: 'দোকান থেকে নেবেন',
       thanks: 'ধন্যবাদ।',
       offlineNote: '({shop}-এর পাতা থেকে পাঠানো — তখন ইন্টারনেট ছিল না।)',
+      unitLocale: 'bn',
     },
   },
   hi: {
@@ -547,6 +560,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     menu: 'सूची',
     inStock: 'उपलब्ध',
     outOfStock: 'खत्म',
+    shopTypes: { GROCERY: 'किराना दुकान', RESTAURANT: 'रेस्टोरेंट', TEA_STALL: 'चाय की दुकान', ROLL_MOMO: 'रोल और मोमो', HOME_KITCHEN: 'घर का खाना', BAKERY: 'बेकरी', OTHER: 'दुकान' },
     add: 'जोड़ें',
     items: 'सामान',
     total: 'कुल',
@@ -569,6 +583,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     orderPlacedTitle: 'ऑर्डर दुकान तक पहुँच गया',
     orderPlacedHint: 'दुकान को ऑर्डर मिल गया है। तैयार होने पर वे फ़ोन या WhatsApp करेंगे।',
     orderPlacedDone: 'ठीक है',
+    orderPlacedNumber: 'ऑर्डर नं.',
     area: 'इलाक़ा',
     areaPlaceholder: 'बाज़ार की तरफ़, स्कूल के पास',
     savedForNextTime: 'इस फ़ोन में सेव हो गया — अगली बार सिर्फ़ ऑर्डर करें।',
@@ -585,6 +600,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     emptyShopHint: 'इस दुकान ने अभी सामान नहीं जोड़ा है। थोड़ी देर बाद देखें।',
     noResults: 'कोई सामान नहीं मिला',
     search: 'सामान खोजें',
+    searchByVoice: 'बोलकर खोजें',
     bellTitle: 'दुकान की खबर',
     bellEmpty: 'अभी कुछ नहीं। दुकान ऑर्डर बदले, न ले पाए या पूरा करे, तो यहाँ दिखेगा।',
     bellClearAll: 'सब हटाएँ',
@@ -698,6 +714,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
       pickup: 'दुकान से ले जाएँगे',
       thanks: 'धन्यवाद।',
       offlineNote: '({shop} के पेज से भेजा — तब इंटरनेट नहीं था।)',
+      unitLocale: 'hi',
     },
   },
 };

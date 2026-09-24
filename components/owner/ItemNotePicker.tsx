@@ -25,7 +25,7 @@ import { SearchIcon } from '@/components/ui/Icon';
 import { SearchMic } from '@/components/voice/SearchMic';
 import { spokenSearchText, rankBySearch } from '@/lib/speech';
 import { formatPaise, paiseToInput } from '@/lib/money';
-import { MOST_PER_LINE } from '@/lib/units';
+import { localUnit, MOST_PER_LINE } from '@/lib/units';
 import { matchesSearch } from '@/lib/speech';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
@@ -117,7 +117,7 @@ export function ItemNotePicker({
         <button
           type="button"
           onClick={() => setOpen((current) => !current)}
-          className="text-sm font-semibold text-brand-700 underline"
+          className="inline-flex min-h-10 items-center px-1 text-sm font-semibold text-brand-700 underline"
         >
           {open ? t.khataItemsClose : t.khataItemsPick}
         </button>
@@ -202,7 +202,7 @@ export function ItemNotePicker({
                     >
                       <span className="block truncate text-sm">
                         {label(item, locale)}
-                        {item.unit && <span className="text-slate-500"> · {item.unit}</span>}
+                        {item.unit && <span className="text-slate-500"> · {localUnit(item.unit, locale)}</span>}
                       </span>
                       <span className="text-xs tabular-nums text-slate-500">
                         {formatPaise(item.pricePaise)}

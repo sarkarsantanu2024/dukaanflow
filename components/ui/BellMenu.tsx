@@ -94,7 +94,7 @@ export function BellMenu({
         aria-label={unread > 0 ? `${labels.title} (${unread})` : labels.title}
         aria-expanded={open}
         className={clsx(
-          'relative inline-flex h-9 w-9 items-center justify-center rounded-lg transition',
+          'relative inline-flex h-10 w-10 items-center justify-center rounded-lg transition',
           tone === 'dark'
             ? 'text-white/85 hover:bg-white/10 hover:text-white'
             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
@@ -156,7 +156,7 @@ export function BellMenu({
                     type="button"
                     onClick={() => onRemove(entry.key)}
                     aria-label={`${labels.remove} — ${entry.title}`}
-                    className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                   >
                     <CloseIcon className="h-4 w-4" />
                   </button>

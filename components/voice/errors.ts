@@ -1,4 +1,5 @@
 import type { VoiceErrorCode } from './useVoice';
+import type { dict } from '@/lib/i18n';
 
 /**
  * Why the microphone is not running, and what the person holding the phone can
@@ -30,3 +31,17 @@ export const VOICE_ERRORS: Record<VoiceErrorCode, string> = {
     'Speech recognition needs an internet connection — Chrome sends the audio to Google to transcribe it.',
   unknown: 'Voice input stopped unexpectedly. Tap the mic to try again.',
 };
+
+/**
+ * The same failures in the customer's words and language, for the shop page's
+ * mics and every search-box mic. A tap on a blocked mic that does nothing is
+ * indistinguishable from a broken button; this says what is wrong.
+ */
+export function voiceErrorText(code: VoiceErrorCode, t: ReturnType<typeof dict>): string {
+  if (code === 'not-allowed') return t.voiceDenied;
+  if (code === 'insecure-context') return t.voiceInsecure;
+  if (code === 'service-not-allowed') return t.voiceServiceBlocked;
+  if (code === 'no-microphone') return t.voiceNoMic;
+  if (code === 'network') return t.voiceNoNetwork;
+  return t.voiceUnavailable;
+}

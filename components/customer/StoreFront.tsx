@@ -20,10 +20,11 @@ import { Modal } from '@/components/ui/Modal';
 import { InstallBar } from './InstallBar';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
+import { voiceErrorText } from '@/components/voice/errors';
 import { useHtmlLang } from '@/components/ui/useHtmlLang';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { matchesSearch, searchRank, spokenSearchText, translateCategory } from '@/lib/speech';
-import { MOST_PER_LINE, roundQuantity } from '@/lib/units';
+import { isLooseUnit, MOST_PER_LINE, roundQuantity } from '@/lib/units';
 import { linePaise } from '@/lib/money';
 import { DELIVERY_AVAILABLE, quoteDelivery } from '@/lib/delivery';
 import { minBasketPaise } from '@/lib/basket';
@@ -130,6 +131,11 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     onPhrase: (alternatives) =>
       setQuery(spokenSearchText(alternatives, items, (item) => itemName(item, locale))),
   });
+  // A blocked mic used to answer a tap with nothing at all. Say why.
+  useEffect(() => {
+    if (voiceSearch.errorCode) push(voiceErrorText(voiceSearch.errorCode, t), 'error');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceSearch.errorCode]);
   const [category, setCategory] = useState<string>('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -150,6 +156,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   const [placed, setPlaced] = useState<{
     orderId: string;
     orderType: 'DELIVERY' | 'PICKUP';
+    totalPaise: number;
   } | null>(null);
   /**
    * The order that could not be sent, and the WhatsApp message that carries it
@@ -334,7 +341,13 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     const item = items.find((candidate) => candidate.id === itemId);
     if (!item || item.stockQty === null) return wanted;
     const have = Math.max(item.stockQty, 0);
-    if (tell && wanted > have) setLimit(item);
+    // THE FIRST TAP ON A WEIGHED ITEM IS "SOME OF THIS", not "exactly one
+    // kilo". With 750 g of atta on a kilo-priced row it put 750 g in the basket
+    // and in the same moment opened "no more than this in stock", which read as
+    // the item being unavailable. What is there goes in quietly; the popup is
+    // for a shopper who then asks for more than exists.
+    const firstWeighedTap = isLooseUnit(item.unit) && !((cart[itemId] ?? 0) > 0) && have > 0;
+    if (tell && wanted > have && !firstWeighedTap) setLimit(item);
     return Math.min(wanted, have);
   }
 
@@ -411,10 +424,11 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           // from the database there — the client never quotes a total.
           items: Object.entries(cart).map(([itemId, quantity]) => ({ itemId, quantity })),
           ...(idempotencyKeyRef.current ? { idempotencyKey: idempotencyKeyRef.current } : {}),
+          locale,
         }),
       );
 
-      const payload = (await response.json()) as { orderId?: string; error?: string };
+      const payload = (await response.json()) as { orderId?: string; totalAmountPaise?: number; error?: string };
 
       if (!response.ok || !payload.orderId) {
         push(payload.error ?? t.orderFailed, 'error');
@@ -455,7 +469,8 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
       // The order used to end with a jump into WhatsApp. Now it ends here, so
       // something has to tell the customer it worked — an empty cart and no
       // message reads as a form that silently failed.
-      setPlaced({ orderId: payload.orderId, orderType: values.orderType });
+      // The server's total, not the basket's: it is what the shop will ask for.
+      setPlaced({ orderId: payload.orderId, orderType: values.orderType, totalPaise: payload.totalAmountPaise ?? totalAmountPaise });
     } catch {
       /**
        * Three tries and the network never answered.
@@ -587,10 +602,10 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
                   <button
                     type="button"
                     onClick={voiceSearch.toggle}
-                    aria-label={t.search}
+                    aria-label={t.searchByVoice}
                     aria-pressed={voiceSearch.listening}
                     className={clsx(
-                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition',
+                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition',
                       voiceSearch.listening
                         ? 'bg-red-500 text-white'
                         : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
@@ -721,6 +736,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           orderId={placed.orderId}
           shopSlug={shop.slug}
           orderType={placed.orderType}
+          totalPaise={placed.totalPaise}
           locale={locale}
           wasRemembered={wasRemembered}
           onClose={() => setPlaced(null)}

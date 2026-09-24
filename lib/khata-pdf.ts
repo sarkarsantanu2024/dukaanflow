@@ -17,7 +17,7 @@
  */
 
 import { formatPaise } from './money';
-import { formatDay, formatDayTime } from './time';
+import { formatDay, formatDayTime, formatIsoDay } from './time';
 
 /** One person's account, in the shape the khata screen already holds. */
 export type StatementAccount = {
@@ -440,5 +440,5 @@ export function statementFilename(
   // customer's statement either.
   const person = who ? safe(who.name) || safe(who.phone) || 'customer' : 'all';
 
-  return `${['khata', safe(shopName) || 'shop', person, on.toISOString().slice(0, 10)].join('-')}.pdf`;
+  return `${['khata', safe(shopName) || 'shop', person, formatIsoDay(on)].join('-')}.pdf`;
 }

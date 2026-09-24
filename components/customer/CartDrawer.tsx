@@ -23,7 +23,7 @@
 import { toAsciiDigits } from '@/lib/digits';
 import { useState } from 'react';
 import { formatPaise, linePaise } from '@/lib/money';
-import { amountLabel, isLooseUnit, totalMeasure } from '@/lib/units';
+import { amountLabel, isLooseUnit, localUnit, totalMeasure } from '@/lib/units';
 import { AmountStepper } from './AmountStepper';
 import { dict, type Locale } from '@/lib/i18n';
 import { Drawer } from '@/components/ui/Drawer';
@@ -260,7 +260,7 @@ export function CartDrawer({
                     <p className="truncate font-semibold text-slate-900">{line.label}</p>
                     <p className="text-sm text-slate-500">
                       {formatPaise(line.pricePaise)}
-                      {line.unit && <span className="text-slate-400"> / {line.unit}</span>}
+                      {line.unit && <span className="text-slate-400"> / {localUnit(line.unit, locale)}</span>}
                       {/* WHAT THE LINE COMES TO, IN THE UNIT THEY BUY IN.
                           "3 × 500 g" is a kilo and a half, and a shopper
                           checking their basket against what they need should
@@ -274,9 +274,12 @@ export function CartDrawer({
                         <span className="text-slate-400">
                           {' '}
                           ·{' '}
-                          {isLooseUnit(line.unit)
-                            ? amountLabel(line.unit, line.quantity)
-                            : totalMeasure(line.unit, line.quantity)}
+                          {localUnit(
+                            (isLooseUnit(line.unit)
+                              ? amountLabel(line.unit, line.quantity)
+                              : totalMeasure(line.unit, line.quantity)) ?? '',
+                            locale,
+                          )}
                         </span>
                       )}
                     </p>
@@ -310,7 +313,7 @@ export function CartDrawer({
                   <div className="flex items-center gap-1 rounded-xl bg-brand-50 p-1">
                     <button
                       type="button"
-                      aria-label="−"
+                      aria-label={`− ${line.label}`}
                       onClick={() => onSetQuantity(line.id, line.quantity - 1)}
                       className="h-9 w-9 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-100"
                     >
@@ -346,7 +349,7 @@ export function CartDrawer({
                     />
                     <button
                       type="button"
-                      aria-label="+"
+                      aria-label={`+ ${line.label}`}
                       disabled={line.most !== undefined && line.quantity >= line.most}
                       onClick={() => onSetQuantity(line.id, line.quantity + 1)}
                       className="h-9 w-9 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-100 disabled:opacity-40"

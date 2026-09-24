@@ -32,7 +32,7 @@ import { useToast } from '@/components/ui/Toast';
 import { CheckIcon, ChevronRightIcon, PdfIcon, TruckIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { ownerDict } from '@/lib/owner-i18n';
 import { formatDay } from '@/lib/time';
-import { orderQuantityText, orderUnit, stockWithUnit } from '@/lib/units';
+import { localUnit, orderQuantityText, orderUnit, stockWithUnit } from '@/lib/units';
 import {
   buildRestockMessage,
   needsRestock,
@@ -338,7 +338,7 @@ export function RestockCard({
                 onClick={() => setPicked(new Set(wanted.map((item) => item.id)))}
                 aria-pressed={allTicked}
                 className={clsx(
-                  'min-h-9 rounded-lg px-3 transition',
+                  'min-h-10 rounded-lg px-3 transition',
                   allTicked ? 'bg-card text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900',
                 )}
               >
@@ -349,7 +349,7 @@ export function RestockCard({
                 onClick={() => setPicked(new Set())}
                 aria-pressed={noneTicked}
                 className={clsx(
-                  'min-h-9 rounded-lg px-3 transition',
+                  'min-h-10 rounded-lg px-3 transition',
                   noneTicked ? 'bg-card text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900',
                 )}
               >
@@ -414,7 +414,7 @@ export function RestockCard({
                       >
                         {finished
                           ? t.restockOut
-                          : `${stockWithUnit(item.unit, item.stockQty ?? 0, t.pieceShort)} ${t.restockLow}`}
+                          : `${localUnit(stockWithUnit(item.unit, item.stockQty ?? 0, t.pieceShort), locale)} ${t.restockLow}`}
                       </span>
                     </span>
 

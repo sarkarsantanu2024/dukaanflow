@@ -146,7 +146,7 @@ export function TakingsPanel({
                 onClick={() => setPeriod(option.id)}
                 aria-pressed={period === option.id}
                 className={clsx(
-                  'h-9 flex-1 rounded-full text-sm font-medium transition',
+                  'h-10 flex-1 rounded-full text-sm font-medium transition',
                   period === option.id
                     ? 'bg-card text-brand-800 shadow-raised'
                     : 'text-white/70 hover:text-white',

@@ -313,7 +313,11 @@ export function UpgradeFlow({
           A <select> option cannot hold more than one line, and "what do I get"
           is the question the dropdown raises. */}
       <ul className="space-y-1.5 rounded-xl bg-sunk p-3 text-sm text-slate-700">
-        {spec.features.map((feature) => (
+        {/* In the owner's language. `spec.features` is the English the console reads. */}
+        {[
+          spec.unlimited ? t.planUnlimitedItems : t.planUpTo.replace('{n}', spec.itemLimit.toLocaleString('en-IN')),
+          ...t.planIncludes,
+        ].map((feature) => (
           <li key={feature} className="flex gap-2">
             <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
             <span>{feature}</span>
@@ -365,7 +369,7 @@ export function UpgradeFlow({
             <button
               type="button"
               onClick={() => setShowQr(true)}
-              className="mt-2 text-sm font-semibold text-brand-700 underline"
+              className="mt-1 inline-flex min-h-10 items-center text-sm font-semibold text-brand-700 underline"
             >
               {t.upgradeShowQr}
             </button>
@@ -477,7 +481,7 @@ function QrDialog({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
+          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
         >
           <CloseIcon className="h-5 w-5" />
         </button>

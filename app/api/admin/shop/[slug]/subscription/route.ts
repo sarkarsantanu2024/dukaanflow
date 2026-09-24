@@ -1,3 +1,4 @@
+import { formatIsoDay } from '@/lib/time';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
@@ -95,7 +96,7 @@ export async function POST(request: Request, { params }: Context) {
      */
     if (shop.currentPeriodEnd && shop.currentPeriodEnd > now) {
       return fail(
-        `This shop has paid to ${shop.currentPeriodEnd.toISOString().slice(0, 10)}, so it is not on a trial. Use the custom price to give it a better rate instead.`,
+        `This shop has paid to ${formatIsoDay(shop.currentPeriodEnd)}, so it is not on a trial. Use the custom price to give it a better rate instead.`,
         409,
       );
     }

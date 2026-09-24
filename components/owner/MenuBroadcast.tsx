@@ -21,12 +21,13 @@ import { WhatsAppIcon } from '@/components/ui/Icon';
 import { formatPaise } from '@/lib/money';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
+import { localUnit } from '@/lib/units';
 
 export type MenuItem = { id: string; name: string; nameBn: string; nameHi: string; pricePaise: number; unit: string };
 
 function label(item: MenuItem, locale: Locale): string {
   const name = locale === 'bn' ? item.nameBn || item.name : locale === 'hi' ? item.nameHi || item.name : item.name;
-  return item.unit ? `${name} (${item.unit})` : name;
+  return item.unit ? `${name} (${localUnit(item.unit, locale)})` : name;
 }
 
 export function MenuBroadcast({

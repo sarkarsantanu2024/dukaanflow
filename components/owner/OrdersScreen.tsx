@@ -47,6 +47,7 @@ import {
   amountLabel,
   baseFromQuantity,
   isLooseUnit,
+  localUnit,
   quantityFromBase,
   stepBase,
 } from '@/lib/units';
@@ -59,7 +60,7 @@ import {
 import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
 import { ownerDict } from '@/lib/owner-i18n';
-import type { Locale } from '@/lib/i18n';
+import { LOCALES, type Locale } from '@/lib/i18n';
 
 /**
  * An ordered line in the owner's language, falling back to the primary name.
@@ -99,6 +100,10 @@ export type OwnerOrder = {
   createdAt: string;
   /** When it went out, or null — the day its money belongs to. See `takingsBetween`. */
   completedAt: string | null;
+  /** How a completed order was paid: "CASH", "UPI", "KHATA", or "" while open. */
+  paymentMode: string;
+  /** The language the customer shopped in, or "" on older orders. */
+  customerLocale: string;
   lines: {
     /** Blank on orders taken before the snapshot carried it. */
     itemId: string;
@@ -289,8 +294,8 @@ function reviseStep(unit: string, quantity: number, direction: 1 | -1): number {
  * the packing list has to name the amount, and only counted goods keep a
  * multiplier.
  */
-function lineAmount(line: { unit: string; quantity: number }): string {
-  return amountLabel(line.unit, line.quantity) ?? `× ${line.quantity}`;
+function lineAmount(line: { unit: string; quantity: number }, locale?: Locale): string {
+  return localUnit(amountLabel(line.unit, line.quantity) ?? `× ${line.quantity}`, locale);
 }
 
 export function OrdersScreen({
@@ -345,9 +350,13 @@ export function OrdersScreen({
    * Where it cannot (a computer, mostly) the icon stays a link to the
    * customer's chat and the bill is saved alongside, to attach by hand.
    *
-   * `paymentMode` is deliberately left off. The browser is not told how an
-   * order was paid, and a bill that printed "Paid by: Cash" over a delivery
-   * nobody has paid for yet would be a receipt for money that never moved.
+   * The payment line is printed only once the order is COMPLETED, when the
+   * owner has said how the money came. Before that a bill that printed "Paid
+   * by: Cash" over a delivery nobody has paid for yet would be a receipt for
+   * money that never moved.
+   *
+   * Everything the customer reads — the bill and the message — is in the
+   * language they shopped in where the order kept it, not the owner's.
    */
   const [canSharePdf, setCanSharePdf] = useState(false);
   useEffect(() => {
@@ -363,11 +372,18 @@ export function OrdersScreen({
     }
   }, []);
 
+  /** The customer's language where the order kept it, the owner's otherwise. */
+  function readerOf(order: OwnerOrder): Locale {
+    return (LOCALES as readonly string[]).includes(order.customerLocale) ? (order.customerLocale as Locale) : locale;
+  }
+
   function billFor(order: OwnerOrder): Bill {
+    const paid = order.status === 'COMPLETED' && ['CASH', 'UPI', 'KHATA'].includes(order.paymentMode);
     return {
       shopName,
+      ...(paid ? { paymentMode: order.paymentMode as 'CASH' | 'UPI' | 'KHATA' } : {}),
       lines: order.lines.map((line) => ({
-        name: lineName(line, locale),
+        name: lineName(line, readerOf(order)),
         unit: line.unit,
         quantity: line.quantity,
         amountPaise: line.amountPaise,
@@ -387,10 +403,10 @@ export function OrdersScreen({
           status: order.status,
           totalAmountPaise: order.totalAmountPaise,
           orderType: order.orderType,
-          lines: order.lines.map((line) => ({ ...line, name: lineName(line, locale) })),
-          words: t.customerWords,
+          lines: order.lines.map((line) => ({ ...line, name: lineName(line, readerOf(order)) })),
+          words: ownerDict(readerOf(order)).customerWords,
         })
-      : `${shopName}\n${t.billDoc} · ${formatPaise(order.totalAmountPaise)}`;
+      : `${shopName}\n${ownerDict(readerOf(order)).billDoc} · ${formatPaise(order.totalAmountPaise)}`;
   }
 
   function chatUrl(order: OwnerOrder): string {
@@ -400,12 +416,14 @@ export function OrdersScreen({
   async function sendBill(order: OwnerOrder) {
     setBilling(order.id);
     try {
+      const tc = ownerDict(readerOf(order));
       const blob = await billPdfBlob(billFor(order), {
-        bill: t.billDoc,
-        total: t.billTotal,
-        paidBy: t.billPaidBy,
-        paymentMode: { CASH: t.sellCash, UPI: t.sellUpi, KHATA: t.sellKhata },
-        credit: `${t.billDoc} · ${shopName}`,
+        bill: tc.billDoc,
+        total: tc.billTotal,
+        paidBy: tc.billPaidBy,
+        paymentMode: { CASH: tc.sellCash, UPI: tc.sellUpi, KHATA: tc.sellKhata },
+        credit: `${tc.billDoc} · ${shopName}`,
+        unitLocale: readerOf(order),
       });
       const file = new File([blob], `bill-${order.id}.pdf`, { type: 'application/pdf' });
 
@@ -591,6 +609,7 @@ export function OrdersScreen({
         pickup: t.roundPickup,
         noAddress: t.roundNoAddress,
         customer: t.roundCustomer,
+        unitLocale: locale,
       },
     });
   }
@@ -659,11 +678,21 @@ export function OrdersScreen({
   const [doneRange, setDoneRange] = useState<1 | 7 | 30 | 90>(90);
   const [doneDate, setDoneDate] = useState('');
 
+  /**
+   * A COMPLETED ORDER BELONGS TO THE DAY IT WENT OUT, not the day it came in —
+   * the same day its money counts in the takings (`takingsBetween`). Filed by
+   * when it was placed, an order taken at 23:50 and handed over at 00:10 sat
+   * under yesterday here while its money was in today's total, and the two
+   * screens disagreed about the same order. Older rows with no completion time
+   * fall back to when they were placed.
+   */
+  const doneAt = (order: OwnerOrder) => order.completedAt ?? order.createdAt;
+
   const doneAll = useMemo(
     () =>
       orders
         .filter((order) => order.status === 'COMPLETED')
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+        .sort((a, b) => doneAt(b).localeCompare(doneAt(a))),
     [orders],
   );
 
@@ -673,7 +702,7 @@ export function OrdersScreen({
     // The first day inside the range, in the shop's own calendar.
     const since = formatIsoDay(new Date(Date.now() - (doneRange - 1) * 24 * 60 * 60 * 1000));
     return doneAll.filter((order) => {
-      const day = formatIsoDay(order.createdAt);
+      const day = formatIsoDay(doneAt(order));
       if (doneDate) {
         if (day !== doneDate) return false;
       } else if (day < since) {
@@ -695,7 +724,7 @@ export function OrdersScreen({
     const yesterdayKey = formatIsoDay(new Date(Date.now() - 24 * 60 * 60 * 1000));
     const days: { key: string; label: string; orders: OwnerOrder[] }[] = [];
     for (const order of doneShown) {
-      const key = formatIsoDay(order.createdAt);
+      const key = formatIsoDay(doneAt(order));
       let day = days[days.length - 1];
       if (!day || day.key !== key) {
         const label =
@@ -703,7 +732,7 @@ export function OrdersScreen({
             ? t.historyToday
             : key === yesterdayKey
               ? t.historyYesterday
-              : formatDay(order.createdAt);
+              : formatDay(doneAt(order));
         day = { key, label, orders: [] };
         days.push(day);
       }
@@ -837,23 +866,26 @@ export function OrdersScreen({
       chat?.close();
       return;
     }
+    // In the customer's language, as the bill is.
+    const reader = readerOf(order);
+    const tc = ownerDict(reader);
     const mode = paymentReceived ? (paymentMode || 'CASH') : 'KHATA';
-    const modeLabel = { CASH: t.sellCash, UPI: t.sellUpi, KHATA: t.sellKhata }[mode];
+    const modeLabel = { CASH: tc.sellCash, UPI: tc.sellUpi, KHATA: tc.sellKhata }[mode];
     const text = [
       shopName,
-      `${t.billDoc} · ${new Date().toLocaleString()}`,
+      `${tc.billDoc} · ${new Date().toLocaleString()}`,
       order.customerName,
       '',
       ...order.lines.map((line) => {
-        const detail = lineDetail({ name: '', unit: line.unit, quantity: line.quantity, amountPaise: line.amountPaise });
-        return `• ${lineName(line, locale)}${detail ? ` — ${detail}` : ''} = ${formatPaise(line.amountPaise)}`;
+        const detail = lineDetail({ name: '', unit: line.unit, quantity: line.quantity, amountPaise: line.amountPaise }, reader);
+        return `• ${lineName(line, reader)}${detail ? ` — ${detail}` : ''} = ${formatPaise(line.amountPaise)}`;
       }),
-      ...(order.deliveryFeePaise > 0 ? [`• ${t.delivery} = ${formatPaise(order.deliveryFeePaise)}`] : []),
+      ...(order.deliveryFeePaise > 0 ? [`• ${tc.delivery} = ${formatPaise(order.deliveryFeePaise)}`] : []),
       '',
-      `${t.billTotal}: ${formatPaise(order.totalAmountPaise)}`,
-      `${t.billPaidBy}: ${modeLabel}`,
+      `${tc.billTotal}: ${formatPaise(order.totalAmountPaise)}`,
+      `${tc.billPaidBy}: ${modeLabel}`,
       '',
-      t.billOrderLink,
+      tc.billOrderLink,
       `${window.location.origin}/track/${order.id}`,
     ]
       .filter((line, index, all) => !(line === '' && all[index - 1] === ''))
@@ -911,8 +943,8 @@ export function OrdersScreen({
             status: 'CANCELLED',
             totalAmountPaise: order.totalAmountPaise,
             orderType: order.orderType,
-            lines: order.lines.map((line) => ({ ...line, name: lineName(line, locale) })),
-            words: t.customerWords,
+            lines: order.lines.map((line) => ({ ...line, name: lineName(line, readerOf(order)) })),
+            words: ownerDict(readerOf(order)).customerWords,
           }),
         )}`,
       });
@@ -983,7 +1015,7 @@ export function OrdersScreen({
           // The owner's name for it, not the catalogue's English.
           name: (() => {
             const own = order.lines.find((candidate) => candidate.itemId === line.itemId);
-            return own ? lineName(own, locale) : line.name;
+            return own ? lineName(own, readerOf(order)) : line.name;
           })(),
           unit: line.unit,
           quantity: line.quantity,
@@ -992,9 +1024,9 @@ export function OrdersScreen({
         })),
         removed: (payload.removed ?? []).map((line) => {
           const own = order.lines.find((candidate) => candidate.name === line.name);
-          return own ? { ...line, name: lineName(own, locale) } : line;
+          return own ? { ...line, name: lineName(own, readerOf(order)) } : line;
         }),
-        words: t.customerWords,
+        words: ownerDict(readerOf(order)).customerWords,
       });
 
       setPendingShare({
@@ -1146,14 +1178,14 @@ export function OrdersScreen({
             <button
               type="button"
               onClick={() => setForHelper(new Set(pending.map((order) => order.id)))}
-              className="rounded-lg bg-white/70 px-3 py-1 text-xs font-medium text-violet-900 transition hover:bg-white"
+              className="min-h-10 rounded-lg bg-white/70 px-3 text-xs font-medium text-violet-900 transition hover:bg-white"
             >
               {t.restockAll}
             </button>
             <button
               type="button"
               onClick={() => setForHelper(new Set())}
-              className="rounded-lg bg-white/70 px-3 py-1 text-xs font-medium text-violet-900 transition hover:bg-white"
+              className="min-h-10 rounded-lg bg-white/70 px-3 text-xs font-medium text-violet-900 transition hover:bg-white"
             >
               {t.restockClear}
             </button>
@@ -1206,13 +1238,17 @@ export function OrdersScreen({
             >
               <div className="flex flex-wrap items-start gap-2">
                 {WORKABLE.includes(order.status) && (
-                  <input
-                    type="checkbox"
-                    checked={helperIds.has(order.id)}
-                    onChange={() => toggleHelper(order.id)}
-                    aria-label={`${t.ordersSendRound} — ${order.customerName || order.customerPhone}`}
-                    className="mt-1 h-5 w-5 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                  />
+                  // The label is the tap target: a 20px box on its own is too
+                  // small to hit reliably with a thumb on a moving counter.
+                  <label className="-m-2.5 flex shrink-0 cursor-pointer p-2.5">
+                    <input
+                      type="checkbox"
+                      checked={helperIds.has(order.id)}
+                      onChange={() => toggleHelper(order.id)}
+                      aria-label={`${t.ordersSendRound} — ${order.customerName || order.customerPhone}`}
+                      className="mt-1 h-5 w-5 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                    />
+                  </label>
                 )}
                 <div className="min-w-0 flex-1">
                   {/* Name and number on two lines: on one, a long name pushed the
@@ -1284,11 +1320,11 @@ export function OrdersScreen({
                         >
                           <span className="min-w-0 flex-1 truncate text-sm text-slate-700">
                             {lineName(line, locale)}
-                            {line.unit && !isLooseUnit(line.unit) ? ` · ${line.unit}` : ''}
+                            {line.unit && !isLooseUnit(line.unit) ? ` · ${localUnit(line.unit, locale)}` : ''}
                             {next !== line.quantity && (
                               <span className="text-slate-400">
                                 {' '}
-                                · {t.reviseWas} {lineAmount(line)}
+                                · {t.reviseWas} {lineAmount(line, locale)}
                               </span>
                             )}
                           </span>
@@ -1308,12 +1344,12 @@ export function OrdersScreen({
                                     [line.itemId]: Math.max(0, reviseStep(line.unit, next, -1)),
                                   }))
                                 }
-                                className="h-8 w-8 rounded text-lg font-semibold text-slate-700"
+                                className="h-10 w-10 rounded text-lg font-semibold text-slate-700"
                               >
                                 −
                               </button>
                               <span className="w-16 text-center font-semibold tabular-nums">
-                                {lineAmount({ unit: line.unit, quantity: next })}
+                                {lineAmount({ unit: line.unit, quantity: next }, locale)}
                               </span>
                               <button
                                 type="button"
@@ -1328,14 +1364,14 @@ export function OrdersScreen({
                                     ),
                                   }))
                                 }
-                                className="h-8 w-8 rounded text-lg font-semibold text-slate-700 disabled:opacity-30"
+                                className="h-10 w-10 rounded text-lg font-semibold text-slate-700 disabled:opacity-30"
                               >
                                 +
                               </button>
                             </span>
                           ) : (
                             <span className="shrink-0 text-sm tabular-nums text-slate-500">
-                              {lineAmount(line)}
+                              {lineAmount(line, locale)}
                             </span>
                           )}
                         </li>
@@ -1375,8 +1411,8 @@ export function OrdersScreen({
                         {lineName(line, locale)}
                         {/* No pack size beside a weighed amount — see the
                              note on the customer's track page. */}
-                        {line.unit && !isLooseUnit(line.unit) ? ` · ${line.unit}` : ''}{' '}
-                        {lineAmount(line)}
+                        {line.unit && !isLooseUnit(line.unit) ? ` · ${localUnit(line.unit, locale)}` : ''}{' '}
+                        {lineAmount(line, locale)}
                       </span>
                       <span className="shrink-0 tabular-nums">{formatPaise(line.amountPaise)}</span>
                     </li>
@@ -1610,7 +1646,7 @@ export function OrdersScreen({
                         type="button"
                         disabled={busyId === order.id}
                         onClick={() => void removeOrder(order)}
-                        className="mt-3 flex w-full items-center justify-center gap-1.5 border-t border-slate-100 pt-2.5 text-sm font-medium text-red-600 transition hover:text-red-700 disabled:opacity-50"
+                        className="mt-3 flex min-h-10 w-full items-center justify-center gap-1.5 border-t border-slate-100 pt-1 text-sm font-medium text-red-600 transition hover:text-red-700 disabled:opacity-50"
                       >
                         <CloseIcon className="h-4 w-4" />
                         {t.markCancelled}
@@ -1722,7 +1758,7 @@ export function OrdersScreen({
                           {order.customerName}
                         </p>
                         <p className="text-xs tabular-nums text-slate-500">
-                          {order.customerPhone} · {formatClock(order.createdAt)}
+                          {order.customerPhone} · {formatClock(doneAt(order))}
                         </p>
                       </div>
                       {whatsAppBill(order, 'plain')}

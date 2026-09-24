@@ -85,6 +85,44 @@ export function normaliseUnit(value: string): string {
     .replace(/\s+/g, ' ');
 }
 
+/**
+ * THE UNIT WORDS, AS A BENGALI OR HINDI READER SAYS THEM.
+ *
+ * What the shop stores is roman — "1 packet", "500 g" — because that is what
+ * every parser, price and unique key in this file is written against, and it
+ * must stay that way. But it was also what every screen printed, so a Bengali
+ * shopper read "Parle-G ₹10 / packet" on a page otherwise entirely in Bengali,
+ * and the bill, the basket and the WhatsApp messages all did the same.
+ *
+ * So this is display only, and only for the words below. A unit the owner made
+ * up ("thonga", "bosta") is their own word and is printed as they typed it.
+ */
+export type UnitLocale = 'en' | 'bn' | 'hi';
+
+const UNIT_WORDS: Record<Exclude<UnitLocale, 'en'>, Record<string, string>> = {
+  bn: {
+    kg: 'কেজি', kgs: 'কেজি', kilo: 'কেজি', g: 'গ্রাম', gm: 'গ্রাম', gms: 'গ্রাম', gram: 'গ্রাম', grams: 'গ্রাম',
+    l: 'লিটার', ltr: 'লিটার', litre: 'লিটার', liter: 'লিটার', ml: 'মিলি',
+    pc: 'টি', pcs: 'টি', piece: 'টি', pieces: 'টি', dozen: 'ডজন',
+    packet: 'প্যাকেট', packets: 'প্যাকেট', pack: 'প্যাকেট', bottle: 'বোতল', bundle: 'আঁটি', box: 'বাক্স',
+    plate: 'প্লেট', half: 'হাফ', bowl: 'বাটি', cup: 'কাপ', glass: 'গ্লাস',
+  },
+  hi: {
+    kg: 'किलो', kgs: 'किलो', kilo: 'किलो', g: 'ग्राम', gm: 'ग्राम', gms: 'ग्राम', gram: 'ग्राम', grams: 'ग्राम',
+    l: 'लीटर', ltr: 'लीटर', litre: 'लीटर', liter: 'लीटर', ml: 'मि.ली.',
+    pc: 'पीस', pcs: 'पीस', piece: 'पीस', pieces: 'पीस', dozen: 'दर्जन',
+    packet: 'पैकेट', packets: 'पैकेट', pack: 'पैकेट', bottle: 'बोतल', bundle: 'गड्डी', box: 'डिब्बा',
+    plate: 'प्लेट', half: 'हाफ', bowl: 'कटोरी', cup: 'कप', glass: 'गिलास',
+  },
+};
+
+/** "1 packet" → "1 প্যাকেট", "250 g" → "250 গ্রাম"; English and unknown words untouched. */
+export function localUnit(text: string, locale: string | undefined): string {
+  const words = locale === 'bn' || locale === 'hi' ? UNIT_WORDS[locale] : null;
+  if (!words || !text) return text;
+  return text.replace(/[A-Za-z]+/g, (word) => words[word.toLowerCase()] ?? word);
+}
+
 /** Item names keep their capitals; only the spacing is tidied. */
 export function normaliseItemName(value: string): string {
   return value.trim().replace(/\s+/g, ' ');

@@ -1,6 +1,6 @@
 import { toAsciiDigits } from '@/lib/digits';
 import { plainPaise } from './money';
-import { amountLabel } from './units';
+import { amountLabel, localUnit, type UnitLocale } from './units';
 
 /**
  * How much of one item, as a shopkeeper reads it on their phone.
@@ -10,8 +10,8 @@ import { amountLabel } from './units';
  * out an amount, so the message has to name one. Weighed goods say "50 g", and
  * counted goods keep the "×3" they always had.
  */
-function saidAs(line: { unit: string; quantity: number }): string {
-  return amountLabel(line.unit, line.quantity) ?? `×${line.quantity}`;
+function saidAs(line: { unit: string; quantity: number }, locale?: UnitLocale): string {
+  return localUnit(amountLabel(line.unit, line.quantity) ?? `×${line.quantity}`, locale);
 }
 
 /**
@@ -22,11 +22,12 @@ function saidAs(line: { unit: string; quantity: number }): string {
  * the amount after it, "Urad Dal 500 g 500 g". A counted line keeps its pack
  * so the count says two of what: "Bingo 1 packet ×2".
  */
-function itemText(line: { name: string; unit: string; quantity: number }): string {
+function itemText(line: { name: string; unit: string; quantity: number }, locale?: UnitLocale): string {
   const amount = amountLabel(line.unit, line.quantity);
+  // Only the unit is put into the reader's language, never the name.
   const text = amount
-    ? `${line.name} ${amount}`
-    : `${[line.name, line.unit].filter(Boolean).join(' ')} ×${line.quantity}`;
+    ? `${line.name} ${localUnit(amount, locale)}`
+    : `${[line.name, localUnit(line.unit, locale)].filter(Boolean).join(' ')} ×${line.quantity}`;
   return escapeWhatsAppText(text);
 }
 
@@ -79,6 +80,8 @@ export type OrderMessageWords = {
   thanks: string;
   /** `{shop}` is replaced with the shop's name. */
   offlineNote: string;
+  /** Which language the unit words ("packet", "kg") are printed in. */
+  unitLocale?: UnitLocale;
 };
 
 export const ENGLISH_ORDER_WORDS: OrderMessageWords = {
@@ -101,7 +104,7 @@ export const ENGLISH_ORDER_WORDS: OrderMessageWords = {
 export function buildOrderMessage(input: OrderMessageInput, words: OrderMessageWords = ENGLISH_ORDER_WORDS): string {
   const w = words;
   const lines = input.lines.map(
-    (line) => `• ${itemText(line)} = ${plainPaise(line.amountPaise)}`,
+    (line) => `• ${itemText(line, w.unitLocale)} = ${plainPaise(line.amountPaise)}`,
   );
 
   const parts = [
@@ -171,6 +174,8 @@ export type CustomerWords = {
   revisedMissing: string;
   newTotal: string;
   was: string;
+  /** Which language the unit words ("packet", "kg") are printed in. */
+  unitLocale?: UnitLocale;
 };
 
 export const ENGLISH_CUSTOMER_WORDS: CustomerWords = {
@@ -211,11 +216,11 @@ export function buildRevisedMessage(input: {
   const shop = escapeWhatsAppText(input.shopName);
   const kept = input.lines.map((line) =>
     line.wasQuantity !== line.quantity
-      ? `• ${itemText(line)} (${w.was} ${saidAs({ unit: line.unit, quantity: line.wasQuantity })}) = ${plainPaise(line.amountPaise)}`
-      : `• ${itemText(line)} = ${plainPaise(line.amountPaise)}`,
+      ? `• ${itemText(line, w.unitLocale)} (${w.was} ${saidAs({ unit: line.unit, quantity: line.wasQuantity }, w.unitLocale)}) = ${plainPaise(line.amountPaise)}`
+      : `• ${itemText(line, w.unitLocale)} = ${plainPaise(line.amountPaise)}`,
   );
 
-  const gone = input.removed.map((line) => `• ${itemText(line)}`);
+  const gone = input.removed.map((line) => `• ${itemText(line, w.unitLocale)}`);
 
   /**
    * The unavailable items get a heading rather than a suffix per line, because
@@ -278,7 +283,7 @@ export function buildRoundMessage(input: {
    * `lines` should already be in it too: the helper reads the same list the
    * owner is looking at, not the catalogue's English.
    */
-  labels?: { heading: string; pickup: string; noAddress: string; customer: string };
+  labels?: { heading: string; pickup: string; noAddress: string; customer: string; unitLocale?: UnitLocale };
 }): string {
   const labels = input.labels ?? {
     heading: 'orders to deliver',
@@ -290,7 +295,7 @@ export function buildRoundMessage(input: {
 
   input.orders.forEach((order, index) => {
     const items = order.lines
-      .map((line) => `   • ${itemText(line)}`)
+      .map((line) => `   • ${itemText(line, labels.unitLocale)}`)
       .join('\n');
 
     parts.push(
@@ -359,7 +364,7 @@ export function buildStatusMessage(input: {
   // phone is what the ₹130 was for — which is the call this message exists to
   // save. Same bullet shape the order message used, so it reads familiarly.
   const items = input.lines
-    .map((line) => `• ${itemText(line)} = ${plainPaise(line.amountPaise)}`)
+    .map((line) => `• ${itemText(line, w.unitLocale)} = ${plainPaise(line.amountPaise)}`)
     .join('\n');
 
   const itemBlock = items ? `\n\n${items}` : '';
