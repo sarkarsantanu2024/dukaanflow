@@ -20,7 +20,7 @@
  */
 
 import { formatPaise } from '@/lib/money';
-import { amountLabel } from '@/lib/units';
+import { amountLabel, localUnit, type UnitLocale } from '@/lib/units';
 
 export type BillLine = {
   name: string;
@@ -59,6 +59,8 @@ export type BillLabels = {
   paidBy: string;
   paymentMode: Record<'CASH' | 'UPI' | 'KHATA', string>;
   credit: string;
+  /** Which language "packet" and "kg" are printed in. */
+  unitLocale?: UnitLocale;
 };
 
 /** Canvas geometry. A receipt is narrow; everything below is in these pixels. */
@@ -85,12 +87,12 @@ const GAP = 14;
  * bill read "Parle-G ₹20" and nobody could tell two packets from one, and the
  * weight printed under the item above looked as if it belonged to this one.
  */
-export function lineDetail(line: BillLine): string | null {
+export function lineDetail(line: BillLine, locale?: UnitLocale): string | null {
   if (line.quantity <= 0) return null;
   const measure = amountLabel(line.unit, line.quantity);
-  if (measure) return measure;
+  if (measure) return localUnit(measure, locale);
   const each = formatPaise(Math.round(line.amountPaise / line.quantity));
-  return [`${line.quantity} × ${each}`, line.unit.trim()].filter(Boolean).join(' · ');
+  return [`${line.quantity} × ${each}`, localUnit(line.unit.trim(), locale)].filter(Boolean).join(' · ');
 }
 
 /** The bill written and saved to the phone, for the till and the fallback. */
@@ -119,7 +121,7 @@ export async function billPdfBlob(bill: Bill, labels: BillLabels): Promise<Blob>
   // bill is not three-quarters white space and a twenty-item one does not run
   // off the bottom.
   const rowHeight = (line: BillLine) =>
-    ROW + (lineDetail(line) ? DETAIL_ROW : 0) + (line.note ? NOTE_ROW : 0) + GAP;
+    ROW + (lineDetail(line, labels.unitLocale) ? DETAIL_ROW : 0) + (line.note ? NOTE_ROW : 0) + GAP;
   const height = PAD * 2 + 210 + bill.lines.reduce((sum, line) => sum + rowHeight(line), 0) + 190;
 
   const canvas = document.createElement('canvas');
@@ -171,7 +173,7 @@ export async function billPdfBlob(bill: Bill, labels: BillLabels): Promise<Blob>
       ctx.textAlign = 'left';
     }
 
-    const detail = lineDetail(line);
+    const detail = lineDetail(line, labels.unitLocale);
     let under = y + 38;
     if (detail) {
       ctx.fillStyle = '#64748b';

@@ -80,6 +80,8 @@ export default async function OrdersPage({ params }: PageProps) {
       OR: [
         { status: { not: 'COMPLETED' } },
         { createdAt: { gte: historySince() } },
+        // The Completed tab files an order under the day it went out.
+        { completedAt: { gte: historySince() } },
       ],
     },
     // The screen groups by status itself and counts today's takings across the
@@ -99,6 +101,8 @@ export default async function OrdersPage({ params }: PageProps) {
       revisedAt: true,
       createdAt: true,
       completedAt: true,
+      paymentMode: true,
+      locale: true,
       itemsJson: true,
     },
     }),
@@ -146,6 +150,8 @@ export default async function OrdersPage({ params }: PageProps) {
     reachable: reachable.has(row.customerPhone),
     createdAt: row.createdAt.toISOString(),
     completedAt: row.completedAt?.toISOString() ?? null,
+    paymentMode: row.paymentMode,
+    customerLocale: row.locale,
     lines: readOrderLines(row.itemsJson, known),
   }));
 

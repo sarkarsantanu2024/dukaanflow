@@ -54,7 +54,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { upiPayUrlWithAmount } from '@/lib/qr';
 import { useToast } from '@/components/ui/Toast';
 import { formatPaise, linePaise } from '@/lib/money';
-import { amountLabel, isLooseUnit, MOST_PER_LINE, roundQuantity } from '@/lib/units';
+import { amountLabel, isLooseUnit, localUnit, MOST_PER_LINE, roundQuantity } from '@/lib/units';
 import { CheckIcon, CloseIcon, MicIcon, PinIcon } from '@/components/ui/Icon';
 import type { SnapshotLine } from '@/lib/order-snapshot';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -829,7 +829,7 @@ export function SellScreen({
                       {lineName(line, locale)}
                       {/* No pack size beside a weighed amount — the amount is
                           the instruction, and "500 g · 50 g" is two of them. */}
-                      {line.unit && !isLooseUnit(line.unit) ? ` · ${line.unit}` : ''}
+                      {line.unit && !isLooseUnit(line.unit) ? ` · ${localUnit(line.unit, locale)}` : ''}
                     </span>
                     <span
                       className={clsx(
@@ -837,7 +837,7 @@ export function SellScreen({
                         done ? 'text-slate-400' : 'text-slate-700',
                       )}
                     >
-                      {packAmount(line)}
+                      {localUnit(packAmount(line), locale)}
                     </span>
                   </button>
                 </li>

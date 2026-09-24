@@ -183,7 +183,7 @@ export function OwnerHeader({
           id="owner-language"
           value={locale}
           onChange={(event) => changeLocale(event.target.value as Locale)}
-          className="h-8 shrink-0 cursor-pointer rounded-lg border border-white/30 bg-white/10 px-2 text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
+          className="h-10 shrink-0 cursor-pointer rounded-lg border border-white/30 bg-white/10 px-2 text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
         >
           {/* THE OPTIONS GET THEIR OWN COLOURS. The white text above is for
               the closed box on the green bar, and an open list inherits it —
@@ -215,7 +215,7 @@ export function OwnerHeader({
           disabled={busy}
           aria-label={t.signOut}
           title={t.signOut}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/75 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/75 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
         >
           {busy ? (
             <Spinner className="h-4 w-4" />
@@ -259,7 +259,7 @@ export function OwnerHeader({
 
             `atHome` is the same test the way-home icon uses, so the two can
             never disagree about which screen this is. */}
-        {atHome && <ShopClock />}
+        {atHome && <ShopClock locale={locale} />}
 
         <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-3 py-2 sm:px-4">
           {ownerImageData ? (
@@ -305,7 +305,7 @@ export function OwnerHeader({
                 aria-label={t.moreSettings}
                 title={t.moreSettings}
                 className={clsx(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition",
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition",
                   settingsOpen
                     ? "bg-slate-200 text-slate-800"
                     : "text-slate-400 hover:bg-slate-200 hover:text-slate-800",
@@ -345,7 +345,7 @@ export function OwnerHeader({
             <Link
               href={`/owner/${slug}`}
               aria-label={t.todayTitle}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition "
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition "
             >
               <HomeIcon className="h-5 w-5" />
             </Link>

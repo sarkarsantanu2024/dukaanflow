@@ -31,11 +31,13 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useAutoPush } from '@/components/ui/useAutoPush';
 import { dict, type Locale } from '@/lib/i18n';
+import { formatPaise } from '@/lib/money';
 
 export function OrderPlaced({
   orderId,
   shopSlug,
   orderType,
+  totalPaise,
   locale,
   onClose,
 }: {
@@ -51,6 +53,8 @@ export function OrderPlaced({
    * asked for twice.
    */
   orderType: 'DELIVERY' | 'PICKUP';
+  /** What the order came to, as the server priced it. */
+  totalPaise: number;
   locale: Locale;
   /** Were this phone's details already saved before this order? */
   wasRemembered: boolean;
@@ -75,9 +79,19 @@ export function OrderPlaced({
         </Button>
       }
     >
+      {/* Which order, and for how much — what the customer reads out when the
+          shop calls, or checks against the bill. The number is the start of the
+          order's id, the same one the tracking page names its bill after. */}
+      <p className="mb-3 flex items-baseline justify-between gap-3 rounded-xl bg-sunk/60 px-3 py-2 text-slate-800">
+        <span>
+          {t.orderPlacedNumber}{' '}
+          <span className="font-semibold tracking-wide tabular-nums">{orderId.slice(0, 8).toUpperCase()}</span>
+        </span>
+        <span>
+          {t.total} <span className="font-semibold tabular-nums">{formatPaise(totalPaise)}</span>
+        </span>
+      </p>
       {t.orderPlacedHint}
-
-
 
       {/* The page they can come back to whatever they decided about
           notifications — and the one that will show them a shortened order if

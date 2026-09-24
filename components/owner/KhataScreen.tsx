@@ -720,7 +720,7 @@ export function KhataScreen({
                             disabled={busy}
                             aria-label={`${t.khataDelete} — ${formatPaise(entry.amountPaise)}`}
                             title={t.khataDelete}
-                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>

@@ -24,7 +24,8 @@ import {
 } from '@/lib/speech';
 import { dict, type Locale } from '@/lib/i18n';
 import { itemName, sellsAnyAmount, type CustomerItem } from './ItemCard';
-import { amountLabel } from '@/lib/units';
+import { amountLabel, localUnit } from '@/lib/units';
+import { voiceErrorText } from '@/components/voice/errors';
 
 /** The shop page already has a language toggle — reuse it for the mic. */
 const RECOGNITION_LANG: Record<Locale, VoiceLang> = {
@@ -57,14 +58,7 @@ type Suggestion = {
  * speech service and a dead connection all used to read as "this browser cannot
  * do voice", which sends everybody looking in the wrong place.
  */
-function reason(code: VoiceErrorCode, t: ReturnType<typeof dict>): string {
-  if (code === 'not-allowed') return t.voiceDenied;
-  if (code === 'insecure-context') return t.voiceInsecure;
-  if (code === 'service-not-allowed') return t.voiceServiceBlocked;
-  if (code === 'no-microphone') return t.voiceNoMic;
-  if (code === 'network') return t.voiceNoNetwork;
-  return t.voiceUnavailable;
-}
+const reason = voiceErrorText;
 
 export function VoiceOrder({
   items,
@@ -187,15 +181,15 @@ export function VoiceOrder({
           // "2 × চাউমিন 1 plate" for something counted. A bare quantity in
           // front of it would say "0.25 চিনি 250 g".
           label: amount
-            ? `${name} ${amount}`
-            : `${line.quantity} × ${[name, item.unit].filter(Boolean).join(' ')}`,
+            ? `${name} ${localUnit(amount, localeRef.current)}`
+            : `${line.quantity} × ${[name, localUnit(item.unit, localeRef.current)].filter(Boolean).join(' ')}`,
           // The amount asked for, when the shop cannot make it up out of whole
           // packs. Both halves of the mismatch, because either on its own reads
           // as the app having misheard: "you said 250 g" invites saying it
           // again, "sold in 1 kg" does not explain why anything is being asked.
           note:
             line.requested && !line.exact
-              ? `${words.voiceYouSaid} ${line.requested} · ${words.voiceSoldIn} ${item.unit}`
+              ? `${words.voiceYouSaid} ${line.requested} · ${words.voiceSoldIn} ${localUnit(item.unit, localeRef.current)}`
               : undefined,
         };
       };
@@ -251,7 +245,7 @@ export function VoiceOrder({
           // name to a sentence that already ended in "at most" produced
           // "সর্বোচ্চ সাবুদানা — 24.75 kg" — the limit before the thing it
           // limits, which is not a sentence in any of the three languages.
-          return `${name} — ${words.voiceAtMost} ${most ?? `${MOST_PER_LINE} × ${item.unit}`}`;
+          return `${name} — ${words.voiceAtMost} ${localUnit(most ?? `${MOST_PER_LINE} × ${item.unit}`, localeRef.current)}`;
         });
 
         const message = `${words.voiceTooMuch} ${limits.filter(Boolean).join(', ')}`;

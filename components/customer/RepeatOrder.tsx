@@ -16,7 +16,7 @@
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import { formatPaise, linePaise } from '@/lib/money';
-import { amountLabel } from '@/lib/units';
+import { amountLabel, localUnit } from '@/lib/units';
 import { dict, type Locale } from '@/lib/i18n';
 import type { CustomerItem } from './ItemCard';
 import { itemName } from './ItemCard';
@@ -140,13 +140,13 @@ export function RepeatOrder({
                 stored fraction of a pack, which is meaningless to a shopper.
                 Counted items keep the plain number they always had. */}
             <span className="flex h-7 min-w-[1.75rem] shrink-0 items-center justify-center rounded-lg bg-brand-100 px-1.5 text-sm font-semibold tabular-nums text-brand-800">
-              {amountLabel(item.unit, quantity) ?? quantity}
+              {localUnit(amountLabel(item.unit, quantity) ?? String(quantity), locale)}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium text-slate-800">
                 {itemName(item, locale)}
               </span>
-              {item.unit && <span className="block text-xs text-slate-400">{item.unit}</span>}
+              {item.unit && <span className="block text-xs text-slate-400">{localUnit(item.unit, locale)}</span>}
             </span>
             <span className="shrink-0 text-sm tabular-nums text-slate-600">
               {formatPaise(linePaise(item.pricePaise, quantity))}

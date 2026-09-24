@@ -21,7 +21,7 @@ import { useToast } from '@/components/ui/Toast';
 import { itemName } from '@/components/customer/ItemCard';
 import { ownerDict } from '@/lib/owner-i18n';
 import { formatIsoDay } from '@/lib/time';
-import { parseStockAmount, rateUnit, stockWithUnit } from '@/lib/units';
+import { localUnit, parseStockAmount, rateUnit, stockWithUnit } from '@/lib/units';
 import type { Locale } from '@/lib/i18n';
 import type { SellItem } from './SellScreen';
 
@@ -92,7 +92,7 @@ export function ShortStockModal({
   if (!item) return null;
 
   const name = itemName(item, locale);
-  const left = stockWithUnit(item.unit, Math.max(item.stockQty ?? 0, 0), t.pieceShort);
+  const left = localUnit(stockWithUnit(item.unit, Math.max(item.stockQty ?? 0, 0), t.pieceShort), locale);
   const hint = rateUnit(item.unit) || t.pieceShort;
 
   async function addStock() {

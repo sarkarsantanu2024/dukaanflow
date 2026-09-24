@@ -257,5 +257,5 @@ export function khataToCsv(input: {
  */
 export function khataFilename(shopName: string, on: Date): string {
   const safe = shopName.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
-  return `khata-${safe || 'shop'}-${on.toISOString().slice(0, 10)}.csv`;
+  return `khata-${safe || 'shop'}-${formatIsoDay(on)}.csv`;
 }

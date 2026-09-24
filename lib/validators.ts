@@ -428,6 +428,8 @@ export const orderSchema = z
      * may not send one, and an order without a key behaves exactly as before.
      */
     idempotencyKey: z.string().uuid().optional(),
+    /** The language the shopper was reading in, so the shop can write back in it. */
+    locale: z.enum(['en', 'bn', 'hi']).optional(),
   })
   // Only a delivery needs somewhere to be delivered to. Demanding an address
   // from somebody walking in to collect would be asking for nothing.

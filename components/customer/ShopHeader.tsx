@@ -36,7 +36,7 @@ import { BrandMark } from '@/components/ui/BrandMark';
 import { AlponaMotif } from '@/components/ui/Ornament';
 import { formatClockRange } from '@/lib/hours';
 import { ClockIcon, PinIcon, RupeeIcon, WhatsAppIcon } from '@/components/ui/Icon';
-import type { Locale } from '@/lib/i18n';
+import { dict, type Locale } from '@/lib/i18n';
 
 export type ShopSummary = {
   name: string;
@@ -185,7 +185,7 @@ export function ShopHeader({
                 {shop.name}
               </h1>
               <p className="truncate text-xs text-brand-100">
-                {SHOP_TYPE_LABELS[shop.type]}
+                {dict(locale).shopTypes[shop.type]}
                 {shop.ownerName && ` · ${shop.ownerName}`}
               </p>
 

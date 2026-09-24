@@ -29,6 +29,7 @@ import {
   MOST_PER_LINE,
   baseFromQuantity,
   baseLabel,
+  localUnit,
   comparableMeasures,
   parseMeasure,
   presetBases,
@@ -127,7 +128,7 @@ export function AmountStepper({
             // and a number field silently refuses every character after the 5.
             type="text"
             inputMode="decimal"
-            placeholder={baseLabel(unit, base)}
+            placeholder={localUnit(baseLabel(unit, base), locale)}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onBlur={commitTyped}
@@ -154,7 +155,7 @@ export function AmountStepper({
             aria-live="polite"
             className="min-w-0 flex-1 rounded-lg px-1 py-1 text-center text-sm font-semibold tabular-nums text-slate-900 underline decoration-dotted decoration-slate-300 underline-offset-4"
           >
-            {baseLabel(unit, base)}
+            {localUnit(baseLabel(unit, base), locale)}
           </button>
         )}
 
@@ -173,7 +174,7 @@ export function AmountStepper({
           fractional amount is safe to offer: the shopper can see that fifty
           grams of ₹1,500 posto is ₹75 before they order it. */}
       <p className="text-xs text-slate-500">
-        {baseLabel(unit, base)} · {formatPaise(linePaise(pricePaise, quantity))}
+        {localUnit(baseLabel(unit, base), locale)} · {formatPaise(linePaise(pricePaise, quantity))}
       </p>
 
       {!compact && presets.length > 0 && (
@@ -191,7 +192,7 @@ export function AmountStepper({
                   : 'bg-card text-slate-600 ring-1 ring-slate-200 hover:bg-brand-50',
               )}
             >
-              {baseLabel(unit, preset)}
+              {localUnit(baseLabel(unit, preset), locale)}
             </button>
           ))}
         </div>

@@ -19,6 +19,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
+import { closeLabel } from './useHtmlLang';
 
 /**
  * Lets content rendered inside a drawer close it without the drawer having to
@@ -225,8 +226,8 @@ export function Drawer({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100"
+            aria-label={closeLabel()}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" aria-hidden>
               <path d="M6 6l12 12M18 6L6 18" />

@@ -20,6 +20,7 @@ import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { Button } from "./Button";
 import { CloseIcon } from "./Icon";
+import { closeLabel } from "./useHtmlLang";
 
 export function Modal({
   open,
@@ -136,8 +137,8 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
-            className="-mr-1 -mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={closeLabel()}
+            className="-mr-1 -mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
           >
             <CloseIcon className="h-5 w-5" />
           </button>
