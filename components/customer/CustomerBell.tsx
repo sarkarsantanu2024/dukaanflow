@@ -1,14 +1,13 @@
 'use client';
 
 /**
- * THE CUSTOMER'S BELL: "YOUR ORDER IS COMPLETED — THE BILL IS ON WHATSAPP".
+ * THE CUSTOMER'S BELL: WHAT THE SHOP DID WITH THEIR ORDERS.
  *
- * When the owner finishes an order they send the customer the bill on
- * WhatsApp, and a customer who missed that message had nowhere in the app to
- * see it. The bell, in the header of the shop page and of the tracking page,
- * shows each completed order this phone placed — and nothing else, by request:
- * "the shop has your order" was news to nobody who had just placed it.
- * Tapping one opens that order.
+ * Three things, the same three the customer's phone is alerted about: the
+ * shop changed the order, could not take it, or finished it with the bill on
+ * WhatsApp. A customer who missed the WhatsApp message had nowhere in the app
+ * to see it. "The shop has your order" is left out, by request: it was news
+ * to nobody who had just placed it. Tapping one opens that order.
  *
  * NOTHING IS STORED ON THE SERVER. The orders are remembered on this phone
  * (`lib/my-orders.ts`), their state is read from the orders themselves, and
@@ -85,14 +84,31 @@ export function CustomerBell({ locale }: { locale: Locale }) {
       if (!response.ok) return;
       const payload = (await response.json()) as { orders?: OrderState[] };
       const found = new Map((payload.orders ?? []).map((order) => [order.id, order]));
-      // ONLY THE FINISHED ORDER IS NEWS, by request. "The shop has your order"
-      // told the customer what they had just seen happen; what they want to
-      // hear is that it is done and the bill is on WhatsApp.
+      // WHAT THE SHOP DID: changed the order, could not take it, or finished
+      // it (bill on WhatsApp). The same three things the customer's phone is
+      // alerted about. "The shop has your order" is not listed: it was news
+      // to nobody who had just placed it.
+      //
+      // An order the server no longer has was turned away — turning an order
+      // away deletes it — and says so rather than silently vanishing.
       setUpdates(
         mine
-          .map((order) => found.get(order.id))
-          .filter((state): state is OrderState => Boolean(state) && state!.status === 'COMPLETED')
-          .map(updateFor)
+          .map((order): Update | null => {
+            const state = found.get(order.id);
+            if (!state) {
+              return {
+                key: `${order.id}:cancelled`,
+                orderId: order.id,
+                kind: 'cancelled',
+                shopName: '',
+                totalAmountPaise: null,
+                at: new Date(order.at).toISOString(),
+              };
+            }
+            const update = updateFor(state);
+            return update.kind === 'received' ? null : update;
+          })
+          .filter((update): update is Update => update !== null)
           .sort((a, b) => b.at.localeCompare(a.at)),
       );
     } catch {

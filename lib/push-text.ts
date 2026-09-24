@@ -31,6 +31,9 @@ type PushDictionary = {
   readyDeliveryBody: string;
   cancelledTitle: string;
   cancelledBody: string;
+  /** The order is finished and the bill is on WhatsApp — the one news a customer waits for. */
+  completedTitle: string;
+  completedBody: string;
   revisedTitle: string;
   /** Followed by the new total. */
   revisedBody: string;
@@ -58,6 +61,8 @@ const DICTIONARIES: Record<Locale, PushDictionary> = {
     readyDeliveryBody: 'It has left',
     cancelledTitle: 'Order could not be taken',
     cancelledBody: 'could not take your order this time.',
+    completedTitle: 'Order completed',
+    completedBody: '— check your bill on WhatsApp.',
     trialOverTitle: 'Your free trial has ended',
     trialOverBody:
       'Your shop page and QR keep working. To add or change items again, choose a plan in the app.',
@@ -79,6 +84,8 @@ const DICTIONARIES: Record<Locale, PushDictionary> = {
     readyDeliveryBody: 'বেরিয়ে গেছে —',
     cancelledTitle: 'অর্ডার নেওয়া গেল না',
     cancelledBody: 'এবার আপনার অর্ডারটি নিতে পারল না।',
+    completedTitle: 'অর্ডার সম্পূর্ণ',
+    completedBody: '— বিল WhatsApp-এ দেখুন।',
     trialOverTitle: 'আপনার ফ্রি সময় শেষ',
     trialOverBody:
       'দোকানের পাতা আর QR ঠিকই চলবে। আবার জিনিস যোগ বা বদল করতে অ্যাপে একটা প্ল্যান নিন।',
@@ -100,6 +107,8 @@ const DICTIONARIES: Record<Locale, PushDictionary> = {
     readyDeliveryBody: 'निकल चुका है —',
     cancelledTitle: 'ऑर्डर नहीं लिया जा सका',
     cancelledBody: 'इस बार आपका ऑर्डर नहीं ले सका।',
+    completedTitle: 'ऑर्डर पूरा',
+    completedBody: '— बिल WhatsApp पर देखें।',
     trialOverTitle: 'आपका फ्री समय खत्म',
     trialOverBody:
       'दुकान का पेज और QR चलता रहेगा। दोबारा सामान जोड़ने या बदलने के लिए ऐप में प्लान चुनिए।',
@@ -161,15 +170,19 @@ export function orderStatusNotification(input: {
   const t = pushDict(input.locale);
 
   /**
-   * "Your order is ready" belongs to READY, and used to fire on COMPLETED.
-   *
-   * That was the wrong moment by one whole step: COMPLETED means the goods have
-   * been handed over and the money accounted for, so the invitation to come and
-   * collect arrived after the collection. COMPLETED now sends nothing — the
-   * customer is standing there with the bag.
+   * Two things reach the customer's phone: an order the shop could not take,
+   * and an order that is done with its bill on WhatsApp. There is no "ready"
+   * step any more (see `orderStatusSchema`), and "the shop has your order" is
+   * news to nobody who just placed it.
    */
   if (input.status === 'CANCELLED') {
     return { title: t.cancelledTitle, body: `${input.shopName} ${t.cancelledBody}` };
+  }
+  // DONE, AND THE BILL IS ON WHATSAPP. With the ready step gone, this is the
+  // moment the customer's phone should hear about: the same words their bell
+  // shows (see `CustomerBell`).
+  if (input.status === 'COMPLETED') {
+    return { title: t.completedTitle, body: `${input.shopName} ${t.completedBody}` };
   }
   return null;
 }

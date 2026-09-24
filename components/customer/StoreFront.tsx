@@ -488,7 +488,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
             customerName: values.customerName,
             customerPhone: values.customerPhone,
             customerAddress: values.customerAddress,
-          }),
+          }, t.orderMessage),
         ),
       });
     } finally {
