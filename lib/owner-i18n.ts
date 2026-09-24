@@ -353,6 +353,15 @@ type OwnerDictionary = {
    * afterwards for the customer who asks.
    */
   billTitle: string;
+  /** Bill popup: the customer's name, their para, the next step, the send and PDF buttons. */
+  billName: string;
+  billArea: string;
+  billNext: string;
+  billSendWa: string;
+  billPdfShare: string;
+  /** The floating filter button, and its panel's clear action. */
+  filterOpen: string;
+  filterClear: string;
   billPhone: string;
   billSend: string;
   billSkip: string;
@@ -987,6 +996,13 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellMissingItem: 'Item not in the list? Add it in Items, then come back.',
     sellKhata: 'Udhaar',
     billTitle: 'Send a bill',
+    billName: 'Customer name',
+    billArea: 'Area',
+    billNext: 'Next',
+    billSendWa: 'Send bill on WhatsApp',
+    billPdfShare: 'PDF',
+    filterOpen: 'Filter',
+    filterClear: 'Clear',
     billPhone: "Customer's WhatsApp number",
     billSend: 'Download bill and open WhatsApp',
     billSkip: 'Not now',
@@ -1505,6 +1521,13 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellMissingItem: 'তালিকায় নেই? “জিনিস”-এ গিয়ে যোগ করুন, তারপর ফিরে আসুন।',
     sellKhata: 'ধার',
     billTitle: 'বিল পাঠান',
+    billName: 'কাস্টমারের নাম',
+    billArea: 'পাড়া',
+    billNext: 'এগিয়ে যান',
+    billSendWa: 'WhatsApp-এ বিল পাঠান',
+    billPdfShare: 'PDF',
+    filterOpen: 'ফিল্টার',
+    filterClear: 'মুছুন',
     billPhone: 'কাস্টমারের WhatsApp নম্বর',
     billSend: 'বিল নামিয়ে WhatsApp খুলুন',
     billSkip: 'এখন নয়',
@@ -2023,6 +2046,13 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellMissingItem: 'सूची में नहीं है? “सामान” में जाकर जोड़िए, फिर लौटिए।',
     sellKhata: 'उधार',
     billTitle: 'बिल भेजिए',
+    billName: 'ग्राहक का नाम',
+    billArea: 'मोहल्ला',
+    billNext: 'आगे बढ़ें',
+    billSendWa: 'WhatsApp पर बिल भेजें',
+    billPdfShare: 'PDF',
+    filterOpen: 'फ़िल्टर',
+    filterClear: 'हटाएं',
     billPhone: 'ग्राहक का WhatsApp नंबर',
     billSend: 'बिल डाउनलोड कर WhatsApp खोलें',
     billSkip: 'अभी नहीं',

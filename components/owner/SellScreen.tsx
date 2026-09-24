@@ -65,7 +65,7 @@ import type { VoiceLang } from '@/lib/speech';
 import { speak, useVoice } from '@/components/voice/useVoice';
 import { useScrolled } from '@/components/ui/useScrolled';
 import { spokenSaleTotal } from '@/lib/spoken-money';
-import { BillCard } from './BillCard';
+import { BillCard, type BillCustomer } from './BillCard';
 import { ShortStockModal } from './ShortStockModal';
 import { formatDay } from '@/lib/time';
 import type { Bill } from '@/lib/bill-pdf';
@@ -239,6 +239,8 @@ export function SellScreen({
    * sent to the right number.
    */
   const [lastBill, setLastBill] = useState<Bill | null>(null);
+  /** Who the bill popup opens filled in for: the khata customer, when there is one. */
+  const [billCustomer, setBillCustomer] = useState<BillCustomer | null>(null);
 
   /** The item whose shelf just ran out under a sale, if the modal is open. */
   const [short, setShort] = useState<SellItem | null>(null);
@@ -661,6 +663,7 @@ export function SellScreen({
         ...(paymentMode === 'KHATA' && khata?.name ? { customerName: khata.name } : {}),
       });
 
+      setBillCustomer(paymentMode === 'KHATA' && khata ? { name: khata.name, phone: khata.phone, area: khata.area } : null);
       setCart({});
       setUnavailable({});
       setSpoken([]);
@@ -744,6 +747,7 @@ export function SellScreen({
           bill={lastBill}
           slug={slug}
           t={t}
+          customer={billCustomer}
           onDone={() => setLastBill(null)}
           onError={(message) => push(message, 'error')}
           onSent={(message) => push(message, 'success')}
