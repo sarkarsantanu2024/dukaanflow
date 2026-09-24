@@ -28,9 +28,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
-import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import { WhatsAppIcon } from '@/components/ui/Icon';
+import { CheckIcon, PdfIcon, TruckIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { ownerDict } from '@/lib/owner-i18n';
 import { translateCategory } from '@/lib/speech';
 import { formatDay } from '@/lib/time';
@@ -270,54 +269,129 @@ export function RestockCard({
   // Items tab — one quiet line, and out of the way.
   if (wanted.length === 0) {
     return (
-      <section className="rounded-2xl border border-glass-edge bg-glass px-4 py-3 shadow-raised">
-        <p className="text-sm font-semibold text-slate-900">{t.restockTitle}</p>
-        <p className="mt-1 text-sm text-slate-500">{t.restockNone}</p>
+      <section className="flex items-center gap-3 rounded-2xl border border-glass-edge bg-glass px-4 py-3 shadow-raised">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+          <CheckIcon className="h-5 w-5" />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-slate-900">{t.restockTitle}</span>
+          <span className="block text-sm text-slate-500">{t.restockNone}</span>
+        </span>
       </section>
     );
   }
 
-  return (
-    <section className="rounded-2xl border border-glass-edge bg-glass px-4 py-3 shadow-raised">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <p className="text-sm font-semibold text-slate-900">{t.restockTitle}</p>
-        <p className="text-sm tabular-nums text-slate-500">
-          {chosen.length} / {wanted.length} {t.restockPicked}
-        </p>
-      </div>
-      <p className="mt-1 text-xs text-slate-500">{t.restockHint}</p>
+  const isFinished = (item: RestockItem) => !item.inStock || item.stockQty === 0;
+  const outCount = wanted.filter(isFinished).length;
+  const lowCount = wanted.length - outCount;
+  const allTicked = chosen.length === wanted.length;
+  const noneTicked = chosen.length === 0;
 
-      <div className="mt-2 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setPicked(new Set(wanted.map((item) => item.id)))}
-          className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-200"
-        >
-          {t.restockAll}
-        </button>
-        <button
-          type="button"
-          onClick={() => setPicked(new Set())}
-          className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-200"
-        >
-          {t.restockClear}
-        </button>
+  /**
+   * THE CARD, REBUILT BY REQUEST — "too plain, and it wastes the space".
+   *
+   * The old card was a caption, a hint, two grey pills and a list whose status
+   * chips took a column of their own, which on a 375px phone squeezed every
+   * name down to a few letters. Now:
+   *
+   *  - A header that says what this is at a glance: an icon, the title, and the
+   *    two numbers that matter (how many have run out, how many are running
+   *    low) as coloured chips — the owner learns the state of the shelf before
+   *    reading a single row.
+   *  - Tick all / untick all as one small segmented control beside the count,
+   *    instead of two loose pills on a line of their own.
+   *  - The status moves INTO the row, under the name, and the row carries it as
+   *    a coloured edge (red run out, amber running low). That frees the width
+   *    the chip column took, so names are readable and the amount box keeps
+   *    its size.
+   *  - A column header once, over the list, instead of a floating caption.
+   *  - The send action is a full-width bar at the foot of the card, saying how
+   *    many lines will go — the one thing to do here, where the thumb is.
+   */
+  return (
+    <section className="overflow-hidden rounded-2xl border border-glass-edge bg-glass shadow-raised">
+      <header className="flex items-start gap-3 px-4 pt-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
+          <TruckIcon className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <h2 className="text-base font-semibold leading-tight text-slate-900">{t.restockTitle}</h2>
+          <p className="mt-1 text-xs leading-snug text-slate-500">{t.restockHint}</p>
+        </span>
+      </header>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2 px-4">
+        {outCount > 0 && (
+          <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold tabular-nums text-rose-700">
+            {outCount} {t.restockOut}
+          </span>
+        )}
+        {lowCount > 0 && (
+          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold tabular-nums text-amber-800">
+            {lowCount} {t.runningLowCount}
+          </span>
+        )}
+        <div className="ml-auto inline-flex rounded-xl bg-sunk p-1 text-xs font-medium" role="group" aria-label={t.restockPicked}>
+          <button
+            type="button"
+            onClick={() => setPicked(new Set(wanted.map((item) => item.id)))}
+            aria-pressed={allTicked}
+            className={clsx(
+              'min-h-9 rounded-lg px-3 transition',
+              allTicked ? 'bg-card text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900',
+            )}
+          >
+            {t.restockAll}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPicked(new Set())}
+            aria-pressed={noneTicked}
+            className={clsx(
+              'min-h-9 rounded-lg px-3 transition',
+              noneTicked ? 'bg-card text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900',
+            )}
+          >
+            {t.restockClear}
+          </button>
+        </div>
+      </div>
+
+      {/* The column headings, once. The amount box's label used to float on a
+          line of its own because a placeholder that narrow was cut to "কত লাগ". */}
+      <div className="mt-3 flex items-center justify-between border-y border-slate-200/70 bg-sunk/60 px-4 py-1.5 text-xs font-semibold text-slate-500">
+        <span>
+          {t.restockItemCol} · <span className="tabular-nums">{chosen.length}/{wanted.length}</span> {t.restockPicked}
+        </span>
+        <span className="w-28 text-right">{t.restockWanted}</span>
       </div>
 
       {/* Capped in height and scrolled. A shop that has let itself run down has
           forty of these, and forty rows pushed between the item list and
           everything under it would bury the tab. */}
-      {/* The order boxes' label, once, over their column: in a box this
-          narrow a placeholder was cut to "কত লাগ". */}
-      <p className="mt-3 text-right text-xs font-medium text-slate-500">{t.restockWanted}</p>
-      <ul className="mt-1 max-h-80 divide-y divide-slate-100 overflow-y-auto">
+      <ul className="max-h-96 divide-y divide-slate-100 overflow-y-auto">
         {wanted.map((item) => {
           const ticked = chosenIds.has(item.id);
-          const finished = !item.inStock || item.stockQty === 0;
+          const finished = isFinished(item);
+          const typed = orderQty[item.id] ?? '';
+          // The unit a bare number will be sent in, faint at the right of the
+          // box, until the owner writes a unit of their own.
+          const hint = /^\s*[\d০-৯०-९]*(?:\.[\d০-৯०-९]*)?\s*$/.test(typed)
+            ? orderUnit(item.unit, t.pieceShort)
+            : '';
 
           return (
-            <li key={item.id}>
-              <label className="flex cursor-pointer items-center gap-3 py-2">
+            <li
+              key={item.id}
+              className={clsx('relative transition', !ticked && 'bg-sunk/40')}
+            >
+              {/* The status edge is its own bar: the list's divide-y colours every
+                  border but the first row's, so a border-l colour was lost. */}
+              <span
+                aria-hidden
+                className={clsx('absolute inset-y-0 left-0 w-1', finished ? 'bg-rose-400' : 'bg-amber-400')}
+              />
+              <label className="flex min-h-14 cursor-pointer items-center gap-3 py-2 pl-3 pr-4">
                 <input
                   type="checkbox"
                   checked={ticked}
@@ -328,135 +402,112 @@ export function RestockCard({
                   <span
                     className={clsx(
                       'block truncate text-sm font-medium',
-                      ticked ? 'text-slate-900' : 'text-slate-400',
+                      ticked ? 'text-slate-900' : 'text-slate-400 line-through decoration-slate-300',
                     )}
                   >
                     {restockName(item, locale)}
                   </span>
-                  <span className="block truncate text-xs text-slate-500">
-                    {[item.unit, item.category ? translateCategory(item.category, locale) : '']
-                      .filter(Boolean)
-                      .join(' · ')}
+                  <span className="mt-0.5 block truncate text-xs">
+                    {/* "1 kg বাকি", not "2 বাকি" — `stockWithUnit` is the same
+                        conversion the item row and the till use, so one shelf
+                        never reads three different ways in one app. */}
+                    <span className={clsx('font-semibold tabular-nums', finished ? 'text-rose-700' : 'text-amber-800')}>
+                      {finished
+                        ? t.restockOut
+                        : `${stockWithUnit(item.unit, item.stockQty ?? 0, t.pieceShort)} ${t.restockLow}`}
+                    </span>
+                    <span className="text-slate-500">
+                      {[item.unit, item.category ? translateCategory(item.category, locale) : '']
+                        .filter(Boolean)
+                        .map((part) => ` · ${part}`)
+                        .join('')}
+                    </span>
                   </span>
                 </span>
-                <span
-                  className={clsx(
-                    'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums',
-                    finished ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800',
-                  )}
-                >
-                  {/* "1 kg বাকি", not "2 বাকি". `stockQty` is a multiple of
-                      the item's own pack, so the raw number means nothing on
-                      its own — two of a 500 g pack is a kilo, and two of a
-                      1 kg pack is two. `stockAmountLabel` is the same
-                      conversion the item row and the till use, so one shelf
-                      never reads three different ways in one app. */}
-                  {finished
-                    ? t.restockOut
-                    : `${stockWithUnit(item.unit, item.stockQty ?? 0, t.pieceShort)} ${t.restockLow}`}
-                </span>
 
-                {/* HOW MUCH TO ORDER — the question this card never asked.
-                    It listed what had run out and stopped there, so the owner
-                    sent a list of names and then said the amounts out loud
-                    anyway, which is the phone call the card exists to save.
-
-                    Free text on purpose: a shop sells rice by the kilo and
-                    buys it by the fifty-kilo bosta, so "2 bosta" and "5 strip"
-                    have to be sayable. Blank is allowed — the shop wants the
-                    item and will settle the amount at the counter.
-
-                    Outside the label's own click target (`onClick` stops the
-                    bubble) or tapping into the box would tick the row off. */}
-                {/* The unit a bare number will be sent in, faint at the right
-                    of the box, until the owner writes a unit of their own. */}
-                {(() => {
-                  const typed = orderQty[item.id] ?? '';
-                  const hint = /^\s*[\d০-৯०-९]*(?:\.[\d০-৯०-९]*)?\s*$/.test(typed)
-                    ? orderUnit(item.unit, t.pieceShort)
-                    : '';
-                  return (
-                    <span className="relative shrink-0">
-                      <input
-                        type="text"
-                        value={typed}
-                        onChange={(event) =>
-                          setOrderQty((current) => ({ ...current, [item.id]: event.target.value }))
-                        }
-                        onClick={(event) => event.preventDefault()}
-                        aria-label={`${t.restockWanted} — ${restockName(item, locale)}`}
-                        className={clsx(
-                          'h-9 w-28 rounded-lg border border-slate-300 pl-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none',
-                          hint ? 'pr-12' : 'pr-2',
-                        )}
-                      />
-                      {hint && (
-                        <span className="pointer-events-none absolute right-2 top-1/2 max-w-[2.75rem] -translate-y-1/2 truncate text-xs text-slate-400">
-                          {hint}
-                        </span>
-                      )}
+                {/* HOW MUCH TO ORDER. Free text on purpose: a shop sells rice by
+                    the kilo and buys it by the fifty-kilo bosta. Blank is fine.
+                    `onClick` stops the label ticking the row off. */}
+                <span className="relative shrink-0">
+                  <input
+                    type="text"
+                    value={typed}
+                    onChange={(event) =>
+                      setOrderQty((current) => ({ ...current, [item.id]: event.target.value }))
+                    }
+                    onClick={(event) => event.preventDefault()}
+                    aria-label={`${t.restockWanted} — ${restockName(item, locale)}`}
+                    className={clsx(
+                      'h-10 w-28 rounded-xl border border-slate-300 bg-card pl-3 text-sm text-slate-900 focus:border-brand-500 focus:outline-none',
+                      hint ? 'pr-12' : 'pr-3',
+                    )}
+                  />
+                  {hint && (
+                    <span className="pointer-events-none absolute right-2.5 top-1/2 max-w-[2.75rem] -translate-y-1/2 truncate text-xs text-slate-400">
+                      {hint}
                     </span>
-                  );
-                })()}
+                  )}
+                </span>
               </label>
             </li>
           );
         })}
       </ul>
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        {canSharePdf ? (
-          // One tap: the share sheet opens with the PDF and the list as its
-          // caption. See `sendToSupplier`.
-          <button
-            type="button"
-            onClick={sendToSupplier}
-            disabled={chosen.length === 0 || building}
-            className={clsx(
-              'inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white transition hover:bg-[#1eb457]',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-            )}
-          >
-            <WhatsAppIcon className="h-4 w-4" />
-            {t.restockSend}
-          </button>
-        ) : (
-          <>
-            {/* A real link rather than the Button component, which only
-                renders a `<button>`. WhatsApp has to be opened by a navigation
-                the browser can see the owner asked for — a click handler
-                calling `window.open` is what pop-up blockers exist to stop. */}
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener"
-              aria-disabled={chosen.length === 0}
-              onClick={(event) => {
-                if (chosen.length === 0) event.preventDefault();
-              }}
-              className={clsx(
-                'inline-flex h-9 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition',
-                chosen.length === 0
-                  ? 'cursor-not-allowed bg-[#25D366] opacity-50'
-                  : 'bg-[#25D366] hover:bg-[#1eb457]',
-                'text-white',
-              )}
-            >
-              <WhatsAppIcon className="h-4 w-4" />
-              {t.restockSend}
-            </a>
-            <Button
-              variant="secondary"
-              size="sm"
+      <footer className="border-t border-slate-200/70 bg-sunk/50 px-4 py-3">
+        <p className="mb-2 text-xs tabular-nums text-slate-500">
+          {t.restockWillSend.replace('{n}', String(chosen.length))}
+        </p>
+        <div className="flex gap-2">
+          {canSharePdf ? (
+            // One tap: the share sheet opens with the PDF and the list as its
+            // caption. See `sendToSupplier`.
+            <button
+              type="button"
               onClick={sendToSupplier}
-              loading={building}
-              disabled={chosen.length === 0}
+              disabled={noneTicked || building}
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1eb457] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {t.restockPdf}
-            </Button>
-          </>
-        )}
-      </div>
+              <WhatsAppIcon className="h-5 w-5" />
+              {t.restockSend}
+            </button>
+          ) : (
+            <>
+              {/* A real link: WhatsApp has to be opened by a navigation the
+                  browser can see the owner asked for — `window.open` from a
+                  handler is what pop-up blockers exist to stop. */}
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noopener"
+                aria-disabled={noneTicked}
+                onClick={(event) => {
+                  if (noneTicked) event.preventDefault();
+                }}
+                className={clsx(
+                  'inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white shadow-sm transition',
+                  noneTicked ? 'cursor-not-allowed opacity-50' : 'hover:bg-[#1eb457]',
+                )}
+              >
+                <WhatsAppIcon className="h-5 w-5" />
+                {t.restockSend}
+              </a>
+              <button
+                type="button"
+                onClick={sendToSupplier}
+                disabled={noneTicked || building}
+                aria-label={t.restockPdf}
+                title={t.restockPdf}
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-card px-4 text-sm font-semibold text-slate-700 transition hover:bg-sunk disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <PdfIcon className="h-5 w-5" />
+                {/* Icon only on a phone, so Send keeps one line. */}
+                <span className="hidden sm:inline">{t.restockPdf}</span>
+              </button>
+            </>
+          )}
+        </div>
+      </footer>
     </section>
   );
 }

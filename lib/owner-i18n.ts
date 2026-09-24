@@ -624,6 +624,12 @@ type OwnerDictionary = {
   restockItemCol: string;
   /** The box where the owner says how much to order, and its column head. */
   restockWanted: string;
+  /** The items-screen stat tile for counted items that are running low. */
+  runningLowCount: string;
+  /** The button on the common-items card that opens the catalogue. */
+  starterChoose: string;
+  /** Under the supplier list's send button. {n} is how many lines go. */
+  restockWillSend: string;
   restockTotal: string;
   restockEmptyLine: string;
 
@@ -1168,6 +1174,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     restockHeading: 'order list',
     restockItemCol: 'Item',
     restockWanted: 'How much',
+    runningLowCount: 'running low',
+    starterChoose: 'Choose',
+    restockWillSend: '{n} items will be sent',
     restockTotal: 'Items',
     restockEmptyLine: 'nothing to order',
 
@@ -1683,6 +1692,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     restockHeading: 'অর্ডার লিস্ট',
     restockItemCol: 'জিনিস',
     restockWanted: 'কত লাগবে',
+    runningLowCount: 'টি কম আছে',
+    starterChoose: 'বেছে নিন',
+    restockWillSend: '{n}টি জিনিস পাঠানো হবে',
     restockTotal: 'মোট',
     restockEmptyLine: 'অর্ডার করার কিছু নেই',
 
@@ -2198,6 +2210,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     restockHeading: 'ऑर्डर लिस्ट',
     restockItemCol: 'सामान',
     restockWanted: 'कितना चाहिए',
+    runningLowCount: 'कम बचे',
+    starterChoose: 'चुनें',
+    restockWillSend: '{n} सामान भेजे जाएंगे',
     restockTotal: 'कुल',
     restockEmptyLine: 'ऑर्डर करने को कुछ नहीं',
 
