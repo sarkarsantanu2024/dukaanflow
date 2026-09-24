@@ -11,7 +11,6 @@
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
-import { needsRestock } from '@/lib/restock';
 import { ItemsManager, type AdminItem } from '@/components/admin/ItemsManager';
 import { RestockCard } from './RestockCard';
 import type { ShopType } from '@prisma/client';
@@ -48,12 +47,6 @@ export function InventoryScreen({
   // The common-items catalogue opens in a drawer, and it starts closed.
   const [picker, setPicker] = useState(false);
 
-  const outOfStock = items.filter((item) => !item.inStock).length;
-  // In stock but at or under the low mark — the same rule the supplier's list uses.
-  const runningLow = useMemo(
-    () => needsRestock(items).filter((item) => item.inStock && item.stockQty !== 0).length,
-    [items],
-  );
   const usedShare = itemLimit > 0 ? Math.min(1, items.length / itemLimit) : 0;
 
   /**
@@ -145,12 +138,11 @@ export function InventoryScreen({
           wanted to change their notice had to know to go to a tab about
           something else. What is left below is a summary of this screen's own
           list, which is the one thing that genuinely belongs to it. */}
-      {/* THREE NUMBERS, THREE TILES. This was one grey line — "31 items / 1000
-          · 1 out" — that read as a footnote. The list's size now shows how much
-          of the plan it uses as a bar, and what has run out or is running low
-          each get a tile in the colour the rest of the app uses for them. */}
-      <section className="grid grid-cols-3 gap-2">
-        <div className="col-span-3 rounded-2xl border border-glass-edge bg-glass p-3 shadow-raised sm:col-span-1">
+      {/* THE LIST'S SIZE, AND HOW MUCH OF THE PLAN IT USES. The run-out and
+          running-low tiles that sat beside it are gone, by request: the
+          supplier card directly above already shows both numbers. */}
+      <section>
+        <div className="rounded-2xl border border-glass-edge bg-glass p-3 shadow-raised">
           <p className="flex items-baseline gap-1.5">
             <span className="text-2xl font-semibold tabular-nums text-slate-900">{items.length}</span>
             <span className="text-sm text-slate-500">{t.itemsCount}</span>
@@ -170,16 +162,6 @@ export function InventoryScreen({
               className={clsx('h-full rounded-full', usedShare >= 0.9 ? 'bg-amber-500' : 'bg-brand-500')}
               style={{ width: `${Math.max(2, Math.round(usedShare * 100))}%` }}
             />
-          </div>
-        </div>
-        <div className="col-span-3 grid grid-cols-2 gap-2 sm:col-span-2">
-          <div className={clsx('rounded-2xl border p-3 shadow-raised', outOfStock > 0 ? 'border-rose-200 bg-rose-50' : 'border-glass-edge bg-glass')}>
-            <p className={clsx('text-2xl font-semibold tabular-nums', outOfStock > 0 ? 'text-rose-700' : 'text-slate-400')}>{outOfStock}</p>
-            <p className="text-sm text-slate-600">{t.outOfStockCount}</p>
-          </div>
-          <div className={clsx('rounded-2xl border p-3 shadow-raised', runningLow > 0 ? 'border-amber-200 bg-amber-50' : 'border-glass-edge bg-glass')}>
-            <p className={clsx('text-2xl font-semibold tabular-nums', runningLow > 0 ? 'text-amber-800' : 'text-slate-400')}>{runningLow}</p>
-            <p className="text-sm text-slate-600">{t.runningLowCount}</p>
           </div>
         </div>
       </section>
