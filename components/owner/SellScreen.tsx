@@ -748,6 +748,7 @@ export function SellScreen({
           slug={slug}
           t={t}
           customer={billCustomer}
+          known={customers.map((entry) => ({ name: entry.name, phone: entry.phone, area: entry.area }))}
           onDone={() => setLastBill(null)}
           onError={(message) => push(message, 'error')}
           onSent={(message) => push(message, 'success')}
