@@ -11,6 +11,7 @@
  * components, with the defaults being the people who run this one. A blank
  * number is simply not rendered rather than shown as an empty line.
  */
+import { toAsciiDigits } from '@/lib/digits';
 
 export type SupportDetails = {
   name: string;
@@ -28,7 +29,7 @@ export type SupportDetails = {
  * shapes are accepted and reduced to the same ten digits.
  */
 function digits(value: string): string {
-  const only = value.replace(/\D/g, '');
+  const only = toAsciiDigits(value).replace(/\D/g, '');
   return only.length === 12 && only.startsWith('91') ? only.slice(2) : only;
 }
 

@@ -3,7 +3,7 @@ import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { bulkSchema } from '@/lib/validators';
 import { matchKey, parseBulk, splitNameAndUnit } from '@/lib/bulk';
-import { suggestNames } from '@/lib/speech';
+import { localNames } from '@/lib/transliterate';
 import { checkEditAllowance, markActivated, shopEntitlement } from '@/lib/billing';
 
 export const runtime = 'nodejs';
@@ -91,7 +91,7 @@ export async function POST(request: Request, { params }: Context) {
     // A pasted list is typed in one language and read in three. Without this
     // a Bengali shop that pastes "Rice 1 kg = 55" lists a row its own owner
     // reads in roman letters.
-    const known = suggestNames(name);
+    const known = localNames(name);
 
     const item = await prisma.item.upsert({
       where: { shopId_name_unit: { shopId: shop.id, name, unit } },
@@ -102,8 +102,8 @@ export async function POST(request: Request, { params }: Context) {
         shopId: shop.id,
         name,
         unit,
-        nameBn: known?.bn ?? '',
-        nameHi: known?.hi ?? '',
+        nameBn: known.bn,
+        nameHi: known.hi,
         pricePaise: line.pricePaise,
         priced: true,
       },

@@ -397,6 +397,8 @@ type OwnerDictionary = {
   stockSoldOut: string;
   /** The stock box on an item row, and what a bad number in it says. */
   stockShort: string;
+  /** What a bare count means on an item with no pack size: pieces. */
+  pieceShort: string;
   stockBadNumber: string;
   /**
    * The same refusal, for a row that has no pack size to measure against.
@@ -948,6 +950,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
       'How much is on the shelf. Write a plain number for the pack size beside it, or write the amount with its unit — 4.5 kg, 700 g, 12. Every sale takes its share off, and at zero the item comes off your shop page on its own. Leave it empty for anything you are not counting.',
     stockSoldOut: 'Sold out — taken off your shop page',
     stockShort: 'Stock',
+    pieceShort: 'pc',
     stockBadNumber: 'write a number, or an amount like 4.5 kg that matches the pack size',
     stockNoPack: 'write a plain number — this item has no pack size yet',
     duplicateName: 'listed twice',
@@ -1409,6 +1412,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
       'দোকানে কতটা আছে। পাশের মাপ অনুযায়ী শুধু সংখ্যা লিখুন, বা মাপ সমেত লিখুন — 4.5 kg, 700 g, 12। বিক্রি হলেই যতটা গেছে ততটা কমবে, শূন্য হলে জিনিসটা নিজে থেকেই দোকানের পাতা থেকে সরে যাবে। যেটা গুনছেন না, সেটা ফাঁকা রাখুন।',
     stockSoldOut: 'শেষ — দোকানের পাতা থেকে সরে গেছে',
     stockShort: 'কত আছে',
+    pieceShort: 'টি',
     stockBadNumber: 'সংখ্যা লিখুন, বা পাশের মাপের সঙ্গে মেলে এমন মাপ — যেমন 4.5 kg',
     stockNoPack: 'শুধু সংখ্যা লিখুন — এই জিনিসের মাপ এখনো দেওয়া হয়নি',
     duplicateName: 'একই নাম',
@@ -1870,6 +1874,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
       'दुकान में कितना है। बगल के पैक के हिसाब से सिर्फ़ संख्या लिखिए, या माप के साथ लिखिए — 4.5 kg, 700 g, 12। हर बिक्री पर उतना ही कम होगा, और शून्य होते ही चीज़ दुकान के पेज से अपने आप हट जाएगी। जो नहीं गिन रहे, उसे खाली छोड़िए।',
     stockSoldOut: 'खत्म — दुकान के पेज से हट गया',
     stockShort: 'कितना है',
+    pieceShort: 'पीस',
     stockBadNumber: 'संख्या लिखिए, या पैक के माप से मेल खाता माप — जैसे 4.5 kg',
     stockNoPack: 'सिर्फ़ संख्या लिखिए — इस चीज़ का माप अभी तय नहीं है',
     duplicateName: 'दो बार है',

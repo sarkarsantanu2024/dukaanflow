@@ -22,6 +22,7 @@
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { SearchIcon } from '@/components/ui/Icon';
+import { SearchMic } from '@/components/voice/SearchMic';
 import { formatPaise, paiseToInput } from '@/lib/money';
 import { MOST_PER_LINE } from '@/lib/units';
 import { matchesSearch } from '@/lib/speech';
@@ -157,16 +158,17 @@ export function ItemNotePicker({
       {open && (
         <div className="mt-2 rounded-xl border border-slate-200 bg-sunk p-2">
           {items.length >= SEARCH_FROM && (
-            <div className="relative">
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <div className="flex items-center gap-2 rounded-lg border border-slate-300 bg-card pl-3 pr-1 focus-within:border-brand-500">
+              <SearchIcon className="pointer-events-none h-4 w-4 shrink-0 text-slate-400" />
               <input
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t.searchItems}
                 aria-label={t.searchItems}
-                className="w-full rounded-lg border border-slate-300 bg-card py-2 pl-9 pr-3 text-base"
+                className="min-w-0 flex-1 bg-transparent py-2 text-base focus:outline-none"
               />
+              <SearchMic locale={locale} onText={setQuery} label={t.searchItems} />
             </div>
           )}
 

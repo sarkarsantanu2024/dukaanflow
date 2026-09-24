@@ -39,6 +39,7 @@
  * happen; the owner leaves the order first, which is one tap.
  */
 
+import { toAsciiDigits } from '@/lib/digits';
 import { SearchIcon } from '@/components/ui/Icon';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ItemCard, itemName, sellsAnyAmount } from '@/components/customer/ItemCard';
@@ -970,7 +971,7 @@ export function SellScreen({
                * number as wrong while it is being typed, which is the app
                * arguing with somebody who has not finished talking.
                */
-              const typed = khata.phone.replace(/\D/g, '');
+              const typed = toAsciiDigits(khata.phone).replace(/\D/g, '');
               const phoneRejected =
                 saleError?.field === 'customerPhone' ||
                 (typed.length >= 10 && !isValidMobile(khata.phone));

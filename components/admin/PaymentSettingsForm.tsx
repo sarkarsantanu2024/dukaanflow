@@ -10,6 +10,7 @@
  * printed and stuck to a wall, had nowhere to live.
  */
 
+import { toAsciiDigits } from '@/lib/digits';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ImagePicker } from './ImagePicker';
@@ -85,7 +86,7 @@ export function PaymentSettingsForm({ initial }: { initial: PaymentSettings }) {
         hint="10 digits"
         value={form.phone}
         error={errors.phone}
-        onChange={(value) => set('phone', value.replace(/\D/g, '').slice(0, 10))}
+        onChange={(value) => set('phone', toAsciiDigits(value).replace(/\D/g, '').slice(0, 10))}
         inputMode="numeric"
         placeholder="9876543210"
       />

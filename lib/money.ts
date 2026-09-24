@@ -14,6 +14,7 @@
  * Anything holding paise says so in its name (`amountPaise`, `PAISE_PER_ITEM`).
  * A bare `amount` or `price` is rupees.
  */
+import { toAsciiDigits } from '@/lib/digits';
 
 /**
  * THERE IS NO `formatRupees` HERE ANY MORE, AND THAT IS DELIBERATE.
@@ -49,7 +50,7 @@ export function rupeesToPaise(rupees: number): number {
  * what to do about it rather than being handed a silent zero.
  */
 export function parsePaise(value: string): number | null {
-  const text = value.trim().replace(/^₹\s*/, '').replace(/,/g, '');
+  const text = toAsciiDigits(value).trim().replace(/^₹\s*/, '').replace(/,/g, '');
   // Optional rupees, optional decimal point, at most two paise digits.
   const match = /^(\d*)(?:\.(\d{0,2}))?$/.exec(text);
   if (!match || (match[1] === '' && match[2] === undefined)) return null;

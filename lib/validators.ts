@@ -1,3 +1,4 @@
+import { toAsciiDigits } from '@/lib/digits';
 import { z } from 'zod';
 import { isStateCode } from './states';
 import { MOST_PER_LINE, QUANTITY_DP, roundQuantity } from './units';
@@ -26,7 +27,7 @@ export const SHOP_TYPE_LABELS: Record<(typeof SHOP_TYPES)[number], string> = {
 export const phoneSchema = z
   .string()
   .trim()
-  .transform((value) => value.replace(/[\s()-]/g, ''))
+  .transform((value) => toAsciiDigits(value).replace(/[\s()-]/g, ''))
   .transform((value) => value.replace(/^(\+?91|0)/, ''))
   .pipe(
     z
@@ -223,7 +224,7 @@ export const tradingTermsSchema = z.object({
 export const optionalPhoneSchema = z
   .string()
   .trim()
-  .transform((value) => value.replace(/[\s()-]/g, ''))
+  .transform((value) => toAsciiDigits(value).replace(/[\s()-]/g, ''))
   .transform((value) => value.replace(/^(\+?91|0)/, ''))
   .refine(
     (value) => value === '' || /^[6-9]\d{9}$/.test(value),
@@ -561,7 +562,7 @@ export const ownerLoginSchema = z.object({
     .string()
     .trim()
     // Phone keyboards and copy-paste both like to add spaces and hyphens.
-    .transform((value) => value.replace(/[\s-]/g, ''))
+    .transform((value) => toAsciiDigits(value).replace(/[\s-]/g, ''))
     .pipe(z.string().regex(/^\d{6}$/, 'Enter the 6-digit PIN')),
 });
 

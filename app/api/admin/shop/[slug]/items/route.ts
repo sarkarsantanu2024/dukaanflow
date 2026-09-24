@@ -4,7 +4,7 @@ import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { itemDeleteSchema, itemPatchSchema, itemUpsertSchema } from '@/lib/validators';
 import { checkEditAllowance, checkItemAllowance, markActivated } from '@/lib/billing';
 import { normaliseItemName, normaliseUnit } from '@/lib/units';
-import { suggestNames } from '@/lib/speech';
+import { localNames } from '@/lib/transliterate';
 
 export const runtime = 'nodejs';
 
@@ -53,13 +53,15 @@ export async function POST(request: Request, { params }: Context) {
    * only on a catalogue hit, and the bulk paste never filled them at all.
    *
    * One place, on the way in, covers all four. Only blanks are filled — a
-   * translation the client sent is the owner's and always wins — and only exact
-   * vocabulary hits are used, because a guessed translation is one the owner
-   * cannot read back to check.
+   * translation the client sent is the owner's and always wins. A vocabulary
+   * hit is translated; a name the vocabulary does not have (a brand, mostly:
+   * "Bingo") is SPELT in the other scripts instead, which the owner can read
+   * back and correct, where a guessed translation could not be checked. See
+   * `lib/transliterate.ts`.
    */
-  const known = suggestNames(name);
-  const nameBn = parsed.data.nameBn || known?.bn || '';
-  const nameHi = parsed.data.nameHi || known?.hi || '';
+  const local = localNames(name);
+  const nameBn = parsed.data.nameBn || local.bn;
+  const nameHi = parsed.data.nameHi || local.hi;
 
   // Re-pricing something the shop already has is an edit, not a new item, so
   // it stays allowed right up to the catalogue limit rather than being refused
@@ -74,7 +76,7 @@ export async function POST(request: Request, { params }: Context) {
       name: { equals: name, mode: 'insensitive' },
       unit: { equals: unit, mode: 'insensitive' },
     },
-    select: { id: true, unit: true },
+    select: { id: true, unit: true, nameBn: true, nameHi: true },
   });
 
   /**
@@ -102,7 +104,7 @@ export async function POST(request: Request, { params }: Context) {
     existing = await prisma.item.findFirst({
       where: { shopId, name: { equals: name, mode: 'insensitive' } },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, unit: true },
+      select: { id: true, unit: true, nameBn: true, nameHi: true },
     });
   }
 
@@ -147,8 +149,10 @@ export async function POST(request: Request, { params }: Context) {
            * deliberately, from the row's own box, through PATCH.
            */
           ...(stockQty === null ? {} : { stockQty }),
-          ...(nameBn ? { nameBn } : {}),
-          ...(nameHi ? { nameHi } : {}),
+          // The automatic spelling only fills a blank: it must never replace
+          // a name the owner typed by hand on an earlier save.
+          ...(parsed.data.nameBn ? { nameBn } : !existing.nameBn && nameBn ? { nameBn } : {}),
+          ...(parsed.data.nameHi ? { nameHi } : !existing.nameHi && nameHi ? { nameHi } : {}),
         },
         select: shape,
       })
