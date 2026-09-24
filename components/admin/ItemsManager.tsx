@@ -2003,9 +2003,10 @@ export function ItemsManager({
 
   if (!wide) {
     return (
-      // Room at the bottom for the floating buttons, so the last item is never
-      // trapped underneath them.
-      <div className="space-y-4 pb-24">
+      // No bottom room of its own any more: the Items screen pads its own foot
+      // for the floating buttons, and this padding stacked on top of it left a
+      // screen-height gap between the list and the cards under it.
+      <div className="space-y-4">
         {unitOptions}
         {photoAdder}
         {list}
