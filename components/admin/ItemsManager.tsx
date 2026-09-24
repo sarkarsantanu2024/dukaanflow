@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { toAsciiDigits } from '@/lib/digits';
 import { Badge } from '@/components/ui/Badge';
-import { CameraIcon, ChevronRightIcon, TrashIcon, SearchIcon } from '@/components/ui/Icon';
+import { CameraIcon, ChevronRightIcon, PlusIcon, TrashIcon, SearchIcon } from '@/components/ui/Icon';
 import { SearchMic } from '@/components/voice/SearchMic';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -287,6 +287,7 @@ export function ItemsManager({
   shopType = 'OTHER',
   catalogue = [],
   tools,
+  catalogueEntry,
 }: {
   slug: string;
   items: AdminItem[];
@@ -309,6 +310,12 @@ export function ItemsManager({
    * stranded the item list at the top beside an empty gutter.
    */
   tools?: { id: string; label: string; hint?: string; content: React.ReactNode }[];
+  /**
+   * The common-items catalogue, offered as one row inside the add sheet. It
+   * used to be a card of its own under the item list; adding from the
+   * catalogue is a way of adding, so it lives with the other ways.
+   */
+  catalogueEntry?: { label: string; count: number; open: () => void };
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -1965,6 +1972,24 @@ export function ItemsManager({
           >
             {scanning ? <Spinner className="h-5 w-5" /> : <CameraIcon className="h-5 w-5" />}
             {t.photoAdd}
+          </button>
+        )}
+        {/* The fourth way: pick from the ready-made list. Closes this sheet
+            and opens the catalogue in its own drawer, which needs the screen. */}
+        {catalogueEntry && catalogueEntry.count > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setDrawer(null);
+              catalogueEntry.open();
+            }}
+            className="flex w-full items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-left text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
+          >
+            <PlusIcon className="h-5 w-5 shrink-0" />
+            <span className="min-w-0 flex-1">{catalogueEntry.label}</span>
+            <span className="shrink-0 rounded-full bg-brand-600 px-2 py-0.5 text-xs tabular-nums text-white">
+              {catalogueEntry.count}
+            </span>
           </button>
         )}
         {/* Said once, above the rows. The mic no longer answers each item with
