@@ -43,6 +43,22 @@ export async function POST(request: Request, { params }: Context) {
   });
   const byId = new Map(rows.map((row) => [row.id, row]));
 
+  /**
+   * Whole numbers only for anything counted rather than weighed — the same rule
+   * the order route enforces, for the same reason: nobody hands over 0.4 of a
+   * bottle. Refused rather than rounded, because rounding here charged for one
+   * amount while the stock below moved by another.
+   */
+  const indivisible = items
+    .map((line) => byId.get(line.itemId))
+    .filter((item, index) => item && !isLooseUnit(item.unit) && !Number.isInteger(items[index]!.quantity));
+  if (indivisible.length > 0) {
+    return fail(
+      `${indivisible.map((item) => [item!.name, item!.unit].filter(Boolean).join(' ')).join(', ')} — sold whole. Please choose a whole number.`,
+      409,
+    );
+  }
+
   const lines = [];
   let totalAmountPaise = 0;
 
@@ -51,20 +67,19 @@ export async function POST(request: Request, { params }: Context) {
     // An item deleted mid-sale simply drops out; the rest of the sale stands.
     if (!item) continue;
     /**
-     * A COUNTER SALE IS WEIGHED TOO.
+     * A COUNTER SALE IS WEIGHED TOO — COUNTED OR NOT.
      *
      * The till sells whatever the shop sells, in whatever amount the customer
      * asked for at the counter — fifty grams of posto off a kilo price is the
      * same sale here as on the shop page. So the quantity may be fractional,
      * and the money is rounded to the paise once, here.
      *
-     * Whole for anything counted rather than weighed: the same rule the order
-     * route enforces, for the same reason — nobody hands over 0.4 of a bottle.
+     * It used to be whole whenever the item had a stock count, a leftover from
+     * when `stockQty` was an integer. The card still offered 250 g of counted
+     * rice, the stock moved by 0.25 and the bill charged a full kilo. The amount
+     * charged and the amount taken off the shelf are now the same number.
      */
-    const quantity =
-      isLooseUnit(item.unit) && item.stockQty === null
-        ? line.quantity
-        : Math.max(1, Math.round(line.quantity));
+    const quantity = line.quantity;
     const amountPaise = linePaise(item.pricePaise, quantity);
     totalAmountPaise += amountPaise;
     // The snapshot keys carry their unit. Readers of this JSON get no help
