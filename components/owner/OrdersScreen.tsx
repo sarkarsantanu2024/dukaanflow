@@ -27,6 +27,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { handledExpiredSession } from './sessionGuard';
 import clsx from 'clsx';
+import { FilterFab } from '@/components/ui/FilterFab';
 import { toAsciiDigits } from '@/lib/digits';
 import { useToast } from '@/components/ui/Toast';
 import {
@@ -39,7 +40,7 @@ import {
   TruckIcon,
   WhatsAppIcon,
 } from '@/components/ui/Icon';
-import { billPdfBlob, type Bill } from '@/lib/bill-pdf';
+import { billPdfBlob, lineDetail, type Bill } from '@/lib/bill-pdf';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { formatPaise } from '@/lib/money';
 import {
@@ -774,7 +775,7 @@ export function OrdersScreen({
     status: OrderStatus,
     paymentReceived = false,
     paymentMode: '' | 'CASH' | 'UPI' = '',
-  ) {
+  ): Promise<boolean> {
     setBusyId(id);
     try {
       const response = await fetch(`/api/admin/shop/${slug}/order`, {
@@ -782,10 +783,10 @@ export function OrdersScreen({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status, paymentReceived, paymentMode }),
       });
-      if (handledExpiredSession({ response, slug, t, push })) return;
+      if (handledExpiredSession({ response, slug, t, push })) return false;
       if (!response.ok) {
         push(t.networkError, 'error');
-        return;
+        return false;
       }
 
       // Say it out loud when money has just become a debt. An owner who taps
@@ -798,11 +799,61 @@ export function OrdersScreen({
 
       setSettling(null);
       router.refresh();
+      return true;
     } catch {
       push(t.networkError, 'error');
+      return false;
     } finally {
       setBusyId(null);
     }
+  }
+
+  /**
+   * DONE, AND THE BILL GOES TO THE CUSTOMER — one tap, by request.
+   *
+   * Cash, UPI or khata completes the order and then opens the customer's own
+   * WhatsApp chat with the bill written out: every line with its quantity, the
+   * delivery charge if any, the total, how it was paid, and the link to their
+   * order page. A wa.me link carries a number and text but never a file — only
+   * the share sheet can attach a PDF, and the share sheet cannot be told which
+   * number — so the bill travels as text; the WhatsApp icon on the card still
+   * shares the PDF for anyone who wants the file.
+   *
+   * The window is opened INSIDE the tap, before the save is awaited: a browser
+   * blocks a window opened after an await as a pop-up. If the save fails the
+   * window is closed again and nothing is sent.
+   */
+  async function completeAndSend(order: OwnerOrder, paymentReceived: boolean, paymentMode: '' | 'CASH' | 'UPI') {
+    const chat = window.open('', '_blank');
+    const saved = await setStatus(order.id, 'COMPLETED', paymentReceived, paymentMode);
+    if (!saved) {
+      chat?.close();
+      return;
+    }
+    const mode = paymentReceived ? (paymentMode || 'CASH') : 'KHATA';
+    const modeLabel = { CASH: t.sellCash, UPI: t.sellUpi, KHATA: t.sellKhata }[mode];
+    const text = [
+      shopName,
+      `${t.billDoc} · ${new Date().toLocaleString()}`,
+      order.customerName,
+      '',
+      ...order.lines.map((line) => {
+        const detail = lineDetail({ name: '', unit: line.unit, quantity: line.quantity, amountPaise: line.amountPaise });
+        return `• ${lineName(line, locale)}${detail ? ` — ${detail}` : ''} = ${formatPaise(line.amountPaise)}`;
+      }),
+      ...(order.deliveryFeePaise > 0 ? [`• ${t.delivery} = ${formatPaise(order.deliveryFeePaise)}`] : []),
+      '',
+      `${t.billTotal}: ${formatPaise(order.totalAmountPaise)}`,
+      `${t.billPaidBy}: ${modeLabel}`,
+      '',
+      t.billOrderLink,
+      `${window.location.origin}/track/${order.id}`,
+    ]
+      .filter((line, index, all) => !(line === '' && all[index - 1] === ''))
+      .join('\n');
+    const url = `https://wa.me/${toWhatsAppNumber(order.customerPhone)}?text=${encodeURIComponent(text)}`;
+    if (chat) chat.location.href = url;
+    else window.location.href = url;
   }
 
   /**
@@ -1157,9 +1208,10 @@ export function OrdersScreen({
                   />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-slate-900">
-                    {order.customerName || '—'} · {order.customerPhone}
-                  </p>
+                  {/* Name and number on two lines: on one, a long name pushed the
+                      number off the card and it read "980000…". */}
+                  <p className="truncate font-semibold text-slate-900">{order.customerName || '—'}</p>
+                  <p className="text-sm tabular-nums text-slate-600">{order.customerPhone}</p>
                   {/* Where it goes belongs with who it is for, not under the
                       list of what is in it — sitting there it read as another
                       line of the order. */}
@@ -1448,7 +1500,7 @@ export function OrdersScreen({
                       <button
                         type="button"
                         disabled={busyId === order.id}
-                        onClick={() => setStatus(order.id, 'COMPLETED', true, 'CASH')}
+                        onClick={() => void completeAndSend(order, true, 'CASH')}
                         className="h-11 rounded-xl border border-slate-300 bg-card text-sm font-semibold text-slate-800 disabled:opacity-50"
                       >
                         {t.sellCash}
@@ -1456,7 +1508,7 @@ export function OrdersScreen({
                       <button
                         type="button"
                         disabled={busyId === order.id}
-                        onClick={() => setStatus(order.id, 'COMPLETED', true, 'UPI')}
+                        onClick={() => void completeAndSend(order, true, 'UPI')}
                         className="h-11 rounded-xl bg-brand-600 text-sm font-semibold text-white disabled:opacity-50"
                       >
                         {t.sellUpi}
@@ -1464,7 +1516,7 @@ export function OrdersScreen({
                       <button
                         type="button"
                         disabled={busyId === order.id}
-                        onClick={() => setStatus(order.id, 'COMPLETED', false)}
+                        onClick={() => void completeAndSend(order, false, '')}
                         className="h-11 rounded-xl border border-amber-400 bg-amber-50 text-sm font-semibold text-amber-800 disabled:opacity-50"
                       >
                         {t.sellKhata}
@@ -1575,39 +1627,53 @@ export function OrdersScreen({
         <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
           <p className="text-xs text-slate-500">{t.ordersHistoryHint}</p>
 
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {/* How far back, as one dropdown: today, 7 days, 30 days, 3 months. */}
-            <select
-              value={doneDate ? '' : String(doneRange)}
-              onChange={(event) => {
-                setDoneRange(Number(event.target.value) as 1 | 7 | 30 | 90);
-                setDoneDate('');
-              }}
-              aria-label={t.historyRange}
-              className="h-11 rounded-xl border border-slate-300 bg-card px-3 text-base"
-            >
-              {doneDate && <option value="">{t.historyDate}</option>}
-              <option value="1">{t.historyToday}</option>
-              <option value="7">{t.history7}</option>
-              <option value="30">{t.history30}</option>
-              <option value="90">{t.history90}</option>
-            </select>
-            <input
-              type="search"
-              value={doneSearch}
-              onChange={(event) => setDoneSearch(event.target.value)}
-              placeholder={t.historySearch}
-              aria-label={t.historySearch}
-              className="h-11 rounded-xl border border-slate-300 bg-card px-3 text-base focus:border-brand-500 focus:outline-none"
-            />
-            <input
-              type="date"
-              value={doneDate}
-              onChange={(event) => setDoneDate(event.target.value)}
-              aria-label={t.historyDate}
-              className="h-11 rounded-xl border border-slate-300 bg-card px-3 text-base"
-            />
-          </div>
+          {/* THE FILTERS LIVE BEHIND THE FLOATING BUTTON, by request: open at the
+              top of the list they took most of a phone screen on every visit.
+              The result line below stays on screen, so a narrowed list never
+              reads as the whole of it. See `FilterFab`. */}
+          <FilterFab
+            label={t.filterOpen}
+            clearLabel={t.historyClear}
+            doneLabel={t.close}
+            active={(doneRange !== 90 ? 1 : 0) + (doneSearch ? 1 : 0) + (doneDate ? 1 : 0)}
+            onClear={() => {
+              setDoneSearch('');
+              setDoneRange(90);
+              setDoneDate('');
+            }}
+          >
+              {/* How far back, as one dropdown: today, 7 days, 30 days, 3 months. */}
+              <select
+                value={doneDate ? '' : String(doneRange)}
+                onChange={(event) => {
+                  setDoneRange(Number(event.target.value) as 1 | 7 | 30 | 90);
+                  setDoneDate('');
+                }}
+                aria-label={t.historyRange}
+                className="h-12 w-full rounded-xl border border-slate-300 bg-card px-3 text-base"
+              >
+                {doneDate && <option value="">{t.historyDate}</option>}
+                <option value="1">{t.historyToday}</option>
+                <option value="7">{t.history7}</option>
+                <option value="30">{t.history30}</option>
+                <option value="90">{t.history90}</option>
+              </select>
+              <input
+                type="search"
+                value={doneSearch}
+                onChange={(event) => setDoneSearch(event.target.value)}
+                placeholder={t.historySearch}
+                aria-label={t.historySearch}
+                className="h-12 w-full rounded-xl border border-slate-300 bg-card px-3 text-base focus:border-brand-500 focus:outline-none"
+              />
+              <input
+                type="date"
+                value={doneDate}
+                onChange={(event) => setDoneDate(event.target.value)}
+                aria-label={t.historyDate}
+                className="h-12 w-full rounded-xl border border-slate-300 bg-card px-3 text-base"
+              />
+          </FilterFab>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-sunk px-3 py-2">
             <p className="text-sm font-semibold tabular-nums text-slate-900">

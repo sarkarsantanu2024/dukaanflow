@@ -184,6 +184,15 @@ export function SearchIcon(props: IconProps) {
   );
 }
 
+/** A funnel: filters, behind the floating filter button. */
+export function FilterIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 5h16l-6.2 7.4V19l-3.6-1.8v-4.8Z" />
+    </Svg>
+  );
+}
+
 export function PhoneIcon(props: IconProps) {
   return (
     <Svg {...props}>
