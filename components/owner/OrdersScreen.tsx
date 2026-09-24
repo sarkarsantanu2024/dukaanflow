@@ -97,6 +97,8 @@ export type OwnerOrder = {
    */
   reachable: boolean;
   createdAt: string;
+  /** When it went out, or null — the day its money belongs to. See `takingsBetween`. */
+  completedAt: string | null;
   lines: {
     /** Blank on orders taken before the snapshot carried it. */
     itemId: string;
@@ -519,16 +521,21 @@ export function OrdersScreen({
     for (const order of orders) {
       if (!isToday(order.createdAt) || order.status === 'CANCELLED') continue;
       count += 1;
-      // Only money the owner has actually agreed to. An order sitting
-      // unanswered is not takingsPaise, and a figure checked against the cash
-      // drawer must never be the optimistic one.
-      if (
-        order.status === 'CONFIRMED' ||
-        order.status === 'READY' ||
-        order.status === 'COMPLETED'
-      ) {
-        takingsPaise += order.totalAmountPaise;
-      }
+    }
+    for (const order of orders) {
+      /**
+       * ONLY MONEY THAT HAS ARRIVED, ON THE DAY IT ARRIVED.
+       *
+       * This counted every CONFIRMED order placed today, and every order is
+       * confirmed the moment it arrives — so a bag still on the shelf, unpaid,
+       * was already in "today's takings", and an order placed last night and
+       * handed over this morning was in nobody's. The rule is now the one
+       * `takingsBetween` uses for the Home screen and the cash drawer: a
+       * completed order, on the day it was completed (placed, for orders from
+       * before completion was stamped).
+       */
+      if (order.status !== 'COMPLETED') continue;
+      if (isToday(order.completedAt ?? order.createdAt)) takingsPaise += order.totalAmountPaise;
     }
     return { count, takingsPaise };
   }, [orders]);

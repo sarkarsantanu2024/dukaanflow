@@ -98,6 +98,7 @@ export default async function OrdersPage({ params }: PageProps) {
       deliveryFeePaise: true,
       revisedAt: true,
       createdAt: true,
+      completedAt: true,
       itemsJson: true,
     },
     }),
@@ -144,6 +145,7 @@ export default async function OrdersPage({ params }: PageProps) {
     revised: row.revisedAt !== null,
     reachable: reachable.has(row.customerPhone),
     createdAt: row.createdAt.toISOString(),
+    completedAt: row.completedAt?.toISOString() ?? null,
     lines: readOrderLines(row.itemsJson, known),
   }));
 
