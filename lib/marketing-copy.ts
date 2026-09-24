@@ -79,9 +79,11 @@ export const STEPS: Words[] = [
     hi: 'ग्राहक QR स्कैन करके सामान चुनता है। ऑर्डर आपके ऐप में आता है और फ़ोन बज उठता है।',
   },
   {
-    en: 'Mark it ready, WhatsApp the customer, take the money, and tick it paid. You keep every rupee.',
-    bn: 'তৈরি হলে দাগ দিন, খদ্দেরকে হোয়াটসঅ্যাপ করুন, টাকা নিন, পেইড টিক করুন। পুরো টাকাটাই আপনার।',
-    hi: 'तैयार होने पर निशान लगाइए, ग्राहक को व्हाट्सएप कीजिए, पैसे लीजिए और “पेड” पर टिक कीजिए। पूरा पैसा आपका।',
+    // There is no "ready" step any more (removed 2026-09-24): the owner hands
+    // it over, taps done, says how it was paid, and the bill goes on WhatsApp.
+    en: 'Hand it over, tap done and say how it was paid — cash, UPI or khata. The bill goes to the customer on WhatsApp. You keep every rupee.',
+    bn: 'জিনিস দিয়ে "হয়ে গেছে" টিপুন, বলুন কীভাবে টাকা এল — নগদ, UPI না খাতায়। বিল খদ্দেরের হোয়াটসঅ্যাপে চলে যায়। পুরো টাকাটাই আপনার।',
+    hi: 'सामान देकर "हो गया" दबाइए, बताइए पैसे कैसे मिले — नकद, UPI या खाते में। बिल ग्राहक के व्हाट्सएप पर चला जाता है। पूरा पैसा आपका।',
   },
 ];
 
