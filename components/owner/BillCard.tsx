@@ -40,6 +40,7 @@ export function BillCard({
   slug,
   t,
   customer,
+  known = [],
   onDone,
   onError,
   onSent,
@@ -49,17 +50,27 @@ export function BillCard({
   t: OwnerDictionary;
   /** Already known — a khata sale names its customer. Fills the first step. */
   customer?: BillCustomer | null;
+  /** This shop's recent regulars, offered as one-tap picks. */
+  known?: BillCustomer[];
   /** Close — the owner is done with this sale. */
   onDone: () => void;
   onError: (message: string) => void;
   onSent: (message: string) => void;
 }) {
-  const [step, setStep] = useState<'who' | 'send'>('who');
+  // A customer the till already knows (a khata sale) skips the form entirely.
+  const [step, setStep] = useState<'who' | 'send'>(customer?.phone ? 'send' : 'who');
   const [name, setName] = useState(customer?.name ?? bill.customerName ?? '');
   const [phone, setPhone] = useState(customer?.phone ?? '');
   const [area, setArea] = useState(customer?.area ?? '');
   const [bad, setBad] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
+  /**
+   * The stored customer behind the typed number: undefined while not looked
+   * up, null when the number is new. A stored customer's name and para are
+   * used as they are and the boxes for them are not shown — asking again is how
+   * one person becomes three spellings in the khata.
+   */
+  const [found, setFound] = useState<BillCustomer | null | undefined>(customer?.phone ? customer : undefined);
 
   /** Can this phone hand a PDF to another app? Asked once, with a stand-in file. */
   const [canSharePdf, setCanSharePdf] = useState(false);
@@ -101,14 +112,70 @@ export function BillCard({
     .filter((line, index, all) => !(line === '' && all[index - 1] === ''))
     .join('\n');
 
+  useEffect(() => {
+    if (step !== 'who') return;
+    if (!isValidMobile(digits)) {
+      setFound(undefined);
+      return;
+    }
+    const nearby = known.find((entry) => entry.phone === digits);
+    if (nearby) {
+      setFound(nearby);
+      return;
+    }
+    let live = true;
+    fetch(`/api/owner/${slug}/customer?phone=${digits}`, { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : { customer: null }))
+      .then((payload: { customer?: BillCustomer | null }) => {
+        if (live) setFound(payload.customer ?? null);
+      })
+      .catch(() => {
+        if (live) setFound(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [digits, step, slug, known]);
+
+  useEffect(() => {
+    if (found) {
+      setName(found.name);
+      setArea(found.area);
+    }
+  }, [found]);
+
   const waUrl = `https://wa.me/${toWhatsAppNumber(digits)}?text=${encodeURIComponent(text)}`;
   const withName = { ...bill, customerName: name.trim() || bill.customerName };
 
-  function next() {
+  async function next() {
     if (!isValidMobile(digits)) {
       setBad(t.billBadPhone);
       return;
     }
+    setBad(undefined);
+    // A new number is remembered once, keyed by phone, so the next bill for
+    // this person needs no typing. A failed save never blocks the bill.
+    if (!found) {
+      try {
+        const response = await fetch(`/api/owner/${slug}/customer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: digits, name: name.trim(), area: area.trim() }),
+        });
+        const payload = (await response.json().catch(() => ({}))) as { customer?: BillCustomer };
+        if (payload.customer) setFound(payload.customer);
+      } catch {
+        // Offline: send the bill anyway.
+      }
+    }
+    setStep('send');
+  }
+
+  function pick(entry: BillCustomer) {
+    setPhone(entry.phone);
+    setFound(entry);
+    setName(entry.name);
+    setArea(entry.area);
     setBad(undefined);
     setStep('send');
   }
@@ -146,7 +213,7 @@ export function BillCard({
             <Button variant="secondary" onClick={onDone}>
               {t.billSkip}
             </Button>
-            <Button onClick={next} data-autofocus>
+            <Button onClick={() => void next()} data-autofocus>
               {t.billNext}
             </Button>
           </>
@@ -156,7 +223,7 @@ export function BillCard({
           className="space-y-3"
           onSubmit={(event) => {
             event.preventDefault();
-            next();
+            void next();
           }}
         >
           <Input
@@ -172,8 +239,36 @@ export function BillCard({
             }}
             error={bad}
           />
-          <Input label={t.billName} autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} />
-          <Input label={t.billArea} value={area} onChange={(event) => setArea(event.target.value)} />
+          {found ? (
+            <div className="rounded-xl bg-brand-50 px-4 py-3 ring-1 ring-brand-200">
+              <p className="text-xs font-semibold text-brand-700">{t.billKnown}</p>
+              <p className="mt-0.5 text-base font-semibold text-slate-900">{found.name || found.phone}</p>
+              {found.area && <p className="text-sm text-slate-600">{found.area}</p>}
+            </div>
+          ) : found === null ? (
+            <>
+              <Input label={t.billName} autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} />
+              <Input label={t.billArea} value={area} onChange={(event) => setArea(event.target.value)} />
+            </>
+          ) : null}
+
+          {!found && known.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-sm text-slate-600">{t.billPickKnown}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {known.slice(0, 8).map((entry) => (
+                  <button
+                    key={entry.phone}
+                    type="button"
+                    onClick={() => pick(entry)}
+                    className="min-h-9 rounded-full bg-card px-3 py-1 text-sm font-medium text-slate-700 ring-1 ring-slate-300 transition hover:bg-brand-50 hover:ring-brand-300"
+                  >
+                    {entry.name || entry.phone}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Enter on a phone keyboard moves on, as the button does. */}
           <button type="submit" hidden aria-hidden tabIndex={-1} />
         </form>

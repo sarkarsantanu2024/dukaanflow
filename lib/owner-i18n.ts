@@ -353,6 +353,11 @@ type OwnerDictionary = {
    * afterwards for the customer who asks.
    */
   billTitle: string;
+  /** Bill popup: a number that belongs to a stored customer, and the quick-pick of regulars. */
+  billKnown: string;
+  billPickKnown: string;
+  /** In the bill message sent on completing an order: the line before the link to the order page. */
+  billOrderLink: string;
   /** Bill popup: the customer's name, their para, the next step, the send and PDF buttons. */
   billName: string;
   billArea: string;
@@ -996,6 +1001,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellMissingItem: 'Item not in the list? Add it in Items, then come back.',
     sellKhata: 'Udhaar',
     billTitle: 'Send a bill',
+    billKnown: 'Saved customer',
+    billPickKnown: 'Or pick a regular',
+    billOrderLink: 'Your order and bill:',
     billName: 'Customer name',
     billArea: 'Area',
     billNext: 'Next',
@@ -1521,6 +1529,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellMissingItem: 'তালিকায় নেই? “জিনিস”-এ গিয়ে যোগ করুন, তারপর ফিরে আসুন।',
     sellKhata: 'ধার',
     billTitle: 'বিল পাঠান',
+    billKnown: 'চেনা কাস্টমার',
+    billPickKnown: 'বা আগের কাস্টমার বেছে নিন',
+    billOrderLink: 'আপনার অর্ডার ও বিল:',
     billName: 'কাস্টমারের নাম',
     billArea: 'পাড়া',
     billNext: 'এগিয়ে যান',
@@ -2046,6 +2057,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     sellMissingItem: 'सूची में नहीं है? “सामान” में जाकर जोड़िए, फिर लौटिए।',
     sellKhata: 'उधार',
     billTitle: 'बिल भेजिए',
+    billKnown: 'पहचाने ग्राहक',
+    billPickKnown: 'या पुराने ग्राहक चुनें',
+    billOrderLink: 'आपका ऑर्डर और बिल:',
     billName: 'ग्राहक का नाम',
     billArea: 'मोहल्ला',
     billNext: 'आगे बढ़ें',
