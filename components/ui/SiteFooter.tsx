@@ -14,17 +14,31 @@
  * browser.
  */
 
+import type { ReactNode } from "react";
 import { supportDetails } from "@/lib/support";
 
+type Slug = "privacy" | "terms" | "refund" | "contact";
+
 /** The four policy pages, by their route. English only, as they always were. */
-const LINK_LABEL: Record<string, string> = {
+const LINK_LABEL: Record<Slug, string> = {
   privacy: "Privacy",
   terms: "Terms",
   refund: "Refunds",
   contact: "Contact",
 };
 
-export function SiteFooter() {
+/**
+ * `labels` is for the landing page, which is read in three languages and
+ * hands its own words in (see `LANDING.footer` in `lib/marketing-copy.ts`).
+ * Every other page passes nothing and gets the English it always had — the
+ * shop and the tracking page have their own language switch, and this footer
+ * does not know about it.
+ */
+export function SiteFooter({
+  labels,
+}: {
+  labels?: Partial<Record<Slug | "poweredBy", ReactNode>>;
+} = {}) {
   const support = supportDetails();
 
   return (
@@ -54,7 +68,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-center px-4 text-center text-[12px] py-2 leading-tight text-slate-500">
         <p className="flex flex-wrap items-center justify-center gap-x-2.5">
           <span>
-            Powered by{" "}
+            {labels?.poweredBy ?? "Powered by"}{" "}
             <span className="font-medium text-slate-700">{support.name}</span>
           </span>
           {support.phone && (
@@ -83,7 +97,7 @@ export function SiteFooter() {
                   href={`/${slug}`}
                   className="whitespace-nowrap hover:text-slate-700"
                 >
-                  {LINK_LABEL[slug]}
+                  {labels?.[slug] ?? LINK_LABEL[slug]}
                 </a>
               </span>
             ),

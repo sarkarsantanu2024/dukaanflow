@@ -142,3 +142,21 @@
     margin: 12mm;
   }
 }
+
+/*
+ * THE LANDING PAGE'S LANGUAGE.
+ *
+ * Every piece of copy on `/` is in the HTML three times — English, Bengali and
+ * Hindi, each in a `data-l` span (see `components/marketing/Say.tsx`) — and the
+ * page root carries the reader's choice as `data-lang`. These rules hide the
+ * two that were not chosen; with no choice made yet, the page is English.
+ *
+ * ONLY EVER `display: none`, never a `display` to show one. The visible span
+ * keeps whatever display it had, so a line set `block` stays a block.
+ */
+[data-landing]:not([data-lang='bn']) [data-l='bn'],
+[data-landing]:not([data-lang='hi']) [data-l='hi'],
+[data-landing][data-lang='bn'] [data-l='en'],
+[data-landing][data-lang='hi'] [data-l='en'] {
+  display: none;
+}

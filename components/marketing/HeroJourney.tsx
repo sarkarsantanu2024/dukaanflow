@@ -36,6 +36,9 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import clsx from 'clsx';
 import { BellIcon, MicIcon, QrIcon, RupeeIcon } from '@/components/ui/Icon';
+import { LANDING, type Words } from '@/lib/marketing-copy';
+import { useLandingLang } from './LangTabs';
+import { Say } from './Say';
 
 /** How long each step holds. Long enough to read the caption aloud. */
 const STEP_MS = 4200;
@@ -46,53 +49,98 @@ type Step = {
   src: string;
   alt: string;
   /** Who is holding the phone. */
-  actor: string;
-  title: string;
-  bn: string;
+  actor: Words;
+  title: Words;
+  /** What is said aloud, where something is — the one line kept in quotes. */
+  quote?: Words;
 };
+
+/**
+ * The spoken line, in the script it is spoken in. In English it stays the
+ * Bengali sentence, as the hero's headline does: nobody lists rice in English.
+ */
+const SAID = LANDING.hero.headline;
 
 const STEPS: Step[] = [
   {
     id: 'speak',
     src: '/tour/02-items.png',
     alt: 'The owner’s item list, filling up as items are spoken',
-    actor: 'The owner',
-    title: 'Says the item and its price',
-    bn: '“চাল ১ কেজি ১০০”',
+    actor: { en: 'The owner', bn: 'মালিক', hi: 'मालिक' },
+    title: {
+      en: 'Says the item and its price',
+      bn: 'জিনিস আর দাম মুখে বলেন',
+      hi: 'सामान और दाम बोलकर बताते हैं',
+    },
+    quote: SAID,
   },
   {
     id: 'scan',
     src: '/tour/04-storefront.png',
     alt: 'The shop’s page as a customer sees it after scanning the QR',
-    actor: 'A customer',
-    title: 'Scans the QR at the counter',
-    bn: 'কাউন্টারের QR স্ক্যান করে',
+    actor: { en: 'A customer', bn: 'একজন খদ্দের', hi: 'एक ग्राहक' },
+    title: {
+      en: 'Scans the QR at the counter',
+      bn: 'কাউন্টারের QR স্ক্যান করেন',
+      hi: 'काउंटर का QR स्कैन करता है',
+    },
   },
   {
     id: 'order',
     src: '/tour/05-orders.png',
     alt: 'A new order arriving in the owner’s app',
-    actor: 'The order',
-    title: 'Lands in the app, and the phone buzzes',
-    bn: 'অর্ডার অ্যাপে আসে, ফোন বেজে ওঠে',
+    actor: { en: 'The order', bn: 'অর্ডার', hi: 'ऑर्डर' },
+    title: {
+      en: 'Lands in the app, and the phone buzzes',
+      bn: 'অ্যাপে আসে, ফোন বেজে ওঠে',
+      hi: 'ऐप में आता है, फ़ोन बज उठता है',
+    },
   },
   {
     id: 'khata',
     src: '/tour/06-khata.png',
     alt: 'The khata, showing each customer’s running balance',
-    actor: 'The khata',
-    title: 'Adds itself up — who owes what',
-    bn: 'বাকির হিসাব নিজেই যোগ হয়',
+    actor: { en: 'The khata', bn: 'খাতা', hi: 'खाता' },
+    title: {
+      en: 'Adds itself up — who owes what',
+      bn: 'নিজেই যোগ হয় — কার কত বাকি',
+      hi: 'अपने आप जुड़ता है — किस पर कितना उधार',
+    },
   },
   {
     id: 'till',
     src: '/tour/07-sell.png',
     alt: 'The counter till ringing up a walk-in sale',
-    actor: 'The till',
-    title: 'Takes the walk-in sale too',
-    bn: 'দোকানে সামনে বিক্রিও এখানেই',
+    actor: { en: 'The till', bn: 'কাউন্টার', hi: 'काउंटर' },
+    title: {
+      en: 'Takes the walk-in sale too',
+      bn: 'দোকানে এসে কেনার বিক্রিও এখানেই',
+      hi: 'दुकान पर आकर हुई बिक्री भी यहीं',
+    },
   },
 ];
+
+/** The words drawn over the screens. */
+const OVERLAY = {
+  said: {
+    en: SAID.en.replace(/[“”]/g, ''),
+    bn: SAID.bn.replace(/[“”]/g, ''),
+    hi: SAID.hi.replace(/[“”]/g, ''),
+  },
+  item: { en: 'চাল', bn: 'চাল', hi: 'चावल' },
+  noLogin: { en: 'No app. No login.', bn: 'অ্যাপ নেই। লগইন নেই।', hi: 'न ऐप, न लॉगिन।' },
+  paraOwes: { en: 'The para owes you', bn: 'পাড়ার কাছে পাওনা', hi: 'मोहल्ले पर उधार' },
+  cashPaid: {
+    en: 'Cash, paid — in today’s total',
+    bn: 'নগদ পেলেন — আজকের হিসাবে যোগ',
+    hi: 'नकद मिला — आज के हिसाब में जुड़ा',
+  },
+} satisfies Record<string, Words>;
+
+/** The English page's spoken words are Bengali, and are marked so. */
+function spoken(words: Words) {
+  return <Say t={words} en={<span lang="bn">{words.en}</span>} />;
+}
 
 export function HeroJourney({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
   const dark = tone === 'dark';
@@ -102,6 +150,7 @@ export function HeroJourney({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
   // reader prefers, and guessing would mean a hydration mismatch.
   const [reduced, setReduced] = useState(false);
   const touched = useRef(false);
+  const lang = useLandingLang();
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -165,17 +214,13 @@ export function HeroJourney({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
                       <MicIcon className="h-4 w-4" />
                       <span className="absolute inset-0 animate-ripple rounded-full bg-brand-400" />
                     </span>
-                    <span lang="bn" className="text-sm font-semibold">
-                      চাল ১ কেজি ১০০
-                    </span>
+                    <span className="text-sm font-semibold">{spoken(OVERLAY.said)}</span>
                   </div>
                   <div
                     className="mt-2 flex items-center justify-between rounded-xl bg-card px-3 py-2 text-sm shadow-raised"
                     style={{ animationDelay: '520ms' }}
                   >
-                    <span lang="bn" className="font-medium text-slate-900">
-                      চাল
-                    </span>
+                    <span className="font-medium text-slate-900">{spoken(OVERLAY.item)}</span>
                     <span className="font-semibold tabular-nums text-brand-700">₹100 / kg</span>
                   </div>
                 </div>
@@ -189,7 +234,7 @@ export function HeroJourney({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
                       <span className="absolute inset-0 animate-ripple rounded-xl bg-brand-400" />
                     </span>
                     <span className="text-sm font-medium text-slate-700">
-                      No app. No login.
+                      <Say t={OVERLAY.noLogin} />
                     </span>
                   </div>
                 </div>
@@ -215,7 +260,9 @@ export function HeroJourney({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
               {step.id === 'khata' && (
                 <div className="absolute inset-x-3 bottom-4 animate-chip-in">
                   <div className="rounded-2xl bg-card px-3 py-2 shadow-float">
-                    <p className="text-xs text-slate-500">The para owes you</p>
+                    <p className="text-xs text-slate-500">
+                      <Say t={OVERLAY.paraOwes} />
+                    </p>
                     <p className="text-lg font-bold tabular-nums text-slate-900">₹4,280</p>
                   </div>
                 </div>
@@ -228,7 +275,7 @@ export function HeroJourney({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
                       <RupeeIcon className="h-4 w-4" />
                     </span>
                     <span className="text-sm font-medium text-slate-700">
-                      Cash, paid — in today’s total
+                      <Say t={OVERLAY.cashPaid} />
                     </span>
                   </div>
                 </div>
@@ -244,12 +291,16 @@ export function HeroJourney({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
       <div className="mx-auto mt-5 max-w-xs text-center lg:max-w-sm">
         <p aria-live="polite" className="min-h-[3.25rem]">
           <span className={clsx('text-xs font-semibold uppercase tracking-[0.16em]', dark ? 'text-brand-200' : 'text-brand-600')}>
-            {step.actor}
+            <Say t={step.actor} />
           </span>
-          <span className={clsx('mt-0.5 block font-semibold', dark ? 'text-white' : 'text-slate-900')}>{step.title}</span>
-          <span lang="bn" className={clsx('block text-sm', dark ? 'text-white/75' : 'text-slate-600')}>
-            {step.bn}
+          <span className={clsx('mt-0.5 block font-semibold', dark ? 'text-white' : 'text-slate-900')}>
+            <Say t={step.title} />
           </span>
+          {step.quote && (
+            <span className={clsx('block text-sm', dark ? 'text-white/75' : 'text-slate-600')}>
+              {spoken(step.quote)}
+            </span>
+          )}
         </p>
 
         <div className="mt-3 flex items-center justify-center gap-2">
@@ -263,7 +314,7 @@ export function HeroJourney({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
                 touched.current = true;
                 setIndex(i);
               }}
-              aria-label={`${i + 1}. ${item.title}`}
+              aria-label={`${i + 1}. ${item.title[lang]}`}
               aria-current={i === index}
               className={clsx(
                 'h-1.5 rounded-full transition-all',
