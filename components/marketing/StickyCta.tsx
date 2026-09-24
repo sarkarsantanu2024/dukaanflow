@@ -21,6 +21,8 @@ import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import Link from 'next/link';
 import { WhatsAppIcon } from '@/components/ui/Icon';
+import { LANDING } from '@/lib/marketing-copy';
+import { Say } from './Say';
 
 export function StickyCta({ whatsapp }: { whatsapp: string | null }) {
   const [shown, setShown] = useState(false);
@@ -51,7 +53,7 @@ export function StickyCta({ whatsapp }: { whatsapp: string | null }) {
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 font-bold text-white shadow-raised"
           >
             <WhatsAppIcon className="h-5 w-5" />
-            <span lang="bn">দোকান খুলুন</span>
+            <Say t={LANDING.getYourShop} />
           </a>
         )}
         <Link
@@ -59,7 +61,7 @@ export function StickyCta({ whatsapp }: { whatsapp: string | null }) {
           tabIndex={shown ? 0 : -1}
           className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-card px-4 py-3 font-semibold text-slate-700"
         >
-          <span lang="bn">দাম</span>
+          <Say t={LANDING.prices} />
         </Link>
       </div>
     </div>

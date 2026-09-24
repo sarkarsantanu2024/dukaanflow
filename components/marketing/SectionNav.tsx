@@ -27,14 +27,19 @@
 
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
+import { LANDING, type Words } from '@/lib/marketing-copy';
+import { useLandingLang } from './LangTabs';
+import { Say } from './Say';
 
-export type NavItem = { href: string; label: string };
+/** A section link, named in every language the page can be read in. */
+export type NavItem = { href: string; label: Words };
 
 /** How far below the viewport top a section counts as "reached". */
 const HEADER_OFFSET = 96;
 
 export function SectionNav({ items, className }: { items: NavItem[]; className?: string }) {
   const [active, setActive] = useState<string | null>(null);
+  const lang = useLandingLang();
 
   useEffect(() => {
     let frame = 0;
@@ -71,7 +76,7 @@ export function SectionNav({ items, className }: { items: NavItem[]; className?:
   }, [items]);
 
   return (
-    <nav className={className} aria-label="Sections of this page">
+    <nav className={className} aria-label={LANDING.nav.label[lang]}>
       {items.map((item) => {
         const on = active === item.href;
         return (
@@ -89,7 +94,7 @@ export function SectionNav({ items, className }: { items: NavItem[]; className?:
                 : 'text-slate-300 hover:bg-white/10 hover:text-white',
             )}
           >
-            {item.label}
+            <Say t={item.label} />
           </a>
         );
       })}

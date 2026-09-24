@@ -17,8 +17,10 @@ import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import Link from 'next/link';
 import { CloseIcon, MenuIcon, WhatsAppIcon } from '@/components/ui/Icon';
-
-type NavItem = { href: string; label: string };
+import { LANDING } from '@/lib/marketing-copy';
+import { LangTabs, useLandingLang } from './LangTabs';
+import type { NavItem } from './SectionNav';
+import { Say } from './Say';
 
 export function MobileMenu({
   items,
@@ -30,10 +32,11 @@ export function MobileMenu({
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const lang = useLandingLang();
 
   useEffect(() => {
     if (!open) return;
-    panelRef.current?.querySelector<HTMLElement>('a')?.focus();
+    panelRef.current?.querySelector<HTMLElement>('nav a')?.focus();
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setOpen(false);
@@ -65,7 +68,12 @@ export function MobileMenu({
           'mb-[env(safe-area-inset-bottom)]',
         )}
       >
-        <nav aria-label="Sections of this page" className="flex flex-col">
+        {/* THE LANGUAGE SWITCH GOES IN HERE ON A PHONE. The bar at the top
+            has no room for it beside the mark and the button, and the tabs in
+            the hero are eight screens behind a reader who is deep in the
+            prices — but this menu is under their thumb on every one of them. */}
+        <LangTabs tone="dark" className="mb-2 w-full [&>button]:flex-1" />
+        <nav aria-label={LANDING.nav.label[lang]} className="flex flex-col">
           {items.map((item) => (
             <a
               key={item.href}
@@ -73,7 +81,7 @@ export function MobileMenu({
               onClick={close}
               className="rounded-xl px-4 py-3 text-base font-medium text-slate-200 hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             >
-              {item.label}
+              <Say t={item.label} />
             </a>
           ))}
           <Link
@@ -81,7 +89,7 @@ export function MobileMenu({
             onClick={close}
             className="rounded-xl px-4 py-3 text-base font-medium text-slate-200 hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
-            Admin sign in
+            <Say t={LANDING.adminSignIn} />
           </Link>
           {whatsapp && (
             <a
@@ -90,7 +98,7 @@ export function MobileMenu({
               className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-base font-semibold text-white hover:bg-brand-700"
             >
               <WhatsAppIcon className="h-5 w-5" />
-              Get your shop
+              <Say t={LANDING.getYourShop} />
             </a>
           )}
         </nav>
@@ -102,7 +110,7 @@ export function MobileMenu({
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls="mobile-menu"
-        aria-label={open ? 'Close menu' : 'Open menu'}
+        aria-label={(open ? LANDING.closeMenu : LANDING.openMenu)[lang]}
         className={clsx(
           'fixed bottom-24 right-4 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-black text-white shadow-float sm:bottom-6 sm:right-6',
           'mb-[env(safe-area-inset-bottom)] transition hover:bg-slate-800',
