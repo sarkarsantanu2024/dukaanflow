@@ -24,8 +24,9 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
+import { SearchIcon } from '@/components/ui/Icon';
 import { SearchMic } from '@/components/voice/SearchMic';
-import { spokenSearchText } from '@/lib/speech';
+import { spokenSearchText, rankBySearch } from '@/lib/speech';
 import { Button } from '@/components/ui/Button';
 import { DrawerFooter } from '@/components/ui/Drawer';
 import { useToast } from '@/components/ui/Toast';
@@ -93,8 +94,12 @@ export function StarterPicker({
     if (!needle) return null;
     // Spelling-tolerant, the same test every other item search uses, so a
     // voice search that finds something by it finds the same here.
-    return catalogue.filter((item) =>
-      matchesSearch([item.name, item.nameBn, item.nameHi, item.unit, item.category], needle),
+    return rankBySearch(
+      catalogue.filter((item) =>
+        matchesSearch([item.name, item.nameBn, item.nameHi, item.unit, item.category], needle),
+      ),
+      needle,
+      (item) => [item.name, item.nameBn, item.nameHi],
     );
   }, [catalogue, query]);
 
@@ -219,14 +224,16 @@ export function StarterPicker({
       <h2 className="font-semibold text-slate-900">{t.starterTitle}</h2>
       <p className="mt-1 text-sm text-slate-600">{t.starterHint}</p>
 
-      <div className="mt-3 flex items-center rounded-xl border border-slate-300 bg-card pr-1 focus-within:border-brand-500">
+      {/* The same search field as the shop page and the till. */}
+      <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-900/[.06] pl-3 pr-1.5 transition-colors focus-within:bg-slate-900/[.09]">
+        <SearchIcon className="pointer-events-none h-[18px] w-[18px] shrink-0 text-slate-500" />
         <input
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t.starterSearch}
           aria-label={t.starterSearch}
-          className="min-w-0 flex-1 rounded-xl bg-transparent px-3 py-2.5 text-base focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent py-2.5 text-base text-slate-900 placeholder:text-slate-500 focus:outline-none"
         />
         <SearchMic
           locale={locale}

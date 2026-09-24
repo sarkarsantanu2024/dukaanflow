@@ -23,7 +23,7 @@ import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { SearchIcon } from '@/components/ui/Icon';
 import { SearchMic } from '@/components/voice/SearchMic';
-import { spokenSearchText } from '@/lib/speech';
+import { spokenSearchText, rankBySearch } from '@/lib/speech';
 import { formatPaise, paiseToInput } from '@/lib/money';
 import { MOST_PER_LINE } from '@/lib/units';
 import { matchesSearch } from '@/lib/speech';
@@ -67,10 +67,13 @@ export function ItemNotePicker({
   /** itemId → how many of it. Absent means not picked. */
   const [picked, setPicked] = useState<Record<string, number>>({});
 
+  // Best match first, as on the shop page and the till — see `rankBySearch`.
   const visible = useMemo(
     () =>
-      items.filter((item) =>
-        matchesSearch([item.name, item.nameBn, item.nameHi, item.unit], query),
+      rankBySearch(
+        items.filter((item) => matchesSearch([item.name, item.nameBn, item.nameHi, item.unit], query)),
+        query,
+        (item) => [item.name, item.nameBn, item.nameHi],
       ),
     [items, query],
   );
@@ -159,15 +162,15 @@ export function ItemNotePicker({
       {open && (
         <div className="mt-2 rounded-xl border border-slate-200 bg-sunk p-2">
           {items.length >= SEARCH_FROM && (
-            <div className="flex items-center gap-2 rounded-lg border border-slate-300 bg-card pl-3 pr-1 focus-within:border-brand-500">
-              <SearchIcon className="pointer-events-none h-4 w-4 shrink-0 text-slate-400" />
+            <div className="flex items-center gap-2 rounded-xl bg-card pl-3 pr-1.5 ring-1 ring-slate-300/70 focus-within:ring-brand-500">
+              <SearchIcon className="pointer-events-none h-[18px] w-[18px] shrink-0 text-slate-500" />
               <input
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t.searchItems}
                 aria-label={t.searchItems}
-                className="min-w-0 flex-1 bg-transparent py-2 text-base focus:outline-none"
+                className="min-w-0 flex-1 bg-transparent py-2.5 text-base text-slate-900 placeholder:text-slate-500 focus:outline-none"
               />
               <SearchMic
                 locale={locale}

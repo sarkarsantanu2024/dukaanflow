@@ -59,29 +59,68 @@ export function escapeWhatsAppText(value: string): string {
   return value.replace(/[*_~`]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-/** Builds the exact customer-facing order message. Server-side only. */
-export function buildOrderMessage(input: OrderMessageInput): string {
+/**
+ * The words of an order message a customer sends the shop. English is the
+ * default; the shop page passes the customer's own language, so a Bengali
+ * shopper's order reaches a Bengali shop in Bengali.
+ */
+export type OrderMessageWords = {
+  title: string;
+  shop: string;
+  items: string;
+  total: string;
+  customer: string;
+  name: string;
+  phone: string;
+  address: string;
+  orderType: string;
+  delivery: string;
+  pickup: string;
+  thanks: string;
+  /** `{shop}` is replaced with the shop's name. */
+  offlineNote: string;
+};
+
+export const ENGLISH_ORDER_WORDS: OrderMessageWords = {
+  title: '🛒 New Order',
+  shop: 'Shop',
+  items: 'Items',
+  total: 'Total',
+  customer: 'Customer',
+  name: 'Name',
+  phone: 'Phone',
+  address: 'Address',
+  orderType: 'Order Type',
+  delivery: 'Delivery',
+  pickup: 'Pickup',
+  thanks: 'Thank you.',
+  offlineNote: "(Sent from {shop}'s page — no internet at the time.)",
+};
+
+/** Builds the exact customer-facing order message. */
+export function buildOrderMessage(input: OrderMessageInput, words: OrderMessageWords = ENGLISH_ORDER_WORDS): string {
+  const w = words;
   const lines = input.lines.map(
     (line) => `• ${itemText(line)} = ${plainPaise(line.amountPaise)}`,
   );
 
   const parts = [
-    '🛒 New Order',
+    w.title,
     '',
-    `Shop: ${escapeWhatsAppText(input.shopName)}`,
+    `${w.shop}: ${escapeWhatsAppText(input.shopName)}`,
     '',
-    'Items',
+    w.items,
     ...lines,
     '',
-    `Total: ${plainPaise(input.totalAmountPaise)}`,
+    `${w.total}: ${plainPaise(input.totalAmountPaise)}`,
     '',
-    'Customer',
-    `Name: ${escapeWhatsAppText(input.customerName) || '-'}`,
-    `Phone: ${input.customerPhone}`,
-    `Address: ${escapeWhatsAppText(input.customerAddress) || '-'}`,
-    `Order Type: ${input.orderType === 'DELIVERY' ? 'Delivery' : 'Pickup'}`,
+    w.customer,
+    `${w.name}: ${escapeWhatsAppText(input.customerName) || '-'}`,
+    `${w.phone}: ${input.customerPhone}`,
+    `${w.address}: ${escapeWhatsAppText(input.customerAddress) || '-'}`,
+    `${w.orderType}: ${input.orderType === 'DELIVERY' ? w.delivery : w.pickup}`,
     '',
-    'Thank you.',
+    w.thanks,
   ];
 
   return parts.join('\n');
@@ -101,10 +140,13 @@ export function buildOrderMessage(input: OrderMessageInput): string {
  * the customer walks in instead — which is the whole product failing at the one
  * moment it is being used.
  */
-export function buildOfflineOrderMessage(input: OrderMessageInput): string {
+export function buildOfflineOrderMessage(
+  input: OrderMessageInput,
+  words: OrderMessageWords = ENGLISH_ORDER_WORDS,
+): string {
   // Same shape as the order message the owner already knows how to read, with
-  // one line at the top saying why it arrived by hand.
-  return `${buildOrderMessage(input)}\n\n(Sent from ${escapeWhatsAppText(input.shopName)}'s page — no internet at the time.)`;
+  // one line at the end saying why it arrived by hand.
+  return `${buildOrderMessage(input, words)}\n\n${words.offlineNote.replace('{shop}', escapeWhatsAppText(input.shopName))}`;
 }
 
 /**

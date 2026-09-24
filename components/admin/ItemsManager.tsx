@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { toAsciiDigits } from '@/lib/digits';
 import { Badge } from '@/components/ui/Badge';
-import { CameraIcon, ChevronRightIcon, TrashIcon } from '@/components/ui/Icon';
+import { CameraIcon, ChevronRightIcon, TrashIcon, SearchIcon } from '@/components/ui/Icon';
 import { SearchMic } from '@/components/voice/SearchMic';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -24,7 +24,7 @@ import {
   type StarterItem,
 } from '@/lib/starter-catalogue';
 import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
-import { spokenSearchText, suggestNames, translateCategory } from '@/lib/speech';
+import { spokenSearchText, suggestNames, translateCategory, matchesSearch, rankBySearch } from '@/lib/speech';
 import { parseStockAmount, rateUnit, stockAmountLabel, unitsFor, UNIT_LIST_ID } from '@/lib/units';
 import { Drawer } from '@/components/ui/Drawer';
 import { FloatingTools } from './FloatingTools';
@@ -413,15 +413,14 @@ export function ItemsManager({
     [items],
   );
 
+  // The same spelling-tolerant match and best-first order as the shop page
+  // and the till — see `matchesSearch` and `rankBySearch`.
   const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return items.filter((item) => {
+    const shown = items.filter((item) => {
       if (category && item.category !== category) return false;
-      if (!needle) return true;
-      return `${item.name} ${item.nameBn} ${item.nameHi} ${item.unit} ${item.category}`
-        .toLowerCase()
-        .includes(needle);
+      return matchesSearch([item.name, item.nameBn, item.nameHi, item.unit, item.category], query);
     });
+    return rankBySearch(shown, query, (item) => [item.name, item.nameBn, item.nameHi]);
   }, [items, query, category]);
 
   /**
@@ -1658,14 +1657,16 @@ export function ItemsManager({
       // owner looking for one item needs it. The ground colour behind it keeps
       // the rows from showing through as they pass underneath.
       <div className="sticky top-[var(--sticky-top,0px)] z-10 -mx-1 mb-3 flex flex-col gap-2 bg-ground/95 px-1 py-2 backdrop-blur sm:flex-row sm:items-center">
-          <div className="flex w-full items-center rounded-xl border border-slate-300 bg-card pr-1 focus-within:border-brand-500">
+          {/* The same search field as the shop page and the till. */}
+          <div className="flex items-center gap-2 rounded-xl bg-slate-900/[.06] pl-3 pr-1.5 transition-colors focus-within:bg-slate-900/[.09] w-full">
+            <SearchIcon className="pointer-events-none h-[18px] w-[18px] shrink-0 text-slate-500" />
             <input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t.searchItems}
               aria-label={t.searchItems}
-              className="min-w-0 flex-1 rounded-xl bg-transparent px-3 py-2.5 focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent py-2.5 text-base text-slate-900 placeholder:text-slate-500 focus:outline-none"
             />
             <SearchMic
               locale={locale}

@@ -1787,9 +1787,24 @@ export function spokenSearchText<T extends MatchableItem>(
 }
 
 /**
+ * The list, best answer to `query` first — see `searchRank` — and otherwise in
+ * the order it came, so a list with no search reads exactly as before. Every
+ * item search in the product sorts through here, so the one on top is the same
+ * item on the shop page, the till, the Items tab and the khata picker.
+ */
+export function rankBySearch<T>(list: T[], query: string, names: (item: T) => string[]): T[] {
+  if (!query.trim()) return list;
+  return list
+    .map((item, index) => ({ item, index, rank: searchRank(names(item), query) }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(({ item }) => item);
+}
+
+/**
  * How well an item answers a search, for ordering what `matchesSearch` lets
- * through: 0 a name that starts with it, 1 a name that contains it, 2 the
- * looser matches (spelling-tolerant, synonyms). Lower is better.
+ * through: 0 a name that IS it, 1 a name that starts with it, 2 a name that
+ * contains it, 3 the looser matches (spelling-tolerant, synonyms). Lower is
+ * better, so "rice" puts Rice above Rice Flour.
  *
  * Filtering alone left the best answer wherever it happened to sit in the
  * catalogue: "chal" said into the mic kept every rice and "chaler gura" in
@@ -1799,9 +1814,10 @@ export function searchRank(fields: string[], query: string): number {
   const needle = query.trim().toLowerCase();
   if (!needle) return 0;
   const names = fields.map((field) => field.toLowerCase());
-  if (names.some((name) => name.startsWith(needle))) return 0;
-  if (names.some((name) => name.includes(needle))) return 1;
-  return 2;
+  if (names.some((name) => name.trim() === needle)) return 0;
+  if (names.some((name) => name.startsWith(needle))) return 1;
+  if (names.some((name) => name.includes(needle))) return 2;
+  return 3;
 }
 
 /**
@@ -1810,8 +1826,21 @@ export function searchRank(fields: string[], query: string): number {
  * "ata"; "Mustard Oil" becomes "mustardoil".
  */
 function loosen(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\p{M}]+/gu, '')
-    .replace(/(.)\1+/gu, '$1');
+  return (
+    text
+      .normalize('NFC')
+      .toLowerCase()
+      // SHORT AND LONG VOWELS ARE ONE SOUND TO A TYPIST. "मुंग" and "मूंग",
+      // "চিনি" and "চীনি" are the same word typed by two people, and a search
+      // that told them apart found nothing for the one who guessed wrong.
+      // Folded both ways, in both scripts; nasal marks go the same way, since
+      // মুগ and मूंग differ only by one.
+      .replace(/[ीী]/g, (c) => (c === 'ी' ? 'ि' : 'ি'))
+      .replace(/[ूূ]/g, (c) => (c === 'ू' ? 'ु' : 'ু'))
+      .replace(/[ईঈ]/g, (c) => (c === 'ई' ? 'इ' : 'ই'))
+      .replace(/[ऊঊ]/g, (c) => (c === 'ऊ' ? 'उ' : 'উ'))
+      .replace(/[ंँংঁ]/g, '')
+      .replace(/[^\p{L}\p{N}\p{M}]+/gu, '')
+      .replace(/(.)\1+/gu, '$1')
+  );
 }

@@ -221,6 +221,8 @@ type Dictionary = {
   offlineTitle: string;
   offlineBody: string;
   offlineWhatsApp: string;
+  /** The words of the order message sent to the shop when there is no signal. */
+  orderMessage: import('./whatsapp').OrderMessageWords;
 };
 
 export const DICTIONARIES: Record<Locale, Dictionary> = {
@@ -268,7 +270,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     noResults: 'No items match your search',
     search: 'Search items',
     bellTitle: 'Updates from the shop',
-    bellEmpty: 'Nothing yet. When the shop completes your order, it shows here.',
+    bellEmpty: 'Nothing yet. When the shop changes, turns away or completes your order, it shows here.',
     bellClearAll: 'Clear all',
     bellRemove: 'Remove',
     bellReceived: 'The shop has your order',
@@ -366,6 +368,21 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     offlineBody:
       'Your basket is safe. Try again when the signal is back, or send the order to the shop on WhatsApp.',
     offlineWhatsApp: 'Send on WhatsApp instead',
+    orderMessage: {
+      title: '🛒 New Order',
+      shop: 'Shop',
+      items: 'Items',
+      total: 'Total',
+      customer: 'Customer',
+      name: 'Name',
+      phone: 'Phone',
+      address: 'Address',
+      orderType: 'Order type',
+      delivery: 'Delivery',
+      pickup: 'Pickup',
+      thanks: 'Thank you.',
+      offlineNote: "(Sent from {shop}'s page — no internet at the time.)",
+    },
   },
   bn: {
     scanToOrder: 'স্ক্যান করে অর্ডার করুন',
@@ -411,7 +428,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     noResults: 'কিছু পাওয়া যায়নি',
     search: 'জিনিস খুঁজুন',
     bellTitle: 'দোকানের খবর',
-    bellEmpty: 'এখনও কিছু নেই। দোকান অর্ডার সম্পূর্ণ করলে এখানে দেখাবে।',
+    bellEmpty: 'এখনও কিছু নেই। দোকান অর্ডার বদলালে, নিতে না পারলে বা সম্পূর্ণ করলে এখানে দেখাবে।',
     bellClearAll: 'সব মুছুন',
     bellRemove: 'মুছুন',
     bellReceived: 'দোকান আপনার অর্ডার পেয়েছে',
@@ -509,6 +526,21 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     offlineBody:
       'আপনার ঝুড়ি ঠিক আছে। নেট এলে আবার চেষ্টা করুন, বা হোয়াটসঅ্যাপে দোকানে অর্ডারটা পাঠিয়ে দিন।',
     offlineWhatsApp: 'হোয়াটসঅ্যাপে পাঠান',
+    orderMessage: {
+      title: '🛒 নতুন অর্ডার',
+      shop: 'দোকান',
+      items: 'জিনিস',
+      total: 'মোট',
+      customer: 'ক্রেতা',
+      name: 'নাম',
+      phone: 'ফোন',
+      address: 'ঠিকানা',
+      orderType: 'কীভাবে নেবেন',
+      delivery: 'বাড়িতে দিয়ে যাবেন',
+      pickup: 'দোকান থেকে নেবেন',
+      thanks: 'ধন্যবাদ।',
+      offlineNote: '({shop}-এর পাতা থেকে পাঠানো — তখন ইন্টারনেট ছিল না।)',
+    },
   },
   hi: {
     scanToOrder: 'स्कैन करके ऑर्डर करें',
@@ -554,7 +586,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     noResults: 'कोई सामान नहीं मिला',
     search: 'सामान खोजें',
     bellTitle: 'दुकान की खबर',
-    bellEmpty: 'अभी कुछ नहीं। दुकान ऑर्डर पूरा करेगी तो यहाँ दिखेगा।',
+    bellEmpty: 'अभी कुछ नहीं। दुकान ऑर्डर बदले, न ले पाए या पूरा करे, तो यहाँ दिखेगा।',
     bellClearAll: 'सब हटाएँ',
     bellRemove: 'हटाएँ',
     bellReceived: 'दुकान को आपका ऑर्डर मिल गया',
@@ -652,6 +684,21 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     offlineBody:
       'आपकी टोकरी सुरक्षित है। नेट आने पर दोबारा कोशिश कीजिए, या व्हाट्सएप पर दुकान को ऑर्डर भेज दीजिए।',
     offlineWhatsApp: 'व्हाट्सएप पर भेजें',
+    orderMessage: {
+      title: '🛒 नया ऑर्डर',
+      shop: 'दुकान',
+      items: 'सामान',
+      total: 'कुल',
+      customer: 'ग्राहक',
+      name: 'नाम',
+      phone: 'फ़ोन',
+      address: 'पता',
+      orderType: 'कैसे लेंगे',
+      delivery: 'घर पर पहुँचाएँ',
+      pickup: 'दुकान से ले जाएँगे',
+      thanks: 'धन्यवाद।',
+      offlineNote: '({shop} के पेज से भेजा — तब इंटरनेट नहीं था।)',
+    },
   },
 };
 
