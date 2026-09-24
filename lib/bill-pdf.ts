@@ -85,7 +85,7 @@ const GAP = 14;
  * bill read "Parle-G ₹20" and nobody could tell two packets from one, and the
  * weight printed under the item above looked as if it belonged to this one.
  */
-function lineDetail(line: BillLine): string | null {
+export function lineDetail(line: BillLine): string | null {
   if (line.quantity <= 0) return null;
   const measure = amountLabel(line.unit, line.quantity);
   if (measure) return measure;
