@@ -48,9 +48,39 @@ export function localNames(name: string): { bn: string; hi: string } {
   const known = suggestNames(trimmed);
   if (known) return { bn: known.bn, hi: known.hi };
 
-  if (BENGALI.test(trimmed)) return { bn: trimmed, hi: bengaliToDevanagari(trimmed) };
-  if (DEVANAGARI.test(trimmed)) return { bn: devanagariToBengali(trimmed), hi: trimmed };
+  if (BENGALI.test(trimmed)) return { bn: trimmed, hi: safe(bengaliToDevanagari(trimmed)) };
+  if (DEVANAGARI.test(trimmed)) return { bn: safe(devanagariToBengali(trimmed)), hi: trimmed };
 
   const hi = romanToDevanagari(trimmed);
-  return { bn: devanagariToBengali(hi), hi };
+  return { bn: safe(devanagariToBengali(hi)), hi: safe(hi) };
+}
+
+/**
+ * WORDS A LETTER-BY-LETTER SPELLING MUST NEVER PRODUCE.
+ *
+ * "Maggi" came out as মাগী — a slur — and sat on a live shop page in front of
+ * every Bengali customer. The brand now has its real spelling in the
+ * vocabulary, but the next unknown brand can land on the same word by the same
+ * accident, and nobody can list every brand in advance. So a guessed spelling
+ * is checked word by word against this list, and one that hits is dropped:
+ * the item then shows its own name in roman letters until the owner types a
+ * spelling, which is the honest fallback — an odd-looking brand name is a
+ * shrug, an insult on the shop's own page is not.
+ *
+ * WHOLE WORDS ONLY. Several of these are also the first letters of ordinary
+ * words (বালতি is a bucket), so a substring match would refuse half a shop.
+ * Only ever applied to GUESSED spellings — a name the owner typed in their own
+ * script is theirs and is never second-guessed.
+ */
+const NEVER_SPELL = new Set([
+  // Bengali
+  'মাগী', 'মাগি', 'খানকি', 'খানকী', 'চোদ', 'চুদি', 'বাঁড়া', 'বাড়া', 'গুদ', 'বাল', 'শালা', 'শালী', 'হারামি', 'হারামী', 'কুত্তা', 'কুত্তী', 'রেন্ডি', 'রেন্ডী', 'রেংডী', 'রেংডি', 'খাংকী', 'খাংকি', 'বেশ্যা',
+  // Hindi
+  'मागी', 'रंडी', 'रण्डी', 'रेंडी', 'रेण्डी', 'खांकी', 'खानकी', 'चूत', 'चुत', 'लौड़ा', 'लौडा', 'लंड', 'गांड', 'गाँड', 'भोसड़ी', 'भोसडी', 'चोद', 'चूतिया', 'हरामी', 'कुत्ती', 'कमीना', 'साला', 'साली', 'बेहेनचोद', 'मादरचोद', 'वेश्या',
+]);
+
+/** The guessed spelling, or '' when any of its words is on `NEVER_SPELL`. */
+function safe(spelt: string): string {
+  const words = spelt.split(/[\s\-–—.,/()]+/).filter(Boolean);
+  return words.some((word) => NEVER_SPELL.has(word)) ? '' : spelt;
 }

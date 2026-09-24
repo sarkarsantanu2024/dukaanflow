@@ -1280,7 +1280,7 @@ const VOCAB: Vocab[] = [
   { en: 'Coconut', hi: 'नारियल', bn: 'নারকেল', roman: ['nariyal', 'narkel'] },
   { en: 'Detergent', hi: 'सर्फ', bn: 'সাবান গুঁড়ো', roman: ['surf', 'detergent powder'] },
   { en: 'Matchbox', hi: 'माचिस', bn: 'দেশলাই', roman: ['machis', 'deshlai'] },
-  { en: 'Candle', hi: 'मोमबत्ती', bn: 'মোমবাতি', roman: ['mombatti', 'mombati'] },
+  { en: 'Candle', hi: 'मोमबत्ती', bn: 'মোমবাতি', roman: ['candles', 'mombatti', 'mombati'] },
   // Street-food menus — the other half of Halkhata's shops.
   { en: 'Roll', hi: 'रोल', bn: 'রোল' },
   { en: 'Momo', hi: 'मोमो', bn: 'মোমো' },
@@ -1293,6 +1293,47 @@ const VOCAB: Vocab[] = [
   { en: 'Pack', hi: 'पैकेट', bn: 'প্যাকেট', roman: ['packet'] },
   { en: 'Powder', hi: 'पाउडर', bn: 'গুঁড়ো', roman: ['gura'] },
   { en: 'Bottle', hi: 'बोतल', bn: 'বোতল' },
+  // Staples that were missing and came out as phonetic guesses.
+  { en: 'Posto', hi: 'पोस्ता', bn: 'পোস্ত', roman: ['poppy seeds', 'posta', 'khuskhus', 'khus khus'] },
+  { en: 'Soya Badi', hi: 'सोया बड़ी', bn: 'সয়াবিন বড়ি', roman: ['soya chunks', 'soya bari', 'soya bori'] },
+  { en: 'Agarbatti', hi: 'अगरबत्ती', bn: 'ধূপকাঠি', roman: ['agarbati', 'incense sticks', 'dhupkathi'] },
+  // BRANDS, SPELT THE WAY THE SHOP AND ITS CUSTOMERS WRITE THEM.
+  //
+  // A brand has no translation, so a name this list does not know is spelt out
+  // letter by letter (lib/transliterate.ts) — and that turned "Maggi" into
+  // মাগী, a slur, on a live shop page. The brands a kirana actually stocks are
+  // listed here with the spelling on their own packets and adverts, so they
+  // never reach the letter-by-letter guess at all.
+  { en: 'Maggi', hi: 'मैगी', bn: 'ম্যাগি', roman: ['maggie', 'magi'] },
+  { en: 'Surf Excel', hi: 'सर्फ एक्सेल', bn: 'সার্ফ এক্সেল', roman: ['serf excel'] },
+  { en: 'Lux', hi: 'लक्स', bn: 'লাক্স' },
+  { en: 'Good Day', hi: 'गुड डे', bn: 'গুড ডে', roman: ['goodday'] },
+  { en: 'Parle-G', hi: 'पारले-जी', bn: 'পার্লে-জি', roman: ['parle g', 'parleg', 'parle'] },
+  { en: 'Colgate', hi: 'कोलगेट', bn: 'কোলগেট' },
+  { en: 'Tata Salt', hi: 'टाटा नमक', bn: 'টাটা নুন' },
+  { en: 'Bingo', hi: 'बिंगो', bn: 'বিঙ্গো' },
+  { en: 'Kurkure', hi: 'कुरकुरे', bn: 'কুরকুরে' },
+  { en: 'Lays', hi: 'लेज़', bn: 'লেজ', roman: ["lay's"] },
+  { en: 'Dettol', hi: 'डेटॉल', bn: 'ডেটল' },
+  { en: 'Lifebuoy', hi: 'लाइफबॉय', bn: 'লাইফবয়' },
+  { en: 'Vim', hi: 'विम', bn: 'ভিম' },
+  { en: 'Rin', hi: 'रिन', bn: 'রিন' },
+  { en: 'Ariel', hi: 'एरियल', bn: 'এরিয়েল' },
+  { en: 'Wheel', hi: 'व्हील', bn: 'হুইল' },
+  { en: 'Horlicks', hi: 'हॉर्लिक्स', bn: 'হরলিক্স' },
+  { en: 'Bournvita', hi: 'बॉर्नविटा', bn: 'বোর্নভিটা' },
+  { en: 'Complan', hi: 'कॉम्प्लान', bn: 'কমপ্ল্যান' },
+  { en: 'Britannia', hi: 'ब्रिटानिया', bn: 'ব্রিটানিয়া' },
+  { en: 'Amul', hi: 'अमूल', bn: 'আমুল' },
+  { en: 'Haldiram', hi: 'हल्दीराम', bn: 'হলদিরাম', roman: ["haldiram's", 'haldirams'] },
+  { en: 'Nescafe', hi: 'नेस्कैफे', bn: 'নেসক্যাফে' },
+  { en: 'Fortune', hi: 'फॉर्च्यून', bn: 'ফরচুন' },
+  { en: 'Aashirvaad', hi: 'आशीर्वाद', bn: 'আশীর্বাদ', roman: ['ashirvad', 'aashirvad'] },
+  { en: 'Clinic Plus', hi: 'क्लिनिक प्लस', bn: 'ক্লিনিক প্লাস' },
+  { en: 'Sunsilk', hi: 'सनसिल्क', bn: 'সানসিল্ক' },
+  { en: 'Pepsodent', hi: 'पेप्सोडेंट', bn: 'পেপসোডেন্ট' },
+  { en: 'Frooti', hi: 'फ्रूटी', bn: 'ফ্রুটি' },
+  { en: 'Thums Up', hi: 'थम्स अप', bn: 'থামস আপ', roman: ['thumbs up'] },
 ];
 
 /**
