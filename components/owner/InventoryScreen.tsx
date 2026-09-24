@@ -103,7 +103,7 @@ export function InventoryScreen({
           counter with a vendor in front of you, and the moment it is needed is
           too short to go hunting behind "More settings" for it. It costs one
           quiet line on a shop whose shelves are full. */}
-      <RestockCard shopName={shopName} items={items} locale={locale} />
+      <RestockCard slug={slug} shopName={shopName} items={items} locale={locale} />
 
       {/* THE CATALOGUE IS NOW ONE CLOSED LINE, AND IT OPENS A DRAWER.
           It used to unfold on the tab itself: a heading, a search box and a

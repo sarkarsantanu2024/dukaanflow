@@ -131,12 +131,24 @@ function catalogueUnit(names: string[], catalogue: StarterItem[]): string {
   const wanted = names.map((name) => name.trim().toLowerCase()).filter(Boolean);
   if (wanted.length === 0) return '';
 
-  const hit = catalogue.find((entry) =>
-    [entry.name, entry.nameBn, entry.nameHi]
-      .filter(Boolean)
-      .some((form) => wanted.includes(form.trim().toLowerCase())),
+  const forms = (entry: StarterItem) =>
+    [entry.name, entry.nameBn, entry.nameHi].filter(Boolean).map((form) => form.trim().toLowerCase());
+
+  const hit = catalogue.find((entry) => forms(entry).some((form) => wanted.includes(form)));
+  if (hit) return hit.unit;
+
+  // NO EXACT ENTRY, SO A WHOLE-WORD ONE. "Flour" translates to আটা, and the
+  // catalogue lists গমের আটা at 1 kg: the owner saying the short name should
+  // still get the pack size a kirana sells it in. Whole words only, and three
+  // letters at least, so "tea" never matches "steam" and a one-letter word
+  // matches nothing.
+  const partial = catalogue.find((entry) =>
+    forms(entry).some((form) => {
+      const words = form.split(/\s+/);
+      return wanted.some((name) => name.length >= 3 && words.includes(name));
+    }),
   );
-  return hit?.unit ?? '';
+  return partial?.unit ?? '';
 }
 
 /**
@@ -1200,17 +1212,17 @@ export function ItemsManager({
                 placeholder: '68',
                 'aria-label': t.price,
               }}
-              unit={
-                lean
-                  ? undefined
-                  : {
-                      value: row.unit,
-                      onChange: (value) => updateRow(index, { unit: value }),
-                      listId: UNIT_LIST_ID,
-                      placeholder: rateUnit(units[0] ?? ''),
-                      'aria-label': t.unit,
-                    }
-              }
+              // "₹ 20 / packet", in simple mode too, exactly as the saved row
+              // shows it: the owner sees what the price is per while typing it,
+              // and the unit filled in from the name is visible and fixable
+              // here instead of arriving unseen. Left empty it still saves.
+              unit={{
+                value: row.unit,
+                onChange: (value) => updateRow(index, { unit: value }),
+                listId: UNIT_LIST_ID,
+                placeholder: t.unit,
+                'aria-label': t.unit,
+              }}
             />
 
             {/* HOW MUCH IS ON THE SHELF, ASKED WHILE THE ITEM IS BEING ADDED.
@@ -1224,7 +1236,7 @@ export function ItemsManager({
               label={t.stockShort}
               aria-label={t.stockShort}
               type="text"
-              inputMode="decimal"
+              inputMode="text"
               value={row.stock}
               onChange={(event) => updateRow(index, { stock: event.target.value })}
               error={rowErrors[index]?.stock}
@@ -1568,7 +1580,7 @@ export function ItemsManager({
                   <div className="relative">
                     <input
                       type="text"
-                      inputMode="decimal"
+                      inputMode="text"
                       aria-label={`${t.stockShort} — ${displayName(item, locale)}`}
                       title={t.stockHint}
                       value={stockText}
