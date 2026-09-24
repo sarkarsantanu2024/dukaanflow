@@ -45,10 +45,13 @@ import {
 import type { Locale } from '@/lib/i18n';
 
 export function RestockCard({
+  slug,
   shopName,
   items,
   locale,
 }: {
+  /** Keys the order amounts kept on this phone — see `orderQty`. */
+  slug: string;
   shopName: string;
   /** The shop's whole list. What needs reordering is worked out from it here. */
   items: RestockItem[];
@@ -80,6 +83,55 @@ export function RestockCard({
    * and buys it by the fifty-kilo bosta. See `RestockLine`.
    */
   const [orderQty, setOrderQty] = useState<Record<string, string>>({});
+
+  /**
+   * KEPT ON THIS PHONE, so a refresh does not throw the list away.
+   *
+   * An owner fills these in over a morning (half the amounts now, the rest
+   * after checking the back room) and the page reloads under them: a pull to
+   * refresh, a sale rung up in another tab, the app reopened from the home
+   * screen. Every amount used to vanish with it.
+   *
+   * Browser storage rather than the server: this is a draft for one phone, not
+   * a record anybody else needs. An item that has been restocked drops off the
+   * list, and its amount is forgotten with it. Storage that is missing or
+   * blocked (a private window) just means the old behaviour.
+   */
+  const storageKey = `halkhata:restock:${slug}`;
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}') as unknown;
+      if (saved && typeof saved === 'object') {
+        setOrderQty(
+          Object.fromEntries(
+            Object.entries(saved as Record<string, unknown>).filter(
+              ([, value]) => typeof value === 'string',
+            ),
+          ) as Record<string, string>,
+        );
+      }
+    } catch {
+      // Unreadable or unavailable storage: start empty.
+    }
+    setRestored(true);
+  }, [storageKey]);
+
+  useEffect(() => {
+    // Not before the saved copy has been read, or the empty first render would
+    // overwrite it.
+    if (!restored) return;
+    const stillWanted = new Set(needsRestock(items).map((item) => item.id));
+    const kept = Object.fromEntries(
+      Object.entries(orderQty).filter(([id, value]) => stillWanted.has(id) && value.trim()),
+    );
+    try {
+      if (Object.keys(kept).length === 0) window.localStorage.removeItem(storageKey);
+      else window.localStorage.setItem(storageKey, JSON.stringify(kept));
+    } catch {
+      // Full or blocked storage: the amounts still work for this visit.
+    }
+  }, [orderQty, items, restored, storageKey]);
   const chosenIds = picked ?? new Set(wanted.map((item) => item.id));
   const chosen = wanted.filter((item) => chosenIds.has(item.id));
   const [building, setBuilding] = useState(false);
