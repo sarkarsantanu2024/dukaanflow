@@ -64,9 +64,34 @@ export type BillLabels = {
 /** Canvas geometry. A receipt is narrow; everything below is in these pixels. */
 const WIDTH = 720;
 const PAD = 48;
+/** An item's name line. */
 const ROW = 52;
+/**
+ * The line under a name saying how much of it — "250 g", "2 × ₹10 · 1 packet".
+ * Drawn close under its own name and followed by a gap, so it reads as part of
+ * the item above and never as the heading of the one below.
+ */
+const DETAIL_ROW = 34;
 /** The extra height a line with a note takes. */
 const NOTE_ROW = 30;
+/** Space between one item and the next. */
+const GAP = 14;
+
+/**
+ * How much of this line was bought, as a shopper would read it.
+ *
+ * Weighed and poured goods say the amount ("250 g", "1.5 kg"). Counted goods
+ * say the count and the price of one ("2 × ₹10 · 1 packet") — without it a
+ * bill read "Parle-G ₹20" and nobody could tell two packets from one, and the
+ * weight printed under the item above looked as if it belonged to this one.
+ */
+function lineDetail(line: BillLine): string | null {
+  if (line.quantity <= 0) return null;
+  const measure = amountLabel(line.unit, line.quantity);
+  if (measure) return measure;
+  const each = formatPaise(Math.round(line.amountPaise / line.quantity));
+  return [`${line.quantity} × ${each}`, line.unit.trim()].filter(Boolean).join(' · ');
+}
 
 /** The bill written and saved to the phone, for the till and the fallback. */
 export async function downloadBillPdf(
@@ -93,8 +118,9 @@ export async function billPdfBlob(bill: Bill, labels: BillLabels): Promise<Blob>
   // Height is worked out from the line count rather than fixed, so a two-item
   // bill is not three-quarters white space and a twenty-item one does not run
   // off the bottom.
-  const notes = bill.lines.filter((line) => line.note).length;
-  const height = PAD * 2 + 210 + bill.lines.length * ROW + notes * NOTE_ROW + 190;
+  const rowHeight = (line: BillLine) =>
+    ROW + (lineDetail(line) ? DETAIL_ROW : 0) + (line.note ? NOTE_ROW : 0) + GAP;
+  const height = PAD * 2 + 210 + bill.lines.reduce((sum, line) => sum + rowHeight(line), 0) + 190;
 
   const canvas = document.createElement('canvas');
   canvas.width = WIDTH;
@@ -145,19 +171,21 @@ export async function billPdfBlob(bill: Bill, labels: BillLabels): Promise<Blob>
       ctx.textAlign = 'left';
     }
 
-    const measure = line.quantity > 0 ? amountLabel(line.unit, line.quantity) : null;
-    if (measure) {
-      ctx.fillStyle = '#94a3b8';
+    const detail = lineDetail(line);
+    let under = y + 38;
+    if (detail) {
+      ctx.fillStyle = '#64748b';
       ctx.font = '22px system-ui, sans-serif';
-      ctx.fillText(measure, PAD, y + 30);
+      ctx.fillText(detail, PAD, under);
+      under += DETAIL_ROW;
     }
     if (line.note) {
       // Amber, the colour the app uses for "not today".
       ctx.fillStyle = '#b45309';
       ctx.font = '22px system-ui, sans-serif';
-      ctx.fillText(line.note, PAD, y + (measure ? 56 : 30));
+      ctx.fillText(line.note, PAD, under);
     }
-    y += ROW + (line.note ? NOTE_ROW : 0);
+    y += rowHeight(line);
   }
 
   y += 8;
