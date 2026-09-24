@@ -21,24 +21,36 @@ import { SiteFooter } from '@/components/ui/SiteFooter';
 import { BackToTop } from '@/components/marketing/BackToTop';
 import { MobileMenu } from '@/components/marketing/MobileMenu';
 import { BRAND_LOGO, BRAND_NAME, BRAND_WORDMARK } from '@/lib/brand';
-import { SAFETY } from '@/lib/marketing-copy';
-import { LangTabs } from '@/components/marketing/LangTabs';
+import {
+  FAQ,
+  FEATURES,
+  LANDING,
+  SAFETY,
+  includesLine,
+  listingOffer,
+  planItemsLine,
+  planTagline,
+  yearLine,
+  type FeatureId,
+  type Words,
+} from '@/lib/marketing-copy';
+import { LandingLanguage, LangSelect, LangTabs } from '@/components/marketing/LangTabs';
+import { Say } from '@/components/marketing/Say';
 import { ProblemList, StepList } from '@/components/marketing/StoryLists';
 import { HeroJourney } from '@/components/marketing/HeroJourney';
-import { SectionNav } from '@/components/marketing/SectionNav';
+import { SectionNav, type NavItem } from '@/components/marketing/SectionNav';
 import { StickyCta } from '@/components/marketing/StickyCta';
 import {
-  AUTO_PAUSE_DAYS,
   EVERY_PLAN_INCLUDES,
   LISTING_PAISE_PER_ITEM,
   PLAN_ORDER,
   PLAN_SPECS,
-  TRIAL_DAYS,
-  planItems,
   yearPrice,
   yearSaving,
 } from '@/lib/plans';
+import type { Locale } from '@/lib/i18n';
 import { formatPaise } from '@/lib/money';
+import { baseUrl } from '@/lib/qr';
 import { supportDetails } from '@/lib/support';
 
 /**
@@ -50,17 +62,50 @@ import { supportDetails } from '@/lib/support';
  * itself back in. `/pricing` already did. This one never did, so the landing
  * page, the headline the whole positioning rests on, could not appear on Google
  * at all while the page listing the prices could.
+ *
+ * THE LINK PREVIEW NEEDS A PICTURE, AND AN ADDRESS. This page is passed round
+ * on WhatsApp far more than it is searched for, and a link with no `og:image`
+ * arrives as a bare grey line of text under somebody's message — the one
+ * chance to look like something, spent. The card is `public/social/
+ * link-preview.png`, 1200×630, made by `npm run social:preview`. It has to be
+ * an absolute URL for a crawler to fetch it, which is what `metadataBase` is
+ * for; the base is `baseUrl()`, the same one the sitemap, robots and every
+ * printed QR use, so the canonical address and the card follow the domain
+ * wherever it moves.
+ *
+ * The description is kept under 160 characters. Past that, Google cuts it
+ * mid-sentence and WhatsApp shows two lines of it anyway.
  */
+const PREVIEW = {
+  url: '/social/link-preview.png',
+  width: 1200,
+  height: 630,
+  alt: `${BRAND_NAME} — say “চাল ১ কেজি ১০০” and your shop is online: QR orders, udhaar khata, no commission`,
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl()),
   title: `${BRAND_NAME} — speak your shop online, khata and all`,
   description:
-    'A kirana runs on a voice, a QR and a notebook. Halkhata lists your items by speaking, takes orders from a QR at your counter, and keeps the udhaar khata — one price a month, no commission on any order.',
+    'List your kirana’s items by speaking, take orders from a QR at your counter and keep the udhaar khata. One price a month, no commission on any order.',
   robots: { index: true, follow: true },
+  alternates: { canonical: '/' },
   openGraph: {
     title: `${BRAND_NAME} — speak your shop online`,
     description:
       'Voice cataloguing in Bangla, Hindi and English. QR ordering. Udhaar khata. No commission.',
     type: 'website',
+    url: '/',
+    siteName: BRAND_NAME,
+    locale: 'en_IN',
+    images: [PREVIEW],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${BRAND_NAME} — speak your shop online`,
+    description:
+      'Voice cataloguing in Bangla, Hindi and English. QR ordering. Udhaar khata. No commission.',
+    images: [PREVIEW],
   },
 };
 
@@ -125,9 +170,9 @@ function SectionHead({
   align = 'left',
   tone = 'light',
 }: {
-  eyebrow: string;
-  title: string;
-  lead?: string;
+  eyebrow: Words;
+  title: Words;
+  lead?: Words;
   align?: 'left' | 'center';
   /** `dark` for a heading sitting on the brand panel. */
   tone?: 'light' | 'dark';
@@ -146,7 +191,7 @@ function SectionHead({
           dark ? 'bg-white/15 text-brand-100' : 'bg-brand-50 text-brand-700',
         )}
       >
-        {eyebrow}
+        <Say t={eyebrow} />
       </span>
       <h2
         className={clsx(
@@ -154,11 +199,11 @@ function SectionHead({
           dark ? 'text-white' : 'text-slate-900',
         )}
       >
-        {title}
+        <Say t={title} />
       </h2>
       {lead && (
         <p className={clsx('mt-3 text-lg leading-relaxed', dark ? 'text-white/75' : 'text-slate-600')}>
-          {lead}
+          <Say t={lead} />
         </p>
       )}
     </div>
@@ -181,7 +226,7 @@ function PhoneShot({
 }: {
   src: string;
   alt: string;
-  caption: string;
+  caption: Words;
   priority?: boolean;
 }) {
   return (
@@ -200,7 +245,7 @@ function PhoneShot({
       {/* `currentColor`, so one component serves the pale band and the dark
           one — the caption takes the colour of whatever section it is in. */}
       <figcaption className="mt-3 text-center text-base font-medium opacity-80">
-        {caption}
+        <Say t={caption} />
       </figcaption>
     </figure>
   );
@@ -287,154 +332,44 @@ const ART = {
 } as const;
 
 /** Where the top bar jumps to, in the order the page answers questions. */
-const NAV = [
-  { href: '#what', label: 'What you get' },
-  { href: '#how', label: 'How it works' },
-  { href: '#why', label: 'Why shops switch' },
-  { href: '#plans', label: 'Pricing' },
+const NAV: NavItem[] = [
+  { href: '#what', label: LANDING.nav.what },
+  { href: '#how', label: LANDING.nav.how },
+  { href: '#why', label: LANDING.nav.why },
+  { href: '#plans', label: LANDING.nav.plans },
 ];
 
 /**
- * What the product actually does, written as the job rather than the feature.
- *
- * NOTHING ASPIRATIONAL IS ALLOWED IN HERE. This page is the promise a QR poster
- * goes up next to, and every line below is a thing a shop can do this
- * afternoon. When something is built, it earns a card; until then it does not
- * get a sentence, however good the sentence would be.
- *
- * The Bengali line is the same point as the English, said the way a shopkeeper
- * would say it — not a translation of the marketing.
+ * The picture on each feature card. The words are `FEATURES` in
+ * `lib/marketing-copy.ts`, matched by id, so the copy file stays free of JSX
+ * and a card added there without an icon here fails the type check.
  */
-const FEATURES: {
-  icon: (props: { className?: string }) => React.ReactElement;
-  title: string;
-  bn: string;
-  body: string;
-}[] = [
-  {
-    icon: MicIcon,
-    title: 'List by speaking',
-    bn: 'বলে বলে তালিকা',
-    body:
-      'Say “চাল ১ কেজি ১০০” and the item is on your shop page with its price. Bangla, Hindi or English, in the shop, with the fan on. Nothing to type.',
-  },
-  {
-    icon: BoxIcon,
-    title: 'Five hundred items, already written',
-    bn: 'চেনা জিনিস এক ট্যাপে',
-    body:
-      'The usual things a kirana carries come ready — named in three languages, with pack sizes and a starting price. Tick what you sell and correct the prices as you trade.',
-  },
-  {
-    icon: QrIcon,
-    title: 'A QR at your counter',
-    bn: 'কাউন্টারে একটা QR',
-    body:
-      'Customers scan and see your shelf, in their own language. No app to install, no account to make, no login for anybody.',
-  },
-  {
-    icon: BellIcon,
-    title: 'Orders land in your app',
-    bn: 'অর্ডার সোজা আপনার অ্যাপে',
-    body:
-      'The phone buzzes and a bell counts the new ones from every screen. The order waits until you look at it — nothing is lost because you were serving someone.',
-  },
-  {
-    icon: UsersIcon,
-    title: 'The udhaar khata',
-    bn: 'বাকির খাতা',
-    body:
-      'Every customer has a running balance the app keeps. One number says what the whole para owes you, and who has owed it longest.',
-  },
-  {
-    icon: RupeeIcon,
-    title: 'Counter sales and the day’s cash',
-    bn: 'দোকানের বিক্রি আর দিনের হিসাব',
-    body:
-      'The walk-in who buys two things and pays cash belongs in the same day’s total. Ring it up at the till and close the drawer at night.',
-  },
-  {
-    icon: CartIcon,
-    /**
-     * THIS CARD USED TO SAY "SELL BY WEIGHT, NOT BY PACKET", WHICH WAS WRONG
-     * ABOUT THE PRODUCT AND ABOUT THE SHOP.
-     *
-     * A kirana sells biscuits by the packet, matches by the box, oil by the
-     * litre, greens by the bundle and rice by the kilo, and no shopkeeper
-     * reading "not by packet" would recognise their own counter in it. What
-     * the product actually does is take the unit the shop already uses — and
-     * then let the things that CAN be divided be divided: see `isLooseUnit`
-     * and `sellsAnyAmount`, where mass and volume split and counted goods do
-     * not, because nothing can keep the 700 g left over from a packet.
-     */
-    title: 'Sold the way you already sell it',
-    bn: 'যেভাবে বেচেন, সেভাবেই',
-    body:
-      'Kilo, gram, litre, ml, piece, packet, bottle or bundle — the pack size is whatever you use, and you can type one we have not thought of. What you weigh or pour can be asked for in any amount: posto priced by the kilo, sold as 50 g. What you count — a packet, a bottle, a bundle — sells whole.',
-  },
-  {
-    icon: CheckIcon,
-    title: 'What is finished, comes off',
-    bn: 'শেষ হলে পাতা থেকে উঠে যায়',
-    body:
-      'One tap marks an item out of stock and customers stop being offered it. Keep counts if you want them, or leave it alone.',
-  },
-  {
-    icon: ChartIcon,
-    title: 'Reports you can read',
-    bn: 'বোঝার মতো হিসাব',
-    body:
-      'What sold, what it earned, which para it went to, and what the festival week did. Enough to order stock with, not a dashboard to study.',
-  },
-  {
-    icon: PdfIcon,
-    title: 'A bill on WhatsApp',
-    bn: 'হোয়াটসঅ্যাপে বিল',
-    body:
-      'Send a customer their bill or their whole khata as a PDF, and the delivery round to whoever is carrying it — from the phone already in your hand.',
-  },
-  {
-    icon: PhoneIcon,
-    title: 'Simple mode',
-    bn: 'সহজ মোড',
-    body:
-      'For an owner who wants the till, the khata and nothing else on the screen. Everything still works; it is just not in the way.',
-  },
-  {
-    icon: WhatsAppIcon,
-    title: 'Your customers stay yours',
-    bn: 'খদ্দের আপনারই থাকে',
-    body:
-      'Every order leaves a name and a number on your list, not a platform’s. No commission is taken from any order, however many you take.',
-  },
-];
+const FEATURE_ICONS: Record<FeatureId, (props: { className?: string }) => React.ReactElement> = {
+  speak: MicIcon,
+  catalogue: BoxIcon,
+  qr: QrIcon,
+  orders: BellIcon,
+  khata: UsersIcon,
+  till: RupeeIcon,
+  units: CartIcon,
+  stock: CheckIcon,
+  reports: ChartIcon,
+  bill: PdfIcon,
+  simple: PhoneIcon,
+  customers: WhatsAppIcon,
+};
 
-const FAQ: { q: string; a: string }[] = [
-  {
-    q: 'Do my customers need to install anything?',
-    a: 'No. They scan the QR with the camera they already have and your shop opens in the browser. No account, no download, no password.',
-  },
-  {
-    q: 'Do I need a new phone?',
-    a: `No. ${BRAND_NAME} runs in the browser on the phone you have, and you can keep it on your home screen like any other app. There is nothing to get from the Play Store.`,
-  },
-  {
-    q: 'What if I cannot read?',
-    a: 'You can list items by speaking, and the phone reads each one back to you, amounts and all. The screens an owner uses every day are built to be workable that way.',
-  },
-  {
-    q: 'Do you take a cut of my orders?',
-    a: `Never. One price a month for the shop, and nothing from an order. ${BRAND_NAME} does not handle your money at all — the customer pays you, in cash or straight into your own UPI.`,
-  },
-  {
-    q: 'What happens if I stop paying?',
-    a: `Nothing sudden. You are told before the period ends, item editing pauses a week later, and the shop goes on trading for ${AUTO_PAUSE_DAYS} days. After that the page closes to customers — and reopens the moment a payment is recorded. Nothing is ever deleted.`,
-  },
-  {
-    q: 'Is my shop’s data mine?',
-    a: 'Yes. Your items, your customers, your khata and your day’s takings belong to your shop, and the khata and the reports come out as PDF or CSV whenever you want them.',
-  },
-];
+/** The catalogue-it-for-you offer in one language, the price in bold. */
+function ListingOffer({ lang }: { lang: Locale }) {
+  const offer = listingOffer(formatPaise(LISTING_PAISE_PER_ITEM));
+  return (
+    <>
+      {offer.before[lang]}
+      <strong className="font-semibold text-brand-700">{offer.strong[lang]}</strong>
+      {offer.after[lang]}
+    </>
+  );
+}
 
 export default function LandingPage() {
   const support = supportDetails();
@@ -447,7 +382,14 @@ export default function LandingPage() {
     : null;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-card">
+    // THE ROOT CARRIES THE LANGUAGE. `data-landing` is what the language rules
+    // in `app/globals.css` hang from, and `data-lang` is set on it by the
+    // script `LandingLanguage` renders — before paint, from a `?lang=` link or
+    // the last visit — which is also why this one element is allowed to
+    // disagree with the server's HTML when React takes over.
+    <div data-landing="" suppressHydrationWarning className="flex min-h-dvh flex-col bg-card">
+      {/* First, so its script runs before any of the words below are painted. */}
+      <LandingLanguage />
       {/* Where the back-to-top button sends the keyboard, so tabbing after it
           resumes at the top of the page rather than in the footer. */}
       <span id="top" tabIndex={-1} className="sr-only" />
@@ -488,11 +430,17 @@ export default function LandingPage() {
               that answers "where am I in this page" is a map. */}
           <SectionNav items={NAV} className="ml-auto hidden items-center gap-2 lg:flex" />
           <div className="ml-auto flex items-center gap-2 lg:ml-6">
+            {/* The app's own language select, in the bar, from a tablet up.
+                On a phone the bar has room for the mark and one button and no
+                more; the switch is in the hero and in the menu there. */}
+            <div className="hidden sm:block">
+              <LangSelect />
+            </div>
             <Link
               href="/admin"
               className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white sm:inline-flex"
             >
-              Admin sign in
+              <Say t={LANDING.adminSignIn} />
             </Link>
             {whatsapp && (
               <a
@@ -500,7 +448,7 @@ export default function LandingPage() {
                 className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
               >
                 <WhatsAppIcon className="h-4 w-4" />
-                Get your shop
+                <Say t={LANDING.getYourShop} />
               </a>
             )}
           </div>
@@ -560,35 +508,44 @@ export default function LandingPage() {
 
           <div className="relative mx-auto grid max-w-[100rem] items-center gap-12 px-5 pb-24 pt-14 sm:px-8 sm:pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20 lg:px-12 lg:pb-28">
             <div className="text-center lg:text-left">
-              {/* THE BENGALI IS MARKED AS BENGALI, here and on every line
-                  below it. The document is `lang="en"`, and a screen reader
+              {/* THE LANGUAGE IS CHOSEN FIRST, before a word of the claim.
+                  Everything below this — the menu, the prices, the questions,
+                  the foot — follows it; see `LangTabs`. It is the first thing
+                  in the fold because the person holding the phone may not be
+                  able to read the default, and every other control on the page
+                  assumes they can. */}
+              <LangTabs className="mb-6" />
+
+              {/* EVERY LANGUAGE IS MARKED AS ITSELF — `Say` wraps each in its
+                  own `lang`. The document is `lang="en"`, and a screen reader
                   handed Bengali script under an English `lang` reads it out in
                   English phonemes, which is unintelligible. It is also what
                   tells a search engine, and a browser's own translate prompt,
                   that this page is not only English. */}
-              <p
-                lang="bn"
-                className="inline-flex items-center gap-2 rounded-full bg-card px-3.5 py-1.5 text-sm font-semibold text-brand-700 shadow-raised ring-1 ring-brand-100"
-              >
+              <p className="inline-flex items-center gap-2 rounded-full bg-card px-3.5 py-1.5 text-sm font-semibold text-brand-700 shadow-raised ring-1 ring-brand-100">
                 <MicIcon className="h-4 w-4" />
-                দোকান সাজান মুখে বলে
+                <Say t={LANDING.hero.badge} />
               </p>
 
               {/* Bigger than it was, and bigger than a web headline usually
                   is. This is read at arm's length on a phone held up by
-                  somebody else, and it is Bengali, which needs the size more
-                  than Latin does. */}
-              <h1
-                lang="bn"
-                className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl"
-              >
-                &ldquo;চাল ১ কেজি ১০০&rdquo;
+                  somebody else, and it is Bengali or Hindi, which need the
+                  size more than Latin does.
+
+                  ON THE ENGLISH PAGE IT IS STILL THE BENGALI SENTENCE — that
+                  is the demonstration, and it is marked `lang="bn"` so it is
+                  read as Bengali. The Hindi page says the Hindi one. */}
+              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
+                <Say
+                  t={LANDING.hero.headline}
+                  en={<span lang="bn">{LANDING.hero.headline.en}</span>}
+                />
               </h1>
 
-              <p lang="bn" className="mx-auto mt-5 max-w-md text-xl text-slate-800 lg:mx-0">
-                বলুন — জিনিসটা দামসহ তালিকায় উঠে গেল, খদ্দের দেখতে পেল।
+              <p className="mx-auto mt-5 max-w-md text-xl text-slate-800 lg:mx-0">
+                <Say t={LANDING.hero.said} />
                 <span className="mt-1 block text-lg text-slate-600">
-                  বাংলা, হিন্দি বা ইংরেজিতে। টাইপ করতে হবে না।
+                  <Say t={LANDING.hero.anyLanguage} />
                 </span>
               </p>
 
@@ -598,14 +555,16 @@ export default function LandingPage() {
                   now, and saying otherwise sold a shopkeeper a flow they would
                   not find. */}
               <p className="mx-auto mt-5 max-w-lg text-slate-600 lg:mx-0">
-                Customers scan the QR at your counter and the order lands in your
-                app — with a bell that counts it from every screen. The khata,
-                the till and the day’s cash are in the same place. No login, no
-                training.
+                <Say t={LANDING.hero.qr} />
               </p>
 
               {/* On the cream the buttons are the brand at full strength —
-                  green for the action, and a plain bordered one beside it. */}
+                  green for the action, and a plain bordered one beside it.
+
+                  The English page keeps the Bengali half of each label. A
+                  reader who has not found the switch yet may still be the one
+                  who will run the shop, and "দোকান খুলুন" on the green button
+                  is the one line they must not miss. */}
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
                 {whatsapp && (
                   <a
@@ -613,14 +572,30 @@ export default function LandingPage() {
                     className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-bold text-white shadow-float transition hover:bg-brand-700"
                   >
                     <WhatsAppIcon className="h-5 w-5" />
-                    <span lang="bn">দোকান খুলুন</span> · Get your shop
+                    <Say
+                      t={LANDING.getYourShop}
+                      en={
+                        <>
+                          <span lang="bn">{LANDING.getYourShop.bn}</span> ·{' '}
+                          {LANDING.getYourShop.en}
+                        </>
+                      }
+                    />
                   </a>
                 )}
                 <a
                   href="#plans"
                   className="rounded-xl border border-brand-200 bg-card px-6 py-3.5 text-base font-semibold text-brand-700 transition hover:bg-brand-50"
                 >
-                  <span lang="bn">দাম দেখুন</span> · See pricing
+                  <Say
+                    t={LANDING.hero.seePricing}
+                    en={
+                      <>
+                        <span lang="bn">{LANDING.hero.seePricing.bn}</span> ·{' '}
+                        {LANDING.hero.seePricing.en}
+                      </>
+                    }
+                  />
                 </a>
               </div>
 
@@ -628,14 +603,12 @@ export default function LandingPage() {
                   asked. Every one is a fact about the product, not a boast. */}
               <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-base text-slate-600 lg:justify-start">
                 {[
-                  `${TRIAL_DAYS} days free, no advance`,
-                  'No commission, ever',
-                  'Nothing to install',
-                  'বাংলা · हिन्दी · English',
+                  ...LANDING.hero.checks,
+                  { en: 'বাংলা · हिन्दी · English', bn: 'বাংলা · हिन्दी · English', hi: 'বাংলা · हिन्दी · English' },
                 ].map((line) => (
-                  <li key={line} className="inline-flex items-center gap-1.5">
+                  <li key={line.en} className="inline-flex items-center gap-1.5">
                     <CheckIcon className="h-4 w-4 text-brand-600" />
-                    {line}
+                    <Say t={line} />
                   </li>
                 ))}
               </ul>
@@ -674,24 +647,21 @@ export default function LandingPage() {
             ================================================================== */}
         <div className="relative z-10 mx-auto -mt-16 max-w-[100rem] px-5 sm:px-8 lg:px-12">
           <dl className="grid gap-3 rounded-3xl border border-brand-100 bg-card p-5 shadow-float sm:grid-cols-2 lg:grid-cols-4 lg:gap-5 lg:p-7">
-            {[
-              { value: '0%', label: 'commission on every order, on every plan' },
-              { value: '500+', label: 'kirana items already named and priced' },
-              { value: '3', label: 'languages the shop speaks — বাংলা, हिन्दी, English' },
-              { value: `${TRIAL_DAYS} days`, label: 'of the top plan free, nothing paid up front' },
-            ].map((stat) => (
-              <div key={stat.label} className="px-2 py-1">
+            {LANDING.stats.map((stat) => (
+              <div key={stat.label.en} className="px-2 py-1">
                 <dd
                   className={clsx(
                     'text-3xl font-bold tabular-nums lg:text-4xl',
                     // The commission figure is the commercial argument, so it
                     // takes the mark's other colour and the eye finds it first.
-                    stat.value === '0%' ? 'text-accent-600' : 'text-brand-700',
+                    stat.accent ? 'text-accent-600' : 'text-brand-700',
                   )}
                 >
-                  {stat.value}
+                  <Say t={stat.value} />
                 </dd>
-                <dt className="mt-1 text-base leading-snug text-slate-600">{stat.label}</dt>
+                <dt className="mt-1 text-base leading-snug text-slate-600">
+                  <Say t={stat.label} />
+                </dt>
               </div>
             ))}
           </dl>
@@ -714,11 +684,12 @@ export default function LandingPage() {
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
                     <CheckIcon className="h-4 w-4" />
                   </span>
+                  {/* One language now, the reader's. This was the English with
+                      the Bengali under it in grey, which made the Bengali the
+                      footnote on the one promise a Bengali-reading owner most
+                      needs to read. */}
                   <p className="text-base leading-relaxed text-slate-700">
-                    {line.en}
-                    <span lang="bn" className="mt-1 block text-slate-500">
-                      {line.bn}
-                    </span>
+                    <Say t={line} />
                   </p>
                 </div>
               ))}
@@ -730,9 +701,9 @@ export default function LandingPage() {
         <Section id="what" tone="tint">
           <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
             <SectionHead
-              eyebrow="What you get"
-              title="A shop’s whole counter, on the phone in your pocket"
-              lead="Every plan includes all of it. The plans differ by how many items your shop lists, and by nothing else."
+              eyebrow={LANDING.what.eyebrow}
+              title={LANDING.what.title}
+              lead={LANDING.what.lead}
             />
             {/* The shop at its busiest — the counter with people at it, which
                 is the state this product is for. An empty shop front is a
@@ -748,11 +719,11 @@ export default function LandingPage() {
               lifts and warms on hover, so a cursor has something to find. */}
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((feature, i) => {
-              const Icon = feature.icon;
+              const Icon = FEATURE_ICONS[feature.id];
               const tile = ['bg-brand-600', 'bg-brand-500', 'bg-brand-700'][i % 3];
               return (
                 <div
-                  key={feature.title}
+                  key={feature.id}
                   className="group rounded-2xl border border-brand-100 bg-card p-6 shadow-raised transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-float"
                 >
                   <span
@@ -763,11 +734,12 @@ export default function LandingPage() {
                   >
                     <Icon className="h-6 w-6" />
                   </span>
-                  <h3 className="mt-4 text-lg font-bold text-slate-900">{feature.title}</h3>
-                  <p lang="bn" className="mt-0.5 text-sm font-semibold text-brand-700">
-                    {feature.bn}
+                  <h3 className="mt-4 text-lg font-bold text-slate-900">
+                    <Say t={feature.title} />
+                  </h3>
+                  <p className="mt-2 text-base leading-relaxed text-slate-600">
+                    <Say t={feature.body} />
                   </p>
-                  <p className="mt-2 text-base leading-relaxed text-slate-600">{feature.body}</p>
                 </div>
               );
             })}
@@ -782,31 +754,31 @@ export default function LandingPage() {
         <Section tone="dark">
           <SectionHead
             tone="dark"
-            eyebrow="The real screens"
-            title="Nothing here is a mock-up"
-            lead="These are the screens a shop uses every day, photographed from a working shop."
+            eyebrow={LANDING.screens.eyebrow}
+            title={LANDING.screens.title}
+            lead={LANDING.screens.lead}
             align="center"
           />
           <div className="mt-10 grid grid-cols-2 gap-6 lg:grid-cols-4">
             <PhoneShot
               src="/tour/02-items.png"
               alt="The item list, with prices and what is out of stock"
-              caption="Your list — spoken, not typed"
+              caption={LANDING.screens.items}
             />
             <PhoneShot
               src="/tour/05-orders.png"
               alt="Orders waiting, confirmed and completed"
-              caption="Orders, in the order you work them"
+              caption={LANDING.screens.orders}
             />
             <PhoneShot
               src="/tour/06-khata.png"
               alt="The khata, with each customer’s running balance"
-              caption="The khata, always added up"
+              caption={LANDING.screens.khata}
             />
             <PhoneShot
               src="/tour/07-sell.png"
               alt="The counter till, ringing up a walk-in sale"
-              caption="The till for walk-ins"
+              caption={LANDING.screens.till}
             />
           </div>
         </Section>
@@ -815,9 +787,9 @@ export default function LandingPage() {
         <Section id="how">
           <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
             <SectionHead
-              eyebrow="How it works"
-              title="Five steps, and we do the first one for you"
-              lead="Nobody has to fill in a form, learn a screen, or be talked through a menu on the phone."
+              eyebrow={LANDING.how.eyebrow}
+              title={LANDING.how.title}
+              lead={LANDING.how.lead}
             />
 
             {/* THE PRODUCT'S OWN DRAWING, not a stock photograph, and the file
@@ -832,34 +804,25 @@ export default function LandingPage() {
               src={ART.owner.src}
               alt={ART.owner.alt}
               className="mx-auto hidden sm:block"
-              caption={
-                <span lang="bn">“চাল এক কেজি ৬৮ টাকা” — বললেই তালিকায়, দামসহ।</span>
-              }
+              caption={<Say t={LANDING.how.ownerSays} />}
             />
           </div>
 
-          {/* THE READER PICKS THE LANGUAGE; the page does not guess.
-              The person who decides is often a son or a nephew who reads
-              English, and the person who will stand behind the counter using
-              it reads Bengali. Stacking both on every card, which is what this
-              did first, doubles the length of the section and leaves each of
-              them scanning past half of it. The Bengali is not a translation
-              so much as the same point made the way a shopkeeper would say it;
-              where the two differ, the Bengali is the one to trust. */}
-          <LangTabs
-            className="mt-10"
-            en={<StepList lang="en" />}
-            bn={<StepList lang="bn" />}
-          />
+          {/* These two lists had their own English/বাংলা tabs, which changed
+              the list and nothing around it. The language is the page's now,
+              chosen once at the top — see `LangTabs`. */}
+          <div className="mt-10">
+            <StepList />
+          </div>
         </Section>
 
         {/* ================================================================== */}
         <Section id="why" tone="tint">
           <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
             <SectionHead
-              eyebrow="Why shops switch"
-              title="The complaint first, the answer second"
-              lead="A feature list leaves the shopkeeper to translate it into their own day — and mostly they do not bother."
+              eyebrow={LANDING.why.eyebrow}
+              title={LANDING.why.title}
+              lead={LANDING.why.lead}
             />
             {/* The other half of the shop: the customer who scans. */}
             <SectionArt
@@ -869,19 +832,17 @@ export default function LandingPage() {
             />
           </div>
 
-          <LangTabs
-            className="mt-10"
-            en={<ProblemList lang="en" />}
-            bn={<ProblemList lang="bn" />}
-          />
+          <div className="mt-10">
+            <ProblemList />
+          </div>
         </Section>
 
         {/* ================================================================== */}
         <Section id="plans" tone="tint">
           <SectionHead
-            eyebrow="Pricing"
-            title="One price a month. Nothing per order."
-            lead={`A new shop starts on ${TRIAL_DAYS} days of the top plan, free, with nothing to pay up front.`}
+            eyebrow={LANDING.plans.eyebrow}
+            title={LANDING.plans.title}
+            lead={LANDING.plans.lead}
             align="center"
           />
 
@@ -900,6 +861,10 @@ export default function LandingPage() {
               // The plan most kiranas land on, marked so the eye has somewhere
               // to start. Five equal cards is five decisions.
               const popular = plan.id === 'PRO';
+              const year = yearLine(
+                yearPrice(plan.id).toLocaleString('en-IN'),
+                yearSaving(plan.id).toLocaleString('en-IN'),
+              );
               return (
                 <div
                   key={plan.id}
@@ -912,7 +877,7 @@ export default function LandingPage() {
                 >
                   {popular && (
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent-600 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-raised">
-                      Most kiranas
+                      <Say t={LANDING.plans.popular} />
                     </span>
                   )}
                   <h3 className={clsx('font-bold', popular ? 'text-white' : 'text-slate-900')}>
@@ -932,7 +897,7 @@ export default function LandingPage() {
                       )}
                     >
                       {' '}
-                      /mo
+                      <Say t={LANDING.plans.perMonth} />
                     </span>
                   </p>
 
@@ -947,12 +912,11 @@ export default function LandingPage() {
                       popular ? 'text-brand-100' : 'text-brand-700',
                     )}
                   >
-                    &#8377;{yearPrice(plan.id).toLocaleString('en-IN')} a year
+                    <Say t={year.price} />
                     <span
                       className={clsx('font-normal', popular ? 'text-white/70' : 'text-slate-500')}
                     >
-                      {' '}
-                      &mdash; save &#8377;{yearSaving(plan.id).toLocaleString('en-IN')}
+                      <Say t={year.save} />
                     </span>
                   </p>
 
@@ -962,10 +926,10 @@ export default function LandingPage() {
                       popular ? 'border-white/20 text-white' : 'border-brand-100 text-slate-900',
                     )}
                   >
-                    {planItems(plan.id)} items
+                    <Say t={planItemsLine(plan.id)} />
                   </p>
                   <p className={clsx('mt-1 text-base', popular ? 'text-white/75' : 'text-slate-500')}>
-                    {plan.tagline}
+                    <Say t={planTagline(plan.id)} />
                   </p>
                 </div>
               );
@@ -977,12 +941,16 @@ export default function LandingPage() {
               and the easiest thing to miss — so the list is stated once,
               plainly, under all five cards rather than repeated inside each. */}
           <div className="mt-6 rounded-3xl border border-brand-100 bg-card p-6 shadow-raised sm:p-8">
-            <h3 className="text-lg font-bold text-slate-900">Every plan includes all of it</h3>
+            <h3 className="text-lg font-bold text-slate-900">
+              <Say t={LANDING.plans.everyPlan} />
+            </h3>
             <ul className="mt-4 grid gap-x-8 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {EVERY_PLAN_INCLUDES.map((feature) => (
                 <li key={feature} className="flex gap-2.5 text-base text-slate-700">
                   <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  {feature}
+                  <span>
+                    <Say t={includesLine(feature)} />
+                  </span>
                 </li>
               ))}
             </ul>
@@ -992,38 +960,39 @@ export default function LandingPage() {
             <div className="mt-6 grid gap-4 border-t border-brand-100 pt-6 sm:grid-cols-2">
               <div>
                 <p className="font-semibold text-slate-900">
-                  Do not want to list the items yourself?
+                  <Say t={LANDING.plans.listForYou} />
                 </p>
                 <p className="mt-1 text-base text-slate-600">
-                  We will catalogue the shop for you at{' '}
-                  <strong className="text-brand-700">
-                    {formatPaise(LISTING_PAISE_PER_ITEM)} an item
-                  </strong>
-                  , once &mdash; names, prices and pack sizes, in all three languages.
+                  {/* Each language puts the price where its sentence wants it,
+                      so the bold part is placed per language, not once. */}
+                  <Say
+                    en={<ListingOffer lang="en" />}
+                    bn={<ListingOffer lang="bn" />}
+                    hi={<ListingOffer lang="hi" />}
+                  />
                 </p>
               </div>
               <div>
-                <p className="font-semibold text-slate-900">If you stop paying</p>
+                <p className="font-semibold text-slate-900">
+                  <Say t={LANDING.plans.stopPaying} />
+                </p>
                 <p className="mt-1 text-base text-slate-600">
-                  Your shop page and QR keep working for {AUTO_PAUSE_DAYS} days and nothing is
-                  ever deleted. Pay by UPI, by the month or the year, no contract, stop whenever
-                  you like.
+                  <Say t={LANDING.plans.stopPayingBody} />
                 </p>
               </div>
             </div>
           </div>
 
           <p className="mt-6 text-center text-base text-slate-500">
-            Customers pay you in cash or straight into your own UPI. {BRAND_NAME} never touches
-            the money from an order.
+            <Say t={LANDING.plans.money} />
           </p>
         </Section>
 
         {/* ================================================================== */}
         <Section tone="tint">
           <SectionHead
-            eyebrow="Questions"
-            title="What shopkeepers actually ask"
+            eyebrow={LANDING.faq.eyebrow}
+            title={LANDING.faq.title}
             align="center"
           />
           {/* A native accordion: no JavaScript, works with the keyboard, and
@@ -1031,11 +1000,13 @@ export default function LandingPage() {
           <div className="mx-auto mt-10 max-w-3xl space-y-3">
             {FAQ.map((entry) => (
               <details
-                key={entry.q}
+                key={entry.q.en}
                 className="group rounded-2xl border border-brand-100 bg-card px-5 py-4"
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-900">
-                  {entry.q}
+                  <span>
+                    <Say t={entry.q} />
+                  </span>
                   <span
                     aria-hidden
                     className="shrink-0 text-xl leading-none text-brand-600 transition-transform group-open:rotate-45"
@@ -1043,7 +1014,9 @@ export default function LandingPage() {
                     +
                   </span>
                 </summary>
-                <p className="mt-3 text-base leading-relaxed text-slate-600">{entry.a}</p>
+                <p className="mt-3 text-base leading-relaxed text-slate-600">
+                  <Say t={entry.a} />
+                </p>
               </details>
             ))}
           </div>
@@ -1052,8 +1025,8 @@ export default function LandingPage() {
         {/* ================================================================== */}
         <section className="px-5 py-20 sm:px-6 sm:py-24">
           <div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-brand-600 bg-chrome px-6 py-12 text-center text-white">
-            <h2 lang="bn" className="relative text-3xl font-bold sm:text-4xl">
-              আজই দোকান অনলাইনে আনুন
+            <h2 className="relative text-3xl font-bold sm:text-4xl">
+              <Say t={LANDING.cta.title} />
             </h2>
             {/* ON A DARK PANEL THE BUTTONS INVERT. A brand-600 button on a
                 brand-800 ground is two greens a hair apart — the call to
@@ -1061,9 +1034,7 @@ export default function LandingPage() {
                 only job it has. The card colour carries brand text instead,
                 exactly as the pricing page's hero does. */}
             <p className="relative mx-auto mt-3 max-w-xl text-white/85">
-              Tell us your shop’s name, phone number and address. We build the
-              shop, print your QR and set it up with you — you start by speaking
-              your first item.
+              <Say t={LANDING.cta.body} />
             </p>
             <div className="relative mt-7 flex flex-wrap items-center justify-center gap-3">
               {whatsapp && (
@@ -1072,7 +1043,7 @@ export default function LandingPage() {
                   className="inline-flex items-center gap-2 rounded-xl bg-card px-6 py-3 font-semibold text-brand-700 shadow-raised transition hover:bg-white"
                 >
                   <WhatsAppIcon className="h-5 w-5" />
-                  WhatsApp us
+                  <Say t={LANDING.cta.whatsapp} />
                 </a>
               )}
               {support.phone && (
@@ -1099,7 +1070,15 @@ export default function LandingPage() {
       <StickyCta whatsapp={whatsapp} />
       <BackToTop />
       <MobileMenu items={NAV} whatsapp={whatsapp} />
-      <SiteFooter />
+      <SiteFooter
+        labels={{
+          poweredBy: <Say t={LANDING.footer.poweredBy} />,
+          privacy: <Say t={LANDING.footer.privacy} />,
+          terms: <Say t={LANDING.footer.terms} />,
+          refund: <Say t={LANDING.footer.refund} />,
+          contact: <Say t={LANDING.footer.contact} />,
+        }}
+      />
     </div>
   );
 }

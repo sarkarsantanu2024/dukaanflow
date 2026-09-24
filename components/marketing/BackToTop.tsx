@@ -26,6 +26,8 @@
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import { ArrowLeftIcon } from '@/components/ui/Icon';
+import { LANDING } from '@/lib/marketing-copy';
+import { Say } from './Say';
 
 export function BackToTop() {
   const [shown, setShown] = useState(false);
@@ -71,7 +73,7 @@ export function BackToTop() {
       {/* The arrow icon set has no "up", so the left one is turned. Rotating a
           shape the product already ships beats a second nearly-identical SVG. */}
       <ArrowLeftIcon className="h-4 w-4 rotate-90" />
-      Top
+      <Say t={LANDING.backToTop} />
     </button>
   );
 }

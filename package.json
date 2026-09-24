@@ -24,6 +24,7 @@
     "subscription:check": "tsx scripts/subscription-check.ts",
     "names:check": "tsx scripts/names-check.ts",
     "social:cards": "tsx scripts/social-cards.ts",
+    "social:preview": "tsx scripts/link-preview.ts",
     "vercel:env": "tsx scripts/vercel-env.ts",
     "postinstall": "prisma generate",
     "db:target": "tsx scripts/db-target.ts"
