@@ -8,18 +8,19 @@
  * the arrangement most likely to end with two pages that look like different
  * products.
  *
- * Each takes a language rather than rendering both at once, because they are
- * meant to sit inside `LangTabs` — the reader picks. Rendering English and
- * Bengali stacked on the same card, which is what the landing page did first,
- * doubles the length of every section and leaves both readers scanning past
- * half of it.
+ * Each card says its line in the page's language, not all of them stacked.
+ * Rendering English and Bengali on the same card, which is what the landing
+ * page did first, doubled the length of every section and left both readers
+ * scanning past half of it. `Say` puts all three in the HTML and the page's
+ * language switch (`LangTabs`) decides which one is seen.
  */
 
 import { AlertIcon, CheckIcon } from '@/components/ui/Icon';
 import { PROBLEMS, STEPS } from '@/lib/marketing-copy';
+import { Say } from './Say';
 
-/** The numbered steps, in one language. */
-export function StepList({ lang }: { lang: 'en' | 'bn' }) {
+/** The numbered steps. */
+export function StepList() {
   return (
     <ol className="mt-6 grid gap-4 lg:grid-cols-2">
       {STEPS.map((step, index) => (
@@ -33,15 +34,15 @@ export function StepList({ lang }: { lang: 'en' | 'bn' }) {
           >
             {index + 1}
           </span>
-          <p className="text-slate-700">{step[lang]}</p>
+          <p className="text-slate-700"><Say t={step} /></p>
         </li>
       ))}
     </ol>
   );
 }
 
-/** The problem/answer pairs, in one language. */
-export function ProblemList({ lang }: { lang: 'en' | 'bn' }) {
+/** The problem/answer pairs. */
+export function ProblemList() {
   return (
     <ul className="mt-6 grid gap-4 md:grid-cols-2">
       {PROBLEMS.map((row) => (
@@ -60,11 +61,11 @@ export function ProblemList({ lang }: { lang: 'en' | 'bn' }) {
               find themselves in it before any feature means anything. */}
           <div className="flex gap-3 border-l-4 border-accent-500 bg-accent-50/60 p-5">
             <AlertIcon className="mt-0.5 h-5 w-5 shrink-0 text-accent-600" />
-            <p className="font-semibold leading-snug text-slate-900">{row.problem[lang]}</p>
+            <p className="font-semibold leading-snug text-slate-900"><Say t={row.problem} /></p>
           </div>
           <div className="flex gap-3 border-l-4 border-brand-500 bg-brand-50/70 p-5">
             <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />
-            <p className="text-base leading-relaxed text-slate-700">{row.answer[lang]}</p>
+            <p className="text-base leading-relaxed text-slate-700"><Say t={row.answer} /></p>
           </div>
         </li>
       ))}
