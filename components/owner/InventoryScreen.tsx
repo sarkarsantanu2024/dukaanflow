@@ -113,6 +113,11 @@ export function InventoryScreen({
           counter with a vendor in front of you, and the moment it is needed is
           too short to go hunting behind "More settings" for it. It costs one
           quiet line on a shop whose shelves are full. */}
+      {/* The list ends here: a highlighted rule rather than empty space, by
+          request — it separates the list from the cards about it without
+          costing a screen of scrolling. */}
+      <div aria-hidden className="h-0.5 rounded-full bg-gradient-to-r from-transparent via-brand-500 to-transparent" />
+
       <RestockCard slug={slug} shopName={shopName} items={items} locale={locale} />
 
       {/* THE COMMON-ITEMS CARD IS GONE FROM THIS TAB, BY REQUEST. Picking from
