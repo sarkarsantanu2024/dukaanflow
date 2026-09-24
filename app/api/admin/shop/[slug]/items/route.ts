@@ -30,7 +30,20 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = itemUpsertSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { pricePaise, category, inStock, priced, stockQty } = parsed.data;
+  const { pricePaise, category, priced, stockQty } = parsed.data;
+
+  /**
+   * A COUNT AND THE STOCK SWITCH MUST NEVER DISAGREE — the rule PATCH already
+   * keeps, and POST did not. `inStock` defaults to true in the schema, so an
+   * item added with "0 left" was listed as available: the shop page offered
+   * it and every order for it was then refused with "only 0 left". A count
+   * decides the switch unless the request is explicitly taking the item off
+   * sale.
+   */
+  const inStock =
+    stockQty !== null && stockQty !== undefined ? parsed.data.inStock && stockQty > 0 : parsed.data.inStock;
+  /** Back on the shelf, so a "back on the 26th" note is no longer true. */
+  const restocked = stockQty !== null && stockQty !== undefined && stockQty > 0 ? { backOn: '', stockNote: '' } : {};
 
   // Canonical spelling before anything else touches these.
   //
@@ -148,7 +161,7 @@ export async function POST(request: Request, { params }: Context) {
            * wipe the shelf figure an owner had typed. Clearing a count is done
            * deliberately, from the row's own box, through PATCH.
            */
-          ...(stockQty === null ? {} : { stockQty }),
+          ...(stockQty === null ? {} : { stockQty, ...restocked }),
           // The automatic spelling only fills a blank: it must never replace
           // a name the owner typed by hand on an earlier save.
           ...(parsed.data.nameBn ? { nameBn } : !existing.nameBn && nameBn ? { nameBn } : {}),
