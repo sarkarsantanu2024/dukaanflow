@@ -29,6 +29,7 @@
  */
 
 import { SHOP_TYPE_LABELS } from '@/lib/validators';
+import { CustomerBell } from './CustomerBell';
 import { upiPayUrl } from '@/lib/qr';
 import { LangToggle } from './LangToggle';
 import { BrandMark } from '@/components/ui/BrandMark';
@@ -103,7 +104,9 @@ export function ShopHeader({
           This one cannot stutter, because nothing is being driven. */}
       <header className="z-20 bg-chrome">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
-          <BrandMark tone="dark" className="text-sm" />
+          {/* Home is this shop, not the landing page: a customer tapping the
+              mark means "back to the shop", not "tell me about Halkhata". */}
+          <BrandMark href={`/shop/${shop.slug}`} tone="dark" className="text-sm" />
           {/* The retired tagline used to sit here. "Scan → Select → Order" is
               a true description of the product and a sentence every competitor
               can write without changing a word; the landing page stopped
@@ -115,7 +118,9 @@ export function ShopHeader({
               tagline is hidden below `sm`, and with `ml-auto` on it the toggle
               simply sat against the logo on every phone — which is where this
               page is actually read. */}
-          <div className="ml-auto">
+          {/* The shop's updates on this phone's orders — see `CustomerBell`. */}
+          <div className="ml-auto flex items-center gap-1">
+            <CustomerBell locale={locale} />
             <LangToggle value={locale} onChange={onLocaleChange} />
           </div>
         </div>

@@ -11,6 +11,15 @@ export const dynamic = 'force-dynamic';
 
 type PageProps = { params: Promise<{ slug: string }> };
 
+/** How far back finished orders stay on the Orders screen: three months. */
+const HISTORY_DAYS = 90;
+
+function historySince(): Date {
+  const since = startOfBusinessDay();
+  since.setDate(since.getDate() - HISTORY_DAYS);
+  return since;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   return {
@@ -59,19 +68,25 @@ export default async function OrdersPage({ params }: PageProps) {
      * age would be the app quietly losing the one thing this screen exists to
      * prevent. Only the finished ones age out.
      */
+    /*
+     * NOW THREE MONTHS OF THEM, BY REQUEST. Completed orders no longer vanish
+     * at the day's end: the screen lists them compactly under the live cards,
+     * grouped by day, so a bill can be sent again weeks later. See the
+     * "finished orders" section in `OrdersScreen`.
+     */
     where: {
       shopId: shop.id,
       status: { not: 'CANCELLED' },
       OR: [
         { status: { not: 'COMPLETED' } },
-        { createdAt: { gte: startOfBusinessDay() } },
+        { createdAt: { gte: historySince() } },
       ],
     },
     // The screen groups by status itself and counts today's takings across the
-    // whole set, so it wants a window of history rather than a top-50 slice
-    // that could cut today's own orders in half on a busy day.
+    // whole set. The cap is well above three months of a kirana's orders; it
+    // exists so one runaway shop cannot make the page unbounded.
     orderBy: { createdAt: 'desc' },
-    take: 200,
+    take: 1500,
     select: {
       id: true,
       customerName: true,

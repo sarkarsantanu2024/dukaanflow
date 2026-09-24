@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { rememberMyOrder } from '@/lib/my-orders';
 import clsx from 'clsx';
 import { MicIcon, SearchIcon } from '@/components/ui/Icon';
 import { useVoice } from '@/components/voice/useVoice';
@@ -14,12 +15,14 @@ import { CheckoutSheet, type CheckoutSubmit } from './CheckoutSheet';
 import { RepeatOrder, rememberOrder } from './RepeatOrder';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { formatDay } from '@/lib/time';
 import { Modal } from '@/components/ui/Modal';
+import { InstallBar } from './InstallBar';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { useHtmlLang } from '@/components/ui/useHtmlLang';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
-import { matchesSearch, translateCategory } from '@/lib/speech';
+import { matchesSearch, searchRank, spokenSearchText, translateCategory } from '@/lib/speech';
 import { MOST_PER_LINE, roundQuantity } from '@/lib/units';
 import { linePaise } from '@/lib/money';
 import { DELIVERY_AVAILABLE, quoteDelivery } from '@/lib/delivery';
@@ -121,7 +124,11 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     // The recogniser hands over its alternatives, best first. The first is what
     // it is most confident of, and that is what belongs in a box the shopper
     // can then edit.
-    onPhrase: (alternatives) => setQuery((alternatives[0] ?? '').trim()),
+    // What was heard, resolved against this shop's own items — see
+    // `spokenSearchText`. The raw first guess used to go in as it was, and a
+    // misheard spelling found nothing.
+    onPhrase: (alternatives) =>
+      setQuery(spokenSearchText(alternatives, items, (item) => itemName(item, locale))),
   });
   const [category, setCategory] = useState<string>('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -199,7 +206,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   );
 
   const visibleItems = useMemo(() => {
-    return items.filter((item) => {
+    const shown = items.filter((item) => {
       if (category && item.category !== category) return false;
       // All three names, and spelling-tolerant: "ata" has to find "Atta", and
       // "chawal" an item listed only as "Rice". See `matchesSearch`.
@@ -208,6 +215,18 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         query,
       );
     });
+    if (!query.trim()) return shown;
+    // The best answer first — a name that starts with what was said or typed
+    // — then the rest in the shop's own order. See `searchRank`.
+    return shown
+      .map((item, index) => ({ item, index }))
+      .sort(
+        (a, b) =>
+          searchRank([a.item.name, a.item.nameBn, a.item.nameHi], query) -
+            searchRank([b.item.name, b.item.nameBn, b.item.nameHi], query) ||
+          a.index - b.index,
+      )
+      .map(({ item }) => item);
   }, [items, query, category]);
 
   const { totalItems, totalAmountPaise } = useMemo(() => {
@@ -275,6 +294,8 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           quantity: cart[item.id]!,
           pricePaise: item.pricePaise,
           loose: sellsAnyAmount(item),
+          // No `most`: the basket's + goes through `setQuantity`, which
+          // holds it at the shelf and opens the popup that says why.
         })),
     [items, cart, locale],
   );
@@ -296,11 +317,38 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
   function addQuantity(itemId: string, more: number) {
     setCart((current) => ({
       ...current,
-      [itemId]: Math.min(roundQuantity((current[itemId] ?? 0) + more), MOST_PER_LINE),
+      [itemId]: withinStock(
+        itemId,
+        Math.min(roundQuantity((current[itemId] ?? 0) + more), MOST_PER_LINE),
+      ),
     }));
   }
 
-  function setQuantity(itemId: string, next: number) {
+  /**
+   * A counted item never goes into the basket beyond what the shop has. The
+   * card's + already stopped there, but the basket's own + and its typed
+   * amount did not, so a shopper could ask for nine of seven and only find out
+   * at checkout, when the order was refused.
+   */
+  function withinStock(itemId: string, wanted: number, tell = false): number {
+    const item = items.find((candidate) => candidate.id === itemId);
+    if (!item || item.stockQty === null) return wanted;
+    const have = Math.max(item.stockQty, 0);
+    if (tell && wanted > have) setLimit(item);
+    return Math.min(wanted, have);
+  }
+
+  /**
+   * THE ITEM THE SHOPPER WANTED MORE OF THAN THE SHOP HAS. A popup says so, in
+   * the shop's own words and with the day it is back when the owner has set
+   * them from the till (`Item.backOn`, `Item.stockNote`). A + that simply
+   * stopped said nothing, and the shopper did not know whether to wait or go
+   * elsewhere.
+   */
+  const [limit, setLimit] = useState<CustomerItem | null>(null);
+
+  function setQuantity(itemId: string, requested: number) {
+    const next = withinStock(itemId, requested, true);
     setCart((current) => {
       const updated = { ...current };
       // Rounded to the thousandth on the way in, so a fraction of a pack
@@ -375,6 +423,8 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
 
       // Remembered before the cart is cleared, so the next visit can offer it.
       rememberOrder(shop.slug, cart);
+      // And its id, so the bell can show what the shop does with it.
+      rememberMyOrder(payload.orderId, shop.slug);
 
       // And the shop itself, so the customer can find it again from the front
       // page of this site without the QR sticker in front of them. See
@@ -453,6 +503,8 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     // empty grey. The footer is the last thing on the page now, so it is the
     // one place that has to clear the basket button.
     <div className="min-h-dvh bg-slate-100">
+      {/* "Keep this shop on your phone", pinned to the top — see `InstallBar`. */}
+      <InstallBar locale={locale} />
       <ShopHeader shop={shop} locale={locale} onLocaleChange={changeLocale} payLabel={t.payViaUpi} />
 
       {/* One column of controls above one grid of items, at every width — the
@@ -484,7 +536,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
                 categories narrow what is below them, so they sit above it.
 
                 Sticky, so both are still reachable ten items down. */}
-            <div className="sticky top-0 z-10 -mx-4 bg-ground/95 px-4 pb-2 pt-3 backdrop-blur">
+            <div className="sticky top-[var(--sticky-top,0px)] z-10 -mx-4 bg-ground/95 px-4 pb-2 pt-3 backdrop-blur">
               {/* SEARCH ONLY WHEN THERE IS SOMETHING TO SEARCH.
                   A shop with a dozen items fits in a screen and a half of
                   scrolling, which is faster than typing and needs nothing
@@ -583,6 +635,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
                     item={item}
                     quantity={cart[item.id] ?? 0}
                     onChange={(next) => setQuantity(item.id, next)}
+                    onBeyondStock={() => setLimit(item)}
                     locale={locale}
                   />
                 ))}
@@ -673,6 +726,30 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           onClose={() => setPlaced(null)}
         />
       )}
+
+      {/* Not enough on the shelf: what the shop says, and when. */}
+      <Modal
+        open={limit !== null}
+        title={limit ? `${itemName(limit, locale)} — ${!limit.inStock || (limit.stockQty ?? 1) <= 0 ? t.limitOut : t.limitFew}` : ''}
+        onClose={() => setLimit(null)}
+        footer={
+          <Button onClick={() => setLimit(null)} data-autofocus>
+            {t.limitOk}
+          </Button>
+        }
+      >
+        {limit?.stockNote ? (
+          <p className="rounded-xl bg-amber-50 px-3 py-2 text-amber-900">
+            <span className="block text-xs font-semibold text-amber-800">{t.limitShopSays}</span>
+            {limit.stockNote}
+          </p>
+        ) : null}
+        <p className={limit?.stockNote ? 'mt-3' : ''}>
+          {limit?.backOn
+            ? `${t.limitBackOn} ${formatDay(new Date(`${limit.backOn}T12:00:00+05:30`))}`
+            : t.limitNoDate}
+        </p>
+      </Modal>
 
       {/* THE SIGNAL WENT, AND THE BASKET DID NOT.
           Not a toast: this needs a decision, and the decision is worth the

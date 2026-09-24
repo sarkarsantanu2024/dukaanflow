@@ -22,6 +22,7 @@ import {
   roundQuantity,
   type Measure,
 } from '@/lib/units';
+import { BENGALI, DEVANAGARI, devanagariToBengali, romanToDevanagari } from './script';
 
 /** Recognition locales offered in the mic UI. Value is a BCP-47 tag. */
 export const VOICE_LANGS = [
@@ -1663,6 +1664,144 @@ export function matchesSearch(fields: string[], query: string): boolean {
   }
 
   return false;
+}
+
+/**
+ * A name reduced to how it SOUNDS, in Bengali consonants: "সয়া বড়ি",
+ * "সোয়া বরি", "soya bori" and "सोया बड़ी" all become "সযবর".
+ *
+ * The recogniser spells a word the way it last heard it, and Bengali has
+ * several honest spellings of most words: ড়/র, য়/য, a vowel sign or none. The
+ * letters differ and the sound does not. So every script is brought to
+ * Bengali, the vowels (signs and letters) and the marks that only adjust them
+ * go, and the look-alike consonants are folded together. What is left is the
+ * word's consonant skeleton, which is what a mishearing keeps.
+ */
+function soundKey(text: string): string {
+  let bn = text.trim();
+  if (!bn) return '';
+  if (!BENGALI.test(bn)) {
+    bn = DEVANAGARI.test(bn) ? devanagariToBengali(bn) : devanagariToBengali(romanToDevanagari(bn));
+  }
+  return bn
+    .normalize('NFC')
+    .replace(/[ড়ঢ়]/g, 'র')
+    .replace(/য়/g, 'য')
+    .replace(/[শষ]/g, 'স')
+    .replace(/ণ/g, 'ন')
+    .replace(/ঙ/g, 'ং')
+    .replace(/জ/g, 'য')
+    // Vowel letters and signs, halant, nukta, chandrabindu, visarga.
+    .replace(/[\u0985-\u0994\u09BE-\u09CC\u09CD\u09BC\u0981\u0983\u09D7]/g, '')
+    .replace(/[^\u0980-\u09FF]/g, '');
+}
+
+/** Letters two keys share, in order, over the longer one: 1 is the same. */
+function keySimilarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const d: number[] = new Array(rows * cols).fill(0);
+  for (let i = 0; i < rows; i++) d[i * cols] = i;
+  for (let j = 0; j < cols; j++) d[j] = j;
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i * cols + j] = Math.min(
+        d[(i - 1) * cols + j]! + 1,
+        d[i * cols + j - 1]! + 1,
+        d[(i - 1) * cols + j - 1]! + cost,
+      );
+    }
+  }
+  return 1 - d[rows * cols - 1]! / Math.max(a.length, b.length);
+}
+
+/**
+ * The item a spoken phrase sounds like, when the letter-by-letter matching
+ * finds nothing. Needs a key of three consonants at least: shorter ones
+ * ("ডাল" is two) match too much of any list.
+ */
+function soundMatch<T extends MatchableItem>(heard: string[], items: T[]): T | null {
+  let best: { item: T; score: number } | null = null;
+  for (const text of heard) {
+    const key = soundKey(text);
+    if (key.length < 3) continue;
+    for (const item of items) {
+      for (const name of [item.nameBn ?? '', item.name, item.nameHi ?? '']) {
+        const itemKey = soundKey(name);
+        if (!itemKey) continue;
+        const score = itemKey.includes(key) ? 1 : keySimilarity(key, itemKey);
+        if (score >= 0.75 && (!best || score > best.score)) best = { item, score };
+      }
+    }
+  }
+  return best?.item ?? null;
+}
+
+/**
+ * WHAT A VOICE SEARCH PUTS IN THE BOX.
+ *
+ * The mic used to write the recogniser's first guess straight into the search
+ * field. For a word like সয়া বড়ি that guess is often a different spelling
+ * ("সোয়া বরি", "soya bori") or a different word altogether, the filter then
+ * found nothing, and the customer concluded the shop did not have it. Sometimes
+ * the box stayed empty.
+ *
+ * So the spoken words are matched against the shop's own items first, across
+ * every alternative the recogniser offered and with the same fuzzy scoring the
+ * voice order uses. When one of them clearly names an item, the box gets THAT
+ * ITEM'S NAME, as the shop wrote it, and the item is on screen. Only when
+ * nothing matches does the raw guess go in, preferring an alternative that at
+ * least finds something.
+ */
+export function spokenSearchText<T extends MatchableItem>(
+  alternatives: string[],
+  items: T[],
+  displayName: (item: T) => string,
+): string {
+  const heard = alternatives.map((text) => text.trim()).filter(Boolean);
+  if (heard.length === 0) return '';
+
+  // WHAT WAS HEARD FINDS SOMETHING AS IT IS: keep it. "ডাল" must list every
+  // dal, not be swapped for whichever one scores highest — the resolving
+  // below is for words that, as spelt, find nothing at all.
+  const direct = heard.find((text) =>
+    items.some((item) => matchesSearch([item.name, item.nameBn ?? '', item.nameHi ?? ''], text)),
+  );
+  if (direct) return direct;
+
+  let best: Match | null = null;
+  for (const text of heard) {
+    const top = rankMatches(text, items)[0];
+    if (top && top.confidence >= UNSURE_MATCH && (!best || top.confidence > best.confidence)) {
+      best = top;
+    }
+  }
+  if (best) return displayName(best.item as T);
+
+  const sounds = soundMatch(heard, items);
+  if (sounds) return displayName(sounds);
+
+  return heard[0]!;
+}
+
+/**
+ * How well an item answers a search, for ordering what `matchesSearch` lets
+ * through: 0 a name that starts with it, 1 a name that contains it, 2 the
+ * looser matches (spelling-tolerant, synonyms). Lower is better.
+ *
+ * Filtering alone left the best answer wherever it happened to sit in the
+ * catalogue: "chal" said into the mic kept every rice and "chaler gura" in
+ * their listed order, and the one named exactly that could be tenth.
+ */
+export function searchRank(fields: string[], query: string): number {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return 0;
+  const names = fields.map((field) => field.toLowerCase());
+  if (names.some((name) => name.startsWith(needle))) return 0;
+  if (names.some((name) => name.includes(needle))) return 1;
+  return 2;
 }
 
 /**

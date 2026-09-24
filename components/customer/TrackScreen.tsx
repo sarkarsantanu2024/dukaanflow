@@ -22,15 +22,18 @@
  * browser's storage. Everything shown is server-rendered data.
  */
 
+import { toWhatsAppNumber } from '@/lib/whatsapp';
 import { useEffect, useState } from 'react';
+import { CustomerBell } from './CustomerBell';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatPaise } from '@/lib/money';
+import { billPdfBlob } from '@/lib/bill-pdf';
 import { amountLabel, isLooseUnit } from '@/lib/units';
 import { formatClock, formatDay } from '@/lib/time';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { LangToggle } from './LangToggle';
-import { WhatsAppIcon } from '@/components/ui/Icon';
+import { CartIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { useHtmlLang } from '@/components/ui/useHtmlLang';
 
@@ -73,6 +76,18 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
   // same rule the storefront follows, so a customer's language does not change
   // when they follow a link out of a notification.
   const [locale, setLocale] = useState<Locale>('bn');
+
+  /** Can this phone hand a PDF to WhatsApp? Asked once, with a stand-in file. */
+  const [canSharePdf, setCanSharePdf] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  useEffect(() => {
+    try {
+      const probe = new File([''], 'order.pdf', { type: 'application/pdf' });
+      setCanSharePdf(Boolean(navigator.canShare?.({ files: [probe] })));
+    } catch {
+      setCanSharePdf(false);
+    }
+  }, []);
   const t = dict(locale);
   const router = useRouter();
   useHtmlLang(locale);
@@ -123,8 +138,10 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
   const header = (
     <header className="sticky top-0 z-20 bg-chrome">
       <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5">
-        <BrandMark tone="dark" className="text-sm" />
-        <div className="ml-auto">
+        {/* Back to the shop the order is from, never the landing page. */}
+        <BrandMark href={order ? `/shop/${order.shopSlug}` : '/'} tone="dark" className="text-sm" />
+        <div className="ml-auto flex items-center gap-1">
+          <CustomerBell locale={locale} />
           <LangToggle value={locale} onChange={changeLocale} />
         </div>
       </div>
@@ -160,19 +177,78 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
    * about a bag the customer was already holding, because "ready" and "done"
    * were one state. Ready is ready; done is done.
    */
+  // No "ready" step any more: an order still marked READY is being prepared.
   const state =
-    order.status === 'READY'
-      ? {
-          tone: 'bg-amber-50 text-amber-800',
-          line: order.orderType === 'PICKUP' ? t.trackStateReadyPickup : t.trackStateReadyDelivery,
-        }
-      : order.status === 'COMPLETED'
+    order.status === 'COMPLETED'
         ? { tone: 'bg-green-50 text-green-800', line: t.trackStateDone }
         : order.status === 'CANCELLED'
           ? { tone: 'bg-slate-100 text-slate-600', line: t.trackStateCancelled }
           : { tone: 'bg-brand-50 text-brand-800', line: t.trackStatePreparing };
 
   const goodsPaise = order.totalAmountPaise - order.deliveryFeePaise;
+
+  /**
+   * WHAT THE CUSTOMER SENDS THE SHOP: WHICH ORDER, AND EVERYTHING IN IT.
+   *
+   * The message used to carry only a total and a time, so the owner had to
+   * work out which order it was and what was in it. It now lists every line
+   * and the total, in the customer's language. Where the phone can share
+   * files the order also goes as a PDF, the same way the shop's bills do:
+   * the customer picks the shop's chat in the share sheet.
+   */
+  const askText = [
+    t.trackAskText
+      .replace('{total}', formatPaise(order.totalAmountPaise))
+      .replace('{when}', `${formatDay(order.placedAt)} ${formatClock(order.placedAt)}`),
+    '',
+    ...order.lines.map((line) => {
+      const amount = amountLabel(line.unit, line.quantity);
+      const what = amount
+        ? `${lineName(line, locale)} ${amount}`
+        : `${lineName(line, locale)}${line.unit ? ` ${line.unit}` : ''} ×${line.quantity}`;
+      return `• ${what} = ${formatPaise(line.amountPaise)}`;
+    }),
+    '',
+    `${t.total}: ${formatPaise(order.totalAmountPaise)}`,
+  ].join('\n');
+
+  async function shareOrder() {
+    if (!order) return;
+    setSharing(true);
+    try {
+      const blob = await billPdfBlob(
+        {
+          shopName: order.shopName,
+          lines: order.lines.map((line) => ({
+            name: lineName(line, locale),
+            unit: line.unit,
+            quantity: line.quantity,
+            amountPaise: line.amountPaise,
+          })),
+          totalPaise: order.totalAmountPaise,
+          at: new Date(order.placedAt),
+          customerName: order.customerName,
+        },
+        {
+          bill: t.trackTitle,
+          total: t.total,
+          paidBy: '',
+          paymentMode: { CASH: '', UPI: '', KHATA: '' },
+          credit: order.shopName,
+        },
+      );
+      const file = new File([blob], `order-${order.id.slice(0, 8)}.pdf`, { type: 'application/pdf' });
+      await navigator.share({ files: [file], text: askText });
+    } catch (error) {
+      // Closing the share sheet is the customer changing their mind. Anything
+      // else: fall back to the plain chat with the list written out.
+      if ((error as { name?: string })?.name !== 'AbortError') {
+        window.location.href = `https://wa.me/${toWhatsAppNumber(order.shopPhone)}?text=${encodeURIComponent(askText)}`;
+      }
+    } finally {
+      setSharing(false);
+    }
+  }
 
   return (
     <div className="min-h-dvh bg-slate-100">
@@ -246,25 +322,44 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
         </section>
 
         {/* The shop is one tap away in both directions: a question goes to
-            WhatsApp, another order goes to the shop page. */}
+            WhatsApp, another order goes to the shop page.
+
+            IT SAYS WHAT IT DOES, AND WHICH ORDER. The button read only the
+            shop's name, so a customer did not know it opened WhatsApp, and the
+            message arrived in the owner's WhatsApp with nothing saying which
+            order it was about. It now names the action and starts the message
+            with the order's total and time. (A WhatsApp message goes to
+            WhatsApp, never into the app, so the owner sees it there.) */}
         <div className="flex gap-2">
           <a
-            href={`https://wa.me/91${order.shopPhone}`}
+            href={`https://wa.me/${toWhatsAppNumber(order.shopPhone)}?text=${encodeURIComponent(askText)}`}
+            onClick={(event) => {
+              // Where the phone can share a file, the order goes as a PDF with
+              // the list as its caption; otherwise the link opens the shop's
+              // chat with the whole list written out.
+              if (!canSharePdf) return;
+              event.preventDefault();
+              void shareOrder();
+            }}
+            aria-busy={sharing}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] text-sm font-semibold text-white"
+            className="inline-flex min-h-11 flex-1 basis-0 items-center justify-center gap-1.5 rounded-xl bg-[#25D366] px-2.5 py-2 text-center text-xs font-semibold leading-snug text-white shadow-md transition active:scale-[0.99]"
           >
-            <WhatsAppIcon className="h-5 w-5" />
-            {order.shopName}
+            <WhatsAppIcon className="h-4 w-4 shrink-0" />
+            {t.trackAskShop}
           </a>
-        </div>
 
-        <Link
-          href={`/shop/${order.shopSlug}`}
-          className="block rounded-xl border border-glass-edge bg-glass px-4 py-3 text-center text-sm font-medium text-brand-700 shadow-raised"
-        >
-          {t.trackOrderAgain}
-        </Link>
+          {/* Beside it, the way back into the shop: the two things a customer
+              does from here, side by side, both app-style buttons. */}
+          <Link
+            href={`/shop/${order.shopSlug}`}
+            className="inline-flex min-h-11 flex-1 basis-0 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-2.5 py-2 text-center text-xs font-semibold leading-snug text-white shadow-md transition hover:bg-brand-700 active:scale-[0.99]"
+          >
+            <CartIcon className="h-4 w-4 shrink-0" />
+            {t.trackOrderAgain}
+          </Link>
+        </div>
 
         <p className="px-1 text-center text-xs text-slate-500">{t.trackHint}</p>
       </main>

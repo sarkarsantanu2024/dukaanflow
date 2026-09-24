@@ -222,6 +222,13 @@ export async function PATCH(request: Request, { params }: Context) {
     changes.inStock = changes.stockQty > 0;
   }
 
+  // Back on the shelf, so "back on the 26th" is no longer true. Cleared here,
+  // once, rather than left for every screen to decide whether to show it.
+  if (changes.stockQty !== undefined && changes.stockQty !== null && changes.stockQty > 0 && changes.backOn === undefined) {
+    changes.backOn = '';
+    changes.stockNote = '';
+  }
+
   try {
     // Scoped by shopId so one shop's id can never mutate another shop's item.
     const result = await prisma.item.updateMany({ where: { id, shopId }, data: changes });

@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { Badge } from '@/components/ui/Badge';
 import { CartIcon } from '@/components/ui/Icon';
 import { formatPaise } from '@/lib/money';
-import { amountLabel, isLooseUnit, MOST_PER_LINE } from '@/lib/units';
+import { amountLabel, isLooseUnit, MOST_PER_LINE, rateUnit } from '@/lib/units';
 import { AmountStepper } from './AmountStepper';
 import type { Locale } from '@/lib/i18n';
 import { dict } from '@/lib/i18n';
@@ -25,6 +25,9 @@ export type CustomerItem = {
    * most of a kirana's list and shows nothing at all.
    */
   stockQty: number | null;
+  /** The day a finished item is back, "2026-09-26", and the shop's message. Customer side only. */
+  backOn?: string;
+  stockNote?: string;
 };
 
 /**
@@ -87,6 +90,7 @@ export function ItemCard({
   onChange,
   locale,
   showStock = false,
+  onBeyondStock,
 }: {
   item: CustomerItem;
   quantity: number;
@@ -98,6 +102,13 @@ export function ItemCard({
    * see the note where the badge is drawn. Off for customers.
    */
   showStock?: boolean;
+  /**
+   * The till only. Called when the owner asks for more than the shelf holds —
+   * the + at the count, or a tap on an item that is out — instead of the tap
+   * doing nothing. See `ShortStockModal`. Customers never get this: for them
+   * the count stays a hard stop.
+   */
+  onBeyondStock?: () => void;
 }) {
   const t = dict(locale);
   const label = itemName(item, locale);
@@ -167,8 +178,30 @@ export function ItemCard({
     </span>
   );
 
+  /**
+   * A TAP ANYWHERE ON THE CARD DOES WHAT THE ROW BUTTON DOES.
+   *
+   * The button only covers the name-and-price row, but in the grid a card is
+   * stretched to the height of its tallest neighbour, so there was a band of
+   * card under that row, and the card's own padding around it, where a tap did
+   * nothing. The card looked like one thing and answered like half of one.
+   *
+   * The button stays the real control, for the keyboard and screen readers; the
+   * card only forwards taps that land outside any control of its own, so the
+   * stepper's − and + and the amount picker keep working exactly as before.
+   */
+  function onCardClick(event: React.MouseEvent<HTMLLIElement>) {
+    if (disabled || (!inBasket && atMost)) {
+      onBeyondStock?.();
+      return;
+    }
+    if ((event.target as HTMLElement).closest('button, input, select, a, label, [data-card-control]')) return;
+    onChange(inBasket ? 0 : quantity + 1);
+  }
+
   return (
     <li
+      onClick={onCardClick}
       className={clsx(
         // A column, so a weighed item's amount picker gets the card's full
         // width on its own row instead of being squeezed into the corner the
@@ -177,8 +210,8 @@ export function ItemCard({
         disabled
           ? 'border-slate-200 bg-gradient-to-b from-slate-100 to-slate-200 opacity-60'
           : inBasket
-            ? 'border-brand-400 bg-brand-50'
-            : 'border-slate-300/70 bg-gradient-to-b from-card to-sunk hover:border-brand-300 hover:shadow-float',
+            ? 'cursor-pointer border-brand-400 bg-brand-50'
+            : 'cursor-pointer border-slate-300/70 bg-gradient-to-b from-card to-sunk hover:border-brand-300 hover:shadow-float',
       )}
     >
       <div className="flex items-center gap-2">
@@ -215,8 +248,12 @@ export function ItemCard({
          * is what a second tap expresses, and the stepper is still there for
          * anyone who wants a count.
          */
-        disabled={disabled || (!inBasket && atMost)}
-        onClick={() => onChange(inBasket ? 0 : quantity + 1)}
+        disabled={(disabled || (!inBasket && atMost)) && !onBeyondStock}
+        onClick={() =>
+          (disabled || (!inBasket && atMost)) && onBeyondStock
+            ? onBeyondStock()
+            : onChange(inBasket ? 0 : quantity + 1)
+        }
         aria-label={inBasket ? `${label} (${quantity})` : `${t.add} — ${label}`}
         // Says whether the thing is in the basket, which is what a second tap
         // now acts on. Cheaper and more accurate than a new label in three
@@ -289,7 +326,7 @@ export function ItemCard({
                 {/* "500 g", not "0.5". The count is a decimal in multiples of
                     the pack, and a raw one is a number nobody in this chain
                     speaks. Counted goods keep the plain number. */}
-                {amountLabel(item.unit, item.stockQty) ?? item.stockQty}
+                {amountLabel(item.unit, item.stockQty) ?? `${item.stockQty} ${rateUnit(item.unit)}`.trim()}
               </Badge>
             ))}
         </span>
@@ -308,7 +345,7 @@ export function ItemCard({
         // The one thing that cannot live inside the button above — buttons do
         // not nest — so it is the one case where the row's right-hand corner
         // does something other than add.
-        <div className="flex shrink-0 items-center gap-1 rounded-xl bg-card p-1 ring-1 ring-brand-200">
+        <div data-card-control className="flex shrink-0 items-center gap-1 rounded-xl bg-card p-1 ring-1 ring-brand-200">
           <button
             type="button"
             aria-label={`− ${label}`}
@@ -359,8 +396,8 @@ export function ItemCard({
           <button
             type="button"
             aria-label={`+ ${label}`}
-            disabled={atMost}
-            onClick={() => onChange(quantity + 1)}
+            disabled={atMost && !onBeyondStock}
+            onClick={() => (atMost && onBeyondStock ? onBeyondStock() : onChange(quantity + 1))}
             className="h-9 w-9 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-50 disabled:opacity-40"
           >
             +
@@ -374,13 +411,17 @@ export function ItemCard({
           a price and a row of common amounts — none of which fits in the
           corner a +/− counter occupies. */}
       {!disabled && inBasket && loose && (
-        <AmountStepper
-          unit={item.unit}
-          pricePaise={item.pricePaise}
-          quantity={quantity}
-          onChange={onChange}
-          locale={locale}
-        />
+        // A control of its own: a tap in its gaps must not reach the card and
+        // take the item back out of the basket. See `onCardClick`.
+        <div data-card-control>
+          <AmountStepper
+            unit={item.unit}
+            pricePaise={item.pricePaise}
+            quantity={quantity}
+            onChange={onChange}
+            locale={locale}
+          />
+        </div>
       )}
     </li>
   );

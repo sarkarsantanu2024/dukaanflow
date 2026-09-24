@@ -513,6 +513,18 @@ model Item {
    */
   stockQty   Float?
 
+  /**
+   * What the shop tells a customer who wants more than it has: the day it is
+   * back ("2026-09-26", or blank) and a short message in the owner's words.
+   * Set from the till's out-of-stock modal, shown to the customer in a modal
+   * when their basket reaches the shelf, and cleared by the server the moment
+   * the count goes back above zero. Blank on both is "nothing said".
+   *
+   * ADDITIVE, WITH DEFAULTS: `prisma db push` adds them without touching a row.
+   */
+  backOn     String   @default("")
+  stockNote  String   @default("")
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

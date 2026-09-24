@@ -132,6 +132,11 @@ type OwnerDictionary = {
   /** Packed and waiting — for collection, or for the round to go out. */
   orderReady: string;
   orderCompleted: string;
+  /** The finished orders kept under the live ones, grouped by day. */
+  ordersHistory: string;
+  ordersHistoryHint: string;
+  historyToday: string;
+  historyYesterday: string;
   orderCancelled: string;
   /** The paid-or-khata question asked when finishing an order. */
   paymentAsk: string;
@@ -181,6 +186,50 @@ type OwnerDictionary = {
   ordersWaiting: string;
   /** Forwards the whole round to whoever is running the deliveries. */
   ordersSendRound: string;
+  /** One order to the helper's WhatsApp. */
+  orderToHelper: string;
+  /** The words of the helper's WhatsApp list. */
+  roundHeading: string;
+  roundPickup: string;
+  roundNoAddress: string;
+  roundCustomer: string;
+  /** The helper strip above the orders. `{n}` is the number ticked. */
+  helperTickHint: string;
+  helperSendTicked: string;
+  /** The completed-orders section and its filters. `{n}` is a count. */
+  ordersLiveTab: string;
+  historySearch: string;
+  historyMonth: string;
+  historyAllMonths: string;
+  historyRange: string;
+  history7: string;
+  history30: string;
+  history90: string;
+  historyDate: string;
+  historyCount: string;
+  historyClear: string;
+  historyNone: string;
+  /** The till's out-of-stock modal and the bill note it writes. */
+  shortTitle: string;
+  shortLeft: string;
+  shortAddTitle: string;
+  shortAddHint: string;
+  shortAddButton: string;
+  shortStockAdded: string;
+  shortTellTitle: string;
+  shortTellHint: string;
+  shortTellButton: string;
+  shortTellNote: string;
+  shortNotedTitle: string;
+  billNotAvailable: string;
+  /** The bell in the header: new orders. */
+  bellTitle: string;
+  bellEmpty: string;
+  bellClearAll: string;
+  bellRemove: string;
+  bellNewOrder: string;
+  /** The words of the WhatsApp messages sent to customers. See `CustomerWords`. */
+  customerWords: import('./whatsapp').CustomerWords;
   noOrdersHere: string;
   delivery: string;
   pickup: string;
@@ -713,6 +762,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     orderConfirmed: 'Preparing',
     orderReady: 'Ready',
     orderCompleted: 'Completed',
+    ordersHistory: 'Completed orders',
+    ordersHistoryHint: 'Completed orders from the last 3 months. Find one by day, week or month, or by name, and tap WhatsApp to send that order\'s bill to the customer.',
+    historyToday: 'Today',
+    historyYesterday: 'Yesterday',
     orderCancelled: 'Cancelled',
     paymentAsk: 'Has the customer paid?',
     paymentGot: 'Paid',
@@ -749,6 +802,55 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     ordersTakings: 'Takings',
     ordersWaiting: 'Waiting',
     ordersSendRound: 'Send list on WhatsApp',
+    orderToHelper: 'Send to helper',
+    roundHeading: 'orders to deliver',
+    roundPickup: 'PICKUP — customer will collect',
+    roundNoAddress: 'No address given — call first',
+    roundCustomer: 'Customer',
+    helperTickHint: 'Tick the orders your helper should take',
+    helperSendTicked: 'Send {n} ticked orders to helper',
+    ordersLiveTab: 'To do',
+    historySearch: 'Name or number',
+    historyMonth: 'Month',
+    historyAllMonths: 'All 3 months',
+    historyRange: 'How far back',
+    history7: '7 days',
+    history30: '30 days',
+    history90: '3 months',
+    historyDate: 'Date',
+    historyCount: '{n} orders',
+    historyClear: 'Show all',
+    historyNone: 'No completed orders match this.',
+    shortTitle: 'not enough in stock',
+    shortLeft: 'In stock:',
+    shortAddTitle: 'Add stock now',
+    shortAddHint: 'More came in? Write how much, and the sale carries on.',
+    shortAddButton: 'Add',
+    shortStockAdded: 'stock added',
+    shortTellTitle: 'Tell the customer',
+    shortTellHint: 'When will it be back? Printed on the bill, and shown to customers on your shop page.',
+    shortTellButton: 'Put on bill',
+    shortTellNote: 'A word for customers (optional)',
+    shortNotedTitle: 'Will be on the bill:',
+    billNotAvailable: 'Out of stock — back on',
+    bellTitle: 'New orders',
+    bellEmpty: 'No orders waiting.',
+    bellClearAll: 'Clear all',
+    bellRemove: 'Remove',
+    bellNewOrder: 'New order',
+    customerWords: {
+      namaste: 'Namaste',
+      received: 'we have received your order. {shop}',
+      preparing: 'we have your order and are getting it ready. {shop}',
+      settled: 'thank you — your order is settled. {shop}',
+      cancelled: 'sorry — we could not take your order this time. {shop}',
+      total: 'Total',
+      revisedIntro: 'we did not have everything you asked for. {shop}',
+      revisedCanSend: 'This is what we can send:',
+      revisedMissing: 'Below items not available right now. We will notify you next day:',
+      newTotal: 'New total',
+      was: 'was',
+    },
     noOrdersHere: 'Nothing here right now',
     delivery: 'Delivery',
     pickup: 'Pickup',
@@ -1192,6 +1294,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     orderConfirmed: 'তৈরি হচ্ছে',
     orderReady: 'তৈরি আছে',
     orderCompleted: 'হয়ে গেছে',
+    ordersHistory: 'হয়ে যাওয়া অর্ডার',
+    ordersHistoryHint: 'গত ৩ মাসের হয়ে যাওয়া অর্ডার। দিন, সপ্তাহ, মাস বা নাম দিয়ে খুঁজুন, আর WhatsApp চেপে সেই অর্ডারের বিল ক্রেতাকে পাঠান।',
+    historyToday: 'আজ',
+    historyYesterday: 'গতকাল',
     orderCancelled: 'বাতিল',
     paymentAsk: 'খদ্দের কি টাকা দিয়েছে?',
     paymentGot: 'টাকা পেয়েছি',
@@ -1228,6 +1334,55 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     ordersTakings: 'আজকের টাকা',
     ordersWaiting: 'বাকি আছে',
     ordersSendRound: 'তালিকা WhatsApp-এ পাঠান',
+    orderToHelper: 'হেল্পারকে পাঠান',
+    roundHeading: 'অর্ডারের তালিকা',
+    roundPickup: 'দোকান থেকে নেবেন',
+    roundNoAddress: 'ঠিকানা নেই — আগে ফোন করুন',
+    roundCustomer: 'ক্রেতা',
+    helperTickHint: 'হেল্পার যে অর্ডার নেবে, সেগুলোতে টিক দিন',
+    helperSendTicked: 'টিক দেওয়া {n}টি অর্ডার হেল্পারকে পাঠান',
+    ordersLiveTab: 'চলতি অর্ডার',
+    historySearch: 'নাম বা নম্বর',
+    historyMonth: 'মাস',
+    historyAllMonths: 'গত ৩ মাস',
+    historyRange: 'কতদিনের',
+    history7: '৭ দিন',
+    history30: '৩০ দিন',
+    history90: '৩ মাস',
+    historyDate: 'তারিখ',
+    historyCount: '{n}টি অর্ডার',
+    historyClear: 'সব দেখান',
+    historyNone: 'এই খোঁজে কোনো অর্ডার নেই।',
+    shortTitle: 'স্টকে যথেষ্ট নেই',
+    shortLeft: 'স্টকে আছে:',
+    shortAddTitle: 'এখনই স্টক যোগ করুন',
+    shortAddHint: 'নতুন মাল এসেছে? কত এল লিখুন, বিক্রি চলবে।',
+    shortAddButton: 'যোগ করুন',
+    shortStockAdded: 'স্টক যোগ হয়েছে',
+    shortTellTitle: 'ক্রেতাকে জানান',
+    shortTellHint: 'কবে পাওয়া যাবে? বিলে লেখা থাকবে, আর দোকানের পাতায় ক্রেতারাও দেখবেন।',
+    shortTellButton: 'বিলে লিখুন',
+    shortTellNote: 'ক্রেতাদের জন্য একটা কথা (ইচ্ছে হলে)',
+    shortNotedTitle: 'বিলে লেখা থাকবে:',
+    billNotAvailable: 'স্টকে নেই — পাওয়া যাবে',
+    bellTitle: 'নতুন অর্ডার',
+    bellEmpty: 'কোনো অর্ডার বাকি নেই।',
+    bellClearAll: 'সব মুছুন',
+    bellRemove: 'মুছুন',
+    bellNewOrder: 'নতুন অর্ডার',
+    customerWords: {
+      namaste: 'নমস্কার',
+      received: 'আপনার অর্ডার পেয়েছি। {shop}',
+      preparing: 'আপনার অর্ডার পেয়েছি, তৈরি করছি। {shop}',
+      settled: 'ধন্যবাদ — আপনার অর্ডার সম্পূর্ণ হয়েছে। {shop}',
+      cancelled: 'দুঃখিত — এবার আপনার অর্ডার নিতে পারলাম না। {shop}',
+      total: 'মোট',
+      revisedIntro: 'আপনি যা চেয়েছিলেন তার সবটা আমাদের কাছে ছিল না। {shop}',
+      revisedCanSend: 'আমরা যা দিতে পারব:',
+      revisedMissing: 'নিচের জিনিসগুলো এখন নেই। পরদিন জানিয়ে দেব:',
+      newTotal: 'নতুন মোট',
+      was: 'আগে',
+    },
     noOrdersHere: 'এখানে এখন কিছু নেই',
     delivery: 'ডেলিভারি',
     pickup: 'দোকান থেকে',
@@ -1654,6 +1809,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     orderConfirmed: 'तैयार हो रहा है',
     orderReady: 'तैयार है',
     orderCompleted: 'हो गया',
+    ordersHistory: 'पूरे हुए ऑर्डर',
+    ordersHistoryHint: 'पिछले 3 महीने के पूरे हुए ऑर्डर। दिन, हफ़्ते, महीने या नाम से खोजें, और WhatsApp दबाकर उस ऑर्डर का बिल ग्राहक को भेजें।',
+    historyToday: 'आज',
+    historyYesterday: 'कल',
     orderCancelled: 'रद्द',
     paymentAsk: 'क्या ग्राहक ने पैसे दिए?',
     paymentGot: 'पैसे मिल गए',
@@ -1690,6 +1849,55 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     ordersTakings: 'आज की कमाई',
     ordersWaiting: 'बाकी है',
     ordersSendRound: 'सूची WhatsApp पर भेजें',
+    orderToHelper: 'हेल्पर को भेजें',
+    roundHeading: 'ऑर्डर की सूची',
+    roundPickup: 'दुकान से ले जाएंगे',
+    roundNoAddress: 'पता नहीं — पहले फ़ोन करें',
+    roundCustomer: 'ग्राहक',
+    helperTickHint: 'हेल्पर जो ऑर्डर ले जाएगा, उन पर टिक करें',
+    helperSendTicked: 'टिक किए {n} ऑर्डर हेल्पर को भेजें',
+    ordersLiveTab: 'चालू ऑर्डर',
+    historySearch: 'नाम या नंबर',
+    historyMonth: 'महीना',
+    historyAllMonths: 'पिछले 3 महीने',
+    historyRange: 'कितने दिन का',
+    history7: '7 दिन',
+    history30: '30 दिन',
+    history90: '3 महीने',
+    historyDate: 'तारीख',
+    historyCount: '{n} ऑर्डर',
+    historyClear: 'सब दिखाएँ',
+    historyNone: 'इस खोज में कोई ऑर्डर नहीं।',
+    shortTitle: 'स्टॉक में कम है',
+    shortLeft: 'स्टॉक में है:',
+    shortAddTitle: 'अभी स्टॉक जोड़ें',
+    shortAddHint: 'नया माल आया? कितना आया लिखिए, बिक्री चलती रहेगी।',
+    shortAddButton: 'जोड़ें',
+    shortStockAdded: 'स्टॉक जुड़ गया',
+    shortTellTitle: 'ग्राहक को बताएँ',
+    shortTellHint: 'कब मिलेगा? बिल पर लिखा रहेगा, और दुकान के पेज पर ग्राहक भी देखेंगे।',
+    shortTellButton: 'बिल पर लिखें',
+    shortTellNote: 'ग्राहकों के लिए एक बात (चाहें तो)',
+    shortNotedTitle: 'बिल पर लिखा रहेगा:',
+    billNotAvailable: 'स्टॉक में नहीं — मिलेगा',
+    bellTitle: 'नए ऑर्डर',
+    bellEmpty: 'कोई ऑर्डर बाकी नहीं।',
+    bellClearAll: 'सब हटाएँ',
+    bellRemove: 'हटाएँ',
+    bellNewOrder: 'नया ऑर्डर',
+    customerWords: {
+      namaste: 'नमस्ते',
+      received: 'आपका ऑर्डर मिल गया। {shop}',
+      preparing: 'आपका ऑर्डर मिल गया, तैयार कर रहे हैं। {shop}',
+      settled: 'धन्यवाद — आपका ऑर्डर पूरा हुआ। {shop}',
+      cancelled: 'माफ़ कीजिए — इस बार आपका ऑर्डर नहीं ले पाए। {shop}',
+      total: 'कुल',
+      revisedIntro: 'आपने जो माँगा, उसमें से सब कुछ हमारे पास नहीं था। {shop}',
+      revisedCanSend: 'हम यह भेज सकते हैं:',
+      revisedMissing: 'नीचे का सामान अभी नहीं है। अगले दिन बता देंगे:',
+      newTotal: 'नया कुल',
+      was: 'पहले',
+    },
     noOrdersHere: 'यहाँ अभी कुछ नहीं',
     delivery: 'डिलीवरी',
     pickup: 'दुकान से',

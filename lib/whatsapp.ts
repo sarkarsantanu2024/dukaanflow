@@ -14,6 +14,22 @@ function saidAs(line: { unit: string; quantity: number }): string {
   return amountLabel(line.unit, line.quantity) ?? `×${line.quantity}`;
 }
 
+/**
+ * One ordered line as a message says it: the name and the amount, once.
+ *
+ * A weighed or poured line reads as the amount itself, "Urad Dal 500 g", as
+ * the order card shows it. Every message used to print the pack size and then
+ * the amount after it, "Urad Dal 500 g 500 g". A counted line keeps its pack
+ * so the count says two of what: "Bingo 1 packet ×2".
+ */
+function itemText(line: { name: string; unit: string; quantity: number }): string {
+  const amount = amountLabel(line.unit, line.quantity);
+  const text = amount
+    ? `${line.name} ${amount}`
+    : `${[line.name, line.unit].filter(Boolean).join(' ')} ×${line.quantity}`;
+  return escapeWhatsAppText(text);
+}
+
 export type OrderLine = {
   name: string;
   unit: string;
@@ -45,10 +61,9 @@ export function escapeWhatsAppText(value: string): string {
 
 /** Builds the exact customer-facing order message. Server-side only. */
 export function buildOrderMessage(input: OrderMessageInput): string {
-  const lines = input.lines.map((line) => {
-    const label = escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
-    return `• ${label} ${saidAs(line)} = ${plainPaise(line.amountPaise)}`;
-  });
+  const lines = input.lines.map(
+    (line) => `• ${itemText(line)} = ${plainPaise(line.amountPaise)}`,
+  );
 
   const parts = [
     '🛒 New Order',
@@ -93,6 +108,44 @@ export function buildOfflineOrderMessage(input: OrderMessageInput): string {
 }
 
 /**
+ * THE WORDS OF THE MESSAGES A SHOP SENDS ITS CUSTOMERS, swappable.
+ *
+ * They were English only, around item names in English, so a Bengali shop
+ * wrote to a Bengali customer in a language neither of them uses. The owner's
+ * screens now pass the owner's own language (the best guide there is to the
+ * customer's, in a neighbourhood shop) and the item names as the owner sees
+ * them. `{shop}` is replaced with the shop's name. English stays the default
+ * for anything that does not pass words.
+ */
+export type CustomerWords = {
+  namaste: string;
+  received: string;
+  preparing: string;
+  settled: string;
+  cancelled: string;
+  total: string;
+  revisedIntro: string;
+  revisedCanSend: string;
+  revisedMissing: string;
+  newTotal: string;
+  was: string;
+};
+
+export const ENGLISH_CUSTOMER_WORDS: CustomerWords = {
+  namaste: 'Namaste',
+  received: 'we have received your order. {shop}',
+  preparing: 'we have your order and are getting it ready. {shop}',
+  settled: 'thank you — your order is settled. {shop}',
+  cancelled: 'sorry — we could not take your order this time. {shop}',
+  total: 'Total',
+  revisedIntro: 'we did not have everything you asked for. {shop}',
+  revisedCanSend: 'This is what we can send:',
+  revisedMissing: 'Below items not available right now. We will notify you next day:',
+  newTotal: 'New total',
+  was: 'was',
+};
+
+/**
  * What the customer is told when the shop cut their order down.
  *
  * The whole message is the difference. A customer who ordered 2 kg and is sent
@@ -109,19 +162,18 @@ export function buildRevisedMessage(input: {
   lines: { name: string; unit: string; quantity: number; wasQuantity: number; amountPaise: number }[];
   /** Lines the shop could not supply at all. */
   removed: { name: string; unit: string; quantity: number }[];
+  words?: CustomerWords;
 }): string {
-  const hello = input.customerName ? `Namaste ${input.customerName},` : 'Namaste,';
+  const w = input.words ?? ENGLISH_CUSTOMER_WORDS;
+  const hello = input.customerName ? `${w.namaste} ${input.customerName},` : `${w.namaste},`;
   const shop = escapeWhatsAppText(input.shopName);
-  const label = (line: { name: string; unit: string }) =>
-    escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
-
   const kept = input.lines.map((line) =>
     line.wasQuantity !== line.quantity
-      ? `• ${label(line)} ${saidAs(line)} (was ${saidAs({ unit: line.unit, quantity: line.wasQuantity })}) = ${plainPaise(line.amountPaise)}`
-      : `• ${label(line)} ${saidAs(line)} = ${plainPaise(line.amountPaise)}`,
+      ? `• ${itemText(line)} (${w.was} ${saidAs({ unit: line.unit, quantity: line.wasQuantity })}) = ${plainPaise(line.amountPaise)}`
+      : `• ${itemText(line)} = ${plainPaise(line.amountPaise)}`,
   );
 
-  const gone = input.removed.map((line) => `• ${label(line)} ${saidAs(line)}`);
+  const gone = input.removed.map((line) => `• ${itemText(line)}`);
 
   /**
    * The unavailable items get a heading rather than a suffix per line, because
@@ -133,15 +185,13 @@ export function buildRevisedMessage(input: {
    * is the difference between a lost sale and a deferred one.
    */
   return [
-    `${hello} we did not have everything you asked for. ${shop}`,
+    `${hello} ${w.revisedIntro.replace('{shop}', shop)}`,
     '',
-    'This is what we can send:',
+    w.revisedCanSend,
     ...kept,
-    ...(gone.length > 0
-      ? ['', 'Below items not available right now. We will notify you next day:', ...gone]
-      : []),
+    ...(gone.length > 0 ? ['', w.revisedMissing, ...gone] : []),
     '',
-    `New total: ${plainPaise(input.totalAmountPaise)}`,
+    `${w.newTotal}: ${plainPaise(input.totalAmountPaise)}`,
   ].join('\n');
 }
 
@@ -181,24 +231,33 @@ export function buildRoundMessage(input: {
     totalAmountPaise: number;
     lines: { name: string; unit: string; quantity: number }[];
   }[];
+  /**
+   * The words around the orders, in the owner's language. The names in
+   * `lines` should already be in it too: the helper reads the same list the
+   * owner is looking at, not the catalogue's English.
+   */
+  labels?: { heading: string; pickup: string; noAddress: string; customer: string };
 }): string {
-  const parts: string[] = [`${escapeWhatsAppText(input.shopName)} — orders to deliver`, ''];
+  const labels = input.labels ?? {
+    heading: 'orders to deliver',
+    pickup: 'PICKUP — customer will collect',
+    noAddress: 'No address given — call first',
+    customer: 'Customer',
+  };
+  const parts: string[] = [`${escapeWhatsAppText(input.shopName)} — ${labels.heading}`, ''];
 
   input.orders.forEach((order, index) => {
     const items = order.lines
-      .map((line) => {
-        const label = escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
-        return `   • ${label} ${saidAs(line)}`;
-      })
+      .map((line) => `   • ${itemText(line)}`)
       .join('\n');
 
     parts.push(
-      `${index + 1}. ${escapeWhatsAppText(order.customerName) || 'Customer'} — ${order.customerPhone}`,
+      `${index + 1}. ${escapeWhatsAppText(order.customerName) || labels.customer} — ${order.customerPhone}`,
       // Pickup orders are in the list but marked, so nobody carries a bag to an
       // address the customer is coming to collect from.
       order.orderType === 'PICKUP'
-        ? '   PICKUP — customer will collect'
-        : `   ${escapeWhatsAppText(order.customerAddress) || 'No address given — call first'}`,
+        ? `   ${labels.pickup}`
+        : `   ${escapeWhatsAppText(order.customerAddress) || labels.noAddress}`,
       items,
       `   ${plainPaise(order.totalAmountPaise)}`,
       '',
@@ -225,8 +284,10 @@ export function buildStatusMessage(input: {
   orderType: 'DELIVERY' | 'PICKUP';
   /** What was ordered. A total with nothing behind it cannot be checked. */
   lines: { name: string; unit: string; quantity: number; amountPaise: number }[];
+  words?: CustomerWords;
 }): string {
-  const hello = input.customerName ? `Namaste ${input.customerName},` : 'Namaste,';
+  const w = input.words ?? ENGLISH_CUSTOMER_WORDS;
+  const hello = input.customerName ? `${w.namaste} ${input.customerName},` : `${w.namaste},`;
   const shop = escapeWhatsAppText(input.shopName);
 
   /**
@@ -237,17 +298,14 @@ export function buildStatusMessage(input: {
    * answer for money nobody had been given yet.
    */
   const body =
-    input.status === 'READY'
-      ? input.orderType === 'PICKUP'
-        ? `your order is ready. Please collect it from ${shop}.`
-        : `your order is ready and on its way from ${shop}.`
-      : input.status === 'COMPLETED'
-        ? `thank you — your order is settled. ${shop}`
-        : input.status === 'CONFIRMED'
-          ? `we have your order and are getting it ready. ${shop}`
-          : input.status === 'CANCELLED'
-            ? `sorry — we could not take your order this time. ${shop}`
-            : `we have received your order. ${shop}`;
+    (input.status === 'COMPLETED'
+      ? w.settled
+      : input.status === 'CONFIRMED' || input.status === 'READY'
+        ? w.preparing
+        : input.status === 'CANCELLED'
+          ? w.cancelled
+          : w.received
+    ).replace('{shop}', shop);
 
   // A cancellation is not a bill, so it carries neither items nor a total.
   if (input.status === 'CANCELLED' || input.totalAmountPaise <= 0) {
@@ -259,12 +317,9 @@ export function buildStatusMessage(input: {
   // phone is what the ₹130 was for — which is the call this message exists to
   // save. Same bullet shape the order message used, so it reads familiarly.
   const items = input.lines
-    .map((line) => {
-      const label = escapeWhatsAppText([line.name, line.unit].filter(Boolean).join(' '));
-      return `• ${label} ${saidAs(line)} = ${plainPaise(line.amountPaise)}`;
-    })
+    .map((line) => `• ${itemText(line)} = ${plainPaise(line.amountPaise)}`)
     .join('\n');
 
   const itemBlock = items ? `\n\n${items}` : '';
-  return `${hello} ${body}${itemBlock}\n\nTotal: ${plainPaise(input.totalAmountPaise)}`;
+  return `${hello} ${body}${itemBlock}\n\n${w.total}: ${plainPaise(input.totalAmountPaise)}`;
 }

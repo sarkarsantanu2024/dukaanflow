@@ -25,12 +25,13 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { SearchMic } from '@/components/voice/SearchMic';
+import { spokenSearchText } from '@/lib/speech';
 import { Button } from '@/components/ui/Button';
 import { DrawerFooter } from '@/components/ui/Drawer';
 import { useToast } from '@/components/ui/Toast';
 import { ownerDict } from '@/lib/owner-i18n';
 import { starterName, starterOtherNames, type StarterItem } from '@/lib/starter-catalogue';
-import { translateCategory } from '@/lib/speech';
+import { matchesSearch, translateCategory } from '@/lib/speech';
 import { formatPaise } from '@/lib/money';
 import { rateUnit } from '@/lib/units';
 import type { Locale } from '@/lib/i18n';
@@ -90,10 +91,10 @@ export function StarterPicker({
   const matches = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return null;
+    // Spelling-tolerant, the same test every other item search uses, so a
+    // voice search that finds something by it finds the same here.
     return catalogue.filter((item) =>
-      `${item.name} ${item.nameBn} ${item.nameHi} ${item.unit} ${item.category}`
-        .toLowerCase()
-        .includes(needle),
+      matchesSearch([item.name, item.nameBn, item.nameHi, item.unit, item.category], needle),
     );
   }, [catalogue, query]);
 
@@ -227,7 +228,18 @@ export function StarterPicker({
           aria-label={t.starterSearch}
           className="min-w-0 flex-1 rounded-xl bg-transparent px-3 py-2.5 text-base focus:outline-none"
         />
-        <SearchMic locale={locale} onText={setQuery} label={t.starterSearch} />
+        <SearchMic
+          locale={locale}
+          onText={setQuery}
+          label={t.starterSearch}
+          resolve={(heard) =>
+            spokenSearchText(
+              heard,
+              catalogue.map((item, index) => ({ ...item, id: String(index) })),
+              (item) => starterName(item, locale),
+            )
+          }
+        />
       </div>
 
       {matches ? (

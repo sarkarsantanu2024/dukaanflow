@@ -32,18 +32,25 @@ export function SearchMic({
   locale,
   onText,
   label,
+  resolve,
   className,
 }: {
   locale: Locale;
-  /** Receives the recogniser's best guess, trimmed. Put it in the query. */
+  /** Receives what to search for. Put it in the query. */
   onText: (text: string) => void;
+  /**
+   * Turns the recogniser's alternatives into the text to search for, usually
+   * `spokenSearchText` over the list being searched, so a misheard spelling
+   * still lands on the item. Without it the first guess is used as heard.
+   */
+  resolve?: (alternatives: string[]) => string;
   /** The accessible name — the search box's own label reads right. */
   label: string;
   className?: string;
 }) {
   const voice = useVoice({
     lang: SEARCH_LANG[locale],
-    onPhrase: (alternatives) => onText((alternatives[0] ?? '').trim()),
+    onPhrase: (alternatives) => onText(resolve ? resolve(alternatives) : (alternatives[0] ?? '').trim()),
   });
 
   if (!voice.supported) return null;

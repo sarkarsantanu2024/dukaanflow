@@ -1,8 +1,20 @@
 'use client';
 
-import clsx from 'clsx';
 import { LOCALES, LOCALE_LABELS, type Locale } from '@/lib/i18n';
 
+/**
+ * The customer's language switch, and it is now the owner's: one compact
+ * dropdown on the green bar, in the same place and the same style.
+ *
+ * It was a three-button segmented control, a white pill wider than the rest of
+ * the bar put together, which crowded the new bell off a small phone. The
+ * owner's header already used a native select, which is also the control a
+ * shopper's phone knows how to draw large and legible.
+ *
+ * The options carry their own colours: the closed box is white text on the
+ * green bar, and an open list would otherwise inherit that white onto the
+ * browser's white list.
+ */
 export function LangToggle({
   value,
   onChange,
@@ -11,32 +23,17 @@ export function LangToggle({
   onChange: (locale: Locale) => void;
 }) {
   return (
-    <div
-      role="group"
+    <select
+      value={value}
+      onChange={(event) => onChange(event.target.value as Locale)}
       aria-label="Language"
-      // A segmented control on a light bar, matching the one the console uses
-      // for its own filters — it used to be white-on-green for a header that
-      // no longer exists.
-      className="inline-flex shrink-0 rounded-full bg-slate-100 p-0.5"
+      className="h-8 shrink-0 cursor-pointer rounded-lg border border-white/30 bg-white/10 px-2 text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
     >
       {LOCALES.map((locale) => (
-        <button
-          key={locale}
-          type="button"
-          onClick={() => onChange(locale)}
-          aria-pressed={value === locale}
-          className={clsx(
-            // 44px wide and 40 tall. It was 44×28: wide enough and too short,
-            // which on a phone is a mis-tap into whatever sits under it.
-            'inline-flex min-h-[40px] min-w-[44px] items-center justify-center rounded-full px-3 text-xs font-semibold transition',
-            value === locale
-              ? 'bg-card text-slate-900 shadow-sm'
-              : 'text-slate-500 hover:text-slate-800',
-          )}
-        >
+        <option key={locale} value={locale} className="bg-white text-slate-900">
           {LOCALE_LABELS[locale]}
-        </button>
+        </option>
       ))}
-    </div>
+    </select>
   );
 }

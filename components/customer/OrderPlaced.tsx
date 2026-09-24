@@ -25,12 +25,11 @@
  *     `SaveShopCard`.
  */
 
-import { useState } from 'react';
+import { CartIcon, ChevronRightIcon } from '@/components/ui/Icon';
 import Link from 'next/link';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { SaveShopCard } from './SaveShopCard';
-import { enablePush, pushSupported } from '@/lib/push-client';
+import { useAutoPush } from '@/components/ui/useAutoPush';
 import { dict, type Locale } from '@/lib/i18n';
 
 export function OrderPlaced({
@@ -38,7 +37,6 @@ export function OrderPlaced({
   shopSlug,
   orderType,
   locale,
-  wasRemembered,
   onClose,
 }: {
   orderId: string;
@@ -59,30 +57,11 @@ export function OrderPlaced({
   onClose: () => void;
 }) {
   const t = dict(locale);
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? '';
-  const [asking, setAsking] = useState(false);
-  /** null until they answer; then what came of it. */
-  const [notify, setNotify] = useState<'on' | 'denied' | 'no' | null>(null);
-
-  const canAsk = Boolean(publicKey) && pushSupported() && notify === null;
-
-  async function turnOn() {
-    setAsking(true);
-    try {
-      const outcome = await enablePush({
-        // The order id is the authorisation — the shop and the phone number are
-        // read off the order, never sent. See the route for why.
-        endpoint: `/api/order/${orderId}/push`,
-        // One worker for every shop this phone uses, so the tea stall and the
-        // kirana are not two registrations fighting over the same cache.
-        scope: '/shop/',
-        publicKey,
-      });
-      setNotify(outcome === 'subscribed' ? 'on' : outcome === 'denied' ? 'denied' : 'no');
-    } finally {
-      setAsking(false);
-    }
-  }
+  // Alerts about this order, on by default — see `useAutoPush`. The order id
+  // is the authorisation: the shop and the phone are read off the order on the
+  // server. One worker for every shop this phone uses (scope `/shop/`). The
+  // customer turns alerts off from the phone's own site settings.
+  useAutoPush({ endpoint: `/api/order/${orderId}/push`, scope: '/shop/' });
 
   return (
     <Modal
@@ -98,61 +77,24 @@ export function OrderPlaced({
     >
       {t.orderPlacedHint}
 
-      {!wasRemembered && <span className="mt-2 block text-slate-500">{t.savedForNextTime}</span>}
 
-      {/* THE ASK. On a tap, once, and never repeated — a browser that has been
-          refused cannot be asked again from code, and a customer who says no
-          here has said no for good. So the wording promises exactly one thing
-          and nothing else: they will be told when it is ready. */}
-      {canAsk && (
-        <div className="mt-3 rounded-xl bg-sunk p-3">
-          <p className="font-semibold text-slate-900">
-            {orderType === 'PICKUP' ? t.notifyTitlePickup : t.notifyTitle}
-          </p>
-          <p className="mt-0.5 text-sm text-slate-600">
-            {orderType === 'PICKUP' ? t.notifyBodyPickup : t.notifyBody}
-          </p>
-          <div className="mt-2.5 flex gap-2">
-            <button
-              type="button"
-              disabled={asking}
-              onClick={turnOn}
-              className="h-10 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
-            >
-              {t.notifyYes}
-            </button>
-            <button
-              type="button"
-              disabled={asking}
-              onClick={() => setNotify('no')}
-              className="h-10 rounded-lg px-3 text-sm font-semibold text-slate-600"
-            >
-              {t.notifyLater}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {notify === 'on' && (
-        <p className="mt-3 rounded-xl bg-brand-50 px-3 py-2 text-sm font-medium text-brand-800">
-          {t.notifyOn}
-        </p>
-      )}
-      {notify === 'denied' && (
-        <p className="mt-3 text-sm text-slate-500">{t.notifyDenied}</p>
-      )}
 
       {/* The page they can come back to whatever they decided about
           notifications — and the one that will show them a shortened order if
           the shop turns out not to have everything. */}
+      {/* The way to the order, as a button rather than an underlined link:
+          it is the one thing on this popup worth tapping. */}
       <Link
         href={`/track/${orderId}`}
-        className="mt-3 block text-sm font-semibold text-brand-700 underline"
+        className="mt-4 flex items-center gap-3 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 font-semibold text-brand-800 shadow-sm transition hover:bg-brand-100 active:scale-[0.99]"
       >
-        {t.trackTitle} →
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
+          <CartIcon className="h-5 w-5" />
+        </span>
+        <span className="flex-1">{t.seeOrders}</span>
+        <ChevronRightIcon className="h-5 w-5 shrink-0 text-brand-600" />
       </Link>
 
-      <SaveShopCard locale={locale} />
     </Modal>
   );
 }
