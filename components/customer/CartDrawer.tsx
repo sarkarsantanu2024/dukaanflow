@@ -47,6 +47,12 @@ export type CartLine = {
    * the menu must not find a whole-pack counter here.
    */
   loose?: boolean;
+  /**
+   * The most that can go in, for a counted item: what the shelf holds. The +
+   * stops here. The till leaves it off on purpose: there, asking for more
+   * opens the out-of-stock modal instead (see `withinStock` in SellScreen).
+   */
+  most?: number;
 };
 
 export function CartDrawer({
@@ -341,8 +347,9 @@ export function CartDrawer({
                     <button
                       type="button"
                       aria-label="+"
+                      disabled={line.most !== undefined && line.quantity >= line.most}
                       onClick={() => onSetQuantity(line.id, line.quantity + 1)}
-                      className="h-9 w-9 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-100"
+                      className="h-9 w-9 rounded-lg text-lg font-semibold text-brand-800 transition hover:bg-brand-100 disabled:opacity-40"
                     >
                       +
                     </button>

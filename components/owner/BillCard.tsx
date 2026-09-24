@@ -14,19 +14,22 @@
  * would soon be showing the bill for a sale three customers ago, which is how
  * the wrong bill gets sent.
  *
- * WHY A DOWNLOAD AND A SEPARATE WHATSAPP OPEN, rather than one button that
- * sends the file: `wa.me` links carry TEXT ONLY. There is no URL that attaches
- * a file to a WhatsApp message, from a web page or anywhere else. So the honest
- * flow is the two steps the owner would do by hand anyway — take the file, then
- * open the chat — and the hint under the button says so plainly rather than
- * leaving them waiting for an attachment that is never going to appear.
+ * THE PDF GOES WITH THE MESSAGE WHERE THE PHONE CAN SHARE FILES, the same
+ * as the order bills, the restock list and the khata. `wa.me` links carry
+ * text only, but `navigator.share` with a file puts the PDF into WhatsApp as an
+ * attachment, with the message as its caption; the owner picks the customer in
+ * the share sheet, so no number is asked for.
+ *
+ * Where it cannot (a computer, mostly), the old two steps remain: the number,
+ * then the PDF is saved and the customer's chat opens, and the hint under the
+ * button says the file is to be attached by hand.
  */
 
 import { toAsciiDigits } from '@/lib/digits';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { downloadBillPdf, type Bill } from '@/lib/bill-pdf';
+import { billPdfBlob, downloadBillPdf, type Bill } from '@/lib/bill-pdf';
 import { toWhatsAppNumber } from '@/lib/whatsapp';
 import { formatPaise } from '@/lib/money';
 import type { OwnerDictionary } from '@/lib/owner-i18n';
@@ -51,6 +54,44 @@ export function BillCard({
   const [busy, setBusy] = useState(false);
   const [bad, setBad] = useState<string | undefined>();
 
+  /** Can this phone hand a PDF to WhatsApp? Asked once, with a stand-in file. */
+  const [canSharePdf, setCanSharePdf] = useState(false);
+  useEffect(() => {
+    try {
+      const probe = new File([''], 'bill.pdf', { type: 'application/pdf' });
+      setCanSharePdf(Boolean(navigator.canShare?.({ files: [probe] })));
+    } catch {
+      setCanSharePdf(false);
+    }
+  }, []);
+
+  const labels = {
+    bill: t.billDoc,
+    total: t.billTotal,
+    paidBy: t.billPaidBy,
+    paymentMode: { CASH: t.sellCash, UPI: t.sellUpi, KHATA: t.sellKhata },
+    credit: `${t.billDoc} · ${bill.shopName}`,
+  };
+  const text = `${bill.shopName}\n${t.billDoc} · ${formatPaise(bill.totalPaise)}`;
+
+  /** The share-sheet path: the PDF attached, the message as its caption. */
+  async function share() {
+    setBusy(true);
+    try {
+      const blob = await billPdfBlob(bill, labels);
+      const file = new File([blob], `bill-${slug}-${bill.at.getTime()}.pdf`, { type: 'application/pdf' });
+      await navigator.share({ files: [file], text });
+      onSent(t.billReady);
+      onDone();
+    } catch (error) {
+      // Closing the share sheet is the owner changing their mind.
+      if ((error as { name?: string })?.name === 'AbortError') return;
+      onError(t.networkError);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function send() {
     // Ten digits, the same shape every other phone field in this product takes.
     const digits = toAsciiDigits(phone).replace(/\D/g, '').replace(/^91/, '');
@@ -61,22 +102,11 @@ export function BillCard({
 
     setBusy(true);
     try {
-      await downloadBillPdf(
-        bill,
-        {
-          bill: t.billDoc,
-          total: t.billTotal,
-          paidBy: t.billPaidBy,
-          paymentMode: { CASH: t.sellCash, UPI: t.sellUpi, KHATA: t.sellKhata },
-          credit: `${t.billDoc} · ${bill.shopName}`,
-        },
-        `bill-${slug}-${bill.at.getTime()}.pdf`,
-      );
+      await downloadBillPdf(bill, labels, `bill-${slug}-${bill.at.getTime()}.pdf`);
 
       // The message carries the total in words as well as the file, because the
       // file is an attachment the owner has still to add — and a message that
       // arrives with the figure in it is already useful if they forget.
-      const text = `${bill.shopName}\n${t.billDoc} · ${formatPaise(bill.totalPaise)}`;
       window.open(
         `https://wa.me/${toWhatsAppNumber(digits)}?text=${encodeURIComponent(text)}`,
         '_blank',
@@ -100,6 +130,21 @@ export function BillCard({
         </p>
       </div>
 
+      {canSharePdf ? (
+        <div className="mt-2 flex items-center gap-2">
+          <Button onClick={share} loading={busy} className="flex-1">
+            {t.billSend}
+          </Button>
+          <button
+            type="button"
+            onClick={onDone}
+            className="shrink-0 px-3 py-2.5 text-sm font-medium text-slate-500"
+          >
+            {t.billSkip}
+          </button>
+        </div>
+      ) : (
+      <>
       <div className="mt-2 flex items-end gap-2">
         <div className="min-w-0 flex-1">
           <Input
@@ -132,6 +177,8 @@ export function BillCard({
       </div>
 
       <p className="mt-2 text-xs text-slate-500">{t.billHint}</p>
+      </>
+      )}
     </div>
   );
 }

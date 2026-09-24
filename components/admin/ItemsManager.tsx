@@ -24,7 +24,7 @@ import {
   type StarterItem,
 } from '@/lib/starter-catalogue';
 import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
-import { suggestNames, translateCategory } from '@/lib/speech';
+import { spokenSearchText, suggestNames, translateCategory } from '@/lib/speech';
 import { parseStockAmount, rateUnit, stockAmountLabel, unitsFor, UNIT_LIST_ID } from '@/lib/units';
 import { Drawer } from '@/components/ui/Drawer';
 import { FloatingTools } from './FloatingTools';
@@ -1653,7 +1653,11 @@ export function ItemsManager({
   const list = (
     <section className="min-w-0">
       {showSearch && (
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+      // STUCK UNDER THE HEADER, so the search is still there forty items
+      // down. It used to scroll away with the list, which is exactly when an
+      // owner looking for one item needs it. The ground colour behind it keeps
+      // the rows from showing through as they pass underneath.
+      <div className="sticky top-[var(--sticky-top,0px)] z-10 -mx-1 mb-3 flex flex-col gap-2 bg-ground/95 px-1 py-2 backdrop-blur sm:flex-row sm:items-center">
           <div className="flex w-full items-center rounded-xl border border-slate-300 bg-card pr-1 focus-within:border-brand-500">
             <input
               type="search"
@@ -1663,26 +1667,19 @@ export function ItemsManager({
               aria-label={t.searchItems}
               className="min-w-0 flex-1 rounded-xl bg-transparent px-3 py-2.5 focus:outline-none"
             />
-            <SearchMic locale={locale} onText={setQuery} label={t.searchItems} />
+            <SearchMic
+              locale={locale}
+              onText={setQuery}
+              label={t.searchItems}
+              resolve={(heard) => spokenSearchText(heard, items, (item) => displayName(item, locale))}
+            />
           </div>
-          {/* One category means the filter cannot change what is on screen. */}
-          {categories.length > 1 && (
-            <select
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              aria-label={t.allCategories}
-              className="rounded-xl border border-slate-300 bg-card px-3 py-2.5 sm:w-52"
-            >
-              <option value="">{t.allCategories}</option>
-              {/* The value stays the stored category so filtering still works;
-                  only what the owner reads is translated. */}
-              {categories.map((name) => (
-                <option key={name} value={name}>
-                  {translateCategory(name, locale)}
-                </option>
-              ))}
-            </select>
-          )}
+          {/* THE CATEGORY FILTER IS GONE, BY REQUEST. The list is already grouped
+              under its categories, each group can be folded, and the search
+              above finds any item by name — a dropdown under it was a third
+              way to do the same thing. `category` stays in state (always ""),
+              so the filtering path is unchanged and putting it back is putting
+              this block back. */}
         </div>
       )}
 

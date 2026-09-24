@@ -27,6 +27,12 @@ export type BillLine = {
   unit: string;
   quantity: number;
   amountPaise: number;
+  /**
+   * A line printed under the name, such as "out of stock, back on 26/09".
+   * A line with a note and nothing sold (quantity 0) is the customer being
+   * told in writing about something they asked for and did not get.
+   */
+  note?: string;
 };
 
 export type Bill = {
@@ -59,16 +65,36 @@ export type BillLabels = {
 const WIDTH = 720;
 const PAD = 48;
 const ROW = 52;
+/** The extra height a line with a note takes. */
+const NOTE_ROW = 30;
 
+/** The bill written and saved to the phone, for the till and the fallback. */
 export async function downloadBillPdf(
   bill: Bill,
   labels: BillLabels,
   fileName: string,
 ): Promise<void> {
+  const blob = await billPdfBlob(bill, labels);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+/**
+ * The bill as a PDF file in memory, so it can be handed to the share sheet
+ * and go into WhatsApp with the message rather than only into Downloads.
+ */
+export async function billPdfBlob(bill: Bill, labels: BillLabels): Promise<Blob> {
   // Height is worked out from the line count rather than fixed, so a two-item
   // bill is not three-quarters white space and a twenty-item one does not run
   // off the bottom.
-  const height = PAD * 2 + 210 + bill.lines.length * ROW + 190;
+  const notes = bill.lines.filter((line) => line.note).length;
+  const height = PAD * 2 + 210 + bill.lines.length * ROW + notes * NOTE_ROW + 190;
 
   const canvas = document.createElement('canvas');
   canvas.width = WIDTH;
@@ -111,18 +137,27 @@ export async function downloadBillPdf(
     ctx.font = '28px system-ui, sans-serif';
     ctx.fillText(line.name, PAD, y);
 
-    const amount = formatPaise(line.amountPaise);
-    ctx.textAlign = 'right';
-    ctx.fillText(amount, right, y);
-    ctx.textAlign = 'left';
+    // Nothing sold on a note-only line, so no "₹0" beside it.
+    if (line.quantity > 0) {
+      const amount = formatPaise(line.amountPaise);
+      ctx.textAlign = 'right';
+      ctx.fillText(amount, right, y);
+      ctx.textAlign = 'left';
+    }
 
-    const measure = amountLabel(line.unit, line.quantity);
+    const measure = line.quantity > 0 ? amountLabel(line.unit, line.quantity) : null;
     if (measure) {
       ctx.fillStyle = '#94a3b8';
       ctx.font = '22px system-ui, sans-serif';
       ctx.fillText(measure, PAD, y + 30);
     }
-    y += ROW;
+    if (line.note) {
+      // Amber, the colour the app uses for "not today".
+      ctx.fillStyle = '#b45309';
+      ctx.font = '22px system-ui, sans-serif';
+      ctx.fillText(line.note, PAD, y + (measure ? 56 : 30));
+    }
+    y += ROW + (line.note ? NOTE_ROW : 0);
   }
 
   y += 8;
@@ -149,9 +184,17 @@ export async function downloadBillPdf(
   ctx.fillText(labels.credit, PAD, y);
 
   const { jsPDF } = await import('jspdf');
-  const doc = new jsPDF({ unit: 'px', format: [WIDTH, height] });
+  // THE ORIENTATION IS STATED, NOT LEFT TO jsPDF. Its default is portrait, and
+  // given a page wider than tall it swaps the two sides to make one — so a
+  // short bill (one or two lines is 720 × ~550) came out 550 wide with the
+  // image cut off down the right, and every price was in the part cut off.
+  const doc = new jsPDF({
+    unit: 'px',
+    format: [WIDTH, height],
+    orientation: WIDTH > height ? 'landscape' : 'portrait',
+  });
   doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, WIDTH, height);
-  doc.save(fileName);
+  return doc.output('blob');
 }
 
 function rule(ctx: CanvasRenderingContext2D, y: number, right: number) {

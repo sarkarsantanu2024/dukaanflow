@@ -12,6 +12,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useAutoPush } from '@/components/ui/useAutoPush';
 import clsx from 'clsx';
 import { ownerDict } from '@/lib/owner-i18n';
 import { useHtmlLang } from '@/components/ui/useHtmlLang';
@@ -121,6 +122,9 @@ export function OwnerShell({
 }) {
   const t = ownerDict(locale);
   const pathname = usePathname();
+  // New-order alerts on this phone, on by default — see `useAutoPush`. The
+  // owner turns them off from the phone's own site settings.
+  useAutoPush({ endpoint: `/api/owner/${slug}/push`, scope: `/owner/${slug}/` });
   /** Same test `OwnerHeader` uses, so the padding and the badge agree. */
   const atHome = pathname === `/owner/${slug}` || pathname === `/owner/${slug}/`;
   /**

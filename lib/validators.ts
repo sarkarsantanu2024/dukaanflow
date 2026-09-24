@@ -375,6 +375,9 @@ export const itemPatchSchema = z.object({
   category: z.string().trim().max(40).optional(),
   nameBn: altNameSchema.optional(),
   nameHi: altNameSchema.optional(),
+  /** When a finished item is back, and what the shop says about it. See `Item.backOn`. */
+  backOn: calendarDateSchema.optional(),
+  stockNote: z.string().trim().max(140, 'Keep the message short').optional(),
 });
 
 /**
@@ -638,7 +641,11 @@ export const orderDeleteSchema = z.object({ id: z.string().uuid('Unknown order')
 
 export const orderStatusSchema = z.object({
   id: z.string().uuid('Unknown order'),
-  status: z.enum(['NEW', 'CONFIRMED', 'READY', 'COMPLETED', 'CANCELLED']),
+  // THE "READY" STEP IS GONE, BY REQUEST. An order goes from waiting straight
+  //    to done, and the customer hears about it from the bill the owner sends. The
+  //    database keeps the status so old orders stay valid; one still marked READY
+  //    reads as "being prepared" everywhere, and nothing can set it any more.
+  status: z.enum(['NEW', 'CONFIRMED', 'COMPLETED', 'CANCELLED']),
   /**
    * Did the money arrive? Only read when completing an order.
    *

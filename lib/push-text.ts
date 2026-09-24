@@ -168,11 +168,6 @@ export function orderStatusNotification(input: {
    * collect arrived after the collection. COMPLETED now sends nothing — the
    * customer is standing there with the bag.
    */
-  if (input.status === 'READY') {
-    return input.orderType === 'PICKUP'
-      ? { title: t.readyPickupTitle, body: `${t.readyPickupBody} ${input.shopName}` }
-      : { title: t.readyDeliveryTitle, body: `${t.readyDeliveryBody} ${input.shopName}` };
-  }
   if (input.status === 'CANCELLED') {
     return { title: t.cancelledTitle, body: `${input.shopName} ${t.cancelledBody}` };
   }

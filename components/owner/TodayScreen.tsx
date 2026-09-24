@@ -33,7 +33,6 @@ import type { Drawer, Takings } from '@/lib/takings';
 
 export type TodayCounts = {
   ordersWaiting: number;
-  ordersReady: number;
   lowStock: number;
   deliveries: number;
   owing: number;
@@ -147,8 +146,6 @@ export function TodayScreen({
   const cards: { key: string; tone: Tone; icon: React.ReactNode; label: string; action: string; href: string }[] = [];
   if (counts.ordersWaiting > 0)
     cards.push({ key: 'waiting', tone: 'red', icon: <BellIcon />, label: fill(t.todayOrdersWaiting, counts.ordersWaiting), action: t.todaySeeOrders, href: `/owner/${slug}/orders` });
-  if (counts.ordersReady > 0)
-    cards.push({ key: 'ready', tone: 'emerald', icon: <CheckIcon />, label: fill(t.todayOrdersReady, counts.ordersReady), action: t.todaySeeOrders, href: `/owner/${slug}/orders` });
   if (counts.lowStock > 0)
     cards.push({ key: 'low', tone: 'amber', icon: <BoxIcon />, label: fill(t.todayLowStock, counts.lowStock), action: t.todaySeeStock, href: `/owner/${slug}/inventory` });
   if (counts.deliveries > 0)

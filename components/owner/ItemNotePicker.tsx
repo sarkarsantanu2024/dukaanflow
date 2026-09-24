@@ -23,6 +23,7 @@ import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { SearchIcon } from '@/components/ui/Icon';
 import { SearchMic } from '@/components/voice/SearchMic';
+import { spokenSearchText } from '@/lib/speech';
 import { formatPaise, paiseToInput } from '@/lib/money';
 import { MOST_PER_LINE } from '@/lib/units';
 import { matchesSearch } from '@/lib/speech';
@@ -168,7 +169,12 @@ export function ItemNotePicker({
                 aria-label={t.searchItems}
                 className="min-w-0 flex-1 bg-transparent py-2 text-base focus:outline-none"
               />
-              <SearchMic locale={locale} onText={setQuery} label={t.searchItems} />
+              <SearchMic
+                locale={locale}
+                onText={setQuery}
+                label={t.searchItems}
+                resolve={(heard) => spokenSearchText(heard, items, (item) => label(item, locale))}
+              />
             </div>
           )}
 

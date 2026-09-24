@@ -31,9 +31,10 @@ export default async function OwnerHome({ params }: PageProps) {
   // the app trusts, in one round of parallel reads. Today's and this month's
   // takings and the cash drawer moved here from the khata "হিসাব" tab — this is
   // where the day starts, so the opening cash and what came in belong here.
-  const [ordersWaiting, ordersReady, deliveries, items, balances, today, month] = await Promise.all([
-    prisma.order.count({ where: { shopId: shop.id, status: { in: ['NEW', 'CONFIRMED'] } } }),
-    prisma.order.count({ where: { shopId: shop.id, status: 'READY' } }),
+  // READY is no longer a step (see `orderStatusSchema`); an old order still
+  // marked READY is waiting like any other.
+  const [ordersWaiting, deliveries, items, balances, today, month] = await Promise.all([
+    prisma.order.count({ where: { shopId: shop.id, status: { in: ['NEW', 'CONFIRMED', 'READY'] } } }),
     prisma.order.count({
       where: { shopId: shop.id, orderType: 'DELIVERY', status: { in: ['NEW', 'CONFIRMED', 'READY'] } },
     }),
@@ -74,7 +75,7 @@ export default async function OwnerHome({ params }: PageProps) {
       <TodayScreen
         slug={shop.slug}
         locale={locale}
-        counts={{ ordersWaiting, ordersReady, lowStock, deliveries, owing }}
+        counts={{ ordersWaiting, lowStock, deliveries, owing }}
         today={today}
         month={month}
         drawer={drawer}

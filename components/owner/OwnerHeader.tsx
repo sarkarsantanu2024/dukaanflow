@@ -29,6 +29,8 @@ import clsx from "clsx";
 import { GearIcon, HomeIcon, SignOutIcon } from "@/components/ui/Icon";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { ShopClock } from "./ShopClock";
+import { OwnerBell } from "./OwnerBell";
+import { useStickyTop } from "@/components/ui/useStickyTop";
 import { Spinner } from "@/components/ui/Spinner";
 import { OwnerInstallButton } from "./OwnerInstallButton";
 import { ShutterSwitch } from "./ShutterSwitch";
@@ -85,6 +87,9 @@ export function OwnerHeader({
     pathname === `/owner/${slug}` || pathname === `/owner/${slug}/`;
   const { push } = useToast();
   const t = ownerDict(locale);
+  // Things that stick under this header read its real height — see `useStickyTop`.
+  const headerRef = useRef<HTMLElement>(null);
+  useStickyTop(headerRef);
   const [busy, setBusy] = useState(false);
 
 
@@ -149,7 +154,7 @@ export function OwnerHeader({
   }
 
   return (
-    <header className="sticky top-0 z-20 bg-chrome">
+    <header ref={headerRef} className="sticky top-0 z-20 bg-chrome">
       <div className="mx-auto flex max-w-3xl items-center px-3 py-2">
         {/* The mark leads home, where a logo leads everywhere else. It used to
             go to the item list on the reasoning that stock is where an owner
@@ -178,10 +183,14 @@ export function OwnerHeader({
           id="owner-language"
           value={locale}
           onChange={(event) => changeLocale(event.target.value as Locale)}
-          className="h-6 shrink-0 rounded-lg border border-white/20 bg-white/10 px-2 text-sm font-medium text-white"
+          className="h-8 shrink-0 cursor-pointer rounded-lg border border-white/30 bg-white/10 px-2 text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
         >
+          {/* THE OPTIONS GET THEIR OWN COLOURS. The white text above is for
+              the closed box on the green bar, and an open list inherits it —
+              but the list the browser draws is white, so every language
+              except the highlighted one was white on white. */}
           {LOCALES.map((option) => (
-            <option key={option} value={option}>
+            <option key={option} value={option} className="bg-white text-slate-900">
               {LOCALE_LABELS[option]}
             </option>
           ))}
@@ -328,6 +337,10 @@ export function OwnerHeader({
               this row is the shop name, a language select, a shutter switch and
               a sign-out, and a fifth thing left "Maa Tara Mudi D…" truncated
               mid-word. */}
+          {/* New orders, on every owner screen, just before the way home —
+              see `OwnerBell`. Dark on this white band. */}
+          <OwnerBell slug={slug} locale={locale} />
+
           {!atHome && (
             <Link
               href={`/owner/${slug}`}

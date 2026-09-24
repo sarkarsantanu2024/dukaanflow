@@ -13,7 +13,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useStickyTop } from '@/components/ui/useStickyTop';
 import clsx from 'clsx';
 import { ArrowLeftIcon, SignOutIcon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
@@ -39,6 +40,9 @@ export function AdminHeader({
   const router = useRouter();
   const { push } = useToast();
   const [loggingOut, setLoggingOut] = useState(false);
+  // Things that stick under this header read its real height — see `useStickyTop`.
+  const headerRef = useRef<HTMLElement>(null);
+  useStickyTop(headerRef);
 
   async function logout() {
     setLoggingOut(true);
@@ -56,7 +60,7 @@ export function AdminHeader({
   // page's title and its actions — the two things that must stay readable —
   // so it gets the surface with the most contrast to spend, not the colour.
   return (
-    <header className="no-print sticky top-0 z-10 border-b border-brand-100 bg-white/85 backdrop-blur">
+    <header ref={headerRef} className="no-print sticky top-0 z-10 border-b border-brand-100 bg-white/85 backdrop-blur">
       <div className="flex items-center gap-1 px-2 py-2 sm:gap-3 sm:px-4 sm:py-3 lg:px-6">
         {backHref && (
           <Link

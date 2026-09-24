@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { Button } from "./Button";
 import { CloseIcon } from "./Icon";
@@ -75,9 +76,15 @@ export function Modal({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === 'undefined') return null;
 
-  return (
+  // RENDERED INTO <body>, NOT WHERE IT IS WRITTEN.
+  // `fixed inset-0 z-50` only covers the screen if nothing above it in the
+  // tree has started a stacking context. The owner app's main area does, and
+  // its sticky green header sits in a higher one — so a drawer opened from
+  // inside the page lay UNDER the header, and every drawer seemed to leave a
+  // band of empty space at its top. A portal to <body> puts it above all of it.
+  return createPortal(
     <div
       className={clsx(
         "fixed inset-0 z-50 flex items-center justify-center",
@@ -148,7 +155,8 @@ export function Modal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

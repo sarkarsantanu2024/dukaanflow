@@ -58,6 +58,22 @@ type Dictionary = {
   emptyShopHint: string;
   noResults: string;
   search: string;
+  /** The bell: what the shop has done with this phone's orders. */
+  bellTitle: string;
+  bellEmpty: string;
+  bellClearAll: string;
+  bellRemove: string;
+  bellReceived: string;
+  bellChanged: string;
+  bellDone: string;
+  bellCancelled: string;
+  /** The popup when the basket reaches what the shop has. */
+  limitOut: string;
+  limitFew: string;
+  limitShopSays: string;
+  limitBackOn: string;
+  limitNoDate: string;
+  limitOk: string;
   shopClosed: string;
   shopClosedHint: string;
   orderFailed: string;
@@ -166,6 +182,11 @@ type Dictionary = {
 
   /** The page a customer can come back to, and the shop they came from. */
   trackTitle: string;
+  /** The button on the order-placed popup. */
+  seeOrders: string;
+  /** The tracking page's WhatsApp button, and the message it starts. */
+  trackAskShop: string;
+  trackAskText: string;
   trackHint: string;
   trackPlaced: string;
   /** Where the order has got to, in the customer's own words. */
@@ -228,7 +249,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     address: 'Address',
     addressPlaceholder: 'House, street, landmark',
     orderPlacedTitle: 'Order sent to the shop',
-    orderPlacedHint: 'The shop has it now. They will call you when it is ready.',
+    orderPlacedHint: 'The shop has your order. They will call you or message you on WhatsApp when it is ready.',
     orderPlacedDone: 'Done',
     area: 'Area',
     areaPlaceholder: 'Bazaar side, near the school',
@@ -246,6 +267,20 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     emptyShopHint: 'This shop has not added items. Please check back soon.',
     noResults: 'No items match your search',
     search: 'Search items',
+    bellTitle: 'Updates from the shop',
+    bellEmpty: 'Nothing yet. When the shop completes your order, it shows here.',
+    bellClearAll: 'Clear all',
+    bellRemove: 'Remove',
+    bellReceived: 'The shop has your order',
+    bellChanged: 'The shop changed your order',
+    bellDone: 'Order completed — check your bill on WhatsApp',
+    bellCancelled: 'The shop could not take this order',
+    limitOut: 'out of stock',
+    limitFew: 'no more in stock right now',
+    limitShopSays: 'The shop says',
+    limitBackOn: 'Back in stock on',
+    limitNoDate: 'The shop has not said yet when more will come.',
+    limitOk: 'OK',
     shopClosed: 'Shop is closed',
     shopClosedHint: 'This shop is not accepting orders right now.',
     orderFailed: 'Could not place the order. Please try again.',
@@ -301,7 +336,10 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     notifyDenied: 'Your browser has blocked notifications for this site.',
 
     trackTitle: 'Your order',
-    trackHint: 'Keep this page. It shows what the shop is doing with your order.',
+    seeOrders: 'See your order',
+    trackAskShop: 'Message the shop on WhatsApp',
+    trackAskText: 'Hello, about my order ({total}, placed {when}): ',
+    trackHint: 'Keep this page. Here you can see whether the shop has your order, whether it changed anything, and when your order is completed.',
     trackPlaced: 'Placed',
     trackStatePreparing: 'The shop has your order and is getting it ready.',
     trackStateReadyPickup: 'Ready. Please collect it from the shop.',
@@ -354,7 +392,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     address: 'ঠিকানা',
     addressPlaceholder: 'বাড়ি, রাস্তা, ল্যান্ডমার্ক',
     orderPlacedTitle: 'অর্ডার দোকানে পৌঁছে গেছে',
-    orderPlacedHint: 'দোকান অর্ডারটি পেয়েছে। তৈরি হলে ওঁরা ফোন করবেন।',
+    orderPlacedHint: 'দোকান অর্ডারটি পেয়েছে। তৈরি হলে ওঁরা ফোন বা WhatsApp করবেন।',
     orderPlacedDone: 'ঠিক আছে',
     area: 'পাড়া',
     areaPlaceholder: 'বাজারের দিকে, স্কুলের কাছে',
@@ -372,6 +410,20 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     emptyShopHint: 'দোকানটি এখনও জিনিস যোগ করেনি। একটু পরে দেখুন।',
     noResults: 'কিছু পাওয়া যায়নি',
     search: 'জিনিস খুঁজুন',
+    bellTitle: 'দোকানের খবর',
+    bellEmpty: 'এখনও কিছু নেই। দোকান অর্ডার সম্পূর্ণ করলে এখানে দেখাবে।',
+    bellClearAll: 'সব মুছুন',
+    bellRemove: 'মুছুন',
+    bellReceived: 'দোকান আপনার অর্ডার পেয়েছে',
+    bellChanged: 'দোকান আপনার অর্ডার বদলেছে',
+    bellDone: 'অর্ডার সম্পূর্ণ — বিল WhatsApp-এ দেখুন',
+    bellCancelled: 'দোকান এই অর্ডার নিতে পারেনি',
+    limitOut: 'এখন স্টকে নেই',
+    limitFew: 'এর বেশি এখন স্টকে নেই',
+    limitShopSays: 'দোকান জানিয়েছে',
+    limitBackOn: 'আবার পাওয়া যাবে',
+    limitNoDate: 'কবে আসবে, দোকান এখনও জানায়নি।',
+    limitOk: 'ঠিক আছে',
     shopClosed: 'দোকান বন্ধ',
     shopClosedHint: 'এই দোকান এখন অর্ডার নিচ্ছে না।',
     orderFailed: 'অর্ডার পাঠানো যায়নি। আবার চেষ্টা করুন।',
@@ -427,7 +479,10 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     notifyDenied: 'আপনার ব্রাউজার এই সাইটের খবর পাঠানো বন্ধ করে রেখেছে।',
 
     trackTitle: 'আপনার অর্ডার',
-    trackHint: 'পাতাটা রেখে দিন। দোকান আপনার অর্ডার নিয়ে কী করছে এখানে দেখা যাবে।',
+    seeOrders: 'আপনার অর্ডার দেখুন',
+    trackAskShop: 'দোকানকে WhatsApp করুন',
+    trackAskText: 'নমস্কার, আমার অর্ডার ({total}, {when}) নিয়ে জানতে চাই: ',
+    trackHint: 'এই পাতাটা রেখে দিন। এখানে দেখতে পাবেন দোকান আপনার অর্ডার পেয়েছে কি না, কিছু বদলেছে কি না, আর অর্ডার কখন সম্পূর্ণ হলো।',
     trackPlaced: 'দেওয়া হয়েছে',
     trackStatePreparing: 'দোকান অর্ডারটি পেয়েছে, তৈরি করছে।',
     trackStateReadyPickup: 'তৈরি হয়ে গেছে। দোকান থেকে নিয়ে আসুন।',
@@ -480,7 +535,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     address: 'पता',
     addressPlaceholder: 'मकान, गली, लैंडमार्क',
     orderPlacedTitle: 'ऑर्डर दुकान तक पहुँच गया',
-    orderPlacedHint: 'दुकान को ऑर्डर मिल गया है। तैयार होने पर वे फ़ोन करेंगे।',
+    orderPlacedHint: 'दुकान को ऑर्डर मिल गया है। तैयार होने पर वे फ़ोन या WhatsApp करेंगे।',
     orderPlacedDone: 'ठीक है',
     area: 'इलाक़ा',
     areaPlaceholder: 'बाज़ार की तरफ़, स्कूल के पास',
@@ -498,6 +553,20 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     emptyShopHint: 'इस दुकान ने अभी सामान नहीं जोड़ा है। थोड़ी देर बाद देखें।',
     noResults: 'कोई सामान नहीं मिला',
     search: 'सामान खोजें',
+    bellTitle: 'दुकान की खबर',
+    bellEmpty: 'अभी कुछ नहीं। दुकान ऑर्डर पूरा करेगी तो यहाँ दिखेगा।',
+    bellClearAll: 'सब हटाएँ',
+    bellRemove: 'हटाएँ',
+    bellReceived: 'दुकान को आपका ऑर्डर मिल गया',
+    bellChanged: 'दुकान ने आपका ऑर्डर बदला',
+    bellDone: 'ऑर्डर पूरा — बिल WhatsApp पर देखें',
+    bellCancelled: 'दुकान यह ऑर्डर नहीं ले पाई',
+    limitOut: 'अभी स्टॉक में नहीं',
+    limitFew: 'इससे ज़्यादा अभी स्टॉक में नहीं',
+    limitShopSays: 'दुकान ने बताया',
+    limitBackOn: 'फिर मिलेगा',
+    limitNoDate: 'कब आएगा, दुकान ने अभी नहीं बताया।',
+    limitOk: 'ठीक है',
     shopClosed: 'दुकान बंद है',
     shopClosedHint: 'यह दुकान अभी ऑर्डर नहीं ले रही है।',
     orderFailed: 'ऑर्डर नहीं भेजा जा सका। दोबारा कोशिश करें।',
@@ -553,7 +622,10 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     notifyDenied: 'आपके ब्राउज़र ने इस साइट की खबर भेजना रोक रखा है।',
 
     trackTitle: 'आपका ऑर्डर',
-    trackHint: 'यह पेज रखिए। दुकान आपके ऑर्डर का क्या कर रही है, यहाँ दिखेगा।',
+    seeOrders: 'अपना ऑर्डर देखें',
+    trackAskShop: 'दुकान को WhatsApp करें',
+    trackAskText: 'नमस्ते, मेरे ऑर्डर ({total}, {when}) के बारे में: ',
+    trackHint: 'यह पेज रखिए। यहाँ दिखेगा कि दुकान को आपका ऑर्डर मिला या नहीं, कुछ बदला या नहीं, और ऑर्डर कब पूरा हुआ।',
     trackPlaced: 'दिया गया',
     trackStatePreparing: 'दुकान को ऑर्डर मिल गया है, तैयार हो रहा है।',
     trackStateReadyPickup: 'तैयार है। दुकान से ले जाइए।',

@@ -59,13 +59,15 @@ import { CheckIcon, CloseIcon, MicIcon, PinIcon } from '@/components/ui/Icon';
 import type { SnapshotLine } from '@/lib/order-snapshot';
 import { ownerDict } from '@/lib/owner-i18n';
 import { dict } from '@/lib/i18n';
-import { matchesSearch, translateCategory } from '@/lib/speech';
+import { matchesSearch, searchRank, spokenSearchText, translateCategory } from '@/lib/speech';
 import { isValidMobile } from '@/lib/validators';
 import type { VoiceLang } from '@/lib/speech';
 import { speak, useVoice } from '@/components/voice/useVoice';
 import { useScrolled } from '@/components/ui/useScrolled';
 import { spokenSaleTotal } from '@/lib/spoken-money';
 import { BillCard } from './BillCard';
+import { ShortStockModal } from './ShortStockModal';
+import { formatDay } from '@/lib/time';
 import type { Bill } from '@/lib/bill-pdf';
 import type { Locale } from '@/lib/i18n';
 
@@ -86,6 +88,9 @@ export type SellItem = {
   priced: boolean;
   unit: string;
   category: string;
+  /** The shop's saved word on this item when it runs out — see `Item.backOn`. */
+  backOn?: string;
+  stockNote?: string;
   inStock: boolean;
   /**
    * How many are left, or null where nobody is counting.
@@ -213,7 +218,11 @@ export function SellScreen({
     // `onPhrase` hands over the recogniser's alternatives, best first — the
     // same shape `resolveSpokenItem` takes. The first is what it is most
     // confident of, and that is what belongs in a box the owner can then edit.
-    onPhrase: (alternatives) => setQuery((alternatives[0] ?? '').trim()),
+    // What was heard, resolved against this shop's own items — see
+    // `spokenSearchText`. The raw first guess used to go in as it was, and a
+    // misheard spelling found nothing.
+    onPhrase: (alternatives) =>
+      setQuery(spokenSearchText(alternatives, sellable, (item) => itemName(item, locale))),
   });
   const [category, setCategory] = useState('');
   const [khata, setKhata] = useState<{ name: string; phone: string; area: string } | null>(null);
@@ -230,6 +239,19 @@ export function SellScreen({
    * sent to the right number.
    */
   const [lastBill, setLastBill] = useState<Bill | null>(null);
+
+  /** The item whose shelf just ran out under a sale, if the modal is open. */
+  const [short, setShort] = useState<SellItem | null>(null);
+  /**
+   * Items the customer asked for that the shop does not have, and the day each
+   * is back, "2026-09-26". Printed on this sale's bill beside the item's name,
+   * then cleared with the basket.
+   */
+  const [unavailable, setUnavailable] = useState<Record<string, string>>({});
+
+  function unavailableNote(isoDate: string): string {
+    return `${t.billNotAvailable} ${formatDay(new Date(`${isoDate}T12:00:00+05:30`))}`;
+  }
 
   /**
    * Which lines of the loaded order are already in the bag.
@@ -309,7 +331,7 @@ export function SellScreen({
    * it is, and the server posts the debt against that customer itself.
    */
   async function settleOrder(
-    status: 'READY' | 'COMPLETED',
+    status: 'COMPLETED',
     paymentReceived = false,
     paymentMode: '' | 'CASH' | 'UPI' = '',
   ) {
@@ -339,7 +361,7 @@ export function SellScreen({
       if (payload.khataAmountPaise && payload.khataAmountPaise > 0) {
         push(`${t.paymentKhataDone} · ${formatPaise(payload.khataAmountPaise)}`, 'success');
       } else {
-        push(status === 'COMPLETED' ? t.orderTillDone : t.markReady, 'success');
+        push(t.orderTillDone, 'success');
       }
 
       if (status === 'COMPLETED') {
@@ -384,14 +406,35 @@ export function SellScreen({
 
   // The shop page's own search: all three names, and spelling-tolerant, so
   // "ata" finds "Atta" while a customer is waiting.
-  const visible = useMemo(
-    () =>
-      sellable.filter((item) => {
-        if (category && item.category !== category) return false;
-        return matchesSearch([item.name, item.nameBn, item.nameHi, item.unit, item.category], query);
-      }),
-    [sellable, query, category],
-  );
+  /**
+   * The items the voice order just named, most recent first. They go to the
+   * top of the grid, so after saying "two rice and a Bingo" the owner sees
+   * those cards, with their counts, without scrolling to find them.
+   */
+  const [spoken, setSpoken] = useState<string[]>([]);
+
+  const visible = useMemo(() => {
+    const shown = sellable.filter((item) => {
+      if (category && item.category !== category) return false;
+      return matchesSearch([item.name, item.nameBn, item.nameHi, item.unit, item.category], query);
+    });
+    const spokenAt = (id: string) => {
+      const index = spoken.indexOf(id);
+      return index < 0 ? Number.POSITIVE_INFINITY : index;
+    };
+    // Spoken first, then the best search matches first; otherwise the
+    // catalogue's own order, which the sort keeps for ties.
+    return shown
+      .map((item, index) => ({ item, index }))
+      .sort(
+        (a, b) =>
+          spokenAt(a.item.id) - spokenAt(b.item.id) ||
+          searchRank([a.item.name, a.item.nameBn, a.item.nameHi], query) -
+            searchRank([b.item.name, b.item.nameBn, b.item.nameHi], query) ||
+          a.index - b.index,
+      )
+      .map(({ item }) => item);
+  }, [sellable, query, category, spoken]);
 
   const lines = useMemo(
     () =>
@@ -455,19 +498,47 @@ export function SellScreen({
   function applyVoice(id: string, quantity: number, mode: 'set' | 'add') {
     if (mode === 'set') setQuantity(id, quantity);
     else addQuantity(id, quantity);
+    // To the top of the grid, and the grid into view, so what was just said
+    // is what the owner is looking at.
+    setSpoken((current) => [id, ...current.filter((other) => other !== id)]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /**
+   * THE ONE PLACE THE TILL CHECKS THE SHELF.
+   *
+   * The out-of-stock modal used to hang off the card's + alone, so every other
+   * way of changing a quantity walked straight past it: the basket drawer's +,
+   * a number typed into the drawer, the voice order. The owner put nine
+   * Kurkure in a basket with seven on the shelf and was never asked. Every
+   * change now comes through here: a counted item is held at what the shelf
+   * has, and asking for more opens the modal (add stock now, or tell the
+   * customer when it is back). Uncounted items are not limited.
+   */
+  function withinStock(id: string, wanted: number): number {
+    const item = sellable.find((candidate) => candidate.id === id);
+    if (!item || item.stockQty === null) return wanted;
+    const have = Math.max(item.stockQty, 0);
+    if (wanted <= have) return wanted;
+    setShort(item);
+    return have;
   }
 
   /** Relative — saying "rice" twice means two of them. */
   function addQuantity(id: string, more: number) {
     if (lockedByOrder()) return;
-    setCart((current) => ({
-      ...current,
-      [id]: Math.min(roundQuantity((current[id] ?? 0) + more), MOST_PER_LINE),
-    }));
+    const target = withinStock(id, roundQuantity((cart[id] ?? 0) + more));
+    setCart((current) => {
+      const updated = { ...current };
+      if (target <= 0) delete updated[id];
+      else updated[id] = Math.min(target, MOST_PER_LINE);
+      return updated;
+    });
   }
 
-  function setQuantity(id: string, next: number) {
+  function setQuantity(id: string, requested: number) {
     if (lockedByOrder()) return;
+    const next = withinStock(id, requested);
     setCart((current) => {
       const updated = { ...current };
       // Thousandths, so a weighed amount survives the round trip exactly as
@@ -555,12 +626,35 @@ export function SellScreen({
        */
       setLastBill({
         shopName,
-        lines: lines.map((line) => ({
-          name: itemName(line.item, locale),
-          unit: line.item.unit,
-          quantity: line.quantity,
-          amountPaise: linePaise(line.item.pricePaise, line.quantity),
-        })),
+        lines: [
+          ...lines.map((line) => ({
+            name: itemName(line.item, locale),
+            unit: line.item.unit,
+            quantity: line.quantity,
+            amountPaise: linePaise(line.item.pricePaise, line.quantity),
+            ...(unavailable[line.item.id]
+              ? { note: unavailableNote(unavailable[line.item.id]!) }
+              : {}),
+          })),
+          // Asked for, none sold: still on the bill, so the date goes home
+          // with the customer.
+          ...Object.entries(unavailable)
+            .filter(([id]) => !lines.some((line) => line.item.id === id))
+            .flatMap(([id, isoDate]) => {
+              const item = sellable.find((candidate) => candidate.id === id);
+              return item
+                ? [
+                    {
+                      name: itemName(item, locale),
+                      unit: item.unit,
+                      quantity: 0,
+                      amountPaise: 0,
+                      note: unavailableNote(isoDate),
+                    },
+                  ]
+                : [];
+            }),
+        ],
         totalPaise: settled,
         paymentMode,
         at: new Date(),
@@ -568,6 +662,8 @@ export function SellScreen({
       });
 
       setCart({});
+      setUnavailable({});
+      setSpoken([]);
       setPaying(false);
       setKhata(null);
       push(t.sellRecorded, 'success');
@@ -621,6 +717,28 @@ export function SellScreen({
           money and them walking away, and it removes itself on dismissal or on
           the next sale. A card that outlived either would be exactly the kind
           of thing that rule is there to keep off this screen. */}
+      <ShortStockModal
+        item={short}
+        slug={slug}
+        locale={locale}
+        onClose={() => setShort(null)}
+        onStockAdded={(item) => {
+          setShort(null);
+          // The count is saved; one more goes in, which is what the owner was
+          // reaching for.
+          setCart((current) => ({
+            ...current,
+            [item.id]: Math.min(roundQuantity((current[item.id] ?? 0) + 1), MOST_PER_LINE),
+          }));
+          router.refresh();
+        }}
+        onNoted={(item, isoDate) => {
+          setShort(null);
+          setUnavailable((current) => ({ ...current, [item.id]: isoDate }));
+          push(`${itemName(item, locale)} · ${unavailableNote(isoDate)}`, 'success');
+        }}
+      />
+
       {lastBill && (
         <BillCard
           bill={lastBill}
@@ -645,7 +763,7 @@ export function SellScreen({
       {tillOrder && (
         <section
           className={clsx(
-            'sticky top-[3.25rem] z-20 -mx-4 border-b px-4 py-3 backdrop-blur',
+            'sticky top-[var(--sticky-top,0px)] z-20 -mx-4 border-b px-4 py-3 backdrop-blur',
             allPacked ? 'border-brand-300 bg-brand-50/95' : 'border-amber-200 bg-amber-50/95',
           )}
         >
@@ -743,7 +861,7 @@ export function SellScreen({
                 // Two things cannot be stuck to the same edge. While an order
                 // is being packed IT is the thing that must stay on screen, so
                 // the filters go back to scrolling with the grid.
-                !tillOrder && 'sticky top-[3.25rem] z-10',
+                !tillOrder && 'sticky top-[var(--sticky-top,0px)] z-10',
               )}
             >
               {/* AN iOS-SHAPED FIELD: a soft grey fill and NO BORDER.
@@ -839,6 +957,41 @@ export function SellScreen({
             </div>
           )}
 
+          {/* What this sale's bill will tell the customer is not here today.
+              Removable, in case it was noted on the wrong item. */}
+          {Object.keys(unavailable).length > 0 && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
+              <p className="text-sm font-semibold text-amber-900">{t.shortNotedTitle}</p>
+              <ul className="mt-1 space-y-1">
+                {Object.entries(unavailable).map(([id, isoDate]) => {
+                  const item = sellable.find((candidate) => candidate.id === id);
+                  if (!item) return null;
+                  return (
+                    <li key={id} className="flex items-center gap-2 text-sm text-amber-900">
+                      <span className="min-w-0 flex-1 truncate">
+                        {itemName(item, locale)} — {unavailableNote(isoDate)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setUnavailable((current) => {
+                            const next = { ...current };
+                            delete next[id];
+                            return next;
+                          })
+                        }
+                        aria-label={`${t.delete} — ${itemName(item, locale)}`}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-amber-800 hover:bg-amber-100"
+                      >
+                        <CloseIcon className="h-4 w-4" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
           {visible.length === 0 ? (
             <EmptyState title={c.noResults} />
           ) : (
@@ -852,6 +1005,7 @@ export function SellScreen({
                   item={item}
                   quantity={cart[item.id] ?? 0}
                   onChange={(next) => setQuantity(item.id, next)}
+                  onBeyondStock={() => setShort(item)}
                   locale={locale}
                   // The till shows what is left on every counted row, not just
                   // the ones running out. This is the screen the shop sells
@@ -1127,16 +1281,10 @@ export function SellScreen({
              tap that tells the customer to come; once it is all in the bag,
              money is the only thing left. */
           <div className="pointer-events-auto flex w-full max-w-md items-center gap-2">
-            {!allPacked && (
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => void settleOrder('READY')}
-                className="h-12 shrink-0 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-white shadow-lg transition hover:bg-amber-600 disabled:opacity-50"
-              >
-                {t.markReady}
-              </button>
-            )}
+            {/* THE "READY" STEP IS GONE, BY REQUEST. An order goes from waiting straight
+                   to done, and the customer hears about it from the bill the owner sends. The
+                   database keeps the status so old orders stay valid; one still marked READY
+                   reads as "being prepared" everywhere, and nothing can set it any more. */}
             <button
               type="button"
               disabled={saving}

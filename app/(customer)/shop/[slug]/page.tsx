@@ -68,6 +68,9 @@ async function loadShop(slug: string) {
           // asks for what the shop can actually hand over. Null everywhere
           // else, which is most of a kirana's list and stays silent.
           stockQty: true,
+          // The shop's word on a finished item — see `Item.backOn`.
+          backOn: true,
+          stockNote: true,
         },
       },
     },
