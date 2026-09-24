@@ -89,15 +89,19 @@ export async function PATCH(request: Request, { params }: Context) {
    * is about everything else, and about the owner being told rather than left
    * to wonder which tap counted.
    */
-  if (
-    status === 'COMPLETED' &&
-    (order.status === 'COMPLETED' || order.status === 'CANCELLED')
-  ) {
+  //
+  // And not only for a second completion. Moving a COMPLETED order to
+  // CANCELLED put goods that had left the shop back on the shelf and deleted
+  // the khata debt for them; moving it back to CONFIRMED deleted the debt too.
+  // No screen sends either, so a finished order is simply final here.
+  if (order.status === 'COMPLETED' || order.status === 'CANCELLED') {
     return fail('This order is already finished.', 409);
   }
 
-  await prisma.order.update({
-    where: { id: order.id },
+  // Conditional on the status just read, so of two requests racing on one
+  // order only the first moves it and runs what follows; the other is told.
+  const moved = await prisma.order.updateMany({
+    where: { id: order.id, status: order.status },
     // Payment only means anything on a completed order. Recording it on a
     // cancelled or still-preparing one would leave a stale "paid" behind if the
     // order later moved somewhere else.
@@ -140,19 +144,21 @@ export async function PATCH(request: Request, { params }: Context) {
         status !== 'COMPLETED' ? '' : paymentReceived ? paymentMode : 'KHATA',
     },
   });
+  if (moved.count === 0) return fail('This order is already finished.', 409);
 
   /**
    * A cancelled order puts its goods back on the shelf.
    *
-   * Only on the way IN to cancelled — `order.status` is what it was before this
-   * request — because an owner tapping a cancelled order again must not credit
-   * the shop with a second packet of biscuits it never had.
+   * Only on the way IN to cancelled — a cancelled order is refused above, and
+   * the conditional update let only one racing request through — because an
+   * owner tapping a cancelled order again must not credit the shop with a
+   * second packet of biscuits it never had.
    *
    * Items nobody is counting are skipped, and an item whose count was raised
    * back above zero comes back on sale, which is the same rule the sale itself
    * used in reverse.
    */
-  if (status === 'CANCELLED' && order.status !== 'CANCELLED') {
+  if (status === 'CANCELLED') {
     await restoreStock(shop.id, readSnapshot(order.itemsJson));
   }
 
