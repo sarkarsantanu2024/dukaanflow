@@ -24,6 +24,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
+import { SearchMic } from '@/components/voice/SearchMic';
 import { Button } from '@/components/ui/Button';
 import { DrawerFooter } from '@/components/ui/Drawer';
 import { useToast } from '@/components/ui/Toast';
@@ -217,14 +218,17 @@ export function StarterPicker({
       <h2 className="font-semibold text-slate-900">{t.starterTitle}</h2>
       <p className="mt-1 text-sm text-slate-600">{t.starterHint}</p>
 
-      <input
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={t.starterSearch}
-        aria-label={t.starterSearch}
-        className="mt-3 w-full rounded-xl border border-slate-300 bg-card px-3 py-2.5 text-base"
-      />
+      <div className="mt-3 flex items-center rounded-xl border border-slate-300 bg-card pr-1 focus-within:border-brand-500">
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t.starterSearch}
+          aria-label={t.starterSearch}
+          className="min-w-0 flex-1 rounded-xl bg-transparent px-3 py-2.5 text-base focus:outline-none"
+        />
+        <SearchMic locale={locale} onText={setQuery} label={t.starterSearch} />
+      </div>
 
       {matches ? (
         <div className="mt-3 flex flex-wrap gap-2">

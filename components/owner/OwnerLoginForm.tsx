@@ -5,6 +5,7 @@
  * No email, no password to forget — a lost PIN is reissued by the Super Admin.
  */
 
+import { toAsciiDigits } from '@/lib/digits';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
@@ -103,7 +104,7 @@ export function OwnerLoginForm({
         maxLength={6}
         required
         value={pin}
-        onChange={(event) => setPin(event.target.value.replace(/\D/g, ''))}
+        onChange={(event) => setPin(toAsciiDigits(event.target.value).replace(/\D/g, ''))}
         aria-invalid={error ? true : undefined}
         className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-center text-2xl tracking-[0.5em] focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
       />

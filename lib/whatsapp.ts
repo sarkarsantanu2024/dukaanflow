@@ -1,3 +1,4 @@
+import { toAsciiDigits } from '@/lib/digits';
 import { plainPaise } from './money';
 import { amountLabel } from './units';
 
@@ -146,7 +147,7 @@ export function buildRevisedMessage(input: {
 
 /** wa.me needs the country code and digits only. Shop phones are stored as 10 digits. */
 export function toWhatsAppNumber(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
+  const digits = toAsciiDigits(phone).replace(/\D/g, '');
   if (digits.length === 10) return `91${digits}`;
   if (digits.length === 12 && digits.startsWith('91')) return digits;
   return digits;

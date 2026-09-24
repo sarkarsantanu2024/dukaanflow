@@ -1,5 +1,6 @@
 'use client';
 
+import { toAsciiDigits } from '@/lib/digits';
 import { useState } from 'react';
 import clsx from 'clsx';
 import { Badge } from '@/components/ui/Badge';
@@ -335,7 +336,7 @@ export function ItemCard({
               // Digits only: a stray "-" or "." here is a quantity nobody can
               // be sold, and stripping is kinder than an error on a box this
               // small.
-              const raw = event.target.value.replace(/\D/g, '');
+              const raw = toAsciiDigits(event.target.value).replace(/\D/g, '');
               setDraft(raw);
               if (raw === '') return;
               // Clamped to what the shop actually has, exactly as + is. The

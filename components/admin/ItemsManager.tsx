@@ -3,8 +3,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
+import { toAsciiDigits } from '@/lib/digits';
 import { Badge } from '@/components/ui/Badge';
 import { CameraIcon, ChevronRightIcon, TrashIcon } from '@/components/ui/Icon';
+import { SearchMic } from '@/components/voice/SearchMic';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Input, PriceRateField } from '@/components/ui/Input';
@@ -164,12 +166,13 @@ function stockLabel(unit: string, quantity: number): string {
  * already in multiples of the pack — `parseStockAmount` reads it that way — so
  * "5" beside a faded "kg" is true as well as legible. The moment the owner
  * writes "700 g" themselves the hint would be arguing with them, so it goes;
- * and it never appears on an item with no pack size to report.
+ * and an item with no pack size gets the word for pieces, which is what a
+ * bare number against it means.
  */
-function stockUnitHint(unit: string, text: string): string {
-  const typed = text.trim();
+function stockUnitHint(unit: string, text: string, piece: string): string {
+  const typed = toAsciiDigits(text).trim();
   if (typed && !/^\d+(?:\.\d+)?$/.test(typed)) return '';
-  return rateUnit(unit);
+  return rateUnit(unit) || piece;
 }
 
 const EMPTY_NEW_ITEM: NewItem = {
@@ -1186,7 +1189,10 @@ export function ItemsManager({
                 it, the row on the list can take one later, and an owner who
                 wants it on the way in taps Show everything. */}
             <PriceRateField
-              label={index === 0 ? t.price : undefined}
+              // Labelled on every row, like the stock box beside it: an owner
+              // on row six should not have to scroll up to learn which box is
+              // which.
+              label={t.price}
               error={rowErrors[index]?.price ?? rowErrors[index]?.unit}
               price={{
                 value: row.price,
@@ -1215,19 +1221,20 @@ export function ItemsManager({
                 Takes "12", "4.5 kg" or "700 g" against the pack size in the box
                 beside it — see `parseStockAmount`. */}
             <Input
-              label={index === 0 ? t.stockShort : undefined}
+              label={t.stockShort}
               aria-label={t.stockShort}
               type="text"
               inputMode="decimal"
               value={row.stock}
               onChange={(event) => updateRow(index, { stock: event.target.value })}
               error={rowErrors[index]?.stock}
-              placeholder={t.stockShort}
+              // No placeholder: the label above already says what this is, and
+              // in a box this narrow the words were cut to "কত আ".
               // The unit the count will be read in, from the box beside this
               // one. Empty until the owner names a pack size, and in simple
               // mode they are never asked for one — so on the quiet screen this
               // is blank and the row keeps the shape it has always had.
-              suffix={stockUnitHint(row.unit, row.stock)}
+              suffix={stockUnitHint(row.unit, row.stock, t.pieceShort)}
             />
 
             {/* THROWING ONE ROW AWAY.
@@ -1241,7 +1248,7 @@ export function ItemsManager({
                 the row it removes on the first row too. Never offered on the
                 last remaining row: a sheet with no rows at all has nothing to
                 type into and no way back except reopening it. */}
-            <div className={clsx('flex justify-end', index === 0 && 'sm:pt-[1.875rem]')}>
+            <div className="flex items-end justify-end">
               <button
                 type="button"
                 disabled={rows.length <= 1}
@@ -1253,9 +1260,9 @@ export function ItemsManager({
                 }}
                 aria-label={`${t.delete} — ${row.name || index + 1}`}
                 title={t.delete}
-                className="inline-flex h-11 w-10 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
+                className="inline-flex h-11 w-10 items-center justify-center rounded-lg text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
               >
-                <TrashIcon className="h-4 w-4" />
+                <TrashIcon className="h-5 w-5" />
               </button>
             </div>
           </div>
@@ -1556,7 +1563,7 @@ export function ItemsManager({
                 const stockText =
                   stockDrafts[item.id] ??
                   (item.stockQty === null ? '' : stockLabel(item.unit, item.stockQty));
-                const hint = stockUnitHint(item.unit, stockText);
+                const hint = stockUnitHint(item.unit, stockText, t.pieceShort);
                 return (
                   <div className="relative">
                     <input
@@ -1574,7 +1581,7 @@ export function ItemsManager({
                       }}
                       className={clsx(
                         'h-10 w-24 rounded-lg border pl-2.5 text-sm tabular-nums',
-                        hint ? 'pr-9' : 'pr-2.5',
+                        hint ? 'pr-12' : 'pr-2.5',
                         // Empty reads as "nobody is counting" and must not look like
                         // a field somebody failed to fill in; zero is the shop
                         // saying it has run out, which is worth the red.
@@ -1584,7 +1591,7 @@ export function ItemsManager({
                       )}
                     />
                     {hint && (
-                      <span className="pointer-events-none absolute right-2 top-1/2 max-w-[2rem] -translate-y-1/2 truncate text-xs text-slate-400">
+                      <span className="pointer-events-none absolute right-2 top-1/2 max-w-[2.75rem] -translate-y-1/2 truncate text-xs text-slate-400">
                         {hint}
                       </span>
                     )}
@@ -1603,9 +1610,9 @@ export function ItemsManager({
             onClick={() => deleteItem(item)}
             aria-label={`${t.delete} — ${displayName(item, locale)}`}
             title={t.delete}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
           >
-            <TrashIcon className="h-[18px] w-[18px]" />
+            <TrashIcon className="h-5 w-5" />
           </button>
         </div>
 
@@ -1635,14 +1642,17 @@ export function ItemsManager({
     <section className="min-w-0">
       {showSearch && (
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t.searchItems}
-            aria-label={t.searchItems}
-            className="w-full rounded-xl border border-slate-300 bg-card px-3 py-2.5"
-          />
+          <div className="flex w-full items-center rounded-xl border border-slate-300 bg-card pr-1 focus-within:border-brand-500">
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t.searchItems}
+              aria-label={t.searchItems}
+              className="min-w-0 flex-1 rounded-xl bg-transparent px-3 py-2.5 focus:outline-none"
+            />
+            <SearchMic locale={locale} onText={setQuery} label={t.searchItems} />
+          </div>
           {/* One category means the filter cannot change what is on screen. */}
           {categories.length > 1 && (
             <select

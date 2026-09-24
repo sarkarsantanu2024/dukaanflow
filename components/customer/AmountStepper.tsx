@@ -20,6 +20,7 @@
  * caller decides which control to show; this one is only for the divisible kind.
  */
 
+import { toAsciiDigits } from '@/lib/digits';
 import { useState } from 'react';
 import clsx from 'clsx';
 import { formatPaise, linePaise } from '@/lib/money';
@@ -100,7 +101,7 @@ export function AmountStepper({
     // No unit written, or one this item cannot be measured in: the number is in
     // the unit the label is showing — grams for a mass item under a kilo, and
     // for one over it too, so "1500" is a kilo and a half.
-    const typed = Number(text.replace(/[^\d.]/g, ''));
+    const typed = Number(toAsciiDigits(text).replace(/[^\d.]/g, ''));
     if (!Number.isFinite(typed) || typed <= 0) return;
     setBase(Math.max(typed, MIN_LOOSE_BASE));
   }

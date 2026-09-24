@@ -20,6 +20,7 @@
  * order itself, stays behind Continue.
  */
 
+import { toAsciiDigits } from '@/lib/digits';
 import { useState } from 'react';
 import { formatPaise, linePaise } from '@/lib/money';
 import { amountLabel, isLooseUnit, totalMeasure } from '@/lib/units';
@@ -320,7 +321,7 @@ export function CartDrawer({
                       aria-label={`${t.amount} — ${line.label}`}
                       value={qtyDrafts[line.id] ?? String(line.quantity)}
                       onChange={(event) => {
-                        const raw = event.target.value.replace(/\D/g, '');
+                        const raw = toAsciiDigits(event.target.value).replace(/\D/g, '');
                         setQtyDrafts((current) => ({ ...current, [line.id]: raw }));
                         if (raw === '') return;
                         onSetQuantity(line.id, Number(raw));

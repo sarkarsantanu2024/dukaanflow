@@ -1,6 +1,7 @@
 /**
  * Fills in Bengali and Hindi names for items created before those columns
- * existed, using the vocabulary in `lib/speech.ts`.
+ * existed: the vocabulary in `lib/speech.ts` where it knows the name, and a
+ * phonetic spelling from `lib/transliterate.ts` where it does not (brands).
  *
  *   npx tsx scripts/backfill-item-names.ts          # report only
  *   npx tsx scripts/backfill-item-names.ts --write  # apply
@@ -11,7 +12,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { suggestNames } from '../lib/speech';
+import { localNames } from '../lib/transliterate';
 
 const prisma = new PrismaClient();
 const write = process.argv.includes('--write');
@@ -28,8 +29,8 @@ async function main() {
   for (const item of items) {
     if (item.nameBn && item.nameHi) continue;
 
-    const known = suggestNames(item.name);
-    if (!known) {
+    const known = localNames(item.name);
+    if (!known.bn && !known.hi) {
       unknown.push(`${item.shop.slug} · ${item.name}`);
       continue;
     }

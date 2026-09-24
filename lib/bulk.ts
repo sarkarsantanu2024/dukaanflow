@@ -1,3 +1,4 @@
+import { toAsciiDigits } from '@/lib/digits';
 import { parsePaise } from './money';
 
 /**
@@ -25,7 +26,7 @@ export function parseBulk(text: string, mode: 'price' | 'stock'): ParseResult {
   const failed: string[] = [];
 
   for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.trim();
+    const line = toAsciiDigits(rawLine).trim();
     if (!line || line.startsWith('#')) continue;
 
     const separator = line.lastIndexOf('=');

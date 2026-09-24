@@ -13,6 +13,7 @@
  * these render as a list someone scans rather than searches.
  */
 
+import { toAsciiDigits } from '@/lib/digits';
 import type { ShopType } from '@prisma/client';
 
 // The half and quarter sizes are in here because they are what a kirana
@@ -75,7 +76,7 @@ export function rateUnit(unit: string): string {
  * shopkeeper typing "1 KG" means the same shelf as one typing "1 kg".
  */
 export function normaliseUnit(value: string): string {
-  return value
+  return toAsciiDigits(value)
     .trim()
     .toLowerCase()
     // "1kg" -> "1 kg", "500ml" -> "500 ml": a digit running into a word is a
@@ -169,7 +170,7 @@ const LEADING_HALF = /^(?:half|aadha|adha|আধা|আধ|হাফ|आधा|�
  * word at all to hang the amount on.
  */
 export function parseMeasure(text: string): Measure | null {
-  let value = text.trim().toLowerCase().replace(/\s+/g, ' ');
+  let value = toAsciiDigits(text).trim().toLowerCase().replace(/\s+/g, ' ');
   if (!value) return null;
 
   let amount: number | null = null;
@@ -418,7 +419,7 @@ export function totalMeasure(unit: string, packs: number): string | null {
  * same as zero — and `'bad'` for anything unreadable.
  */
 export function parseStockAmount(text: string, unit: string): number | null | 'bad' {
-  const value = text.trim();
+  const value = toAsciiDigits(text).trim();
   if (!value) return null;
 
   // A bare number is already in multiples of the row's own pack, which is what
@@ -428,8 +429,20 @@ export function parseStockAmount(text: string, unit: string): number | null | 'b
     return Number.isFinite(amount) && amount >= 0 ? roundQuantity(amount) : 'bad';
   }
 
-  const typed = parseMeasure(value);
   const pack = parseMeasure(unit);
+
+  // THE TEXT FALLBACK. An item with no pack size (one spoken in as just
+  // "Bingo") has nothing to convert into, so a number followed by any word
+  // ("5 packet", "5 টি", "5 kg") is read as that many of the item. Refusing it
+  // would leave the owner unable to write the count the way they say it.
+  if (!pack) {
+    const lead = value.match(/^(\d+(?:\.\d+)?)\s*\S/);
+    if (!lead) return 'bad';
+    const amount = Number(lead[1]);
+    return Number.isFinite(amount) && amount >= 0 ? roundQuantity(amount) : 'bad';
+  }
+
+  const typed = parseMeasure(value);
   if (!typed || !pack || pack.base <= 0) return 'bad';
   if (!comparableMeasures(typed, pack)) return 'bad';
 
@@ -446,4 +459,51 @@ export function parseStockAmount(text: string, unit: string): number | null | 'b
  */
 export function stockAmountLabel(unit: string, quantity: number): string {
   return amountLabel(unit, quantity) ?? String(quantity);
+}
+
+/**
+ * A stock figure that always says what it is counting: "2 kg", "5 packet",
+ * "3 × 6 pc", or "2 টি" for an item with no pack size.
+ *
+ * `stockAmountLabel` leaves counted goods as a bare number because the item
+ * row prints the pack size beside the box. Anywhere that pack size is not on
+ * screen (the restock badge, a hint) the number needs its unit with it.
+ * `piece` is the locale's word for one of a thing.
+ */
+export function stockWithUnit(unit: string, quantity: number, piece: string): string {
+  const amount = amountLabel(unit, quantity);
+  if (amount) return amount;
+  const rate = rateUnit(unit);
+  if (!rate) return `${tidy(quantity)} ${piece}`;
+  // "3 × 6 pc", never "3 6 pc": a rate that carries its own number is a pack.
+  return /\d/.test(rate) ? `${tidy(quantity)} × ${rate}` : `${tidy(quantity)} ${rate}`;
+}
+
+/**
+ * The unit a supplier order is written in, for the faint hint in the
+ * "how much to order" box and for a bare number typed into it.
+ *
+ * Not the shop's retail pack: a wholesaler sells sugar by the kilo, not by the
+ * shop's 500 g packet. So weighed goods order in kg, poured ones in litres,
+ * counted ones in pieces; a packet, a bundle or a bottle keeps its own word;
+ * and an item with no pack size at all orders in pieces.
+ */
+export function orderUnit(unit: string, piece: string): string {
+  const pack = parseMeasure(unit);
+  if (!pack) return rateUnit(unit) || piece;
+  if (pack.dimension === 'mass') return 'kg';
+  if (pack.dimension === 'volume') return 'l';
+  if (pack.dimension === 'count') return piece;
+  return pack.unit;
+}
+
+/**
+ * What an owner typed into the order box, with the unit added when they typed
+ * only a number. "5" against sugar becomes "5 kg"; "2 bosta" or "5 strip" is
+ * the owner's own words and goes to the supplier untouched.
+ */
+export function orderQuantityText(text: string, unit: string, piece: string): string {
+  const typed = toAsciiDigits(text).trim();
+  if (!/^\d+(?:\.\d+)?$/.test(typed)) return typed;
+  return `${typed} ${orderUnit(unit, piece)}`;
 }

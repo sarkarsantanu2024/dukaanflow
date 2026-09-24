@@ -26,7 +26,7 @@
  * margin for no reason at all.
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
@@ -34,7 +34,7 @@ import { WhatsAppIcon } from '@/components/ui/Icon';
 import { ownerDict } from '@/lib/owner-i18n';
 import { translateCategory } from '@/lib/speech';
 import { formatDay } from '@/lib/time';
-import { stockAmountLabel } from '@/lib/units';
+import { orderQuantityText, orderUnit, stockWithUnit } from '@/lib/units';
 import {
   buildRestockMessage,
   needsRestock,
@@ -84,6 +84,23 @@ export function RestockCard({
   const chosen = wanted.filter((item) => chosenIds.has(item.id));
   const [building, setBuilding] = useState(false);
 
+  /**
+   * Whether this browser can hand a PDF to WhatsApp through the share sheet.
+   * Asked once, up front, with a stand-in file, so the card shows one button
+   * where it can and the old message-plus-download pair where it cannot. The
+   * fallback cannot be decided after the tap: a WhatsApp window opened once
+   * the PDF has been built is what pop-up blockers stop.
+   */
+  const [canSharePdf, setCanSharePdf] = useState(false);
+  useEffect(() => {
+    try {
+      const probe = new File([''], 'list.pdf', { type: 'application/pdf' });
+      setCanSharePdf(Boolean(navigator.canShare?.({ files: [probe] })));
+    } catch {
+      setCanSharePdf(false);
+    }
+  }, []);
+
   function toggle(id: string) {
     const next = new Set(chosenIds);
     if (next.has(id)) next.delete(id);
@@ -101,7 +118,8 @@ export function RestockCard({
    */
   const lines = chosen.map((item) => ({
     name: restockName(item, locale),
-    wanted: orderQty[item.id] ?? '',
+    // A bare "5" goes to the supplier as "5 kg": see `orderQuantityText`.
+    wanted: orderQuantityText(orderQty[item.id] ?? '', item.unit, t.pieceShort),
   }));
 
   const message = buildRestockMessage({
@@ -124,7 +142,21 @@ export function RestockCard({
    */
   const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
 
-  async function downloadPdf() {
+  /**
+   * THE LIST GOES AS A MESSAGE AND A PDF IN ONE TAP.
+   *
+   * There used to be two buttons, a WhatsApp message and a PDF download, and
+   * the owner then had to attach the file by hand. `navigator.share` with a
+   * file is the only way a browser can put a document into WhatsApp (a wa.me
+   * link carries text only), so on the Android phones this runs on the share
+   * sheet opens with WhatsApp in it and the PDF goes with the message as its
+   * caption. The owner picks the supplier there; the sheet cannot be told who.
+   *
+   * Where a browser cannot share files (desktop, mostly) the PDF is downloaded
+   * and the WhatsApp chat opens with the list as text, the way the khata
+   * statement does it.
+   */
+  async function sendToSupplier() {
     setBuilding(true);
     try {
       // Imported here rather than at the top: this pulls in jsPDF and a page of
@@ -141,7 +173,7 @@ export function RestockCard({
         // shop's business, not the supplier's — see the note in `restock-pdf`.
         rows: chosen.map((item) => ({
           name: restockName(item, locale),
-          wanted: (orderQty[item.id] ?? '').trim(),
+          wanted: orderQuantityText(orderQty[item.id] ?? '', item.unit, t.pieceShort),
         })),
         labels: {
           heading: t.restockHeading,
@@ -152,9 +184,21 @@ export function RestockCard({
         },
       });
 
-      saveBlob(blob, restockFilename(shopName, now));
+      const file = new File([blob], restockFilename(shopName, now), { type: 'application/pdf' });
+
+      // Checked with the actual file: a browser can share text and still
+      // refuse a PDF, and calling `share` blind throws.
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text: message });
+        return;
+      }
+
+      saveBlob(blob, file.name);
       push(t.restockDownloaded, 'success');
-    } catch {
+    } catch (error) {
+      // Closing the share sheet rejects with AbortError: the owner changed
+      // their mind, which is not a failure.
+      if ((error as { name?: string })?.name === 'AbortError') return;
       push(t.networkError, 'error');
     } finally {
       setBuilding(false);
@@ -211,7 +255,10 @@ export function RestockCard({
       {/* Capped in height and scrolled. A shop that has let itself run down has
           forty of these, and forty rows pushed between the item list and
           everything under it would bury the tab. */}
-      <ul className="mt-3 max-h-80 divide-y divide-slate-100 overflow-y-auto">
+      {/* The order boxes' label, once, over their column: in a box this
+          narrow a placeholder was cut to "কত লাগ". */}
+      <p className="mt-3 text-right text-xs font-medium text-slate-500">{t.restockWanted}</p>
+      <ul className="mt-1 max-h-80 divide-y divide-slate-100 overflow-y-auto">
         {wanted.map((item) => {
           const ticked = chosenIds.has(item.id);
           const finished = !item.inStock || item.stockQty === 0;
@@ -254,7 +301,7 @@ export function RestockCard({
                       never reads three different ways in one app. */}
                   {finished
                     ? t.restockOut
-                    : `${stockAmountLabel(item.unit, item.stockQty ?? 0)} ${t.restockLow}`}
+                    : `${stockWithUnit(item.unit, item.stockQty ?? 0, t.pieceShort)} ${t.restockLow}`}
                 </span>
 
                 {/* HOW MUCH TO ORDER — the question this card never asked.
@@ -269,17 +316,36 @@ export function RestockCard({
 
                     Outside the label's own click target (`onClick` stops the
                     bubble) or tapping into the box would tick the row off. */}
-                <input
-                  type="text"
-                  value={orderQty[item.id] ?? ''}
-                  onChange={(event) =>
-                    setOrderQty((current) => ({ ...current, [item.id]: event.target.value }))
-                  }
-                  onClick={(event) => event.preventDefault()}
-                  placeholder={t.restockWanted}
-                  aria-label={`${t.restockWanted} — ${restockName(item, locale)}`}
-                  className="h-9 w-24 shrink-0 rounded-lg border border-slate-300 px-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none"
-                />
+                {/* The unit a bare number will be sent in, faint at the right
+                    of the box, until the owner writes a unit of their own. */}
+                {(() => {
+                  const typed = orderQty[item.id] ?? '';
+                  const hint = /^\s*[\d০-৯०-९]*(?:\.[\d০-৯०-९]*)?\s*$/.test(typed)
+                    ? orderUnit(item.unit, t.pieceShort)
+                    : '';
+                  return (
+                    <span className="relative shrink-0">
+                      <input
+                        type="text"
+                        value={typed}
+                        onChange={(event) =>
+                          setOrderQty((current) => ({ ...current, [item.id]: event.target.value }))
+                        }
+                        onClick={(event) => event.preventDefault()}
+                        aria-label={`${t.restockWanted} — ${restockName(item, locale)}`}
+                        className={clsx(
+                          'h-9 w-28 rounded-lg border border-slate-300 pl-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none',
+                          hint ? 'pr-12' : 'pr-2',
+                        )}
+                      />
+                      {hint && (
+                        <span className="pointer-events-none absolute right-2 top-1/2 max-w-[2.75rem] -translate-y-1/2 truncate text-xs text-slate-400">
+                          {hint}
+                        </span>
+                      )}
+                    </span>
+                  );
+                })()}
               </label>
             </li>
           );
@@ -287,38 +353,57 @@ export function RestockCard({
       </ul>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {/* A real link rather than the Button component, which only renders a
-            `<button>`. WhatsApp has to be opened by a navigation the browser
-            can see the owner asked for — a click handler calling `window.open`
-            is what pop-up blockers exist to stop. */}
-        <a
-          href={waUrl}
-          target="_blank"
-          rel="noopener"
-          aria-disabled={chosen.length === 0}
-          onClick={(event) => {
-            if (chosen.length === 0) event.preventDefault();
-          }}
-          className={clsx(
-            'inline-flex h-9 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition',
-            chosen.length === 0
-              ? 'cursor-not-allowed bg-[#25D366] opacity-50'
-              : 'bg-[#25D366] hover:bg-[#1eb457]',
-            'text-white',
-          )}
-        >
-          <WhatsAppIcon className="h-4 w-4" />
-          {t.restockSend}
-        </a>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={downloadPdf}
-          loading={building}
-          disabled={chosen.length === 0}
-        >
-          {t.restockPdf}
-        </Button>
+        {canSharePdf ? (
+          // One tap: the share sheet opens with the PDF and the list as its
+          // caption. See `sendToSupplier`.
+          <button
+            type="button"
+            onClick={sendToSupplier}
+            disabled={chosen.length === 0 || building}
+            className={clsx(
+              'inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white transition hover:bg-[#1eb457]',
+              'disabled:cursor-not-allowed disabled:opacity-50',
+            )}
+          >
+            <WhatsAppIcon className="h-4 w-4" />
+            {t.restockSend}
+          </button>
+        ) : (
+          <>
+            {/* A real link rather than the Button component, which only
+                renders a `<button>`. WhatsApp has to be opened by a navigation
+                the browser can see the owner asked for — a click handler
+                calling `window.open` is what pop-up blockers exist to stop. */}
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener"
+              aria-disabled={chosen.length === 0}
+              onClick={(event) => {
+                if (chosen.length === 0) event.preventDefault();
+              }}
+              className={clsx(
+                'inline-flex h-9 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition',
+                chosen.length === 0
+                  ? 'cursor-not-allowed bg-[#25D366] opacity-50'
+                  : 'bg-[#25D366] hover:bg-[#1eb457]',
+                'text-white',
+              )}
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              {t.restockSend}
+            </a>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={sendToSupplier}
+              loading={building}
+              disabled={chosen.length === 0}
+            >
+              {t.restockPdf}
+            </Button>
+          </>
+        )}
       </div>
     </section>
   );

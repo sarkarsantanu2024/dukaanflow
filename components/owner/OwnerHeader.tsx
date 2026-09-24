@@ -227,8 +227,9 @@ export function OwnerHeader({
           title of the app you are in. The fixes are all one idea — make it look
           deliberate:
 
-          - A tinted ground. White under white is not a band, it is a gap. The
-            slate tint says the header is two parts of one block and ends here.
+          - A white ground, with a hairline under it. The page itself is
+            tinted, so a white band reads as the header's second half and the
+            rule says where it ends.
           - A SQUARE tile, not a circle. This photo is a shopfront as often as
             it is a face, and a circle crops a shutter and a signboard into a
             meaningless dot. It is the same rounded tile the customer sees on
@@ -240,7 +241,7 @@ export function OwnerHeader({
       {/* `relative` so the clock can hang off the bottom edge of this band —
           see `ShopClock`. The band is inside the sticky header, so the badge
           stays on screen with it as the page scrolls. */}
-      <div className="relative border-t border-slate-200/70 bg-sunk">
+      <div className="relative border-b border-slate-200 bg-white">
         {/* THE HOME SCREEN ONLY. It rode on every owner screen, which put a
             wall clock over the till, the khata and the orders queue — three
             screens with a job in hand, none of which is asking what day it is.

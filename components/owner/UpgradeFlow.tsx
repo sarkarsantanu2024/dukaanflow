@@ -25,6 +25,7 @@
  * back tomorrow must not be asked to pay again.
  */
 
+import { toAsciiDigits } from '@/lib/digits';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ImagePicker } from '@/components/admin/ImagePicker';
@@ -247,7 +248,7 @@ export function UpgradeFlow({
             </span>
             <input
               value={code}
-              onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 4))}
+              onChange={(event) => setCode(toAsciiDigits(event.target.value).replace(/\D/g, '').slice(0, 4))}
               inputMode="numeric"
               autoComplete="one-time-code"
               placeholder="––––"

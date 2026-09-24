@@ -22,6 +22,7 @@
  * leaving them waiting for an attachment that is never going to appear.
  */
 
+import { toAsciiDigits } from '@/lib/digits';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -52,7 +53,7 @@ export function BillCard({
 
   async function send() {
     // Ten digits, the same shape every other phone field in this product takes.
-    const digits = phone.replace(/\D/g, '').replace(/^91/, '');
+    const digits = toAsciiDigits(phone).replace(/\D/g, '').replace(/^91/, '');
     if (digits.length !== 10) {
       setBad(t.billBadPhone);
       return;
