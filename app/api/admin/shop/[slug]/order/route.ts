@@ -1,4 +1,5 @@
 import { after } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
@@ -427,10 +428,32 @@ export async function DELETE(request: Request, { params }: Context) {
     return fail('A completed order cannot be removed.', 409);
   }
 
-  await restoreStock(shop.id, readSnapshot(order.itemsJson));
+  /**
+   * THE ROW GOES FIRST, AND ONLY ITS DELETER PUTS THE GOODS BACK.
+   *
+   * Two phones, or a double tap, can send this for one order at the same
+   * moment. Restoring the stock before deleting meant both requests put the
+   * goods back and then one of them failed on the delete — the shelf gained a
+   * packet it never had. The conditional delete below succeeds for exactly one
+   * request, inside the same transaction as the restore, so the goods go back
+   * once. `LedgerEntry.orderId` is a plain column, not a relation, so nothing
+   * cascades it; an order can only carry one if it was completed unpaid, which
+   * is refused above and again by the condition here.
+   */
+  const lines = readSnapshot(order.itemsJson);
+  const deleted = await prisma.$transaction(async (tx) => {
+    const gone = await tx.order.deleteMany({
+      where: { id: order.id, shopId: shop.id, status: { not: 'COMPLETED' } },
+    });
+    if (gone.count === 0) return false;
+    await tx.ledgerEntry.deleteMany({ where: { orderId: order.id } });
+    await restoreStock(shop.id, lines, tx);
+    return true;
+  });
+  if (!deleted) return fail('Order not found', 404);
 
   /**
-   * Told BEFORE the row goes, and told first.
+   * Told AFTER the row goes, now that it is certain this request removed it.
    *
    * `sendPush` reads nothing from the order except the phone and the id, but
    * the customer's notification links to a tracking page that is about to stop
@@ -456,14 +479,6 @@ export async function DELETE(request: Request, { params }: Context) {
       { ...notification, url: `/shop/${slug}`, tag: `order-${order.id}` },
     );
   });
-
-  // `LedgerEntry.orderId` is a plain column, not a relation, so nothing
-  // cascades it. An order can only carry one if it was completed unpaid, which
-  // is refused above — this is belt and braces against a future path.
-  await prisma.$transaction([
-    prisma.ledgerEntry.deleteMany({ where: { orderId: order.id } }),
-    prisma.order.delete({ where: { id: order.id } }),
-  ]);
 
   return ok({ success: true });
 }
@@ -524,13 +539,17 @@ function readSnapshot(itemsJson: unknown): SnapshotLine[] {
 }
 
 /** Puts a cancelled order's goods back, for the items somebody is counting. */
-async function restoreStock(shopId: string, lines: SnapshotLine[]): Promise<void> {
+async function restoreStock(
+  shopId: string,
+  lines: SnapshotLine[],
+  db: Pick<Prisma.TransactionClient, 'item'> = prisma,
+): Promise<void> {
   for (const line of lines) {
     if (!line.itemId || line.quantity <= 0) continue;
     // Fractions included: see the note in the revise transaction.
     const back = roundQuantity(line.quantity);
     if (back <= 0) continue;
-    await prisma.item.updateMany({
+    await db.item.updateMany({
       // `stockQty: { not: null }` is the whole guard: an item nobody counts must
       // stay uncounted rather than acquiring a total out of a cancellation.
       where: { id: line.itemId, shopId, stockQty: { not: null } },
