@@ -8,6 +8,7 @@ import type { OrderLine } from '@/lib/whatsapp';
 import { upsertCustomer } from '@/lib/khata';
 import { quoteDelivery } from '@/lib/delivery';
 import { basketShortfallPaise, minBasketPaise } from '@/lib/basket';
+import { entitlement, type Plan, type SubStatus } from '@/lib/plans';
 import { formatPaise, linePaise } from '@/lib/money';
 import { isLooseUnit, MOST_PER_LINE, roundQuantity } from '@/lib/units';
 import { sendPush } from '@/lib/push';
@@ -96,13 +97,26 @@ export async function POST(request: Request) {
       freeDeliveryAbovePaise: true,
       minOrderPaise: true,
       locale: true,
+      plan: true,
+      subscriptionStatus: true,
+      trialEndsAt: true,
+      currentPeriodEnd: true,
     },
   });
   if (!shop) return fail('Shop not found', 404);
-  // Either shutter. `active` is the operator's, `ownerClosed` the shopkeeper's,
-  // and a stale tab left open from before the shop shut must not slip an order
-  // in behind either of them.
-  if (!shop.active || shop.ownerClosed) {
+  // Every shutter the shop page closes on. `active` is the operator's,
+  // `ownerClosed` the shopkeeper's, and `autoPaused` the lapsed subscription's —
+  // the page read all three but this route only the first two, so a stale tab
+  // or a hand-made request could still place an order at a shop whose own page
+  // said it was not taking any. Same `entitlement` the page uses, so the two
+  // cannot disagree.
+  const billing = entitlement({
+    plan: shop.plan as Plan,
+    subscriptionStatus: shop.subscriptionStatus as SubStatus,
+    trialEndsAt: shop.trialEndsAt,
+    currentPeriodEnd: shop.currentPeriodEnd,
+  });
+  if (!shop.active || shop.ownerClosed || billing.autoPaused) {
     return fail('This shop is not accepting orders right now', 409);
   }
 
