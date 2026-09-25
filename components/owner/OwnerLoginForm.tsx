@@ -18,17 +18,20 @@ export function OwnerLoginForm({
   shopName,
   ownerImage,
   locale,
+  expired = false,
 }: {
   slug: string;
   shopName: string;
   /** The owner's own photo as a data URL, or blank. */
   ownerImage: string;
   locale: Locale;
+  /** Arrived because the session died mid-task; the reason is shown until they sign in. */
+  expired?: boolean;
 }) {
   const router = useRouter();
   const t = ownerDict(locale);
   const [pin, setPin] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(expired ? t.sessionEnded : '');
   const [busy, setBusy] = useState(false);
 
   async function submit(event: React.FormEvent) {

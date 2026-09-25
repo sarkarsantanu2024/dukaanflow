@@ -82,6 +82,7 @@ export function PhotoItemAdder({
   onError,
   onBusyChange,
   openRef,
+  words,
 }: {
   /** The shop-type catalogue, matched against so a hit is a real item. */
   catalogue: StarterItem[];
@@ -89,11 +90,13 @@ export function PhotoItemAdder({
    * What was read, listed straight away and unpriced — the way voice and the
    * starter catalogue both list things.
    */
-  onBatch: (items: Identified[], unreadable: number) => void;
+  onBatch: (items: Identified[], unreadable: number) => void | Promise<void>;
   onError: (message: string) => void;
   onBusyChange?: (busy: boolean) => void;
   /** Lets the floating button open the picker without rendering one. */
   openRef?: { current: (() => void) | null };
+  /** The failure messages in the owner's language. English when left out. */
+  words?: { unreadPacket: string; unreadPhoto: string };
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -180,7 +183,7 @@ export function PhotoItemAdder({
       const { found, unreadable } = await readAll(files);
 
       if (found.length === 0) {
-        onError('Could not read that packet. Try a closer, straighter photo — or type the name.');
+        onError(words?.unreadPacket ?? 'Could not read that packet. Try a closer, straighter photo — or type the name.');
         return;
       }
 
@@ -189,9 +192,10 @@ export function PhotoItemAdder({
       // rest in — which is the opposite of the point: the camera is for getting
       // the name down, and the price is set afterwards on the row, the same way
       // voice and the starter list already work.
-      onBatch(found, unreadable);
+      // Awaited, so a save that fails is reported rather than left unhandled.
+      await onBatch(found, unreadable);
     } catch {
-      onError('Could not read that photo. Try again, or type the name.');
+      onError(words?.unreadPhoto ?? 'Could not read that photo. Try again, or type the name.');
     } finally {
       setBusy(false);
       onBusyChange?.(false);

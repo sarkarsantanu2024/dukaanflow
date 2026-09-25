@@ -124,6 +124,16 @@ type OwnerDictionary = {
   /** "Up to {n} items" — the one line that differs between plans. */
   planUpTo: string;
   planUnlimitedItems: string;
+  /** A photographed packet the reader could not make out. */
+  photoUnreadPacket: string;
+  photoUnreadPhoto: string;
+  /** Photographed items that were read but could not be saved; `{names}` lists them. */
+  photoSaveFailed: string;
+  /** The add sheet's field errors, in place of the server's English. */
+  itemErrPrice: string;
+  itemErrName: string;
+  itemErrUnit: string;
+  itemErrStock: string;
   /** What every plan includes, in this language. Mirrors `EVERY_PLAN_INCLUDES`. */
   planIncludes: string[];
   outOfStockCount: string;
@@ -779,6 +789,13 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     itemsCount: 'items',
     planUpTo: 'Up to {n} items',
     planUnlimitedItems: 'Unlimited items',
+    photoUnreadPacket: 'Could not read that packet. Try a closer, straighter photo — or type the name.',
+    photoUnreadPhoto: 'Could not read that photo. Try again, or type the name.',
+    photoSaveFailed: 'Not saved — check the internet and try again: {names}',
+    itemErrPrice: 'Price must be at least ₹0.50',
+    itemErrName: 'Name is blank or too long',
+    itemErrUnit: 'Pack size is too long or not recognised',
+    itemErrStock: 'Stock is not a usable number',
     planIncludes: [
       'QR shop page and printable poster',
       'Voice listing in English, Hindi and Bengali',
@@ -1338,6 +1355,13 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     itemsCount: 'টি জিনিস',
     planUpTo: '{n}টি পর্যন্ত জিনিস',
     planUnlimitedItems: 'যত খুশি জিনিস',
+    photoUnreadPacket: 'প্যাকেটটা পড়া গেল না। আরও কাছ থেকে, সোজা করে ছবি তুলুন — বা নামটা লিখে দিন।',
+    photoUnreadPhoto: 'ছবিটা পড়া গেল না। আবার চেষ্টা করুন, বা নামটা লিখে দিন।',
+    photoSaveFailed: 'সেভ হয়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন: {names}',
+    itemErrPrice: 'দাম অন্তত ₹০.৫০ হতে হবে',
+    itemErrName: 'নাম খালি বা খুব লম্বা',
+    itemErrUnit: 'মাপটা খুব লম্বা বা চেনা যাচ্ছে না',
+    itemErrStock: 'স্টকের সংখ্যাটা ঠিক নয়',
     planIncludes: [
       'QR দোকান-পাতা আর ছাপানো পোস্টার',
       'বাংলা, হিন্দি আর ইংরেজিতে মুখে বলে জিনিস তোলা',
@@ -1881,6 +1905,13 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     itemsCount: 'सामान',
     planUpTo: '{n} सामान तक',
     planUnlimitedItems: 'जितना चाहें उतना सामान',
+    photoUnreadPacket: 'पैकेट पढ़ा नहीं जा सका। और पास से, सीधी फ़ोटो लीजिए — या नाम लिख दीजिए।',
+    photoUnreadPhoto: 'फ़ोटो पढ़ी नहीं जा सकी। फिर कोशिश कीजिए, या नाम लिख दीजिए।',
+    photoSaveFailed: 'सेव नहीं हुआ — इंटरनेट देखकर फिर कोशिश कीजिए: {names}',
+    itemErrPrice: 'दाम कम से कम ₹0.50 होना चाहिए',
+    itemErrName: 'नाम खाली है या बहुत लंबा है',
+    itemErrUnit: 'पैक का साइज़ बहुत लंबा है या पहचाना नहीं गया',
+    itemErrStock: 'स्टॉक की संख्या ठीक नहीं है',
     planIncludes: [
       'QR दुकान-पेज और छपने वाला पोस्टर',
       'हिंदी, बांग्ला और अंग्रेज़ी में बोलकर सामान जोड़ना',
