@@ -134,6 +134,8 @@ export function PriceRateField({
     listId?: string;
     placeholder?: string;
     'aria-label'?: string;
+    /** How the unit reads while not being edited. Defaults to `rateUnit`. */
+    display?: (value: string) => string;
   };
 }) {
   const fieldId = useId();
@@ -183,7 +185,7 @@ export function PriceRateField({
               type="text"
               list={unit.listId}
               aria-label={unit['aria-label']}
-              value={editingUnit ? unit.value : rateUnit(unit.value)}
+              value={editingUnit ? unit.value : (unit.display ?? rateUnit)(unit.value)}
               placeholder={unit.placeholder}
               onChange={(event) => unit.onChange(event.target.value)}
               onFocus={() => setEditingUnit(true)}

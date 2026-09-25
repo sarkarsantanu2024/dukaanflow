@@ -438,14 +438,14 @@ export default function LandingPage() {
             </div>
             <Link
               href="/admin"
-              className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white sm:inline-flex"
+              className="hidden min-h-10 items-center rounded-xl px-3 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white sm:inline-flex"
             >
               <Say t={LANDING.adminSignIn} />
             </Link>
             {whatsapp && (
               <a
                 href={whatsapp}
-                className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700"
               >
                 <WhatsAppIcon className="h-4 w-4" />
                 <Say t={LANDING.getYourShop} />
@@ -1003,7 +1003,7 @@ export default function LandingPage() {
                 key={entry.q.en}
                 className="group rounded-2xl border border-brand-100 bg-card px-5 py-4"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-900">
+                <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-900">
                   <span>
                     <Say t={entry.q} />
                   </span>

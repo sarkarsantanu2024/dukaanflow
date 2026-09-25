@@ -934,10 +934,12 @@ export function SellScreen({
                     <button
                       type="button"
                       onClick={voiceSearch.toggle}
-                      aria-label={t.searchItems}
+                      // Its own name: it used to share the search box's, so a
+                      // screen reader heard two identical "search items".
+                      aria-label={dict(locale).searchByVoice}
                       aria-pressed={voiceSearch.listening}
                       className={clsx(
-                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition',
+                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition',
                         voiceSearch.listening
                           ? 'bg-red-500 text-white'
                           : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
@@ -1044,7 +1046,7 @@ export function SellScreen({
                 type="button"
                 onClick={() => setPaying(false)}
                 aria-label={t.no}
-                className="-mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                className="-mr-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
               >
                 <CloseIcon className="h-5 w-5" />
               </button>

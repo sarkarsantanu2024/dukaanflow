@@ -25,7 +25,7 @@ import {
 } from '@/lib/starter-catalogue';
 import { formatPaise, paiseToInput, parsePaise } from '@/lib/money';
 import { spokenSearchText, suggestNames, translateCategory, matchesSearch, rankBySearch } from '@/lib/speech';
-import { parseStockAmount, rateUnit, stockAmountLabel, unitsFor, UNIT_LIST_ID } from '@/lib/units';
+import { localUnit, parseStockAmount, rateUnit, stockAmountLabel, unitsFor, UNIT_LIST_ID } from '@/lib/units';
 import { Drawer } from '@/components/ui/Drawer';
 import { FloatingTools } from './FloatingTools';
 import { useSimpleMode } from '@/components/owner/SimpleMode';
@@ -1618,6 +1618,8 @@ export function ItemsManager({
                 onBlur: () => commitUnit(item),
                 listId: UNIT_LIST_ID,
                 placeholder: t.unit,
+                // Read in the owner's language; typed and stored in roman.
+                display: (value: string) => localUnit(rateUnit(value), locale),
                 'aria-label': `${t.unit} — ${displayName(item, locale)}`,
               }}
             />

@@ -85,7 +85,7 @@ export function SectionNav({ items, className }: { items: NavItem[]; className?:
             href={item.href}
             aria-current={on ? true : undefined}
             className={clsx(
-              'rounded-full px-3 py-1.5 text-sm font-semibold transition-colors',
+              'inline-flex min-h-10 items-center rounded-full px-3 text-sm font-semibold transition-colors',
               // Light on the black header bar. The section you are in is a
               // filled pill: a green underline all but vanished on black.
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
