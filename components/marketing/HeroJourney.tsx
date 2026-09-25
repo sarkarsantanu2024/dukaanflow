@@ -317,7 +317,9 @@ export function HeroJourney({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
               aria-label={`${i + 1}. ${item.title[lang]}`}
               aria-current={i === index}
               className={clsx(
-                'h-1.5 rounded-full transition-all',
+                // The bar stays 6px to look at; the ::before reaches 40px
+                // tall, so a thumb can actually land on a step.
+                "relative h-1.5 rounded-full transition-all before:absolute before:-inset-x-1 before:-inset-y-[17px] before:content-['']",
                 i === index
                   ? dark ? 'w-8 bg-white' : 'w-8 bg-brand-600'
                   : dark ? 'w-3 bg-white/35 hover:bg-white/60' : 'w-3 bg-slate-300 hover:bg-slate-400',

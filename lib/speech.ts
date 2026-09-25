@@ -1380,6 +1380,14 @@ const CATEGORY_VOCAB: Vocab[] = [
   { en: 'Frozen Food', hi: 'फ्रोज़न फ़ूड', bn: 'হিমায়িত খাবার' },
   { en: 'Electricals', hi: 'बिजली का सामान', bn: 'বিদ্যুতের জিনিস' },
   { en: 'Pet Care', hi: 'पालतू का सामान', bn: 'পোষ্যের জিনিস' },
+  // Headings owners type themselves, found in live shops by release QA. Each
+  // reached a Bengali or Hindi Items screen in English.
+  { en: 'Grocery', hi: 'किराना', bn: 'মুদি' },
+  { en: 'Oil', hi: 'तेल', bn: 'তেল' },
+  { en: 'Rice & Dal', hi: 'चावल-दाल', bn: 'চাল-ডাল' },
+  { en: 'Rice', hi: 'चावल', bn: 'চাল' },
+  { en: 'Dal', hi: 'दाल', bn: 'ডাল' },
+  { en: 'Other', hi: 'अन्य', bn: 'অন্যান্য' },
 ];
 
 const CATEGORY_BY_FORM = new Map<string, Vocab>();

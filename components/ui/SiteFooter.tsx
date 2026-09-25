@@ -95,7 +95,7 @@ export function SiteFooter({
                 )}
                 <a
                   href={`/${slug}`}
-                  className="inline-flex min-h-10 items-center whitespace-nowrap hover:text-slate-700"
+                  className="inline-flex min-h-10 min-w-10 items-center justify-center whitespace-nowrap hover:text-slate-700"
                 >
                   {labels?.[slug] ?? LINK_LABEL[slug]}
                 </a>
