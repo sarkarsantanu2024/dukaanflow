@@ -65,7 +65,7 @@ export function SiteFooter({
           reason, which reads as a mistake. The credit and the number are one
           thought; the four policies are another; so each gets a line and
           neither can split the other. */}
-      <div className="mx-auto flex max-w-6xl flex-col items-center px-4 text-center text-[12px] py-2 leading-tight text-slate-500">
+      <div className="mx-auto flex max-w-6xl flex-col items-center px-4 text-center text-[12px] py-1 leading-tight text-slate-500">
         <p className="flex flex-wrap items-center justify-center gap-x-2.5">
           <span>
             {labels?.poweredBy ?? "Powered by"}{" "}
@@ -74,8 +74,8 @@ export function SiteFooter({
           {support.phone && (
             <a
               href={`tel:+91${support.phone}`}
-              // Readable, and hittable: 44px is the touch-target floor.
-              className="inline-flex items-center font-medium tabular-nums text-slate-700 hover:text-brand-700"
+              // Readable, and hittable: 40px tall, like every link in this footer.
+              className="inline-flex min-h-10 items-center font-medium tabular-nums text-slate-700 hover:text-brand-700"
             >
               {support.phone}
             </a>
@@ -95,7 +95,7 @@ export function SiteFooter({
                 )}
                 <a
                   href={`/${slug}`}
-                  className="whitespace-nowrap hover:text-slate-700"
+                  className="inline-flex min-h-10 items-center whitespace-nowrap hover:text-slate-700"
                 >
                   {labels?.[slug] ?? LINK_LABEL[slug]}
                 </a>
