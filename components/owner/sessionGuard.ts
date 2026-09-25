@@ -41,7 +41,8 @@ export function handledExpiredSession({
 
   push(t.sessionEnded, 'error');
   // A full navigation, not a router push: the session cookie is now worthless
-  // and every cached server component rendered with it is too.
-  window.location.href = `/owner/${slug}/login`;
+  // and every cached server component rendered with it is too. The toast above
+  // dies with the page a moment later, so the PIN screen is told to say it.
+  window.location.href = `/owner/${slug}/login?expired=1`;
   return true;
 }

@@ -9,12 +9,14 @@ import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
-type PageProps = { params: Promise<{ slug: string }> };
+type PageProps = { params: Promise<{ slug: string }>; searchParams: Promise<{ expired?: string }> };
 
 export const metadata: Metadata = { title: `${BRAND_NAME} — Shop sign in` };
 
-export default async function OwnerLoginPage({ params }: PageProps) {
+export default async function OwnerLoginPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  // Sent here by `handledExpiredSession`: say why they are signing in again.
+  const expired = (await searchParams).expired === '1';
 
   const shop = await prisma.shop.findUnique({
     where: { slug },
@@ -36,6 +38,7 @@ export default async function OwnerLoginPage({ params }: PageProps) {
           shopName={shop.name}
           ownerImage={shop.ownerImageData}
           locale={locale}
+          expired={expired}
         />
       ) : (
         // The same head as the sign-in card: an owner who has no PIN yet is

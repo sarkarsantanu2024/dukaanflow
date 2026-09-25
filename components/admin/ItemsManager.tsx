@@ -32,6 +32,7 @@ import { useSimpleMode } from '@/components/owner/SimpleMode';
 import type { ShopType } from '@prisma/client';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
+import { handledExpiredSession } from '@/components/owner/sessionGuard';
 
 export type AdminItem = {
   id: string;
@@ -269,12 +270,21 @@ function sameShelf(a: NewItem, b: NewItem): boolean {
  * toast ("please check the highlighted fields") made it worse by promising a
  * highlight that was not there.
  */
-const FIELD_FOR: Record<string, string> = { pricePaise: 'price' };
+const FIELD_FOR: Record<string, string> = { pricePaise: 'price', stockQty: 'stock' };
 
-function formErrors(errors: Record<string, string> | undefined): Record<string, string> {
+/**
+ * The server's reasons are English ("Price must be at least 50 paise"), and the
+ * owner reads Bengali or Hindi. Where the field is known, the owner is told in
+ * their own language; `words` is left out on the console, which stays English.
+ */
+function formErrors(
+  errors: Record<string, string> | undefined,
+  words?: Record<string, string>,
+): Record<string, string> {
   const mapped: Record<string, string> = {};
   for (const [field, message] of Object.entries(errors ?? {})) {
-    mapped[FIELD_FOR[field] ?? field] = message;
+    const box = FIELD_FOR[field] ?? field;
+    mapped[box] = words?.[box] ?? message;
   }
   return mapped;
 }
@@ -376,6 +386,19 @@ export function ItemsManager({
    */
   const { simple } = useSimpleMode();
   const lean = !wide && simple;
+
+  /**
+   * A dead owner session sends the owner to the PIN screen with a sentence in
+   * their language, the same as every other owner screen. Items used to show
+   * the middleware's raw "Not authenticated" and stay put. The console has its
+   * own login, so it is left alone.
+   */
+  const expired = (response: Response) => !wide && handledExpiredSession({ response, slug, t, push });
+  const fieldWords = wide
+    ? undefined
+    : { price: t.itemErrPrice, name: t.itemErrName, unit: t.itemErrUnit, stock: t.itemErrStock };
+  /** The item whose name edit Escape just abandoned. See `commitName`. */
+  const cancelledName = useRef<string | null>(null);
 
   function toggleSelected(id: string) {
     setSelected((current) => {
@@ -549,6 +572,7 @@ export function ItemsManager({
           inStock: true,
         }),
       });
+      if (expired(response)) return;
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) {
         push(payload.error ?? t.networkError, 'error');
@@ -752,6 +776,15 @@ export function ItemsManager({
        * their forty rows the bad one was.
        */
       const stock = parseStockAmount(row.stock, row.unit);
+      // The server refuses more than a million; say so on the row, in the
+      // owner's language, rather than after a round trip.
+      if (typeof stock === 'number' && stock > 1_000_000) {
+        const why = fieldWords?.stock ?? t.stockBadNumber;
+        failures[kept.length] = { stock: why };
+        firstProblem ||= `${row.name || ''} — ${why}`.trim();
+        kept.push(row);
+        continue;
+      }
       if (stock === 'bad') {
         // Which refusal depends on whether there is a pack size to measure
         // against at all. Sending a simple-mode owner to a box that screen
@@ -781,6 +814,10 @@ export function ItemsManager({
             inStock: stock === null || stock > 0,
           }),
         });
+        if (expired(response)) {
+          setAdding(false);
+          return;
+        }
         const payload = (await response.json().catch(() => ({}))) as {
           error?: string;
           errors?: Record<string, string>;
@@ -791,7 +828,7 @@ export function ItemsManager({
           // knows exactly what was wrong with the price; saying so is the whole
           // difference between a form a shopkeeper can fix and one that ignores
           // them.
-          const fields = formErrors(payload.errors);
+          const fields = formErrors(payload.errors, fieldWords);
           const message = Object.values(fields)[0] ?? payload.error ?? t.networkError;
           failures[kept.length] = Object.keys(fields).length > 0 ? fields : { name: message };
           firstProblem ||= message;
@@ -832,6 +869,7 @@ export function ItemsManager({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...changes }),
       });
+      if (expired(response)) return false;
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) {
         push(payload.error ?? t.networkError, 'error');
@@ -866,6 +904,7 @@ export function ItemsManager({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: item.id }),
       });
+      if (expired(response)) return;
       if (!response.ok) {
         push(t.networkError, 'error');
         return;
@@ -951,6 +990,7 @@ export function ItemsManager({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      if (expired(response)) return;
       const payload = (await response.json().catch(() => ({}))) as {
         deleted?: number;
         error?: string;
@@ -1070,6 +1110,13 @@ export function ItemsManager({
    * The English name stays as the fallback every other reader sees.
    */
   async function commitName(item: AdminItem) {
+    // Escape blurs the box to leave it, and blurring commits, so without this
+    // the edit being abandoned was saved. The draft in state is still the old
+    // one at that moment; the ref says it was cancelled.
+    if (cancelledName.current === item.id) {
+      cancelledName.current = null;
+      return;
+    }
     const next = nameDrafts[item.id];
     if (next === undefined) return;
 
@@ -1334,9 +1381,14 @@ export function ItemsManager({
    */
   async function addIdentified(found: Identified[], unreadable: number) {
     let created = 0;
+    // Read but not saved, named back to the owner, so a dropped connection
+    // does not quietly throw away what the camera read.
+    const failed: string[] = [];
 
     for (const item of found) {
-      const response = await fetch(`/api/admin/shop/${slug}/items`, {
+      let response: Response;
+      try {
+        response = await fetch(`/api/admin/shop/${slug}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1353,16 +1405,33 @@ export function ItemsManager({
           inStock: true,
         }),
       });
+      } catch {
+        failed.push(identifiedName(item));
+        continue;
+      }
+      if (expired(response)) return;
       if (response.ok) created += 1;
+      else failed.push(identifiedName(item));
     }
 
-    push(
-      unreadable > 0
-        ? `${created} ${t.voiceSetPrice} · ${unreadable} ✗`
-        : `${created} ${t.voiceSetPrice}`,
-      created > 0 ? 'success' : 'error',
-    );
-    if (created > 0) router.refresh();
+    if (failed.length > 0) {
+      push(t.photoSaveFailed.replace('{names}', failed.join(', ')), 'error');
+    }
+    if (created > 0) {
+      push(
+        unreadable > 0
+          ? `${created} ${t.voiceSetPrice} · ${unreadable} ✗`
+          : `${created} ${t.voiceSetPrice}`,
+        'success',
+      );
+      router.refresh();
+    }
+  }
+
+  function identifiedName(item: Identified): string {
+    if (locale === 'bn') return item.nameBn || item.name;
+    if (locale === 'hi') return item.nameHi || item.name;
+    return item.name;
   }
 
   /**
@@ -1399,6 +1468,7 @@ export function ItemsManager({
       onBusyChange={setScanning}
       openRef={openPhoto}
       onError={(message) => push(message, 'error')}
+      words={{ unreadPacket: t.photoUnreadPacket, unreadPhoto: t.photoUnreadPhoto }}
     />
   );
 
@@ -1487,6 +1557,7 @@ export function ItemsManager({
                 if (event.key === 'Enter') event.currentTarget.blur();
                 // Escape abandons the edit rather than saving it.
                 if (event.key === 'Escape') {
+                  cancelledName.current = item.id;
                   setNameDrafts((current) => {
                     const copy = { ...current };
                     delete copy[item.id];
