@@ -1935,7 +1935,7 @@ export function ItemsManager({
                                     {starterName(suggestion, locale)}
                                     {suggestion.unit && (
                                       <span className="text-xs text-slate-400">
-                                        {suggestion.unit}
+                                        {localUnit(suggestion.unit, locale)}
                                       </span>
                                     )}
                                   </button>
