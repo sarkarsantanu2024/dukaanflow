@@ -23,6 +23,7 @@ import { useRef, useState } from 'react';
 import { Spinner } from '@/components/ui/Spinner';
 import { matchCatalogue, extractUnit, pickLikelyName, type ScannedLine } from '@/lib/ocr-match';
 import { categoryForNames, type StarterItem } from '@/lib/starter-catalogue';
+import { lookupBarcode, readBarcode } from '@/lib/barcode-lookup';
 
 /** Text needs resolution; this is the smallest that reads a label reliably. */
 const MAX_EDGE = 1400;
@@ -198,6 +199,35 @@ export function PhotoItemAdder({
     };
   }
 
+  /** The packet's barcode, looked up in Open Food Facts — see `lib/barcode-lookup.ts`. */
+  async function fromBarcode(file: File): Promise<Identified | null> {
+    const code = await readBarcode(file);
+    if (!code) return null;
+    const product = await lookupBarcode(code);
+    if (!product) return null;
+    const match = matchCatalogue(product.name, catalogue);
+    if (match) {
+      return {
+        name: match.name,
+        nameBn: match.nameBn,
+        nameHi: match.nameHi,
+        unit: product.unit || match.unit,
+        pricePaise: !product.unit || product.unit === match.unit ? match.pricePaise : 0,
+        category: match.category,
+      };
+    }
+    // Local spellings are left blank here: the items route fills blank Bengali
+    // and Hindi names with `localNames()`, which is the one place they are made.
+    return {
+      name: product.name,
+      nameBn: '',
+      nameHi: '',
+      unit: product.unit,
+      pricePaise: 0,
+      category: categoryForNames([product.name], catalogue),
+    };
+  }
+
   /** One shared worker for the whole batch — starting it is the slow part. */
   async function readAll(files: File[]): Promise<{ found: Identified[]; unreadable: number }> {
     const { createWorker } = await import('tesseract.js');
@@ -277,12 +307,24 @@ export function PhotoItemAdder({
     onBusyChange?.(true);
 
     try {
-      // The model first; the phone's own OCR only when there is no model to ask
-      // or the server could not be reached.
-      let read = await readWithModel(files).catch(() => null);
-      if (read === 'expired') return;
-      read ??= await readAll(files);
-      const { found, unreadable } = read;
+      // The barcode first: free, exact, and read on the phone. Only photos it
+      // could not settle go on to the model, and the phone's own OCR only when
+      // there is no model to ask or the server could not be reached.
+      const byBarcode: Identified[] = [];
+      const rest: File[] = [];
+      for (const file of files) {
+        const hit = await fromBarcode(file);
+        if (hit) byBarcode.push(hit);
+        else rest.push(file);
+      }
+      let read: { found: Identified[]; unreadable: number } | 'expired' | null = { found: [], unreadable: 0 };
+      if (rest.length > 0) {
+        read = await readWithModel(rest).catch(() => null);
+        if (read === 'expired') return;
+        read ??= await readAll(rest);
+      }
+      const found = [...byBarcode, ...read.found];
+      const unreadable = read.unreadable;
 
       if (found.length === 0) {
         onError(words?.unreadPacket ?? 'Could not read that packet. Try a closer, straighter photo — or type the name.');

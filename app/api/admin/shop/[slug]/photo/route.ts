@@ -8,6 +8,9 @@ import { normaliseItemName, normaliseUnit } from '@/lib/units';
 
 type Context = { params: Promise<{ slug: string }> };
 
+/** A model reading a photo can take 10–20 s; the default function limit is shorter. */
+export const maxDuration = 60;
+
 /** The browser resizes to ~1280px JPEG first; this is the backstop (≈1.5 MB of base64). */
 const bodySchema = z.object({
   image: z
