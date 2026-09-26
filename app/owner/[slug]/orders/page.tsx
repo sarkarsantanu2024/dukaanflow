@@ -4,6 +4,7 @@ import { startOfBusinessDay } from '@/lib/time';
 import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { OrdersScreen, type OwnerOrder } from '@/components/owner/OrdersScreen';
+import { KeepScreenAwake } from '@/components/owner/KeepScreenAwake';
 import { BRAND_NAME } from '@/lib/brand';
 import { readOrderLines, type SnapshotNames } from '@/lib/order-snapshot';
 
@@ -166,6 +167,7 @@ export default async function OrdersPage({ params }: PageProps) {
       settings={settings}
       ownerClosed={shop.ownerClosed}
     >
+      <KeepScreenAwake openTime={shop.openTime} closeTime={shop.closeTime} ownerClosed={shop.ownerClosed} />
       <OrdersScreen
         slug={shop.slug}
         shopName={shop.name}

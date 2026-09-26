@@ -22,6 +22,24 @@ export function formatClockTime(value: string): string {
 }
 
 /**
+ * Whether `now` falls inside the shop's hours, by the clock of the phone in
+ * the shop. True when the shop has not said its hours: then the owner's own
+ * shutter is the only word on it. A close before the open is a shop that runs
+ * past midnight; equal times are a shop that never shuts.
+ */
+export function withinHours(openTime: string, closeTime: string, now: Date): boolean {
+  const minutes = (value: string) => {
+    const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value.trim());
+    return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+  };
+  const open = minutes(openTime);
+  const close = minutes(closeTime);
+  if (open === null || close === null || open === close) return true;
+  const at = now.getHours() * 60 + now.getMinutes();
+  return open < close ? at >= open && at < close : at >= open || at < close;
+}
+
+/**
  * "9 am – 9 pm", or blank when the shop has not said.
  *
  * Both halves or neither: one time alone tells a customer nothing useful, and
