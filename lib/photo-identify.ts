@@ -53,8 +53,9 @@ const ProductSchema = z.object({
   /** "Tata Salt", "Aashirvaad Atta", "Parle-G", "Surf Excel Easy Wash". English, title case. */
   name: z.string(),
   /** The same name in Bengali and Devanagari script, as Indian packets and adverts write it. A candidate only — see `localNamesWithHint`. */
-  nameBn: z.string(),
-  nameHi: z.string(),
+  // Optional: a hint only, and an answer without it must not be thrown away.
+  nameBn: z.string().default(''),
+  nameHi: z.string().default(''),
   /** The pack size printed on the packet, "1 kg" / "500 g" / "200 ml" / "12 pc", or "" if none is legible. */
   unit: z.string(),
   category: z.string(),
@@ -75,7 +76,7 @@ For each distinct retail product clearly visible in the photo, return:
 - category: exactly one of: ${PHOTO_CATEGORIES.join(', ')}. Use "" if none fits.
 - confidence: "high" when brand and product are clearly readable, "medium" when partly readable, "low" when you are guessing.
 
-Owners photograph packets quickly, so photos are often blurred, dark, at an angle, or show only part of the name. Identify the product the way an experienced shopkeeper would: from the logo, colours, pack shape and design, and any partial words, not only from fully legible text. A well-known Indian brand is recognisable from its logo and colours alone (Dettol's green sword logo, Parle-G's yellow wrapper, Maggi's yellow and red). When you recognise the product this way, give its full usual name and set confidence to "medium"; use "high" only when the name is clearly readable. Never invent a variant or pack size you cannot see.
+Owners photograph packets quickly, so photos are often blurred, dark, at an angle, or show only part of the name. Identify the product the way an experienced shopkeeper would: from the logo, colours, pack shape and design, and any partial words, not only from fully legible text. A well-known Indian brand is recognisable from its logo and colours alone (Dettol's green sword logo, Parle-G's yellow wrapper, Maggi's yellow and red). When you recognise the product this way, give its full usual name and set confidence to "medium"; use "high" only when the name is clearly readable. Never invent a product type, variant or pack size you cannot see: if only the brand is visible (just a logo, no product words), return the brand alone as the name (e.g. "Dettol") with confidence "low", so the shopkeeper completes it.
 
 List the same product once even if several identical packets are visible. Ignore shelves, hands, price stickers and background items you cannot identify. If there is no identifiable product, return an empty list. Text on packets may be in English, Bengali or Hindi; always answer in English.`;
 
@@ -137,7 +138,12 @@ const GEMINI_SCHEMA = {
 async function readWithGemini(jpegBase64: string): Promise<PhotoProduct[]> {
   let lastStatus = 0;
   for (const model of GEMINI_MODELS) {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    // The free tier is sometimes slow to answer. A model that does not answer
+    // in time is treated like a busy one: the next model is asked, inside the
+    // route's 60 seconds.
+    let response: Response;
+    try {
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY! },
       body: JSON.stringify({
@@ -153,8 +159,12 @@ async function readWithGemini(jpegBase64: string): Promise<PhotoProduct[]> {
         ],
         generationConfig: { responseMimeType: 'application/json', responseSchema: GEMINI_SCHEMA, temperature: 0 },
       }),
-      signal: AbortSignal.timeout(25_000),
+      signal: AbortSignal.timeout(22_000),
     });
+    } catch {
+      lastStatus = 408;
+      continue;
+    }
     lastStatus = response.status;
     // Over the free tier's limit, or busy: the lighter free model next.
     if (response.status === 429 || response.status === 503) continue;
