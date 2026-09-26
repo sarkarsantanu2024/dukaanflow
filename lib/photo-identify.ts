@@ -84,7 +84,7 @@ For each distinct retail product clearly visible in the photo, return:
 
 Owners photograph packets quickly, so photos are often blurred, dark, at an angle, or show only part of the name. Identify the product the way an experienced shopkeeper would: from the logo, colours, pack shape and design, and any partial words, not only from fully legible text. A well-known Indian brand is recognisable from its logo and colours alone (Dettol's green sword logo, Parle-G's yellow wrapper, Maggi's yellow and red). When you recognise the product this way, give its full usual name and set confidence to "medium"; use "high" only when the name is clearly readable. Never invent a product type, variant or pack size you cannot see: if only the brand is visible (just a logo, no product words), return the brand alone as the name (e.g. "Dettol") with confidence "low", so the shopkeeper completes it.
 
-ALWAYS GIVE YOUR BEST GUESS. If any product is visible at all, return it — even when the photo is blurred, dark or cut off — rather than an empty list. When confidence is "medium" or "low", also give up to 3 alternatives: other complete product names it could plausibly be, most likely first (for a Dettol pouch whose words are hidden: "Dettol Liquid Handwash", "Dettol Antiseptic Liquid", "Dettol Body Wash"). The shopkeeper will tap the right one, so make them distinct and realistic. When confidence is "high", alternatives is an empty list.
+ALWAYS GIVE YOUR BEST GUESS. If any product is visible at all, return it — even when the photo is blurred, dark or cut off — rather than an empty list. When confidence is "medium" or "low", also give up to 3 alternatives: other complete product names it could plausibly be, most likely first (for a Dettol pouch whose words are hidden: "Dettol Liquid Handwash", "Dettol Antiseptic Liquid", "Dettol Body Wash"). The shopkeeper will tap the right one, so make them distinct and realistic. When the product TYPE is not visible (only a brand's logo or colours), the alternatives must be DIFFERENT KINDS of product that brand makes, most common in Indian shops first (for Dettol: "Dettol Liquid Handwash", "Dettol Soap", "Dettol Antiseptic Liquid") — never several variants of one kind. When confidence is "high", alternatives is an empty list.
 
 List the same product once even if several identical packets are visible. Ignore shelves, hands, price stickers and background items you cannot identify. If there is no identifiable product, return an empty list. Text on packets may be in English, Bengali or Hindi; always answer in English.`;
 
@@ -126,7 +126,10 @@ function tidy(products: PhotoProduct[]): PhotoProduct[] {
     .map((product) => ({
       ...product,
       name: product.name.trim().replace(/\s+/g, ' ').slice(0, 80),
-      unit: product.unit.trim().toLowerCase(),
+      // A size is only kept when the model could read the pack. A blurred
+      // photo once came back "200 ml" from nothing; a wrong size silently
+      // changes what customers are quoted, a blank one is filled in by hand.
+      unit: product.confidence === 'high' ? product.unit.trim().toLowerCase() : '',
       category: (PHOTO_CATEGORIES as readonly string[]).includes(product.category) ? product.category : '',
       alternatives: [...new Set(product.alternatives.map((name) => name.trim().replace(/\s+/g, ' ').slice(0, 80)))]
         .filter((name) => name.length >= 2 && name.toLowerCase() !== product.name.trim().toLowerCase())
