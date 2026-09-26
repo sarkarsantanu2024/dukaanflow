@@ -5,8 +5,16 @@
  * the ink it can see — on a shiny, curved kirana packet photographed under a
  * tube light that is the FSSAI number, half a slogan and the net weight, and
  * rarely the product. Owners asked for a result they can trust, and many of
- * them will use this, so the photo now goes to Claude, which reads a packet the
- * way a person does: brand, product and pack size.
+ * them will use this, so the photo now goes to a vision model, which reads a
+ * packet the way a person does: brand, product and pack size.
+ *
+ * TWO PROVIDERS, CHOSEN BY WHICH KEY IS SET. Google's Gemini free tier
+ * (`GEMINI_API_KEY`) costs nothing, which is what a shop earning nothing from
+ * this yet can afford — the trade is that Google may use free-tier photos to
+ * improve its products, which for a photo of a biscuit packet is acceptable.
+ * Claude (`ANTHROPIC_API_KEY`) is the paid upgrade for when sales justify it.
+ * `PHOTO_PROVIDER=gemini|claude` forces one when both keys are set; otherwise
+ * Claude wins when present, because it was added on purpose and costs money.
  *
  * What comes back is deliberately small — an English name, the printed pack
  * size, a category from a fixed list. The Bengali and Hindi names are NOT taken
@@ -25,6 +33,13 @@ import { z } from 'zod/v4';
 
 /** Overridable without a deploy of code, e.g. PHOTO_MODEL=claude-haiku-4-5 to cut cost. */
 const MODEL = process.env.PHOTO_MODEL || 'claude-opus-5';
+
+/**
+ * Free-tier Gemini models, tried in order: the second when the first is over
+ * its free-tier rate limit (429) or overloaded (503). GEMINI_MODEL overrides
+ * the first, for when Google renames them.
+ */
+const GEMINI_MODELS = [process.env.GEMINI_MODEL || 'gemini-3.5-flash', 'gemini-3.5-flash-lite'];
 
 /** The headings the starter catalogue files items under. The model must choose one or leave it blank. */
 export const PHOTO_CATEGORIES = [
@@ -60,9 +75,95 @@ List the same product once even if several identical packets are visible. Ignore
 
 let client: Anthropic | null = null;
 
+/** Which model reads photos on this deployment, or null when there is no key for either. */
+function provider(): 'gemini' | 'claude' | null {
+  const forced = process.env.PHOTO_PROVIDER;
+  if (forced === 'gemini' && process.env.GEMINI_API_KEY) return 'gemini';
+  if (forced === 'claude' && process.env.ANTHROPIC_API_KEY) return 'claude';
+  if (process.env.ANTHROPIC_API_KEY) return 'claude';
+  if (process.env.GEMINI_API_KEY) return 'gemini';
+  return null;
+}
+
 /** Null when the server has no key, so the caller can say "use the phone's reader instead". */
 export async function identifyFromPhoto(jpegBase64: string): Promise<PhotoProduct[] | null> {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
+  const which = provider();
+  if (!which) return null;
+  const products = which === 'gemini' ? await readWithGemini(jpegBase64) : await readWithClaude(jpegBase64);
+  return tidy(products);
+}
+
+/** Same checks for either provider: known categories only, tidy names and units. */
+function tidy(products: PhotoProduct[]): PhotoProduct[] {
+  return products
+    .map((product) => ({
+      ...product,
+      name: product.name.trim().replace(/\s+/g, ' ').slice(0, 80),
+      unit: product.unit.trim().toLowerCase(),
+      category: (PHOTO_CATEGORIES as readonly string[]).includes(product.category) ? product.category : '',
+    }))
+    .filter((product) => product.name.length >= 2);
+}
+
+/** Gemini's JSON schema, the same shape `ResultSchema` checks afterwards. */
+const GEMINI_SCHEMA = {
+  type: 'object',
+  properties: {
+    products: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          unit: { type: 'string' },
+          category: { type: 'string' },
+          confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+        },
+        required: ['name', 'unit', 'category', 'confidence'],
+      },
+    },
+  },
+  required: ['products'],
+};
+
+async function readWithGemini(jpegBase64: string): Promise<PhotoProduct[]> {
+  let lastStatus = 0;
+  for (const model of GEMINI_MODELS) {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY! },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM }] },
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { inline_data: { mime_type: 'image/jpeg', data: jpegBase64 } },
+              { text: 'List the products in this photo.' },
+            ],
+          },
+        ],
+        generationConfig: { responseMimeType: 'application/json', responseSchema: GEMINI_SCHEMA, temperature: 0 },
+      }),
+      signal: AbortSignal.timeout(25_000),
+    });
+    lastStatus = response.status;
+    // Over the free tier's limit, or busy: the lighter free model next.
+    if (response.status === 429 || response.status === 503) continue;
+    if (!response.ok) throw new Error(`gemini ${response.status}: ${(await response.text()).slice(0, 300)}`);
+
+    const payload = (await response.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('') ?? '';
+    // A blocked or empty answer reads as "nothing recognised", not as a crash.
+    const parsed = ResultSchema.safeParse(JSON.parse(text || '{"products":[]}'));
+    return parsed.success ? parsed.data.products : [];
+  }
+  throw new Error(`gemini busy (${lastStatus})`);
+}
+
+async function readWithClaude(jpegBase64: string): Promise<PhotoProduct[]> {
   client ??= new Anthropic();
 
   const response = await client.beta.messages.parse({
@@ -86,13 +187,5 @@ export async function identifyFromPhoto(jpegBase64: string): Promise<PhotoProduc
   });
 
   if (response.stop_reason === 'refusal' || !response.parsed_output) return [];
-
-  return response.parsed_output.products
-    .map((product) => ({
-      ...product,
-      name: product.name.trim().replace(/\s+/g, ' ').slice(0, 80),
-      unit: product.unit.trim().toLowerCase(),
-      category: (PHOTO_CATEGORIES as readonly string[]).includes(product.category) ? product.category : '',
-    }))
-    .filter((product) => product.name.length >= 2);
+  return response.parsed_output.products;
 }
