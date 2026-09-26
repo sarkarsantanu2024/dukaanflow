@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { speak } from '@/components/voice/useVoice';
+import { cueOrder } from '@/components/voice/cue';
 import { BellIcon } from '@/components/ui/Icon';
 import { ANNOUNCE_LANG, announceOn, setAnnounceOn, spokenNewOrders } from '@/lib/order-announce';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -25,7 +26,11 @@ export function AnnounceToggle({ slug, locale }: { slug: string; locale: Locale 
     const next = !on;
     setOn(next);
     setAnnounceOn(slug, next);
-    if (next) speak(spokenNewOrders(locale, [20000]), ANNOUNCE_LANG[locale]);
+    if (next) {
+      // The same ding-dong a real order makes; this tap also unlocks the sound.
+      cueOrder();
+      window.setTimeout(() => speak(spokenNewOrders(locale, [20000]), ANNOUNCE_LANG[locale]), 700);
+    }
   }
 
   return (

@@ -15,14 +15,14 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { BellMenu, readStore, writeStore, type BellEntry } from '@/components/ui/BellMenu';
 import { formatPaise } from '@/lib/money';
 import { formatClock, formatDay, formatIsoDay } from '@/lib/time';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
-import { speak } from '@/components/voice/useVoice';
-import { ANNOUNCE_LANG, announceOn, announcedUpTo, setAnnouncedUpTo, spokenNewOrders } from '@/lib/order-announce';
+import { announceOn, announcedUpTo, setAnnouncedUpTo } from '@/lib/order-announce';
+import { RINGS, keepWaitingOnly, raiseOrderAlarm, silenceOrderAlarm } from './order-alarm';
 
 type BellOrder = {
   id: string;
@@ -39,6 +39,7 @@ const POLL_MS = 20_000;
 export function OwnerBell({ slug, locale }: { slug: string; locale: Locale }) {
   const t = ownerDict(locale);
   const router = useRouter();
+  const onOrders = usePathname()?.endsWith('/orders') ?? false;
   const seenKey = `halkhata:bell:seen:${slug}`;
   const removedKey = `halkhata:bell:removed:${slug}`;
 
@@ -52,24 +53,32 @@ export function OwnerBell({ slug, locale }: { slug: string; locale: Locale }) {
     setRemoved(readStore<string[]>(removedKey, []));
   }, [seenKey, removedKey]);
 
+  // Reaching the Orders screen is the owner going to look: stop ringing.
+  useEffect(() => {
+    if (onOrders) silenceOrderAlarm();
+  }, [onOrders]);
+
   /**
-   * Says any order newer than the last one said on this phone — see
-   * `lib/order-announce.ts`. The very first look on a phone only sets the mark:
-   * a fresh install reading out a morning's worth of old orders is noise.
+   * Rings for any order newer than the last one announced on this phone — see
+   * `lib/order-announce.ts` and `./order-alarm.ts`. The very first look on a
+   * phone only sets the mark: a fresh install reading out a morning's worth of
+   * old orders is noise.
    */
   const announce = useCallback(
     (list: BellOrder[]) => {
+      keepWaitingOnly(
+        slug,
+        list.map((order) => order.id),
+      );
       const newest = list.reduce((max, order) => (order.createdAt > max ? order.createdAt : max), '');
       if (!newest) return;
       const mark = announcedUpTo(slug);
       setAnnouncedUpTo(slug, newest > mark ? newest : mark);
       if (!mark || !announceOn(slug)) return;
       const fresh = list.filter((order) => order.createdAt > mark);
-      if (fresh.length > 0) {
-        speak(spokenNewOrders(locale, fresh.map((order) => order.totalAmountPaise)), ANNOUNCE_LANG[locale]);
-      }
+      raiseOrderAlarm(slug, locale, fresh, onOrders ? 1 : RINGS);
     },
-    [slug, locale],
+    [slug, locale, onOrders],
   );
 
   const load = useCallback(async () => {
@@ -129,6 +138,8 @@ export function OwnerBell({ slug, locale }: { slug: string; locale: Locale }) {
   }));
 
   function markRead() {
+    // Opening the bell is looking at the orders too.
+    silenceOrderAlarm();
     const newest = shown[0]?.createdAt;
     if (newest && newest > seenUpTo) {
       setSeenUpTo(newest);
