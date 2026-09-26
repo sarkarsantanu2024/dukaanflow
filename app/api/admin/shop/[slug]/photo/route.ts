@@ -3,7 +3,7 @@ import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { rateLimit } from '@/lib/rate-limit';
 import { identifyFromPhoto } from '@/lib/photo-identify';
-import { localNames } from '@/lib/transliterate';
+import { localNamesWithHint } from '@/lib/transliterate';
 import { normaliseItemName, normaliseUnit } from '@/lib/units';
 
 type Context = { params: Promise<{ slug: string }> };
@@ -54,7 +54,7 @@ export async function POST(request: Request, { params }: Context) {
     available: true,
     products: products.map((product) => {
       const name = normaliseItemName(product.name);
-      const local = localNames(name);
+      const local = localNamesWithHint(name, { bn: product.nameBn, hi: product.nameHi });
       return {
         name,
         nameBn: local.bn,

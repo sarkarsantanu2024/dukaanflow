@@ -51,8 +51,70 @@ export function localNames(name: string): { bn: string; hi: string } {
   if (BENGALI.test(trimmed)) return { bn: trimmed, hi: safe(bengaliToDevanagari(trimmed)) };
   if (DEVANAGARI.test(trimmed)) return { bn: safe(devanagariToBengali(trimmed)), hi: trimmed };
 
-  const hi = romanToDevanagari(trimmed);
-  return { bn: safe(devanagariToBengali(hi)), hi: safe(hi) };
+  return phraseByPhrase(trimmed);
+}
+
+/**
+ * PHRASE BY PHRASE. "Dettol Handwash Original" has one brand and two ordinary
+ * words the vocabulary knows; spelling the whole name letter by letter because
+ * it is not one entry gave "ডেটোল হাংড্ভাশ ওরিগিনাল". So the longest run of
+ * words the vocabulary knows is taken first — three words, then two, then one,
+ * which keeps "Surf Excel" and "Mother Dairy" whole — and only what is left is
+ * spelt. `unknown` says which words had to be spelt, for a caller holding a
+ * better spelling of them (the photo reader's).
+ */
+function phraseByPhrase(name: string): { bn: string; hi: string; unknown: boolean } {
+  const words = name.split(/\s+/);
+  const bn: string[] = [];
+  const hi: string[] = [];
+  let unknown = false;
+  for (let index = 0; index < words.length; ) {
+    let taken = 0;
+    for (let size = Math.min(3, words.length - index); size >= 1 && !taken; size--) {
+      const hit = suggestNames(words.slice(index, index + size).join(' '));
+      if (hit) {
+        bn.push(hit.bn);
+        hi.push(hit.hi);
+        taken = size;
+      }
+    }
+    if (!taken) {
+      // A number and its word ("2-Minute") keep the number and spell the word.
+      const word = words[index]!;
+      const spelt = /^\d+$/.test(word) ? word : romanToDevanagari(word);
+      bn.push(/^\d+$/.test(word) ? word : devanagariToBengali(spelt));
+      hi.push(spelt);
+      unknown ||= !/^\d+$/.test(word);
+      taken = 1;
+    }
+    index += taken;
+  }
+  return { bn: safe(bn.join(' ')), hi: safe(hi.join(' ')), unknown };
+}
+
+/**
+ * Local names for a name a vision model read off a packet, with the model's own
+ * spellings as a candidate.
+ *
+ * The vocabulary still decides wherever it knows the whole name. Where it had
+ * to spell something letter by letter, the model's spelling — a model writes
+ * "Harpic Power Plus" as হারপিক পাওয়ার প্লাস, the letter-by-letter speller as
+ * হারপিক পোভের প্লুস — is used instead, but only in the right script and only
+ * after the same word-by-word check (`NEVER_SPELL`) every guess goes through.
+ */
+export function localNamesWithHint(name: string, hint: { bn: string; hi: string }): { bn: string; hi: string } {
+  const trimmed = name.trim();
+  if (!trimmed || BENGALI.test(trimmed) || DEVANAGARI.test(trimmed)) return localNames(trimmed);
+  const known = suggestNames(trimmed);
+  if (known) return { bn: known.bn, hi: known.hi };
+  const ours = phraseByPhrase(trimmed);
+  if (!ours.unknown) return { bn: ours.bn, hi: ours.hi };
+  const bn = hint.bn.trim().slice(0, 80);
+  const hi = hint.hi.trim().slice(0, 80);
+  return {
+    bn: bn && BENGALI.test(bn) && !/[A-Za-z\u0900-\u097F]/.test(bn) ? safe(bn) || ours.bn : ours.bn,
+    hi: hi && DEVANAGARI.test(hi) && !/[A-Za-z\u0980-\u09FF]/.test(hi) ? safe(hi) || ours.hi : ours.hi,
+  };
 }
 
 /**
