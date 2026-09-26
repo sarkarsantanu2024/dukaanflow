@@ -21,6 +21,8 @@ import { formatPaise } from '@/lib/money';
 import { formatClock, formatDay, formatIsoDay } from '@/lib/time';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
+import { speak } from '@/components/voice/useVoice';
+import { ANNOUNCE_LANG, announceOn, announcedUpTo, setAnnouncedUpTo, spokenNewOrders } from '@/lib/order-announce';
 
 type BellOrder = {
   id: string;
@@ -50,16 +52,38 @@ export function OwnerBell({ slug, locale }: { slug: string; locale: Locale }) {
     setRemoved(readStore<string[]>(removedKey, []));
   }, [seenKey, removedKey]);
 
+  /**
+   * Says any order newer than the last one said on this phone — see
+   * `lib/order-announce.ts`. The very first look on a phone only sets the mark:
+   * a fresh install reading out a morning's worth of old orders is noise.
+   */
+  const announce = useCallback(
+    (list: BellOrder[]) => {
+      const newest = list.reduce((max, order) => (order.createdAt > max ? order.createdAt : max), '');
+      if (!newest) return;
+      const mark = announcedUpTo(slug);
+      setAnnouncedUpTo(slug, newest > mark ? newest : mark);
+      if (!mark || !announceOn(slug)) return;
+      const fresh = list.filter((order) => order.createdAt > mark);
+      if (fresh.length > 0) {
+        speak(spokenNewOrders(locale, fresh.map((order) => order.totalAmountPaise)), ANNOUNCE_LANG[locale]);
+      }
+    },
+    [slug, locale],
+  );
+
   const load = useCallback(async () => {
     try {
       const response = await fetch(`/api/owner/${slug}/notifications`, { cache: 'no-store' });
       if (!response.ok) return;
       const payload = (await response.json()) as { orders?: BellOrder[] };
-      setOrders(payload.orders ?? []);
+      const list = payload.orders ?? [];
+      setOrders(list);
+      announce(list);
     } catch {
       // Offline: keep what is showing.
     }
-  }, [slug]);
+  }, [slug, announce]);
 
   // Polled while the screen is being looked at, and at once when it comes back.
   useEffect(() => {
@@ -75,7 +99,10 @@ export function OwnerBell({ slug, locale }: { slug: string; locale: Locale }) {
       if (document.visibilityState === 'visible') {
         void load();
         start();
-      } else {
+      } else if (!announceOn(slug)) {
+        // Hidden and nobody wants to hear orders: stop asking. With
+        // announcements on the app keeps listening, so an order is said even
+        // with the screen off, for as long as the phone lets the page run.
         stop();
       }
     };
@@ -86,7 +113,7 @@ export function OwnerBell({ slug, locale }: { slug: string; locale: Locale }) {
       stop();
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [load]);
+  }, [load, slug]);
 
   const today = formatIsoDay(new Date());
   const shown = useMemo(() => orders.filter((order) => !removed.includes(order.id)), [orders, removed]);

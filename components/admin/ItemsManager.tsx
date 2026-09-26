@@ -1463,6 +1463,8 @@ export function ItemsManager({
   // scan can do no better than the largest text on the wrapper.
   const photoAdder = photoAvailable && (
     <PhotoItemAdder
+      slug={slug}
+      onExpired={expired}
       catalogue={catalogue}
       onBatch={addIdentified}
       onBusyChange={setScanning}

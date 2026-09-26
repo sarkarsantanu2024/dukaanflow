@@ -28,6 +28,7 @@
 import Link from 'next/link';
 import { ChevronRightIcon, RupeeIcon } from '@/components/ui/Icon';
 import { NoticeCard } from './NoticeCard';
+import { AnnounceToggle } from './AnnounceToggle';
 import { DeliveryCard } from './DeliveryCard';
 import { DELIVERY_AVAILABLE } from '@/lib/delivery';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -104,6 +105,8 @@ export function MoreDrawer({
         <span className="font-medium text-slate-700">{t.renewOpen}</span>
         <ChevronRightIcon className="ml-auto h-4 w-4 shrink-0 text-slate-400" />
       </Link>
+
+      <AnnounceToggle slug={slug} locale={locale} />
 
       <NoticeCard
         slug={slug}
