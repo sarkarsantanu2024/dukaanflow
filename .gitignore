@@ -23,3 +23,7 @@ khata-backup-*.json
 .responsive/
 .next-verify/
 .dev.log
+
+# QA reports stay local: they hold phone numbers, test credentials and screenshots,
+# and this repository is public. Never commit anything under qa-report/.
+qa-report/
