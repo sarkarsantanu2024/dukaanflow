@@ -8,14 +8,15 @@
  * not say the way it is spelled, and anything they would otherwise spell out
  * letter by letter.
  *
- * The reading happens **in the browser**. No key, no per-photo cost, and the
- * photograph never leaves the phone — which also means it cannot be stored,
- * because there is nowhere for it to go. What the owner gets back is a filled
- * form they still have to agree to.
+ * THE PHOTO IS READ BY A VISION MODEL ON THE SERVER (`lib/photo-identify.ts`),
+ * which reads a packet the way a person does — brand, product, pack size. The
+ * in-browser OCR this used to rely on returned whatever ink it could see on a
+ * shiny, curved wrapper, which was rarely the product. The photo is sent,
+ * read and discarded; nothing is stored.
  *
- * OCR is loaded only when someone actually takes a picture. It is a few
- * megabytes of engine and language data, and a shopkeeper who never uses this
- * should not pay for it on every page load.
+ * The OCR stays as the fallback, for a deployment with no model key or a
+ * moment when the server cannot be reached. It is loaded only then: a few
+ * megabytes of engine and language data nobody should pay for on page load.
  */
 
 import { useRef, useState } from 'react';
@@ -26,6 +27,32 @@ import { categoryForNames, type StarterItem } from '@/lib/starter-catalogue';
 /** Text needs resolution; this is the smallest that reads a label reliably. */
 const MAX_EDGE = 1400;
 const QUALITY = 0.9;
+/** What the model is sent: colour, and small enough to upload quickly on one bar of signal. */
+const MODEL_EDGE = 1280;
+const MODEL_QUALITY = 0.85;
+
+/** Resized, colour kept — a vision model reads colour and branding, unlike OCR. */
+async function prepareForModel(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, MODEL_EDGE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('canvas unavailable');
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvas.toDataURL('image/jpeg', MODEL_QUALITY);
+}
+
+type ModelProduct = {
+  name: string;
+  nameBn: string;
+  nameHi: string;
+  unit: string;
+  category: string;
+  confidence: 'high' | 'medium' | 'low';
+};
 
 export type Identified = {
   name: string;
@@ -77,13 +104,19 @@ async function prepare(file: File): Promise<string> {
 }
 
 export function PhotoItemAdder({
+  slug,
   catalogue,
   onBatch,
   onError,
   onBusyChange,
   openRef,
   words,
+  onExpired,
 }: {
+  /** The shop whose photo route reads the packet. */
+  slug: string;
+  /** Handles a dead session (401); true when it did, and the scan should stop. */
+  onExpired?: (response: Response) => boolean;
   /** The shop-type catalogue, matched against so a hit is a real item. */
   catalogue: StarterItem[];
   /**
@@ -100,6 +133,70 @@ export function PhotoItemAdder({
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+
+  /**
+   * The model's reading of each photo, or null when this deployment has no model
+   * (the caller then falls back to OCR). A product the catalogue knows takes the
+   * catalogue's names and suggested price, exactly as an OCR match did; one it
+   * does not keeps the model's name with local spellings from the server.
+   */
+  async function readWithModel(
+    files: File[],
+  ): Promise<{ found: Identified[]; unreadable: number } | 'expired' | null> {
+    const found: Identified[] = [];
+    let unreadable = 0;
+    for (const file of files) {
+      const response = await fetch(`/api/admin/shop/${slug}/photo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: await prepareForModel(file) }),
+      });
+      if (onExpired?.(response)) return 'expired';
+      if (!response.ok) throw new Error(`photo ${response.status}`);
+      const payload = (await response.json()) as { available: boolean; products?: ModelProduct[] };
+      if (!payload.available) return null;
+
+      // A guess is only worth listing when it is all there is.
+      const products = payload.products ?? [];
+      const sure = products.filter((product) => product.confidence !== 'low');
+      const kept = sure.length > 0 ? sure : products;
+      if (kept.length === 0) unreadable += 1;
+
+      for (const product of kept) {
+        const match = matchCatalogue(product.name, catalogue);
+        if (match) {
+          found.push({
+            name: match.name,
+            nameBn: match.nameBn,
+            nameHi: match.nameHi,
+            unit: product.unit || match.unit,
+            pricePaise: !product.unit || product.unit === match.unit ? match.pricePaise : 0,
+            category: match.category || product.category,
+          });
+        } else {
+          found.push({
+            name: product.name,
+            nameBn: product.nameBn,
+            nameHi: product.nameHi,
+            unit: product.unit,
+            pricePaise: 0,
+            category: product.category || categoryForNames([product.name], catalogue),
+          });
+        }
+      }
+    }
+    // One packet photographed twice is one item.
+    const seen = new Set<string>();
+    return {
+      found: found.filter((item) => {
+        const key = `${item.name.toLowerCase()}|${item.unit}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }),
+      unreadable,
+    };
+  }
 
   /** One shared worker for the whole batch — starting it is the slow part. */
   async function readAll(files: File[]): Promise<{ found: Identified[]; unreadable: number }> {
@@ -180,7 +277,12 @@ export function PhotoItemAdder({
     onBusyChange?.(true);
 
     try {
-      const { found, unreadable } = await readAll(files);
+      // The model first; the phone's own OCR only when there is no model to ask
+      // or the server could not be reached.
+      let read = await readWithModel(files).catch(() => null);
+      if (read === 'expired') return;
+      read ??= await readAll(files);
+      const { found, unreadable } = read;
 
       if (found.length === 0) {
         onError(words?.unreadPacket ?? 'Could not read that packet. Try a closer, straighter photo — or type the name.');

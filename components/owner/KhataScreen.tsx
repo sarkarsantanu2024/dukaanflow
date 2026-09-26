@@ -33,7 +33,6 @@ import {
   type StatementAccount,
 } from '@/lib/khata-pdf';
 import { ItemNotePicker, type PickableItem } from './ItemNotePicker';
-import { KhataVoice } from './KhataVoice';
 import { speak } from '@/components/voice/useVoice';
 import { spokenKhataEntry } from '@/lib/spoken-money';
 import type { VoiceLang } from '@/lib/speech';
@@ -493,45 +492,6 @@ export function KhataScreen({
             customer who wants it on paper. Both are the two icons above. */}
       </div>
 
-      {/* THE MICROPHONE. Fixed to the bottom-right corner, so where it sits in
-          this tree does not decide where it appears — it floats over the list
-          exactly as the mic does on the items screen and the till.
-
-          This is the screen an owner who cannot write opens most often, and it
-          was the only one in the app with no way in but the keyboard: the item
-          list has a mic and a camera, the till has a mic, and the credit book,
-          which is the one thing nobody can do on their behalf, had a form.
-
-          It needs names to match against, so it is absent on an empty book:
-          the first customer is always typed, because a new one needs a phone
-          number and that is not something to take from a recogniser. */}
-      {/* THE KHATA MIC IS HIDDEN, BY REQUEST — and this one has a cost worth
-          stating plainly, because the paragraph above is the argument against
-          doing it.
-
-          This is the screen an owner who cannot write opens most often, and the
-          mic was its only way in that was not a keyboard. Hidden, the credit
-          book is a typed form again: a name, a kind and an amount, on the one
-          record nobody else in the shop can keep on the owner's behalf.
-
-          The item list's mic and camera are untouched, so a non-reading owner
-          can still list stock by voice — it is only the khata that goes back to
-          typing.
-
-          HIDDEN, NOT DELETED. `KhataVoice`, `addFor` and the customer list are
-          all still wired to each other; restoring it is putting this back:
-
-            {customers.length > 0 && (
-              <KhataVoice
-                customers={customers}
-                locale={locale}
-                busy={busy}
-                onCommit={(customer, kind, amountPaise) =>
-                  addFor(customer as KhataCustomer, kind, amountPaise)
-                }
-              />
-            )}
-      */}
 
       {customers.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-card p-6 text-center">

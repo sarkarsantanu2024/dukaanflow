@@ -413,18 +413,35 @@ export function OrdersScreen({
     return `https://wa.me/${toWhatsAppNumber(order.customerPhone)}?text=${encodeURIComponent(messageFor(order))}`;
   }
 
+  /** The bill as a PDF, in the customer's language. */
+  function billBlobFor(order: OwnerOrder): Promise<Blob> {
+    const tc = ownerDict(readerOf(order));
+    return billPdfBlob(billFor(order), {
+      bill: tc.billDoc,
+      total: tc.billTotal,
+      paidBy: tc.billPaidBy,
+      paymentMode: { CASH: tc.sellCash, UPI: tc.sellUpi, KHATA: tc.sellKhata },
+      credit: `${tc.billDoc} · ${shopName}`,
+      unitLocale: readerOf(order),
+    });
+  }
+
+  /** Saves the PDF to the device — the computer's way of "sending" it. */
+  function saveBillFile(blob: Blob, name: string) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  }
+
   async function sendBill(order: OwnerOrder) {
     setBilling(order.id);
     try {
-      const tc = ownerDict(readerOf(order));
-      const blob = await billPdfBlob(billFor(order), {
-        bill: tc.billDoc,
-        total: tc.billTotal,
-        paidBy: tc.billPaidBy,
-        paymentMode: { CASH: tc.sellCash, UPI: tc.sellUpi, KHATA: tc.sellKhata },
-        credit: `${tc.billDoc} · ${shopName}`,
-        unitLocale: readerOf(order),
-      });
+      const blob = await billBlobFor(order);
       const file = new File([blob], `bill-${order.id}.pdf`, { type: 'application/pdf' });
 
       if (navigator.canShare?.({ files: [file] })) {
@@ -845,54 +862,56 @@ export function OrdersScreen({
   }
 
   /**
-   * DONE, AND THE BILL GOES TO THE CUSTOMER — one tap, by request.
+   * DONE, AND THE BILL GOES TO THE CUSTOMER AS A PDF — the file and nothing
+   * else, by request.
    *
-   * Cash, UPI or khata completes the order and then opens the customer's own
-   * WhatsApp chat with the bill written out: every line with its quantity, the
-   * delivery charge if any, the total, how it was paid, and the link to their
-   * order page. A wa.me link carries a number and text but never a file — only
-   * the share sheet can attach a PDF, and the share sheet cannot be told which
-   * number — so the bill travels as text; the WhatsApp icon on the card still
-   * shares the PDF for anyone who wants the file.
+   * Cash, UPI or khata completes the order and hands the bill PDF (with how it
+   * was paid) to the phone's share sheet, where the owner picks WhatsApp and
+   * the customer. It used to open the customer's chat with the bill typed out
+   * as text; owners wanted the proper bill instead. A wa.me link cannot carry a
+   * file, and the share sheet cannot be told which chat, so this is one pick in
+   * the sheet — the only way a browser can put a document into WhatsApp.
    *
-   * The window is opened INSIDE the tap, before the save is awaited: a browser
-   * blocks a window opened after an await as a pop-up. If the save fails the
-   * window is closed again and nothing is sent.
+   * The PDF is drawn WHILE the order saves, so the sheet opens inside the few
+   * seconds a browser allows after a tap. If the phone still refuses (a slow
+   * save), the bill waits in a bar at the top of the screen for one more tap —
+   * the order card itself has already moved to Completed. On a computer, which
+   * has no share sheet for files, the PDF is saved to attach by hand.
    */
-  async function completeAndSend(order: OwnerOrder, paymentReceived: boolean, paymentMode: '' | 'CASH' | 'UPI') {
-    const chat = window.open('', '_blank');
-    const saved = await setStatus(order.id, 'COMPLETED', paymentReceived, paymentMode);
-    if (!saved) {
-      chat?.close();
+  const [billToSend, setBillToSend] = useState<OwnerOrder | null>(null);
+
+  async function shareBillPdf(order: OwnerOrder, ready?: Blob) {
+    const blob = ready ?? (await billBlobFor(order));
+    const file = new File([blob], `bill-${order.id}.pdf`, { type: 'application/pdf' });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        setBillToSend(null);
+      } catch (error) {
+        // Closing the sheet is the owner's choice; anything else is the browser
+        // refusing a share it no longer counts as part of the tap.
+        if ((error as { name?: string })?.name === 'AbortError') setBillToSend(null);
+        else setBillToSend(order);
+      }
       return;
     }
-    // In the customer's language, as the bill is.
-    const reader = readerOf(order);
-    const tc = ownerDict(reader);
+    saveBillFile(blob, file.name);
+    setBillToSend(null);
+    push(t.billReady, 'success');
+  }
+
+  async function completeAndSend(order: OwnerOrder, paymentReceived: boolean, paymentMode: '' | 'CASH' | 'UPI') {
     const mode = paymentReceived ? (paymentMode || 'CASH') : 'KHATA';
-    const modeLabel = { CASH: tc.sellCash, UPI: tc.sellUpi, KHATA: tc.sellKhata }[mode];
-    const text = [
-      shopName,
-      `${tc.billDoc} · ${new Date().toLocaleString()}`,
-      order.customerName,
-      '',
-      ...order.lines.map((line) => {
-        const detail = lineDetail({ name: '', unit: line.unit, quantity: line.quantity, amountPaise: line.amountPaise }, reader);
-        return `• ${lineName(line, reader)}${detail ? ` — ${detail}` : ''} = ${formatPaise(line.amountPaise)}`;
-      }),
-      ...(order.deliveryFeePaise > 0 ? [`• ${tc.delivery} = ${formatPaise(order.deliveryFeePaise)}`] : []),
-      '',
-      `${tc.billTotal}: ${formatPaise(order.totalAmountPaise)}`,
-      `${tc.billPaidBy}: ${modeLabel}`,
-      '',
-      tc.billOrderLink,
-      `${window.location.origin}/track/${order.id}`,
-    ]
-      .filter((line, index, all) => !(line === '' && all[index - 1] === ''))
-      .join('\n');
-    const url = `https://wa.me/${toWhatsAppNumber(order.customerPhone)}?text=${encodeURIComponent(text)}`;
-    if (chat) chat.location.href = url;
-    else window.location.href = url;
+    const done: OwnerOrder = { ...order, status: 'COMPLETED', paymentMode: mode };
+    const drawing = billBlobFor(done).catch(() => null);
+    const saved = await setStatus(order.id, 'COMPLETED', paymentReceived, paymentMode);
+    if (!saved) return;
+    const blob = await drawing;
+    if (!blob) {
+      setBillToSend(done);
+      return;
+    }
+    await shareBillPdf(done, blob);
   }
 
   /**
@@ -1127,6 +1146,31 @@ export function OrdersScreen({
           still send it. The order it is about no longer exists, so there is no
           card to hang this on and no second chance to find it later. It stays
           until the owner sends it or says they have. */}
+      {billToSend && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+          <p className="text-sm font-semibold text-emerald-900">
+            {t.billSendPdfHint.replace('{name}', billToSend.customerName || billToSend.customerPhone)}
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void shareBillPdf(billToSend)}
+              className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white"
+            >
+              <WhatsAppIcon className="h-[18px] w-[18px]" />
+              {t.billSendPdf}
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillToSend(null)}
+              className="min-h-10 shrink-0 px-3 text-sm font-medium text-slate-500"
+            >
+              {t.no}
+            </button>
+          </div>
+        </div>
+      )}
+
       {removed && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-3">
           <p className="text-sm font-semibold text-red-900">

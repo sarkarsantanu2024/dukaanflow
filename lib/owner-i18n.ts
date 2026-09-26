@@ -389,6 +389,13 @@ type OwnerDictionary = {
   billHint: string;
   billBadPhone: string;
   billReady: string;
+  /** The bar that holds a finished order's bill when the phone would not open the share sheet by itself. */
+  billSendPdf: string;
+  /** The switch that makes the phone say new orders out loud. */
+  announceLabel: string;
+  announceHint: string;
+  /** `{name}` is the customer. */
+  billSendPdfHint: string;
   /** Words printed on the sheet itself. */
   billDoc: string;
   billTotal: string;
@@ -1053,6 +1060,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     billHint: 'The bill saves to this phone. In WhatsApp, attach it with the 📎 clip.',
     billBadPhone: 'Enter a 10-digit mobile number',
     billReady: 'Bill saved — attach it in WhatsApp',
+    billSendPdf: 'Send the bill (PDF)',
+    announceLabel: 'Say new orders out loud',
+    announceHint: 'While the app is open on this phone',
+    billSendPdfHint: 'Order done. Send {name} the bill:',
     billDoc: 'Bill',
     billTotal: 'Total',
     billPaidBy: 'Paid by',
@@ -1603,6 +1614,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     billHint: 'বিলটা এই ফোনে নেমে যাবে। WhatsApp-এ 📎 ক্লিপ দিয়ে জুড়ে দিন।',
     billBadPhone: '১০ সংখ্যার মোবাইল নম্বর লিখুন',
     billReady: 'বিল তৈরি — WhatsApp-এ জুড়ে দিন',
+    billSendPdf: 'বিল পাঠান (PDF)',
+    announceLabel: 'নতুন অর্ডার এলে বলে জানাবে',
+    announceHint: 'এই ফোনে অ্যাপটা খোলা থাকলে',
+    billSendPdfHint: 'অর্ডার হয়ে গেছে। {name}-কে বিল পাঠান:',
     billDoc: 'বিল',
     billTotal: 'মোট',
     billPaidBy: 'যেভাবে দিলেন',
@@ -2153,6 +2168,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     billHint: 'बिल इसी फ़ोन में आ जाएगा। WhatsApp में 📎 क्लिप से जोड़ दीजिए।',
     billBadPhone: '10 अंकों का मोबाइल नंबर लिखिए',
     billReady: 'बिल तैयार — WhatsApp में जोड़ दीजिए',
+    billSendPdf: 'बिल भेजें (PDF)',
+    announceLabel: 'नया ऑर्डर आने पर बोलकर बताए',
+    announceHint: 'जब इस फ़ोन पर ऐप खुला हो',
+    billSendPdfHint: 'ऑर्डर हो गया। {name} को बिल भेजिए:',
     billDoc: 'बिल',
     billTotal: 'कुल',
     billPaidBy: 'भुगतान',
