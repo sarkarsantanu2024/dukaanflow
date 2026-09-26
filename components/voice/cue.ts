@@ -54,7 +54,7 @@ function audioContext(): AudioContext | null {
  * Never throws. A phone with audio unavailable should lose the beep and keep
  * the microphone, so every failure here is swallowed.
  */
-function tone(fromHz: number, toHz: number, seconds: number) {
+function tone(fromHz: number, toHz: number, seconds: number, peak = 0.12) {
   const ctx = audioContext();
   if (!ctx) return;
 
@@ -71,7 +71,7 @@ function tone(fromHz: number, toHz: number, seconds: number) {
 
     // 0.0001 rather than 0 — an exponential ramp cannot reach zero.
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(0.12, now + 0.015);
+    gain.gain.linearRampToValueAtTime(peak, now + 0.015);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + seconds);
 
     oscillator.connect(gain);
@@ -91,4 +91,16 @@ export function cueStart() {
 /** Falling — the mic has stopped. */
 export function cueStop() {
   tone(880, 520, 0.16);
+}
+
+/**
+ * Ding-dong — a new order. Played before the spoken sentence, so the owner's
+ * head is already turning when the first word comes, and so the phone makes a
+ * sound even where it has no voice for the owner's language (`speak` stays
+ * silent then).
+ */
+export function cueOrder() {
+  // Louder than the mic cues: this has to cross a shop, not a counter.
+  tone(988, 988, 0.22, 0.4);
+  if (typeof window !== 'undefined') window.setTimeout(() => tone(784, 784, 0.34, 0.4), 240);
 }
