@@ -61,6 +61,12 @@ const ProductSchema = z.object({
   category: z.string(),
   /** How sure the model is that this is the product in the photo. */
   confidence: z.enum(['high', 'medium', 'low']),
+  /**
+   * Other full names it could be, when not sure — the owner picks one with a
+   * tap instead of typing (a blurred or cut-off photo cannot be read, only
+   * narrowed down).
+   */
+  alternatives: z.array(z.string()).default([]),
 });
 
 const ResultSchema = z.object({ products: z.array(ProductSchema) });
@@ -78,6 +84,8 @@ For each distinct retail product clearly visible in the photo, return:
 
 Owners photograph packets quickly, so photos are often blurred, dark, at an angle, or show only part of the name. Identify the product the way an experienced shopkeeper would: from the logo, colours, pack shape and design, and any partial words, not only from fully legible text. A well-known Indian brand is recognisable from its logo and colours alone (Dettol's green sword logo, Parle-G's yellow wrapper, Maggi's yellow and red). When you recognise the product this way, give its full usual name and set confidence to "medium"; use "high" only when the name is clearly readable. Never invent a product type, variant or pack size you cannot see: if only the brand is visible (just a logo, no product words), return the brand alone as the name (e.g. "Dettol") with confidence "low", so the shopkeeper completes it.
 
+ALWAYS GIVE YOUR BEST GUESS. If any product is visible at all, return it — even when the photo is blurred, dark or cut off — rather than an empty list. When confidence is "medium" or "low", also give up to 3 alternatives: other complete product names it could plausibly be, most likely first (for a Dettol pouch whose words are hidden: "Dettol Liquid Handwash", "Dettol Antiseptic Liquid", "Dettol Body Wash"). The shopkeeper will tap the right one, so make them distinct and realistic. When confidence is "high", alternatives is an empty list.
+
 List the same product once even if several identical packets are visible. Ignore shelves, hands, price stickers and background items you cannot identify. If there is no identifiable product, return an empty list. Text on packets may be in English, Bengali or Hindi; always answer in English.`;
 
 let client: Anthropic | null = null;
@@ -93,11 +101,23 @@ function provider(): 'gemini' | 'claude' | null {
 }
 
 /** Null when the server has no key, so the caller can say "use the phone's reader instead". */
-export async function identifyFromPhoto(jpegBase64: string): Promise<PhotoProduct[] | null> {
+export async function identifyFromPhoto(jpegBase64: string, shopItems: string[] = []): Promise<PhotoProduct[] | null> {
   const which = provider();
   if (!which) return null;
-  const products = which === 'gemini' ? await readWithGemini(jpegBase64) : await readWithClaude(jpegBase64);
+  const ask = askFor(shopItems);
+  const products = which === 'gemini' ? await readWithGemini(jpegBase64, ask) : await readWithClaude(jpegBase64, ask);
   return tidy(products);
+}
+
+/**
+ * The question, with the everyday items a shop of this kind lists. Most of
+ * them are generic ("Bath Soap", "Moong Dal"), so they help most with loose
+ * and unbranded goods, where the photo shows a sack or a plain packet and
+ * the list gives the name the shop actually uses.
+ */
+function askFor(shopItems: string[]): string {
+  if (shopItems.length === 0) return 'List the products in this photo.';
+  return `List the products in this photo.\n\nItems a shop like this usually lists (use one of these exact names when the product is one of them and no brand is visible): ${shopItems.join(', ')}`;
 }
 
 /** Same checks for either provider: known categories only, tidy names and units. */
@@ -108,6 +128,9 @@ function tidy(products: PhotoProduct[]): PhotoProduct[] {
       name: product.name.trim().replace(/\s+/g, ' ').slice(0, 80),
       unit: product.unit.trim().toLowerCase(),
       category: (PHOTO_CATEGORIES as readonly string[]).includes(product.category) ? product.category : '',
+      alternatives: [...new Set(product.alternatives.map((name) => name.trim().replace(/\s+/g, ' ').slice(0, 80)))]
+        .filter((name) => name.length >= 2 && name.toLowerCase() !== product.name.trim().toLowerCase())
+        .slice(0, 3),
     }))
     .filter((product) => product.name.length >= 2);
 }
@@ -127,15 +150,16 @@ const GEMINI_SCHEMA = {
           unit: { type: 'string' },
           category: { type: 'string' },
           confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+          alternatives: { type: 'array', items: { type: 'string' } },
         },
-        required: ['name', 'nameBn', 'nameHi', 'unit', 'category', 'confidence'],
+        required: ['name', 'nameBn', 'nameHi', 'unit', 'category', 'confidence', 'alternatives'],
       },
     },
   },
   required: ['products'],
 };
 
-async function readWithGemini(jpegBase64: string): Promise<PhotoProduct[]> {
+async function readWithGemini(jpegBase64: string, ask: string): Promise<PhotoProduct[]> {
   let lastStatus = 0;
   for (const model of GEMINI_MODELS) {
     // The free tier is sometimes slow to answer. A model that does not answer
@@ -153,7 +177,7 @@ async function readWithGemini(jpegBase64: string): Promise<PhotoProduct[]> {
             role: 'user',
             parts: [
               { inline_data: { mime_type: 'image/jpeg', data: jpegBase64 } },
-              { text: 'List the products in this photo.' },
+              { text: ask },
             ],
           },
         ],
@@ -181,7 +205,7 @@ async function readWithGemini(jpegBase64: string): Promise<PhotoProduct[]> {
   throw new Error(`gemini busy (${lastStatus})`);
 }
 
-async function readWithClaude(jpegBase64: string): Promise<PhotoProduct[]> {
+async function readWithClaude(jpegBase64: string, ask: string): Promise<PhotoProduct[]> {
   client ??= new Anthropic();
 
   const response = await client.beta.messages.parse({
@@ -198,7 +222,7 @@ async function readWithClaude(jpegBase64: string): Promise<PhotoProduct[]> {
         role: 'user',
         content: [
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: jpegBase64 } },
-          { type: 'text', text: 'List the products in this photo.' },
+          { type: 'text', text: ask },
         ],
       },
     ],

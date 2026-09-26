@@ -129,6 +129,9 @@ type OwnerDictionary = {
   photoUnreadPhoto: string;
   /** Photographed items that were read but could not be saved; `{names}` lists them. */
   photoSaveFailed: string;
+  /** A blurred photo narrowed to a few products: the owner taps the right one. */
+  photoWhich: string;
+  photoSkip: string;
   /** The add sheet's field errors, in place of the server's English. */
   itemErrPrice: string;
   itemErrName: string;
@@ -799,6 +802,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     photoUnreadPacket: 'Could not read that packet. Try a closer, straighter photo — or type the name.',
     photoUnreadPhoto: 'Could not read that photo. Try again, or type the name.',
     photoSaveFailed: 'Not saved — check the internet and try again: {names}',
+    photoWhich: 'Which one is it?',
+    photoSkip: 'None of these',
     itemErrPrice: 'Price must be at least ₹0.50',
     itemErrName: 'Name is blank or too long',
     itemErrUnit: 'Pack size is too long or not recognised',
@@ -1369,6 +1374,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     photoUnreadPacket: 'প্যাকেটটা পড়া গেল না। আরও কাছ থেকে, সোজা করে ছবি তুলুন — বা নামটা লিখে দিন।',
     photoUnreadPhoto: 'ছবিটা পড়া গেল না। আবার চেষ্টা করুন, বা নামটা লিখে দিন।',
     photoSaveFailed: 'সেভ হয়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন: {names}',
+    photoWhich: 'কোনটা?',
+    photoSkip: 'এগুলোর কোনোটা নয়',
     itemErrPrice: 'দাম অন্তত ₹০.৫০ হতে হবে',
     itemErrName: 'নাম খালি বা খুব লম্বা',
     itemErrUnit: 'মাপটা খুব লম্বা বা চেনা যাচ্ছে না',
@@ -1923,6 +1930,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     photoUnreadPacket: 'पैकेट पढ़ा नहीं जा सका। और पास से, सीधी फ़ोटो लीजिए — या नाम लिख दीजिए।',
     photoUnreadPhoto: 'फ़ोटो पढ़ी नहीं जा सकी। फिर कोशिश कीजिए, या नाम लिख दीजिए।',
     photoSaveFailed: 'सेव नहीं हुआ — इंटरनेट देखकर फिर कोशिश कीजिए: {names}',
+    photoWhich: 'कौन सा है?',
+    photoSkip: 'इनमें से कोई नहीं',
     itemErrPrice: 'दाम कम से कम ₹0.50 होना चाहिए',
     itemErrName: 'नाम खाली है या बहुत लंबा है',
     itemErrUnit: 'पैक का साइज़ बहुत लंबा है या पहचाना नहीं गया',
