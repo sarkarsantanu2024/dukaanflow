@@ -5,6 +5,9 @@ import { rateLimit } from '@/lib/rate-limit';
 import { identifyFromPhoto } from '@/lib/photo-identify';
 import { localNamesWithHint } from '@/lib/transliterate';
 import { normaliseItemName, normaliseUnit } from '@/lib/units';
+import { localNames } from '@/lib/transliterate';
+import { prisma } from '@/lib/prisma';
+import { starterCatalogue } from '@/lib/starter-catalogue';
 
 type Context = { params: Promise<{ slug: string }> };
 
@@ -40,9 +43,13 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = bodySchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
+  // The shop's kind decides which everyday item names the model is shown.
+  const shop = await prisma.shop.findUnique({ where: { slug }, select: { type: true } });
+  const shopItems = shop ? [...new Set(starterCatalogue(shop.type).map((item) => item.name))] : [];
+
   let products;
   try {
-    products = await identifyFromPhoto(parsed.data.image.slice('data:image/jpeg;base64,'.length));
+    products = await identifyFromPhoto(parsed.data.image.slice('data:image/jpeg;base64,'.length), shopItems);
   } catch (error) {
     console.error('photo identify failed', error);
     // The phone falls back to its own reader rather than showing a dead end.
@@ -62,6 +69,12 @@ export async function POST(request: Request, { params }: Context) {
         unit: product.unit ? normaliseUnit(product.unit) : '',
         category: product.category,
         confidence: product.confidence,
+        // Each with its own local spellings, so the choice reads in the owner's language.
+        alternatives: product.alternatives.map((alternative) => {
+          const altName = normaliseItemName(alternative);
+          const altLocal = localNames(altName);
+          return { name: altName, nameBn: altLocal.bn, nameHi: altLocal.hi };
+        }),
       };
     }),
   });

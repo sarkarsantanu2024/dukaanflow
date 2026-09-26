@@ -1470,7 +1470,8 @@ export function ItemsManager({
       onBusyChange={setScanning}
       openRef={openPhoto}
       onError={(message) => push(message, 'error')}
-      words={{ unreadPacket: t.photoUnreadPacket, unreadPhoto: t.photoUnreadPhoto }}
+      locale={locale}
+      words={{ unreadPacket: t.photoUnreadPacket, unreadPhoto: t.photoUnreadPhoto, which: t.photoWhich, skip: t.photoSkip }}
     />
   );
 

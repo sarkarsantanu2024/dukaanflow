@@ -21,6 +21,8 @@
 
 import { useRef, useState } from 'react';
 import { Spinner } from '@/components/ui/Spinner';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 import { matchCatalogue, extractUnit, pickLikelyName, type ScannedLine } from '@/lib/ocr-match';
 import { categoryForNames, type StarterItem } from '@/lib/starter-catalogue';
 import { lookupBarcode, readBarcode } from '@/lib/barcode-lookup';
@@ -53,7 +55,12 @@ type ModelProduct = {
   unit: string;
   category: string;
   confidence: 'high' | 'medium' | 'low';
+  /** Other names it could be, when the model is not sure — offered as taps. */
+  alternatives?: { name: string; nameBn: string; nameHi: string }[];
 };
+
+/** One photo the model could only narrow down: the owner taps which it is. */
+type Choice = Identified[];
 
 export type Identified = {
   name: string;
@@ -113,7 +120,10 @@ export function PhotoItemAdder({
   openRef,
   words,
   onExpired,
+  locale = 'en',
 }: {
+  /** Which name to show big on the "which one is it?" buttons. */
+  locale?: 'en' | 'bn' | 'hi';
   /** The shop whose photo route reads the packet. */
   slug: string;
   /** Handles a dead session (401); true when it did, and the scan should stop. */
@@ -130,10 +140,49 @@ export function PhotoItemAdder({
   /** Lets the floating button open the picker without rendering one. */
   openRef?: { current: (() => void) | null };
   /** The failure messages in the owner's language. English when left out. */
-  words?: { unreadPacket: string; unreadPhoto: string };
+  words?: { unreadPacket: string; unreadPhoto: string; which?: string; skip?: string };
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  /**
+   * Photos waiting for the owner to say which product it is, first one shown.
+   *
+   * A blurred or cut-off photo cannot be READ — no reader, free or paid, sees a
+   * word that is not in the picture — only narrowed down from the logo, the
+   * colours and the pack. So when the model is not sure it offers its best few
+   * guesses and the owner taps the right one: one tap, no typing, and nothing
+   * silently wrong on the list.
+   */
+  const [choosing, setChoosing] = useState<Choice[]>([]);
+
+  /** A model's name as an item: the catalogue's names and price when it knows the product. */
+  function toIdentified(product: { name: string; nameBn: string; nameHi: string; unit: string; category: string }): Identified {
+    const match = matchCatalogue(product.name, catalogue);
+    if (match) {
+      return {
+        name: match.name,
+        nameBn: match.nameBn,
+        nameHi: match.nameHi,
+        unit: product.unit || match.unit,
+        pricePaise: !product.unit || product.unit === match.unit ? match.pricePaise : 0,
+        category: match.category || product.category,
+      };
+    }
+    return {
+      name: product.name,
+      nameBn: product.nameBn,
+      nameHi: product.nameHi,
+      unit: product.unit,
+      pricePaise: 0,
+      category: product.category || categoryForNames([product.name], catalogue),
+    };
+  }
+
+  function shown(item: Identified): string {
+    if (locale === 'bn') return item.nameBn || item.name;
+    if (locale === 'hi') return item.nameHi || item.name;
+    return item.name;
+  }
 
   /**
    * The model's reading of each photo, or null when this deployment has no model
@@ -143,8 +192,9 @@ export function PhotoItemAdder({
    */
   async function readWithModel(
     files: File[],
-  ): Promise<{ found: Identified[]; unreadable: number } | 'expired' | null> {
+  ): Promise<{ found: Identified[]; unreadable: number; choices: Choice[] } | 'expired' | null> {
     const found: Identified[] = [];
+    const choices: Choice[] = [];
     let unreadable = 0;
     for (const file of files) {
       const response = await fetch(`/api/admin/shop/${slug}/photo`, {
@@ -164,26 +214,13 @@ export function PhotoItemAdder({
       if (kept.length === 0) unreadable += 1;
 
       for (const product of kept) {
-        const match = matchCatalogue(product.name, catalogue);
-        if (match) {
-          found.push({
-            name: match.name,
-            nameBn: match.nameBn,
-            nameHi: match.nameHi,
-            unit: product.unit || match.unit,
-            pricePaise: !product.unit || product.unit === match.unit ? match.pricePaise : 0,
-            category: match.category || product.category,
-          });
-        } else {
-          found.push({
-            name: product.name,
-            nameBn: product.nameBn,
-            nameHi: product.nameHi,
-            unit: product.unit,
-            pricePaise: 0,
-            category: product.category || categoryForNames([product.name], catalogue),
-          });
-        }
+        const best = toIdentified(product);
+        const others = (product.alternatives ?? []).map((alternative) =>
+          toIdentified({ ...alternative, unit: product.unit, category: product.category }),
+        );
+        // Sure: straight onto the list. Not sure: the owner picks.
+        if (product.confidence !== 'high' && others.length > 0) choices.push([best, ...others]);
+        else found.push(best);
       }
     }
     // One packet photographed twice is one item.
@@ -196,6 +233,7 @@ export function PhotoItemAdder({
         return true;
       }),
       unreadable,
+      choices,
     };
   }
 
@@ -317,7 +355,7 @@ export function PhotoItemAdder({
         if (hit) byBarcode.push(hit);
         else rest.push(file);
       }
-      let read: { found: Identified[]; unreadable: number } | 'expired' | null = { found: [], unreadable: 0 };
+      let read: { found: Identified[]; unreadable: number; choices?: Choice[] } | 'expired' | null = { found: [], unreadable: 0 };
       if (rest.length > 0) {
         read = await readWithModel(rest).catch(() => null);
         if (read === 'expired') return;
@@ -325,6 +363,9 @@ export function PhotoItemAdder({
       }
       const found = [...byBarcode, ...read.found];
       const unreadable = read.unreadable;
+      const choices = read.choices ?? [];
+      if (choices.length > 0) setChoosing((queue) => [...queue, ...choices]);
+      if (found.length === 0 && choices.length > 0) return;
 
       if (found.length === 0) {
         onError(words?.unreadPacket ?? 'Could not read that packet. Try a closer, straighter photo — or type the name.');
@@ -349,7 +390,15 @@ export function PhotoItemAdder({
   // The floating button owns the trigger; this component only owns the input.
   if (openRef) openRef.current = () => input.current?.click();
 
+  async function pick(item: Identified | null) {
+    setChoosing((queue) => queue.slice(1));
+    if (item) await onBatch([item], 0);
+  }
+
+  const current = choosing[0];
+
   return (
+    <>
     <input
       ref={input}
       type="file"
@@ -378,5 +427,30 @@ export function PhotoItemAdder({
         event.target.value = '';
       }}
     />
+      <Modal
+        open={Boolean(current)}
+        title={words?.which ?? 'Which one is it?'}
+        onClose={() => void pick(null)}
+        footer={
+          <Button variant="ghost" onClick={() => void pick(null)}>
+            {words?.skip ?? 'None of these'}
+          </Button>
+        }
+      >
+        <div className="space-y-2">
+          {current?.map((item, index) => (
+            <button
+              key={`${item.name}-${index}`}
+              type="button"
+              onClick={() => void pick(item)}
+              className="flex min-h-12 w-full flex-col items-start justify-center rounded-xl border border-slate-300 bg-card px-4 py-2 text-left transition hover:border-brand-400 hover:bg-brand-50"
+            >
+              <span className="text-base font-semibold text-slate-900">{shown(item)}</span>
+              {shown(item) !== item.name && <span className="text-xs text-slate-500">{item.name}</span>}
+            </button>
+          ))}
+        </div>
+      </Modal>
+    </>
   );
 }
