@@ -24,6 +24,7 @@ import { SubscriptionRoadblock, type RoadblockState } from './SubscriptionRoadbl
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { SimpleModeProvider } from './SimpleMode';
 import { MoreDrawer, type OwnerSettings } from './MoreDrawer';
+import { NewOrderBar } from './NewOrderBar';
 
 export type OwnerTab = 'sell' | 'inventory' | 'khata' | 'orders';
 
@@ -297,6 +298,10 @@ export function OwnerShell({
           })}
         </div>
       </nav>
+
+      {/* An order nobody has looked at yet: one big target over the header, on
+          every screen but Orders itself. See `NewOrderBar`. */}
+      <NewOrderBar slug={slug} locale={locale} hidden={pathname.startsWith(`/owner/${slug}/orders`)} />
 
       {/* Last in the tree and fixed over everything, so it covers the tab bar
           too. A roadblock the owner can navigate out of with one thumb is a

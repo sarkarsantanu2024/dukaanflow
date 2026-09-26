@@ -22,7 +22,7 @@ import { formatClock, formatDay, formatIsoDay } from '@/lib/time';
 import { ownerDict } from '@/lib/owner-i18n';
 import type { Locale } from '@/lib/i18n';
 import { announceOn, announcedUpTo, setAnnouncedUpTo } from '@/lib/order-announce';
-import { RINGS, keepWaitingOnly, raiseOrderAlarm, silenceOrderAlarm } from './order-alarm';
+import { keepWaitingOnly, raiseOrderAlarm, ringOnce, silenceOrderAlarm } from './order-alarm';
 
 type BellOrder = {
   id: string;
@@ -74,9 +74,12 @@ export function OwnerBell({ slug, locale }: { slug: string; locale: Locale }) {
       if (!newest) return;
       const mark = announcedUpTo(slug);
       setAnnouncedUpTo(slug, newest > mark ? newest : mark);
-      if (!mark || !announceOn(slug)) return;
+      if (!mark) return;
       const fresh = list.filter((order) => order.createdAt > mark);
-      raiseOrderAlarm(slug, locale, fresh, onOrders ? 1 : RINGS);
+      // `order-alarm` decides whether it is heard (the announce switch); the
+      // bar comes either way.
+      if (onOrders) ringOnce(slug, locale, fresh);
+      else raiseOrderAlarm(slug, locale, fresh);
     },
     [slug, locale, onOrders],
   );

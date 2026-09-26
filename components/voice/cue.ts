@@ -54,7 +54,7 @@ function audioContext(): AudioContext | null {
  * Never throws. A phone with audio unavailable should lose the beep and keep
  * the microphone, so every failure here is swallowed.
  */
-function tone(fromHz: number, toHz: number, seconds: number, peak = 0.12) {
+function tone(fromHz: number, toHz: number, seconds: number) {
   const ctx = audioContext();
   if (!ctx) return;
 
@@ -71,7 +71,7 @@ function tone(fromHz: number, toHz: number, seconds: number, peak = 0.12) {
 
     // 0.0001 rather than 0 — an exponential ramp cannot reach zero.
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(peak, now + 0.015);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.015);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + seconds);
 
     oscillator.connect(gain);
@@ -93,14 +93,63 @@ export function cueStop() {
   tone(880, 520, 0.16);
 }
 
+/** How long `cueOrder` rings, so the voice can wait for it to finish. */
+export const ORDER_RING_MS = 2000;
+
 /**
- * Ding-dong — a new order. Played before the spoken sentence, so the owner's
- * head is already turning when the first word comes, and so the phone makes a
- * sound even where it has no voice for the owner's language (`speak` stays
- * silent then).
+ * THE NEW-ORDER RING. Played before the spoken sentence, so the owner's head is
+ * already turning when the first word comes, and so the phone makes a sound
+ * even where it has no voice for the owner's language (`speak` stays silent
+ * then).
+ *
+ * IT WAS A SOFT SINE DING-DONG, AND IT WAS TOO QUIET. Owners said so. A sine at
+ * 1 kHz is about the weakest thing a phone speaker can make: all its energy is
+ * one note in the speaker's thinnest range. This is a square wave, warbling
+ * between two pitches like a telephone bell, in the 1.4–1.8 kHz band where
+ * both small speakers and ears are most sensitive — the same peak, several
+ * times as loud to the ear, and a sound a shop already knows means "answer
+ * me". Two bursts, and the phone vibrates with them.
+ *
+ * A PAGE CANNOT PLAY THE PHONE'S OWN RINGTONE — browsers give it no access. The
+ * phone's chosen sound is what the push notification plays (`admin-sw.js`);
+ * the owner picks it in Android's notification settings for this site. This
+ * ring follows the MEDIA volume, which the page can neither read nor raise.
  */
 export function cueOrder() {
-  // Louder than the mic cues: this has to cross a shop, not a counter.
-  tone(988, 988, 0.22, 0.4);
-  if (typeof window !== 'undefined') window.setTimeout(() => tone(784, 784, 0.34, 0.4), 240);
+  const ctx = audioContext();
+  if (ctx) {
+    try {
+      const now = ctx.currentTime;
+      warble(ctx, now, 0.8);
+      warble(ctx, now + 1.05, 0.8);
+    } catch {
+      /* No audio on this device. The words and the bar still come. */
+    }
+  }
+  try {
+    navigator.vibrate?.([500, 200, 500, 200, 500]);
+  } catch {
+    /* No vibration motor, or not allowed yet. */
+  }
+}
+
+function warble(ctx: AudioContext, start: number, seconds: number) {
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  oscillator.type = 'square';
+  // 25 steps a second between the two pitches: a bell's trill, not two notes.
+  const step = 0.04;
+  for (let at = 0, high = false; at < seconds; at += step, high = !high) {
+    oscillator.frequency.setValueAtTime(high ? 1780 : 1420, start + at);
+  }
+  // Ramped at both ends so it starts and stops without a click; flat and near
+  // full scale in between, because loudness is the whole job here.
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.linearRampToValueAtTime(0.7, start + 0.01);
+  gain.gain.setValueAtTime(0.7, start + seconds - 0.03);
+  gain.gain.linearRampToValueAtTime(0.0001, start + seconds);
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
+  oscillator.start(start);
+  oscillator.stop(start + seconds);
 }

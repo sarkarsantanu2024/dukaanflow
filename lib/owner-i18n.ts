@@ -246,6 +246,9 @@ type OwnerDictionary = {
   bellClearAll: string;
   bellRemove: string;
   bellNewOrder: string;
+  /** The bar across every owner screen while an order waits unseen. `{n}` is a count. */
+  orderBarMany: string;
+  orderBarTap: string;
   /** The words of the WhatsApp messages sent to customers. See `CustomerWords`. */
   customerWords: import('./whatsapp').CustomerWords;
   noOrdersHere: string;
@@ -906,6 +909,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     bellClearAll: 'Clear all',
     bellRemove: 'Remove',
     bellNewOrder: 'New order',
+    orderBarMany: '{n} new orders',
+    orderBarTap: 'Tap to see',
     customerWords: {
       namaste: 'Namaste',
       received: 'we have received your order. {shop}',
@@ -1478,6 +1483,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     bellClearAll: 'সব মুছুন',
     bellRemove: 'মুছুন',
     bellNewOrder: 'নতুন অর্ডার',
+    orderBarMany: '{n}টা নতুন অর্ডার',
+    orderBarTap: 'দেখতে ছুঁয়ে দিন',
     customerWords: {
       namaste: 'নমস্কার',
       received: 'আপনার অর্ডার পেয়েছি। {shop}',
@@ -2034,6 +2041,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     bellClearAll: 'सब हटाएँ',
     bellRemove: 'हटाएँ',
     bellNewOrder: 'नया ऑर्डर',
+    orderBarMany: '{n} नए ऑर्डर',
+    orderBarTap: 'देखने के लिए छुएँ',
     customerWords: {
       namaste: 'नमस्ते',
       received: 'आपका ऑर्डर मिल गया। {shop}',
