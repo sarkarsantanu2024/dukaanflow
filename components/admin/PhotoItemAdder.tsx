@@ -157,7 +157,11 @@ export function PhotoItemAdder({
 
   /** A model's name as an item: the catalogue's names and price when it knows the product. */
   function toIdentified(product: { name: string; nameBn: string; nameHi: string; unit: string; category: string }): Identified {
-    const match = matchCatalogue(product.name, catalogue);
+    // The catalogue's row only when it IS this name. A model's name carries the
+    // brand ("Dettol Antiseptic Liquid"); the catalogue's generic row
+    // ("Antiseptic Liquid") contains every word of it and would drop the brand.
+    const found = matchCatalogue(product.name, catalogue);
+    const match = found && found.name.toLowerCase() === product.name.trim().toLowerCase() ? found : null;
     if (match) {
       return {
         name: match.name,
@@ -174,7 +178,7 @@ export function PhotoItemAdder({
       nameHi: product.nameHi,
       unit: product.unit,
       pricePaise: 0,
-      category: product.category || categoryForNames([product.name], catalogue),
+      category: product.category || found?.category || categoryForNames([product.name], catalogue),
     };
   }
 
