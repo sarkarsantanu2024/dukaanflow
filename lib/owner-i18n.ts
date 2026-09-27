@@ -402,6 +402,8 @@ type OwnerDictionary = {
   announceHint: string;
   /** `{name}` is the customer. */
   billSendPdfHint: string;
+  /** Put before the bill's link in the customer's chat: "Your bill: https://…". */
+  billSeeOnline: string;
   /** Words printed on the sheet itself. */
   billDoc: string;
   billTotal: string;
@@ -1074,6 +1076,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     announceLabel: 'Say new orders out loud',
     announceHint: 'Up to 3 times, until you open Orders · while the app is open on this phone',
     billSendPdfHint: 'Order done. Send {name} the bill:',
+    billSeeOnline: 'Your bill (tap to open or download):',
     billDoc: 'Bill',
     billTotal: 'Total',
     billPaidBy: 'Paid by',
@@ -1632,6 +1635,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     announceLabel: 'নতুন অর্ডার এলে বলে জানাবে',
     announceHint: 'অর্ডার না খোলা পর্যন্ত ৩ বার পর্যন্ত · এই ফোনে অ্যাপটা খোলা থাকলে',
     billSendPdfHint: 'অর্ডার হয়ে গেছে। {name}-কে বিল পাঠান:',
+    billSeeOnline: 'আপনার বিল (খুলতে বা নামাতে ছুঁয়ে দিন):',
     billDoc: 'বিল',
     billTotal: 'মোট',
     billPaidBy: 'যেভাবে দিলেন',
@@ -2190,6 +2194,7 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     announceLabel: 'नया ऑर्डर आने पर बोलकर बताए',
     announceHint: 'ऑर्डर खोलने तक 3 बार तक · जब इस फ़ोन पर ऐप खुला हो',
     billSendPdfHint: 'ऑर्डर हो गया। {name} को बिल भेजिए:',
+    billSeeOnline: 'आपका बिल (खोलने या डाउनलोड करने के लिए छुएँ):',
     billDoc: 'बिल',
     billTotal: 'कुल',
     billPaidBy: 'भुगतान',

@@ -180,7 +180,12 @@ export function KhataScreen({
   }
 
   /**
-   * ONE CUSTOMER'S STATEMENT, HANDED TO WHATSAPP AS A FILE.
+   * ONE CUSTOMER'S STATEMENT, HANDED TO WHATSAPP AS A FILE — the second way.
+   *
+   * The row's WhatsApp button opens the customer's own chat with the account
+   * typed out, because owners did not want to hunt for the customer in the
+   * contact list every time. This is the button inside the row for the file
+   * itself, and the file can only go through the share sheet:
    *
    * `navigator.share` with a `files` array is the only thing in a browser that
    * can put a document into WhatsApp. A `wa.me` link cannot: it carries text
@@ -607,30 +612,34 @@ export function KhataScreen({
                 {/* ONE ACTION ON THE ROW, NOT TWO.
                     A separate statement icon beside this one was two buttons
                     for what a shopkeeper thinks of as one job — telling
-                    somebody what they owe. The WhatsApp button now carries the
-                    statement with it, so the row asks one question and answers
-                    it. The book as a whole is still a download at the top.
+                    somebody what they owe. The WhatsApp button opens their chat
+                    with the account written out; the statement PDF is inside
+                    the row. The book as a whole is still a download at the top.
 
                     Only where there is something to ask for: a reminder to
                     somebody who owes nothing would read "₹0 is pending", and to
                     somebody holding credit it would be the wrong way round
                     entirely — the shop owes them. */}
+                {/* STRAIGHT TO THAT CUSTOMER'S CHAT. It used to hand the PDF
+                    to the share sheet, and the owner then had to find the
+                    customer in WhatsApp's contact list every time. The message
+                    already lists every entry and the total, so it opens their
+                    chat with it typed; the PDF is inside the row for anyone who
+                    wants the file. */}
                 {owes && (
                   <span className="flex shrink-0 items-center pr-2">
-                    <button
-                      type="button"
-                      onClick={() => sendStatement(customer)}
-                      disabled={building !== null}
+                    <a
+                      href={`https://wa.me/91${customer.phone}?text=${encodeURIComponent(
+                        reminderMessage(shopName, customer.name, customer.balancePaise, locale, customer.entries),
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       aria-label={`${t.khataRemind} — ${customer.name || customer.phone}`}
                       title={t.khataRemind}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#25D366] transition hover:bg-green-50 disabled:opacity-50"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#25D366] transition hover:bg-green-50"
                     >
-                      {building === customer.id ? (
-                        <Spinner className="h-5 w-5" />
-                      ) : (
-                        <WhatsAppIcon className="h-5 w-5" />
-                      )}
-                    </button>
+                      <WhatsAppIcon className="h-5 w-5" />
+                    </a>
                   </span>
                 )}
                 </div>
@@ -642,9 +651,25 @@ export function KhataScreen({
                         Repeating them inside would be two buttons for one job
                         sitting a centimetre apart. What is left in here is what
                         opening a row is actually for: the entries. */}
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      {t.khataHistory}
-                    </p>
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        {t.khataHistory}
+                      </p>
+                      {/* The statement as a file, for an owner who wants to
+                          send the PDF itself: through the share sheet, where
+                          WhatsApp's contact list is the only way to pick. */}
+                      {owes && (
+                        <button
+                          type="button"
+                          onClick={() => sendStatement(customer)}
+                          disabled={building !== null}
+                          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 disabled:opacity-50"
+                        >
+                          {building === customer.id ? <Spinner className="h-4 w-4" /> : <PdfIcon className="h-4 w-4" />}
+                          {t.khataExportPdf}
+                        </button>
+                      )}
+                    </div>
                     <ul className="divide-y divide-slate-100">
                       {customer.entries.map((entry) => (
                         <li key={entry.id} className="flex items-center gap-3 py-2 text-sm">

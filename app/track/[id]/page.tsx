@@ -71,6 +71,7 @@ export default async function TrackPage({ params }: PageProps) {
           deliveryFeePaise: true,
           revisedAt: true,
           createdAt: true,
+          paymentMode: true,
           itemsJson: true,
           customerName: true,
           shop: { select: { name: true, slug: true, phone: true } },
@@ -91,6 +92,11 @@ export default async function TrackPage({ params }: PageProps) {
             deliveryFeePaise: order.deliveryFeePaise,
             revised: order.revisedAt !== null,
             placedAt: order.createdAt.toISOString(),
+            // Only once it is done: before that nobody has said how it was paid.
+            paymentMode:
+              order.status === 'COMPLETED' && ['CASH', 'UPI', 'KHATA'].includes(order.paymentMode ?? '')
+                ? (order.paymentMode as 'CASH' | 'UPI' | 'KHATA')
+                : null,
             customerName: order.customerName,
             shopName: order.shop.name,
             shopSlug: order.shop.slug,

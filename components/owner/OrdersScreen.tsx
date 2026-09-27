@@ -34,6 +34,7 @@ import {
   CartIcon,
   CheckIcon,
   CloseIcon,
+  PdfIcon,
   PencilIcon,
   PhoneIcon,
   PinIcon,
@@ -337,18 +338,15 @@ export function OrdersScreen({
   const [tab, setTab] = useState<Tab | null>(null);
 
   /**
-   * THE BILL GOES WITH THE MESSAGE, AS A PDF, in one tap on the WhatsApp icon.
+   * THE WHATSAPP ICON OPENS THE CUSTOMER'S OWN CHAT; THE PDF ICON SENDS THE FILE.
    *
-   * There used to be a printer icon beside it that saved the PDF, and the owner
-   * then had to open WhatsApp and attach the file by hand. `navigator.share`
-   * with a file is the only way a browser can put a document into WhatsApp (a
-   * wa.me link carries text only), so where the phone can share files the
-   * share sheet opens with the bill attached and the message as its caption,
-   * the same as the restock list. The owner picks WhatsApp and the customer
-   * there; the sheet cannot be told which chat.
-   *
-   * Where it cannot (a computer, mostly) the icon stays a link to the
-   * customer's chat and the bill is saved alongside, to attach by hand.
+   * The icon used to hand the bill PDF to the share sheet, and the owner then
+   * had to find the customer in WhatsApp's contact list on every order: a
+   * wa.me link can open a chat by number but carries only text, and the share
+   * sheet can carry a file but cannot be told which chat. So the WhatsApp icon
+   * is now the direct chat with the bill as a link (see `billMessage`), and the
+   * PDF icon beside it is the file through the share sheet (saved, on a
+   * computer) for an owner who wants to send the file itself.
    *
    * The payment line is printed only once the order is COMPLETED, when the
    * owner has said how the money came. Before that a bill that printed "Paid
@@ -358,17 +356,15 @@ export function OrdersScreen({
    * Everything the customer reads — the bill and the message — is in the
    * language they shopped in where the order kept it, not the owner's.
    */
-  const [canSharePdf, setCanSharePdf] = useState(false);
   useEffect(() => {
     try {
       const probe = new File([''], 'bill.pdf', { type: 'application/pdf' });
-      const able = Boolean(navigator.canShare?.({ files: [probe] }));
-      setCanSharePdf(able);
-      // Loaded ahead of the tap: the share sheet must open within the few
-      // seconds a browser allows after a tap, and jsPDF is the slow part.
-      if (able) void import('jspdf');
+      // Loaded ahead of a tap on the PDF button: the share sheet must open
+      // within the few seconds a browser allows after a tap, and jsPDF is the
+      // slow part.
+      if (navigator.canShare?.({ files: [probe] })) void import('jspdf');
     } catch {
-      setCanSharePdf(false);
+      // No file sharing here: the PDF button saves the file instead.
     }
   }, []);
 
@@ -409,8 +405,33 @@ export function OrdersScreen({
       : `${shopName}\n${ownerDict(readerOf(order)).billDoc} · ${formatPaise(order.totalAmountPaise)}`;
   }
 
+  /**
+   * THE BILL AS A LINK, IN THAT CUSTOMER'S OWN CHAT.
+   *
+   * A wa.me link opens the customer's chat directly but can carry only text; a
+   * file can only go through the share sheet, where the owner had to find the
+   * customer in WhatsApp's contact list on every order. Owners asked for the
+   * chat to open by itself, so the message carries the bill as a link: the
+   * order's page, which shows every line and the total and saves the bill PDF.
+   * The order id in it is the same unguessable key the tracking page has always
+   * used. The PDF itself is still one tap away, for an owner who wants the file.
+   */
+  function billMessage(order: OwnerOrder): string {
+    const tc = ownerDict(readerOf(order));
+    const paid = order.status === 'COMPLETED' && ['CASH', 'UPI', 'KHATA'].includes(order.paymentMode);
+    const modes: Record<string, string> = { CASH: tc.sellCash, UPI: tc.sellUpi, KHATA: tc.sellKhata };
+    return [
+      messageFor(order),
+      paid ? `${tc.billPaidBy}: ${modes[order.paymentMode]}` : '',
+      '',
+      `${tc.billSeeOnline} ${window.location.origin}/track/${order.id}`,
+    ]
+      .filter((line, index, all) => line !== '' || (index > 0 && all[index - 1] !== ''))
+      .join('\n');
+  }
+
   function chatUrl(order: OwnerOrder): string {
-    return `https://wa.me/${toWhatsAppNumber(order.customerPhone)}?text=${encodeURIComponent(messageFor(order))}`;
+    return `https://wa.me/${toWhatsAppNumber(order.customerPhone)}?text=${encodeURIComponent(billMessage(order))}`;
   }
 
   /** The bill as a PDF, in the customer's language. */
@@ -478,32 +499,31 @@ export function OrdersScreen({
         ? 'border-[#25D366] bg-[#25D366] text-white'
         : 'border-slate-300 text-[#25D366] hover:bg-slate-50',
     );
-    if (canSharePdf) {
-      return (
-        <button
-          type="button"
-          onClick={() => sendBill(order)}
-          disabled={billing === order.id}
+    // Straight into the customer's chat with the message and the bill's link.
+    // The PDF file is the small icon beside it, through the share sheet.
+    return (
+      <>
+        <a
+          href={chatUrl(order)}
+          target="_blank"
+          rel="noopener noreferrer"
           aria-label={label}
           title={label}
           className={className}
         >
           <WhatsAppIcon className="h-[18px] w-[18px]" />
+        </a>
+        <button
+          type="button"
+          onClick={() => void sendBill(order)}
+          disabled={billing === order.id}
+          aria-label={t.billSendPdf}
+          title={t.billSendPdf}
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
+        >
+          <PdfIcon className="h-[18px] w-[18px]" />
         </button>
-      );
-    }
-    return (
-      <a
-        href={chatUrl(order)}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => void sendBill(order)}
-        aria-label={label}
-        title={label}
-        className={className}
-      >
-        <WhatsAppIcon className="h-[18px] w-[18px]" />
-      </a>
+      </>
     );
   }
 
@@ -900,18 +920,27 @@ export function OrdersScreen({
     push(t.billReady, 'success');
   }
 
+  /**
+   * DONE: the order saves, then THAT CUSTOMER'S CHAT OPENS by itself with the
+   * bill — how it was paid and the link to it. By request, 27 Sep: picking the
+   * customer out of WhatsApp's contact list on every order was the complaint,
+   * and a file (26 Sep's "PDF only") can only travel through that list.
+   *
+   * The chat is opened right after the save, inside the few seconds a browser
+   * still counts as part of the tap. If the phone refuses anyway (a slow save),
+   * the bar at the top holds the same chat as a big button, with the PDF beside
+   * it for an owner who wants to send the file itself.
+   */
   async function completeAndSend(order: OwnerOrder, paymentReceived: boolean, paymentMode: '' | 'CASH' | 'UPI') {
     const mode = paymentReceived ? (paymentMode || 'CASH') : 'KHATA';
     const done: OwnerOrder = { ...order, status: 'COMPLETED', paymentMode: mode };
-    const drawing = billBlobFor(done).catch(() => null);
     const saved = await setStatus(order.id, 'COMPLETED', paymentReceived, paymentMode);
     if (!saved) return;
-    const blob = await drawing;
-    if (!blob) {
-      setBillToSend(done);
-      return;
-    }
-    await shareBillPdf(done, blob);
+    // Not `noopener` in the features: with it `window.open` always returns
+    // null, and a refused open could not be told from one that worked.
+    const opened = window.open(chatUrl(done), '_blank');
+    if (opened) opened.opener = null;
+    setBillToSend(opened ? null : done);
   }
 
   /**
@@ -1152,13 +1181,27 @@ export function OrdersScreen({
             {t.billSendPdfHint.replace('{name}', billToSend.customerName || billToSend.customerPhone)}
           </p>
           <div className="mt-2 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void shareBillPdf(billToSend)}
+            {/* The customer's own chat, with the bill's link typed in. */}
+            <a
+              href={chatUrl(billToSend)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setBillToSend(null)}
               className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white"
             >
               <WhatsAppIcon className="h-[18px] w-[18px]" />
-              {t.billSendPdf}
+              {t.billSendWa}
+            </a>
+            {/* The file itself, through the share sheet. */}
+            <button
+              type="button"
+              onClick={() => void shareBillPdf(billToSend)}
+              aria-label={t.billSendPdf}
+              title={t.billSendPdf}
+              className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border border-emerald-300 px-3 text-sm font-semibold text-emerald-800"
+            >
+              <PdfIcon className="h-[18px] w-[18px]" />
+              PDF
             </button>
             <button
               type="button"
