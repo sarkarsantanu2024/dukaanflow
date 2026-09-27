@@ -81,6 +81,7 @@ export default async function TrackPage({ params }: PageProps) {
   return (
     <>
       <TrackScreen
+        orderId={id}
         order={
           order && {
             id: order.id,

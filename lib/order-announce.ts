@@ -55,6 +55,36 @@ export function setAnnouncedUpTo(slug: string, iso: string) {
 }
 
 /**
+ * What the CUSTOMER's phone says when the shop does something to their order:
+ * changed it (with the new total), finished it, or could not take it. In the
+ * language the shopper chose on their own phone. Several at once are said one
+ * after another, newest last.
+ */
+export function spokenCustomerUpdates(
+  locale: Locale,
+  updates: { kind: 'changed' | 'done' | 'cancelled'; totalPaise: number | null }[],
+): string {
+  const rupees = (paise: number) => String(Math.round(paise / 100));
+  const one = (update: (typeof updates)[number]): string => {
+    if (update.kind === 'changed') {
+      const total = update.totalPaise !== null ? rupees(update.totalPaise) : '';
+      if (locale === 'bn') return total ? `দোকান আপনার অর্ডার বদলেছে, নতুন মোট ${total} টাকা` : 'দোকান আপনার অর্ডার বদলেছে';
+      if (locale === 'hi') return total ? `दुकान ने आपका ऑर्डर बदला है, नया कुल ${total} रुपये` : 'दुकान ने आपका ऑर्डर बदला है';
+      return total ? `The shop changed your order. The new total is ${total} rupees` : 'The shop changed your order';
+    }
+    if (update.kind === 'done') {
+      if (locale === 'bn') return 'আপনার অর্ডার সম্পূর্ণ হয়েছে, বিল হোয়াটসঅ্যাপে দেখুন';
+      if (locale === 'hi') return 'आपका ऑर्डर पूरा हो गया है, बिल व्हाट्सऐप पर देखें';
+      return 'Your order is complete. Check your bill on WhatsApp';
+    }
+    if (locale === 'bn') return 'দুঃখিত, দোকান এবার আপনার অর্ডারটি নিতে পারল না';
+    if (locale === 'hi') return 'माफ़ कीजिए, दुकान इस बार आपका ऑर्डर नहीं ले पाई';
+    return 'Sorry, the shop could not take your order this time';
+  };
+  return updates.map(one).join(locale === 'en' ? '. ' : '। ');
+}
+
+/**
  * What the phone says. Digits, not number words, with no separators: the
  * synthesiser reads digits in the utterance's own language (see
  * `lib/spoken-money.ts`), so "200" is said "দুশো" under bn-IN.

@@ -15,6 +15,7 @@
  */
 
 import { useEffect } from 'react';
+import { BackButton } from '@/components/ui/BackButton';
 
 export default function AppError({
   error,
@@ -40,6 +41,11 @@ export default function AppError({
         >
           Try again · আবার চেষ্টা করুন
         </button>
+
+        {/* A way out when trying again keeps failing. */}
+        <div className="mt-3 flex justify-center">
+          <BackButton tone="light" fallback="/" label="Back · পিছনে · वापस" showLabel />
+        </div>
 
         {error.digest && (
           <p className="mt-4 font-mono text-[11px] text-slate-400">{error.digest}</p>

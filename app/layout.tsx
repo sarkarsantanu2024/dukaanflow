@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { ToastProvider } from '@/components/ui/Toast';
+import { NavMemory } from '@/components/ui/BackButton';
 import './globals.css';
 import { BRAND_GREEN, BRAND_NAME } from '@/lib/brand';
 
@@ -27,6 +28,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
+        {/* Remembers in-app moves, so a back button knows where "back" is. */}
+        <NavMemory />
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>

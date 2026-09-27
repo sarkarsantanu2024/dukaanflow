@@ -73,6 +73,9 @@ type Dictionary = {
   bellChanged: string;
   bellDone: string;
   bellCancelled: string;
+  /** The bar over the page while the shop's news waits unseen. `{n}` is a count. */
+  newsBarMany: string;
+  newsBarTap: string;
   /** The popup when the basket reaches what the shop has. */
   limitOut: string;
   limitFew: string;
@@ -286,6 +289,8 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     bellChanged: 'The shop changed your order',
     bellDone: 'Order completed — check your bill on WhatsApp',
     bellCancelled: 'The shop could not take this order',
+    newsBarMany: '{n} updates on your orders',
+    newsBarTap: 'Tap to see',
     limitOut: 'out of stock',
     limitFew: 'no more in stock right now',
     limitShopSays: 'The shop says',
@@ -447,6 +452,8 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     bellChanged: 'দোকান আপনার অর্ডার বদলেছে',
     bellDone: 'অর্ডার সম্পূর্ণ — বিল WhatsApp-এ দেখুন',
     bellCancelled: 'দোকান এই অর্ডার নিতে পারেনি',
+    newsBarMany: 'আপনার অর্ডারে {n}টা খবর',
+    newsBarTap: 'দেখতে ছুঁয়ে দিন',
     limitOut: 'এখন স্টকে নেই',
     limitFew: 'এর বেশি এখন স্টকে নেই',
     limitShopSays: 'দোকান জানিয়েছে',
@@ -609,6 +616,8 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     bellChanged: 'दुकान ने आपका ऑर्डर बदला',
     bellDone: 'ऑर्डर पूरा — बिल WhatsApp पर देखें',
     bellCancelled: 'दुकान यह ऑर्डर नहीं ले पाई',
+    newsBarMany: 'आपके ऑर्डर पर {n} खबरें',
+    newsBarTap: 'देखने के लिए छुएँ',
     limitOut: 'अभी स्टॉक में नहीं',
     limitFew: 'इससे ज़्यादा अभी स्टॉक में नहीं',
     limitShopSays: 'दुकान ने बताया',

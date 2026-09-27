@@ -748,6 +748,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         open={limit !== null}
         title={limit ? `${itemName(limit, locale)} — ${!limit.inStock || (limit.stockQty ?? 1) <= 0 ? t.limitOut : t.limitFew}` : ''}
         onClose={() => setLimit(null)}
+        closeOnBack
         footer={
           <Button onClick={() => setLimit(null)} data-autofocus>
             {t.limitOk}
@@ -776,6 +777,7 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
         open={offline !== null}
         title={t.offlineTitle}
         onClose={() => setOffline(null)}
+        closeOnBack
         footer={
           <>
             <a

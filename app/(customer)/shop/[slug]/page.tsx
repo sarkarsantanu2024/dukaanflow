@@ -6,6 +6,7 @@ import { formatClockRange } from '@/lib/hours';
 import { liveNotice } from '@/lib/notice';
 import { SHOP_TYPE_LABELS } from '@/lib/validators';
 import { SiteFooter } from '@/components/ui/SiteFooter';
+import { BackButton } from '@/components/ui/BackButton';
 import { entitlement, type Plan, type SubStatus } from '@/lib/plans';
 
 // The menu changes whenever the admin edits an item, so this page is always
@@ -142,6 +143,10 @@ export default async function ShopPage({ params }: PageProps) {
   if (!shop.active || shop.ownerClosed || billing.autoPaused) {
     return (
       <>
+      {/* A way back: this page used to be a dead end with no header at all. */}
+      <div className="mx-auto w-full max-w-md px-2 pt-2">
+        <BackButton tone="light" fallback="/" label="Back · পিছনে · वापस" />
+      </div>
       {/* `flex-1` rather than `min-h-dvh`: the page is now a column with a
           footer under it, and a main that is a full screen tall on its own
           would push that footer off the bottom of every closed shop. */}

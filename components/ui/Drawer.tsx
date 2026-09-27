@@ -20,6 +20,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { closeLabel } from './useHtmlLang';
+import { useBackCloses } from './useBackCloses';
 
 /**
  * Lets content rendered inside a drawer close it without the drawer having to
@@ -72,6 +73,7 @@ export function Drawer({
   footer,
   onClose,
   modal = true,
+  closeOnBack = false,
   children,
 }: {
   open: boolean;
@@ -110,8 +112,11 @@ export function Drawer({
    */
   footer?: React.ReactNode;
   onClose: () => void;
+  /** The phone's back button closes this drawer — see `useBackCloses`. */
+  closeOnBack?: boolean;
   children: React.ReactNode;
 }) {
+  useBackCloses(open && closeOnBack, onClose);
   // The panel outlives `open` by one animation so it can slide out instead of
   // vanishing. `leaving` drives which keyframe runs; the animation's own end
   // event unmounts it, so the timing lives in CSS rather than a setTimeout that

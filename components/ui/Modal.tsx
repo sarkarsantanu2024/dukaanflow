@@ -21,6 +21,7 @@ import clsx from "clsx";
 import { Button } from "./Button";
 import { CloseIcon } from "./Icon";
 import { closeLabel } from "./useHtmlLang";
+import { useBackCloses } from "./useBackCloses";
 
 export function Modal({
   open,
@@ -31,6 +32,7 @@ export function Modal({
   footer,
   tone = "normal",
   size = "sm",
+  closeOnBack = false,
 }: {
   open: boolean;
   title: string;
@@ -52,7 +54,10 @@ export function Modal({
    * distraction from the one thing they came to do.
    */
   size?: "sm" | "md" | "full";
+  /** The phone's back button closes this dialog — see `useBackCloses`. */
+  closeOnBack?: boolean;
 }) {
+  useBackCloses(open && closeOnBack, onClose);
   const full = size === "full";
   const panelRef = useRef<HTMLDivElement>(null);
 
