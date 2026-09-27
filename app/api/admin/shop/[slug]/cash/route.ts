@@ -3,6 +3,7 @@ import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { cashDaySchema } from '@/lib/validators';
 import { formatIsoDay } from '@/lib/time';
+import { openingCashRequired } from '@/lib/cash-day';
 
 export const runtime = 'nodejs';
 
@@ -43,6 +44,19 @@ export async function POST(request: Request, { params }: Context) {
   }
 
   const day = formatIsoDay(new Date());
+
+  /**
+   * The evening count cannot open the day. Today's row is what "the opening
+   * cash was entered" means (see `lib/cash-day.ts`), so it is only ever
+   * created by a request that carries the opening figure.
+   */
+  if (openingPaise === undefined) {
+    const existing = await prisma.cashDay.findUnique({
+      where: { shopId_day: { shopId: shop.id, day } },
+      select: { id: true },
+    });
+    if (!existing) return openingCashRequired();
+  }
 
   /**
    * Upsert on the day, updating only what was sent.

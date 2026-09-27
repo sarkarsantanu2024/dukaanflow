@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { tradingTermsSchema } from '@/lib/validators';
+import { openedToday, openingCashRequired } from '@/lib/cash-day';
 
 export const runtime = 'nodejs';
 
@@ -29,11 +30,17 @@ export async function PATCH(request: Request, { params }: Context) {
   const parsed = tradingTermsSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const result = await prisma.shop.updateMany({
-    where: { slug },
+  const shop = await prisma.shop.findUnique({ where: { slug }, select: { id: true } });
+  if (!shop) return fail('Shop not found', 404);
+
+  // OPENING needs today's cash; closing never does — a shop must always be able
+  // to shut. See `lib/cash-day.ts`.
+  if (!parsed.data.ownerClosed && !(await openedToday(shop.id))) return openingCashRequired();
+
+  await prisma.shop.update({
+    where: { id: shop.id },
     data: { ownerClosed: parsed.data.ownerClosed },
   });
-  if (result.count === 0) return fail('Shop not found', 404);
 
   // Orders already placed are untouched. A shop that shuts at four still owes
   // the customers whose orders it took at three.

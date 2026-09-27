@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { SellScreen } from '@/components/owner/SellScreen';
+import { StartDayRow } from '@/components/owner/StartDayRow';
+import { openedToday } from '@/lib/cash-day';
 import { MenuBroadcast } from '@/components/owner/MenuBroadcast';
 import type { OrderStatus, ShopType } from '@prisma/client';
 import { baseUrl } from '@/lib/qr';
@@ -95,6 +97,29 @@ export default async function SellPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const { shop, plan, settings, roadblock, locale } = await loadOwnerShop(slug);
   const tillOrder = await loadTillOrder(shop.id, (await searchParams).order);
+
+  /**
+   * NO TILL BEFORE TODAY'S CASH (2026-09-28). An owner who comes straight to
+   * the Sell tab — past the home screen's cash box — meets that box here
+   * instead of the till, and the till appears the moment it is saved. The sale
+   * route refuses without it regardless; see `lib/cash-day.ts`.
+   */
+  if (!(await openedToday(shop.id))) {
+    return (
+      <OwnerShell
+        slug={shop.slug}
+        shopName={shop.name}
+        ownerImageData={shop.ownerImageData}
+        roadblock={roadblock}
+        locale={locale}
+        plan={plan}
+        settings={settings}
+        ownerClosed={shop.ownerClosed}
+      >
+        <StartDayRow slug={shop.slug} drawer={null} locale={locale} gate />
+      </OwnerShell>
+    );
+  }
 
   // The day's takings and the list of sales rung up today used to load here and
   // sit above the till. They are gone from the screen — an owner selling with a

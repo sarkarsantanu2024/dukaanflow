@@ -59,6 +59,16 @@ export function ShutterSwitch({
       });
       if (handledExpiredSession({ response, slug, t, push })) return;
       if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as {
+          errors?: Record<string, string>;
+        };
+        // Opening needs today's cash (`lib/cash-day.ts`). Say so in the
+        // owner's language and take them to the box on the home screen.
+        if (payload.errors?.openingPaise === 'required') {
+          push(t.cashRequired, 'error');
+          router.push(`/owner/${slug}`);
+          return;
+        }
         push(t.networkError, 'error');
         return;
       }
