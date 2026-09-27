@@ -23,6 +23,7 @@ import { useToast } from '@/components/ui/Toast';
 import { ImagePicker } from './ImagePicker';
 import { slugify } from '@/lib/slug';
 import { SHOP_TYPES, SHOP_TYPE_LABELS } from '@/lib/validators';
+import type { ShopType } from '@prisma/client';
 import { STATES } from '@/lib/states';
 
 export type ShopFormValues = {
@@ -30,7 +31,7 @@ export type ShopFormValues = {
   ownerName: string;
   locale: 'en' | 'bn' | 'hi';
   slug: string;
-  type: (typeof SHOP_TYPES)[number];
+  type: ShopType;
   phone: string;
   /** Whoever runs the deliveries, or blank. */
   labourPhone: string;

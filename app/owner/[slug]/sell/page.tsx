@@ -17,7 +17,6 @@ const DAILY_OFFER_SHOPS: ShopType[] = [
   'RESTAURANT',
   'BAKERY',
   'TEA_STALL',
-  'STREET_FOOD',
   'SWEET_SHOP',
 ];
 

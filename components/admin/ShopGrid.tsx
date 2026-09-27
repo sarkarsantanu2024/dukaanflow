@@ -24,7 +24,8 @@ import {
   PlusIcon,
   SearchIcon,
 } from '@/components/ui/Icon';
-import { SHOP_TYPE_LABELS, SHOP_TYPES } from '@/lib/validators';
+import { SHOP_TYPE_LABELS } from '@/lib/validators';
+import type { ShopType } from '@prisma/client';
 import { ShopRowActions } from './ShopRowActions';
 import { ShopReportMenu } from './ShopReportMenu';
 import { ShopPinBadge } from './ShopPinBadge';
@@ -35,7 +36,7 @@ export type ShopRow = {
   id: string;
   name: string;
   slug: string;
-  type: (typeof SHOP_TYPES)[number];
+  type: ShopType;
   phone: string;
   /** Street address, or blank when the shop has not given one. */
   address: string;

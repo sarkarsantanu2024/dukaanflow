@@ -29,6 +29,12 @@ enum ShopType {
   /// Appended 2026-09-27, never inserted — Postgres adds enum values at the
   /// end whatever this file says. Halkhata is for every local business, not
   /// only groceries; each of these has its own starter list and landing page.
+  ///
+  /// RETIRED 2026-09-28, at the owner's word, and offered by nothing:
+  /// RESTAURANT, TEA_STALL, BAKERY, STREET_FOOD, FRUIT_VEG, DAIRY (folded into
+  /// grocery), COSMETICS, HARDWARE, GARMENTS. They stay declared because
+  /// dropping an enum value means rebuilding the type — a destructive push —
+  /// and no row uses them. The offered list is `SHOP_TYPES` in lib/validators.
   STREET_FOOD
   SWEET_SHOP
   FRUIT_VEG

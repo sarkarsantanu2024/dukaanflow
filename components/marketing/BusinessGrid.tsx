@@ -22,21 +22,12 @@ import { Say } from './Say';
  */
 export const BUSINESS_MARK: Record<BusinessSlug, string> = {
   grocery: '🛒',
-  restaurant: '🍛',
-  'street-food': '🥙',
-  'tea-stall': '☕',
   'roll-momo': '🥟',
   'home-kitchen': '🍱',
-  bakery: '🎂',
   'sweet-shop': '🍬',
-  'vegetables-fruits': '🥦',
-  dairy: '🥛',
   'meat-fish': '🐟',
   stationery: '✏️',
-  cosmetics: '💄',
-  hardware: '🔧',
   'flowers-puja': '🌼',
-  garments: '👕',
 };
 
 export function BusinessGrid({
@@ -48,7 +39,7 @@ export function BusinessGrid({
   exclude?: BusinessSlug;
 }) {
   return (
-    <ul className={clsx('grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4', className)}>
+    <ul className={clsx('grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3', className)}>
       {BUSINESSES.filter((business) => business.slug !== exclude).map((business) => (
         <li key={business.slug}>
           <Link

@@ -72,7 +72,7 @@ import { supportDetails } from '@/lib/support';
  */
 
 const TITLE = `${BRAND_NAME} — Shop Management App for Every Local Business | QR Orders, Khata & Billing`;
-const DESCRIPTION = `Run your grocery store, restaurant, sweet shop, food counter or any local shop from your phone: QR code ordering, digital khata, counter billing and bills on WhatsApp. One plan, ₹${PLAN_SPECS[PLAN_ORDER[0]!].price} a month. Zero commission. ${TRIAL_DAYS}-day free trial.`;
+const DESCRIPTION = `Take daily and bulk orders ahead by QR code and bill the counter crowd fast — for grocery stores, sweet shops, meat and fish shops, stationery and more: digital khata, counter billing and bills on WhatsApp. One plan, ₹${PLAN_SPECS[PLAN_ORDER[0]!].price} a month. Zero commission. ${TRIAL_DAYS}-day free trial.`;
 
 const PREVIEW = {
   url: '/social/link-preview.png',
@@ -88,7 +88,8 @@ export const metadata: Metadata = {
   keywords: [
     'kirana store app',
     'grocery shop billing app',
-    'restaurant QR menu ordering',
+    'daily order app for shops',
+    'counter billing app',
     'sweet shop billing app',
     'small business app India',
     'local shop online store',
