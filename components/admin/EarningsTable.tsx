@@ -64,7 +64,7 @@ export function EarningsTable({
               <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <th className="pb-2 pr-3">{view === 'months' ? 'Month' : 'Year'}</th>
                 <th className="pb-2 pr-3 text-right">Subscriptions</th>
-                <th className="pb-2 pr-3 text-right">Listing</th>
+                <th className="pb-2 pr-3 text-right">Setup &amp; listing</th>
                 <th className="pb-2 text-right">Total</th>
               </tr>
             </thead>

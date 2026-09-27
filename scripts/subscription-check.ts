@@ -15,6 +15,7 @@ import {
   GRACE_DAYS,
   PLAN_ORDER,
   PLAN_SPECS,
+  SETUP_FEE_PAISE,
   STANDARD_PLAN,
   STANDARD_PRICE,
   TRIAL_PLAN,
@@ -233,6 +234,9 @@ check('25 months refused', parse({ plan: 'PRO', months: 25 }).success, false);
 check('5001 listed items refused', parse({ listedItems: 5001 }).success, false);
 check('unknown plan refused', parse({ plan: 'GOLD' }).success, false);
 check('unknown status refused', parse({ status: 'PAUSED' }).success, false);
+check('setup fee is Rs 499', SETUP_FEE_PAISE, 49900);
+check('setup fee needs no plan', parse({ setupFee: true }).success, true);
+check('setup fee false refused', parse({ setupFee: false }).success, false);
 
 console.log(`\n  ${passes} passed, ${failures} failed\n`);
 if (failures > 0) process.exit(1);

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { subscriptionSchema } from '@/lib/validators';
-import { listingChargePaise } from '@/lib/plans';
+import { SETUP_FEE_PAISE, listingChargePaise } from '@/lib/plans';
 import { grantSubscription } from '@/lib/subscription';
 
 export const runtime = 'nodejs';
@@ -38,11 +38,11 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = subscriptionSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { plan, months, status, listedItems, trialDays, method, reference, note } = parsed.data;
+  const { plan, months, status, listedItems, trialDays, setupFee, method, reference, note } = parsed.data;
 
   // Only one action per request. A body carrying two would silently do the
   // first one and drop the other.
-  const actions = [status, listedItems, trialDays].filter((value) => value !== undefined);
+  const actions = [status, listedItems, trialDays, setupFee].filter((value) => value !== undefined);
   if (actions.length > 1) return fail('Send one change at a time', 400);
 
   /**
@@ -116,6 +116,35 @@ export async function POST(request: Request, { params }: Context) {
   // It records money and nothing else — the shop's plan, period and status are
   // untouched, because listing a shop's items is not a renewal and must never
   // silently extend a subscription somebody has not paid for.
+  /**
+   * The one-time setup fee. Money only, like the listing charge: no plan, no
+   * period, no status. ONCE PER SHOP — a second press on a slow connection, or
+   * an operator who forgot it was already taken, must not charge the shop
+   * twice for one setup.
+   */
+  if (setupFee) {
+    const already = await prisma.payment.findFirst({
+      where: { shopId: shop.id, kind: 'SETUP' },
+      select: { id: true },
+    });
+    if (already) return fail('The setup fee for this shop is already recorded', 409);
+    const at = new Date();
+    await prisma.payment.create({
+      data: {
+        shopId: shop.id,
+        amountPaise: SETUP_FEE_PAISE,
+        plan: shop.plan,
+        kind: 'SETUP',
+        periodStart: at,
+        periodEnd: at,
+        method,
+        reference,
+        note,
+      },
+    });
+    return ok({ success: true, amountPaise: SETUP_FEE_PAISE });
+  }
+
   if (listedItems !== undefined) {
     const amountPaise = listingChargePaise(listedItems);
     const at = new Date();

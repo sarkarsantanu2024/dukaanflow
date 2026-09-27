@@ -159,6 +159,8 @@ export async function loadOwnerShop(slug: string) {
     shop,
     plan,
     settings,
+    /** A super admin viewing an owner screen — see `InventoryScreen.isAdmin`. */
+    isAdmin: Boolean(admin),
     roadblock: roadblockFor(shop, billing),
     locale: (shop.locale as Locale) ?? 'en',
   };

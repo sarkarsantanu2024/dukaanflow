@@ -60,7 +60,8 @@ export default function TermsPage() {
       <p>
         There is one plan, priced per shop per month with no limit on items, set out on the{' '}
         <a href="/#plans">pricing section</a>, which is the only place prices are stated. A
-        shop may instead agree a custom price with us, which can carry an item limit.{' '}
+        shop may instead agree a custom price with us, which can carry an item limit. Each
+        shop also pays a one-time setup fee when we set it up.{' '}
         <strong>Prices can change.</strong> A change will not alter a period you
         have already paid for, and we will tell shopkeepers in the app before a new price applies
         to them.
