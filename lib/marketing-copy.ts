@@ -756,6 +756,11 @@ export const LANDING = {
       bn: 'আমাদের ডেমো দোকানের স্ক্রিন। নিজে খুলে অর্ডার দিয়ে দেখুন।',
       hi: 'हमारी डेमो दुकान की स्क्रीन। खुद खोलकर ऑर्डर करके देखिए।',
     },
+    screensLeadNoDemo: {
+      en: 'Real screens from Halkhata, set up for this kind of shop.',
+      bn: 'Halkhata-র আসল স্ক্রিন, এই ধরনের দোকানের জন্য সাজানো।',
+      hi: 'Halkhata की असली स्क्रीन, इस तरह की दुकान के लिए तैयार।',
+    },
     openDemo: { en: 'Open the demo shop', bn: 'ডেমো দোকান খুলুন', hi: 'डेमो दुकान खोलिए' },
     screens: {
       storefront: { en: 'What your customers see', bn: 'গ্রাহক যা দেখেন', hi: 'ग्राहक क्या देखते हैं' },

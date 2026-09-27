@@ -122,6 +122,8 @@ export default async function BusinessPage({ params }: Props) {
   const items = starterCatalogue(business.type);
   const groups = sampleGroups(items);
   const plan = PLAN_SPECS[PLAN_ORDER[0]!];
+  // No link to a demo shop that has been removed. See `Business.hasDemo`.
+  const hasDemo = business.hasDemo !== false;
 
   const NAV: NavItem[] = [
     { href: '#items', label: LANDING.business.navItems },
@@ -188,13 +190,15 @@ export default async function BusinessPage({ params }: Props) {
                     <Say t={LANDING.getYourShop} />
                   </a>
                 )}
-                <a
-                  href={`/shop/${demoSlug(business)}`}
-                  className="inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-card px-6 py-3.5 text-base font-semibold text-brand-700 transition hover:bg-brand-50"
-                >
-                  <QrIcon className="h-5 w-5" />
-                  <Say t={LANDING.business.openDemo} />
-                </a>
+                {hasDemo && (
+                  <a
+                    href={`/shop/${demoSlug(business)}`}
+                    className="inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-card px-6 py-3.5 text-base font-semibold text-brand-700 transition hover:bg-brand-50"
+                  >
+                    <QrIcon className="h-5 w-5" />
+                    <Say t={LANDING.business.openDemo} />
+                  </a>
+                )}
               </div>
             </div>
 
@@ -243,9 +247,9 @@ export default async function BusinessPage({ params }: Props) {
         {/* SCREENS — from this kind of shop's own demo shop. */}
         <Section id="screens" tone="tint">
           <SectionHead
-            eyebrow={LANDING.business.openDemo}
+            eyebrow={business.name}
             title={LANDING.business.screensTitle}
-            lead={LANDING.business.screensLead}
+            lead={hasDemo ? LANDING.business.screensLead : LANDING.business.screensLeadNoDemo}
           />
           <div className="mx-auto mt-12 grid max-w-5xl gap-10 sm:grid-cols-2 lg:grid-cols-3">
             {BUSINESS_SCREENS.map((screen) => (
@@ -262,15 +266,17 @@ export default async function BusinessPage({ params }: Props) {
               </div>
             ))}
           </div>
-          <div className="mt-10 flex justify-center">
-            <a
-              href={`/shop/${demoSlug(business)}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-bold text-white shadow-float transition hover:bg-brand-700"
-            >
-              <QrIcon className="h-5 w-5" />
-              <Say t={LANDING.business.openDemo} />
-            </a>
-          </div>
+          {hasDemo && (
+            <div className="mt-10 flex justify-center">
+              <a
+                href={`/shop/${demoSlug(business)}`}
+                className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-bold text-white shadow-float transition hover:bg-brand-700"
+              >
+                <QrIcon className="h-5 w-5" />
+                <Say t={LANDING.business.openDemo} />
+              </a>
+            </div>
+          )}
         </Section>
 
         {/* THE PLAN — the same one for every kind of shop. */}

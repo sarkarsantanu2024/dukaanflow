@@ -31,7 +31,11 @@ import { rupeesToPaise } from '../lib/money';
 const prisma = new PrismaClient();
 
 /** Every business but grocery, whose demo shop has its own script. */
-const TARGETS = BUSINESSES.filter((business) => business.slug !== 'grocery');
+const TARGETS = BUSINESSES.filter(
+  // Grocery has its own script; a business marked `hasDemo: false` has had its
+  // demo shop removed on purpose and must not be re-created by a top-up run.
+  (business) => business.slug !== 'grocery' && business.hasDemo !== false,
+);
 
 /**
  * A shop's worth of items from its own list: sixteen, taken a round at a time

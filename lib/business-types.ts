@@ -44,6 +44,13 @@ export type Business = {
   points: Words[];
   /** The demo shop's display name. English, as a shop's own name is. */
   demoName: string;
+  /**
+   * False when this business has no demo shop, so its page must not link to
+   * one. Removed 2026-09-28 at the owner's word, with its data and its
+   * screenshots (flowers & puja, stationery, meat & fish); the page shows the
+   * branded placeholder tiles until new screens are captured.
+   */
+  hasDemo?: boolean;
 };
 
 /** The demo shop for a kind of business. `demo-grocery` predates this file. */
@@ -159,6 +166,7 @@ export const BUSINESSES: Business[] = [
   {
     slug: 'meat-fish',
     type: 'MEAT_FISH',
+    hasDemo: false,
     demoName: 'Demo Meat & Fish',
     name: { en: 'Meat & fish shops', bn: 'মাছ ও মাংসের দোকান', hi: 'मीट और मछली की दुकान' },
     headline: {
@@ -180,6 +188,7 @@ export const BUSINESSES: Business[] = [
   {
     slug: 'stationery',
     type: 'STATIONERY',
+    hasDemo: false,
     demoName: 'Demo Stationery',
     name: { en: 'Stationery & xerox shops', bn: 'স্টেশনারি ও জেরক্সের দোকান', hi: 'स्टेशनरी और ज़ेरॉक्स की दुकान' },
     headline: {
@@ -201,6 +210,7 @@ export const BUSINESSES: Business[] = [
   {
     slug: 'flowers-puja',
     type: 'PUJA_FLOWER',
+    hasDemo: false,
     demoName: 'Demo Flowers & Puja',
     name: { en: 'Flower & puja shops', bn: 'ফুল ও পুজোর দোকান', hi: 'फूल और पूजा सामग्री की दुकान' },
     headline: {
