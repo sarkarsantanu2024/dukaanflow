@@ -7,6 +7,7 @@ import { z } from 'zod';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
 import { CloseIcon } from '@/components/ui/Icon';
+import { useBackCloses } from '@/components/ui/useBackCloses';
 import { Input, Textarea } from '@/components/ui/Input';
 import { formatPaise } from '@/lib/money';
 import { phoneSchema } from '@/lib/validators';
@@ -144,6 +145,9 @@ export function CheckoutSheet({
   useEffect(() => {
     if (open) setEditingDetails(false);
   }, [open]);
+
+  // The phone's back button closes the sheet rather than leaving the shop.
+  useBackCloses(open, onClose);
 
   // Lock background scroll and move focus into the sheet while it is open.
   useEffect(() => {

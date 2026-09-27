@@ -6,7 +6,7 @@ import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { orderDeleteSchema, orderReviseSchema, orderStatusSchema } from '@/lib/validators';
 import { upsertCustomer } from '@/lib/khata';
 import { sendPush } from '@/lib/push';
-import { orderRevisedNotification, orderStatusNotification } from '@/lib/push-text';
+import { customerLocale, orderRevisedNotification, orderStatusNotification } from '@/lib/push-text';
 import { quoteDelivery } from '@/lib/delivery';
 import { linePaise } from '@/lib/money';
 import { amountLabel, roundQuantity } from '@/lib/units';
@@ -71,6 +71,7 @@ export async function PATCH(request: Request, { params }: Context) {
       customerName: true,
       customerPhone: true,
       itemsJson: true,
+      locale: true,
     },
   });
   if (!order) return fail('Order not found', 404);
@@ -206,7 +207,7 @@ export async function PATCH(request: Request, { params }: Context) {
   if (status !== order.status) {
     after(async () => {
       const notification = orderStatusNotification({
-        locale: shop.locale as Locale,
+        locale: customerLocale(order.locale, shop.locale),
         shopName: shop.name,
         status,
         orderType: order.orderType,
@@ -272,6 +273,7 @@ export async function PUT(request: Request, { params }: Context) {
       itemsJson: true,
       totalAmountPaise: true,
       customerPhone: true,
+      locale: true,
     },
   });
   if (!order) return fail('Order not found', 404);
@@ -360,7 +362,7 @@ export async function PUT(request: Request, { params }: Context) {
 
   after(async () => {
     const notification = orderRevisedNotification({
-      locale: shop.locale as Locale,
+      locale: customerLocale(order.locale, shop.locale),
       shopName: shop.name,
       totalAmountPaise: quote.totalPaise,
     });
@@ -423,6 +425,7 @@ export async function DELETE(request: Request, { params }: Context) {
       orderType: true,
       itemsJson: true,
       customerPhone: true,
+      locale: true,
     },
   });
   if (!order) return fail('Order not found', 404);
@@ -469,7 +472,7 @@ export async function DELETE(request: Request, { params }: Context) {
    */
   after(async () => {
     const notification = orderStatusNotification({
-      locale: shop.locale as Locale,
+      locale: customerLocale(order.locale, shop.locale),
       shopName: shop.name,
       status: 'CANCELLED',
       orderType: order.orderType,

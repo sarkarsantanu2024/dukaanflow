@@ -25,6 +25,8 @@
 import { toWhatsAppNumber } from '@/lib/whatsapp';
 import { useEffect, useState } from 'react';
 import { CustomerBell } from './CustomerBell';
+import { BackButton } from '@/components/ui/BackButton';
+import { readMyOrders } from '@/lib/my-orders';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatPaise } from '@/lib/money';
@@ -71,7 +73,7 @@ function lineName(
   return line.name;
 }
 
-export function TrackScreen({ order }: { order: TrackedOrder | null }) {
+export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; orderId: string }) {
   // Bengali first, then whatever this phone last chose on any shop page — the
   // same rule the storefront follows, so a customer's language does not change
   // when they follow a link out of a notification.
@@ -135,13 +137,26 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
     return () => clearInterval(timer);
   }, [waiting, router]);
 
+  /**
+   * The shop this order is from. For an order that no longer exists (turned
+   * away, or purged) the server cannot say, but this phone remembers which shop
+   * it placed it at — so back still goes to that shop, not the landing page.
+   */
+  const [rememberedSlug, setRememberedSlug] = useState('');
+  useEffect(() => {
+    if (!order) setRememberedSlug(readMyOrders().find((mine) => mine.id === orderId)?.slug ?? '');
+  }, [order, orderId]);
+  const shopHref = order ? `/shop/${order.shopSlug}` : rememberedSlug ? `/shop/${rememberedSlug}` : '/';
+
   const header = (
     <header className="sticky top-0 z-20 bg-chrome">
-      <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5">
+      <div className="mx-auto flex max-w-lg items-center gap-1 px-2 py-2.5 sm:gap-3 sm:px-4">
+        {/* A visible way back: to the screen they came from, or else the shop. */}
+        <BackButton fallback={shopHref} label={t.back} />
         {/* Back to the shop the order is from, never the landing page. */}
-        <BrandMark href={order ? `/shop/${order.shopSlug}` : '/'} tone="dark" className="text-sm" />
+        <BrandMark href={shopHref} tone="dark" className="text-sm" />
         <div className="ml-auto flex items-center gap-1">
-          <CustomerBell locale={locale} />
+          <CustomerBell locale={locale} viewingOrderId={orderId} />
           <LangToggle value={locale} onChange={changeLocale} />
         </div>
       </div>
@@ -159,6 +174,17 @@ export function TrackScreen({ order }: { order: TrackedOrder | null }) {
           <p className="text-4xl">🔎</p>
           <h1 className="mt-3 text-xl font-semibold text-slate-900">{t.trackNotFound}</h1>
           <p className="mt-1 text-slate-600">{t.trackNotFoundHint}</p>
+          {/* A dead end no longer: an order that is gone was most often turned
+              away, and the next thing wanted is the shop itself. */}
+          {rememberedSlug && (
+            <Link
+              href={shopHref}
+              className="mt-6 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-brand-700 active:scale-[0.99]"
+            >
+              <CartIcon className="h-4 w-4 shrink-0" />
+              {t.trackOrderAgain}
+            </Link>
+          )}
         </main>
       </div>
     );

@@ -125,6 +125,7 @@ export function CartDrawer({
       open={open}
       title={t.cartTitle}
       onClose={onClose}
+      closeOnBack
       // The menu stays live behind it: the basket is meant to fill up in front
       // of the shopper as they pick, not to be a place they visit afterwards.
       modal={false}

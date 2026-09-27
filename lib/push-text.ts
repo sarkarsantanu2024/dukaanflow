@@ -6,14 +6,22 @@
  * them hours later with the app shut. They have to stand alone: no surrounding
  * screen, no context, and a lock screen's worth of room.
  *
- * The customer's notification is in the SHOP's language rather than the
- * shopper's. The shopper's choice lives in their own browser's storage and the
- * server has never seen it — and the shop's language is the language of the
- * para the shop is in, which is very nearly always the same answer.
+ * The customer's notification is in the language THE SHOPPER CHOSE, which the
+ * order has carried since `Order.locale` was added (see `customerLocale`). It
+ * used to be the shop's, from before the server knew the shopper's choice.
  */
 
-import type { Locale } from './i18n';
+import { LOCALES, type Locale } from './i18n';
 import { plainPaise } from './money';
+
+/**
+ * The language to write to a customer in: the one they ordered in, or the
+ * shop's for an order placed before orders carried it.
+ */
+export function customerLocale(orderLocale: string, shopLocale: string): Locale {
+  if ((LOCALES as readonly string[]).includes(orderLocale)) return orderLocale as Locale;
+  return (LOCALES as readonly string[]).includes(shopLocale) ? (shopLocale as Locale) : 'en';
+}
 
 type PushDictionary = {
   /** Title of the owner's "an order has come in". */

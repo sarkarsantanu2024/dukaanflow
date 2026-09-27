@@ -11,6 +11,7 @@
 
 import Link from 'next/link';
 import { BrandMark } from '@/components/ui/BrandMark';
+import { BackButton } from '@/components/ui/BackButton';
 import { SiteFooter } from '@/components/ui/SiteFooter';
 import { COMPANY } from '@/lib/company';
 
@@ -27,8 +28,13 @@ export function LegalPage({
   return (
     <div className="min-h-dvh bg-sunk">
       <header className="border-b border-slate-200 bg-card">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
-          <BrandMark href="/" className="text-base" />
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-3 sm:px-5 sm:py-4">
+          {/* Reached from the footer of a shop or an order page: back returns
+              there, rather than the logo taking a shopper to our home page. */}
+          <div className="flex items-center gap-1">
+            <BackButton tone="light" fallback="/" label="Back" />
+            <BrandMark href="/" className="text-base" />
+          </div>
           <Link href="/#plans" className="text-sm font-semibold text-brand-700 hover:underline">
             Pricing
           </Link>

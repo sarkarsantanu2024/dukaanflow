@@ -73,6 +73,7 @@ export function OrderPlaced({
       title={t.orderPlacedTitle}
       tone="success"
       onClose={onClose}
+      closeOnBack
       footer={
         <Button onClick={onClose} data-autofocus>
           {t.orderPlacedDone}
