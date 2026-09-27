@@ -610,6 +610,13 @@ type OwnerDictionary = {
    */
   drawerStartTitle: string;
   drawerStartHint: string;
+  /** Today's opening cash is mandatory before selling or opening the shop. */
+  cashRequired: string;
+  /** The word beside the box that says it must be filled. */
+  cashRequiredMark: string;
+  /** The till, before today's cash is in: what to do, and the button. */
+  cashGateTitle: string;
+  cashGateStart: string;
   drawerStartSave: string;
   drawerStarted: string;
   drawerTitle: string;
@@ -1204,6 +1211,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
 
     drawerStartTitle: "Today's cash",
     drawerStartHint: "Type it once, before you open. Without it the day's cash cannot be checked.",
+    cashRequired: "Enter today's cash first. The shop cannot open or sell without it — type 0 if the drawer is empty.",
+    cashRequiredMark: 'Required',
+    cashGateTitle: "Enter today's cash to start selling",
+    cashGateStart: 'Start selling',
     drawerStartSave: 'Start the day',
     drawerStarted: 'Day started',
     drawerTitle: 'Cash count',
@@ -1765,6 +1776,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
 
     drawerStartTitle: 'আজকের নগদ',
     drawerStartHint: 'দোকান খোলার আগে একবার লিখুন। এটা না থাকলে হিসাব মেলানো যায় না।',
+    cashRequired: 'আগে আজকের নগদ লিখুন। এটা ছাড়া দোকান খোলা বা বিক্রি করা যাবে না — ড্রয়ার খালি থাকলে ০ লিখুন।',
+    cashRequiredMark: 'আবশ্যক',
+    cashGateTitle: 'বিক্রি শুরু করতে আজকের নগদ লিখুন',
+    cashGateStart: 'বিক্রি শুরু করুন',
     drawerStartSave: 'দিন শুরু করুন',
     drawerStarted: 'দিন শুরু হল',
     drawerTitle: 'নগদের হিসাব',
@@ -2326,6 +2341,10 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
 
     drawerStartTitle: 'आज का नकद',
     drawerStartHint: 'दुकान खोलने से पहले एक बार लिखें। इसके बिना हिसाब मिलाया नहीं जा सकता।',
+    cashRequired: 'पहले आज का नकद लिखें। इसके बिना दुकान न खुलेगी, न बिक्री होगी — दराज़ खाली हो तो 0 लिखें।',
+    cashRequiredMark: 'ज़रूरी',
+    cashGateTitle: 'बिक्री शुरू करने के लिए आज का नकद लिखें',
+    cashGateStart: 'बिक्री शुरू करें',
     drawerStartSave: 'दिन शुरू करें',
     drawerStarted: 'दिन शुरू हुआ',
     drawerTitle: 'नकद का हिसाब',

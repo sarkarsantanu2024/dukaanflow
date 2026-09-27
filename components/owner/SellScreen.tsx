@@ -595,6 +595,13 @@ export function SellScreen({
          * the bare failure: the owner reads it, looks for the red box, finds
          * none, and concludes the app is broken. Which, at that moment, it is.
          */
+        // Today's cash was never entered (or the day rolled over mid-sale):
+        // the page reloads into the cash box. See `lib/cash-day.ts`.
+        if (payload.errors?.openingPaise === 'required') {
+          push(t.cashRequired, 'error');
+          router.refresh();
+          return;
+        }
         const fields = Object.entries(payload.errors ?? {});
         const [field, message] = fields[0] ?? [];
         if (field) setSaleError({ field, message: message ?? '' });

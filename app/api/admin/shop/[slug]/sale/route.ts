@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { openedToday, openingCashRequired } from '@/lib/cash-day';
 import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { saleSchema } from '@/lib/validators';
@@ -24,6 +25,9 @@ export async function POST(request: Request, { params }: Context) {
 
   const shop = await prisma.shop.findUnique({ where: { slug }, select: { id: true } });
   if (!shop) return fail('Shop not found', 404);
+
+  // No counter sale before today's opening cash is in. See `lib/cash-day.ts`.
+  if (!(await openedToday(shop.id))) return openingCashRequired();
 
   const parsed = saleSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
