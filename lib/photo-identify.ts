@@ -73,7 +73,7 @@ const ResultSchema = z.object({ products: z.array(ProductSchema) });
 
 export type PhotoProduct = z.infer<typeof ProductSchema>;
 
-const SYSTEM = `You read photos taken by shopkeepers of small local shops in India — grocery (kirana), stationery, cosmetics, hardware and others — to add products to their shop's item list.
+const SYSTEM = `You read photos taken by shopkeepers of small local shops in India — grocery (kirana), stationery, sweet shops, puja shops and others — to add products to their shop's item list.
 
 For each distinct retail product clearly visible in the photo, return:
 - name: what a shopkeeper would list it as, in English: brand plus product, e.g. "Tata Salt", "Aashirvaad Atta", "Parle-G", "Fortune Mustard Oil", "Surf Excel Easy Wash". Put the product type in the name when the brand alone does not say it. Title case. No pack size, no marketing words ("New", "Rich", "Tasty") and no promotional text.

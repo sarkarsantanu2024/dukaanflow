@@ -1,46 +1,48 @@
 import { toAsciiDigits } from '@/lib/digits';
+import type { ShopType } from '@prisma/client';
 import { z } from 'zod';
 import { isStateCode } from './states';
 import { MOST_PER_LINE, QUANTITY_DP, roundQuantity } from './units';
 
+/**
+ * The shop types the console offers. Retired values (restaurant, tea stall,
+ * bakery, street food, vegetables & fruits, dairy, cosmetics, hardware,
+ * garments — 2026-09-28) stay in the database enum but are not offered here.
+ */
 export const SHOP_TYPES = [
   'GROCERY',
-  'RESTAURANT',
-  'TEA_STALL',
-  'ROLL_MOMO',
-  'HOME_KITCHEN',
-  'BAKERY',
-  'STREET_FOOD',
   'SWEET_SHOP',
-  'FRUIT_VEG',
-  'DAIRY',
   'MEAT_FISH',
   'STATIONERY',
-  'COSMETICS',
-  'HARDWARE',
   'PUJA_FLOWER',
-  'GARMENTS',
+  'ROLL_MOMO',
+  'HOME_KITCHEN',
   'OTHER',
 ] as const;
 
-export const SHOP_TYPE_LABELS: Record<(typeof SHOP_TYPES)[number], string> = {
+/**
+ * A name for every stored type, offered or retired, so a row written under a
+ * retired value still reads as something rather than as blank.
+ */
+export const SHOP_TYPE_LABELS: Record<ShopType, string> = {
   GROCERY: 'Grocery / Kirana',
-  RESTAURANT: 'Restaurant',
-  TEA_STALL: 'Tea Stall',
-  ROLL_MOMO: 'Roll & Momo',
-  HOME_KITCHEN: 'Home Kitchen',
-  BAKERY: 'Bakery',
-  STREET_FOOD: 'Street Food / Food Counter',
   SWEET_SHOP: 'Sweet Shop',
-  FRUIT_VEG: 'Vegetables & Fruits',
-  DAIRY: 'Dairy / Milk Booth',
   MEAT_FISH: 'Meat & Fish',
   STATIONERY: 'Stationery & Xerox',
-  COSMETICS: 'Cosmetics & Fancy Store',
-  HARDWARE: 'Hardware & Electricals',
   PUJA_FLOWER: 'Flowers & Puja Items',
-  GARMENTS: 'Garments & Hosiery',
+  ROLL_MOMO: 'Roll & Momo',
+  HOME_KITCHEN: 'Home Kitchen',
   OTHER: 'Other',
+  // Retired 2026-09-28 — not offered in the console.
+  RESTAURANT: 'Restaurant',
+  TEA_STALL: 'Tea Stall',
+  BAKERY: 'Bakery',
+  STREET_FOOD: 'Street Food',
+  FRUIT_VEG: 'Vegetables & Fruits',
+  DAIRY: 'Dairy',
+  COSMETICS: 'Cosmetics',
+  HARDWARE: 'Hardware',
+  GARMENTS: 'Garments',
 };
 
 /** Indian mobile: exactly 10 digits starting 6-9. Accepts +91 / 0 prefixes and strips them. */

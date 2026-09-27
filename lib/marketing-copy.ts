@@ -468,9 +468,9 @@ export const FAQ: { q: Words; a: Words }[] = [
       hi: `कौन-सी दुकानें ${BRAND_NAME} इस्तेमाल कर सकती हैं?`,
     },
     a: {
-      en: 'Any local business that sells to nearby customers: grocery stores, restaurants, street-food counters, tea stalls, sweet shops, bakeries, vegetable and fruit sellers, dairies, meat and fish shops, stationery and xerox shops, cosmetics stores, hardware shops, flower and puja shops, garment shops and home kitchens.',
-      bn: 'কাছের গ্রাহকদের কাছে বিক্রি করে এমন যে কোনও স্থানীয় ব্যবসা: মুদির দোকান, রেস্তোরাঁ, খাবারের কাউন্টার, চায়ের দোকান, মিষ্টির দোকান, বেকারি, সবজি ও ফলের দোকান, দুধের দোকান, মাছ-মাংসের দোকান, স্টেশনারি ও জেরক্স, প্রসাধনী, হার্ডওয়্যার, ফুল ও পুজোর দোকান, জামাকাপড়ের দোকান আর বাড়ির রান্না।',
-      hi: 'पास के ग्राहकों को बेचने वाला कोई भी लोकल व्यापार: किराना स्टोर, रेस्टोरेंट, खाने के काउंटर, चाय की दुकान, मिठाई की दुकान, बेकरी, सब्ज़ी और फल की दुकान, दूध की दुकान, मीट और मछली की दुकान, स्टेशनरी और ज़ेरॉक्स, कॉस्मेटिक्स, हार्डवेयर, फूल और पूजा सामग्री, कपड़ों की दुकान और होम किचन।',
+      en: 'Local shops with daily regulars and a busy counter: grocery and kirana stores (including milk and dairy), sweet shops, meat and fish shops, stationery and xerox shops, flower and puja shops, roll and momo corners and home kitchens.',
+      bn: 'রোজের নিয়মিত খদ্দের আর ভিড়ের কাউন্টার আছে এমন স্থানীয় দোকান: মুদি ও কিরানা দোকান (দুধ ও ডেয়ারি সমেত), মিষ্টির দোকান, মাছ-মাংসের দোকান, স্টেশনারি ও জেরক্স, ফুল ও পুজোর দোকান, রোল-মোমোর দোকান আর বাড়ির রান্না।',
+      hi: 'रोज़ के नियमित ग्राहकों और भीड़ वाले काउंटर वाली लोकल दुकानें: किराना स्टोर (दूध और डेयरी समेत), मिठाई की दुकान, मीट और मछली की दुकान, स्टेशनरी और ज़ेरॉक्स, फूल और पूजा सामग्री की दुकान, रोल-मोमो की दुकान और होम किचन।',
     },
   },
   {
@@ -647,14 +647,14 @@ export const LANDING = {
       hi: 'हर लोकल व्यापार के लिए शॉप मैनेजमेंट ऐप',
     },
     headline: {
-      en: 'Orders, khata and billing — your whole shop on one phone',
-      bn: 'অর্ডার, খাতা আর বিলিং — পুরো দোকান এক ফোনে',
-      hi: 'ऑर्डर, खाता और बिलिंग — पूरी दुकान एक फ़ोन पर',
+      en: 'Take the daily orders ahead. Clear the counter crowd fast.',
+      bn: 'রোজের অর্ডার আগেই নিন। কাউন্টারের ভিড় সামলান দ্রুত।',
+      hi: 'रोज़ के ऑर्डर पहले ही लीजिए। काउंटर की भीड़ जल्दी निपटाइए।',
     },
     lead: {
-      en: 'Take orders through your own QR code, add products by voice or photo, track customer credit and send bills on WhatsApp. Customers pay you directly — we never take a commission.',
-      bn: 'নিজের QR কোডে অর্ডার নিন, মুখে বলে বা ছবি তুলে জিনিস যোগ করুন, বাকির হিসাব রাখুন আর বিল পাঠান হোয়াটসঅ্যাপে। গ্রাহক টাকা দেন সরাসরি আপনাকে — আমরা কোনও কমিশন নিই না।',
-      hi: 'अपने QR कोड से ऑर्डर लीजिए, बोलकर या फ़ोटो से सामान जोड़िए, उधार का हिसाब रखिए और बिल व्हाट्सएप पर भेजिए। ग्राहक सीधे आपको भुगतान करते हैं — हम कोई कमीशन नहीं लेते।',
+      en: 'Regular customers send their daily and bulk orders through your QR code, so they are packed before anyone arrives. At the counter, bill each customer in a few taps and keep the queue moving. Khata, stock and bills on WhatsApp are included — and customers pay you directly, with no commission.',
+      bn: 'নিয়মিত খদ্দেররা আপনার QR কোডে রোজের আর বড় অর্ডার পাঠান, তাই কেউ আসার আগেই মাল গোছানো থাকে। কাউন্টারে কয়েক চাপে প্রত্যেকের বিল করুন, লাইন এগিয়ে চলুক। খাতা, স্টক আর হোয়াটসঅ্যাপে বিল — সব আছে। গ্রাহক টাকা দেন সরাসরি আপনাকে, কোনও কমিশন নেই।',
+      hi: 'नियमित ग्राहक आपके QR कोड से रोज़ के और थोक ऑर्डर भेजते हैं, तो किसी के आने से पहले सामान पैक रहता है। काउंटर पर कुछ टैप में हर ग्राहक का बिल बनाइए, लाइन चलती रहे। खाता, स्टॉक और व्हाट्सएप पर बिल — सब शामिल है। ग्राहक सीधे आपको भुगतान करते हैं, कोई कमीशन नहीं।',
     },
     watch: { en: 'Watch the videos', bn: 'ভিডিও দেখুন', hi: 'वीडियो देखें' },
     checks: [
