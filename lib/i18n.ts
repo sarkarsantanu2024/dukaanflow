@@ -193,9 +193,6 @@ type Dictionary = {
   trackTitle: string;
   /** The button on the order-placed popup. */
   seeOrders: string;
-  /** The tracking page's WhatsApp button, and the message it starts. */
-  trackAskShop: string;
-  trackAskText: string;
   trackHint: string;
   trackPlaced: string;
   /** Where the order has got to, in the customer's own words. */
@@ -355,8 +352,6 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
 
     trackTitle: 'Your order',
     seeOrders: 'See your order',
-    trackAskShop: 'Message the shop on WhatsApp',
-    trackAskText: 'Hello, about my order ({total}, placed {when}): ',
     trackHint: 'Keep this page. Here you can see whether the shop has your order, whether it changed anything, and when your order is completed.',
     trackPlaced: 'Placed',
     trackStatePreparing: 'The shop has your order and is getting it ready.',
@@ -519,8 +514,6 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
 
     trackTitle: 'আপনার অর্ডার',
     seeOrders: 'আপনার অর্ডার দেখুন',
-    trackAskShop: 'দোকানকে WhatsApp করুন',
-    trackAskText: 'নমস্কার, আমার অর্ডার ({total}, {when}) নিয়ে জানতে চাই: ',
     trackHint: 'এই পাতাটা রেখে দিন। এখানে দেখতে পাবেন দোকান আপনার অর্ডার পেয়েছে কি না, কিছু বদলেছে কি না, আর অর্ডার কখন সম্পূর্ণ হলো।',
     trackPlaced: 'দেওয়া হয়েছে',
     trackStatePreparing: 'দোকান অর্ডারটি পেয়েছে, তৈরি করছে।',
@@ -684,8 +677,6 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
 
     trackTitle: 'आपका ऑर्डर',
     seeOrders: 'अपना ऑर्डर देखें',
-    trackAskShop: 'दुकान को WhatsApp करें',
-    trackAskText: 'नमस्ते, मेरे ऑर्डर ({total}, {when}) के बारे में: ',
     trackHint: 'यह पेज रखिए। यहाँ दिखेगा कि दुकान को आपका ऑर्डर मिला या नहीं, कुछ बदला या नहीं, और ऑर्डर कब पूरा हुआ।',
     trackPlaced: 'दिया गया',
     trackStatePreparing: 'दुकान को ऑर्डर मिल गया है, तैयार हो रहा है।',

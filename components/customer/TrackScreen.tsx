@@ -22,7 +22,6 @@
  * browser's storage. Everything shown is server-rendered data.
  */
 
-import { toWhatsAppNumber } from '@/lib/whatsapp';
 import { useEffect, useState } from 'react';
 import { CustomerBell } from './CustomerBell';
 import { BackButton } from '@/components/ui/BackButton';
@@ -36,7 +35,7 @@ import { amountLabel, isLooseUnit, localUnit } from '@/lib/units';
 import { formatClock, formatDay } from '@/lib/time';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { LangToggle } from './LangToggle';
-import { CartIcon, PdfIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { CartIcon, PdfIcon } from '@/components/ui/Icon';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { useHtmlLang } from '@/components/ui/useHtmlLang';
 
@@ -56,7 +55,6 @@ export type TrackedOrder = {
   customerName: string;
   shopName: string;
   shopSlug: string;
-  shopPhone: string;
   lines: {
     name: string;
     nameBn: string;
@@ -207,31 +205,6 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
 
   const goodsPaise = order.totalAmountPaise - order.deliveryFeePaise;
 
-  /**
-   * WHAT THE CUSTOMER SENDS THE SHOP: WHICH ORDER, AND EVERYTHING IN IT.
-   *
-   * The message used to carry only a total and a time, so the owner had to
-   * work out which order it was and what was in it. It now lists every line
-   * and the total, in the customer's language, and opens THE SHOP'S OWN CHAT
-   * directly. It used to go as a PDF through the share sheet, where the
-   * customer had to find the shop in WhatsApp's contact list; the written list
-   * says everything the PDF did.
-   */
-  const askText = [
-    t.trackAskText
-      .replace('{total}', formatPaise(order.totalAmountPaise))
-      .replace('{when}', `${formatDay(order.placedAt)} ${formatClock(order.placedAt)}`),
-    '',
-    ...order.lines.map((line) => {
-      const amount = amountLabel(line.unit, line.quantity);
-      const what = amount
-        ? `${lineName(line, locale)} ${localUnit(amount, locale)}`
-        : `${lineName(line, locale)}${line.unit ? ` ${localUnit(line.unit, locale)}` : ''} ×${line.quantity}`;
-      return `• ${what} = ${formatPaise(line.amountPaise)}`;
-    }),
-    '',
-    `${t.total}: ${formatPaise(order.totalAmountPaise)}`,
-  ].join('\n');
 
   /**
    * THE BILL, SAVED TO THE PHONE — where the shop's "your bill" link lands.
@@ -360,36 +333,18 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
           )}
         </section>
 
-        {/* The shop is one tap away in both directions: a question goes to
-            WhatsApp, another order goes to the shop page.
-
-            IT SAYS WHAT IT DOES, AND WHICH ORDER. The button read only the
-            shop's name, so a customer did not know it opened WhatsApp, and the
-            message arrived in the owner's WhatsApp with nothing saying which
-            order it was about. It now names the action and starts the message
-            with the order's total and time. (A WhatsApp message goes to
-            WhatsApp, never into the app, so the owner sees it there.) */}
-        <div className="flex gap-2">
-          <a
-            href={`https://wa.me/${toWhatsAppNumber(order.shopPhone)}?text=${encodeURIComponent(askText)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-11 flex-1 basis-0 items-center justify-center gap-1.5 rounded-xl bg-[#25D366] px-2.5 py-2 text-center text-xs font-semibold leading-snug text-white shadow-md transition active:scale-[0.99]"
-          >
-            <WhatsAppIcon className="h-4 w-4 shrink-0" />
-            {t.trackAskShop}
-          </a>
-
-          {/* Beside it, the way back into the shop: the two things a customer
-              does from here, side by side, both app-style buttons. */}
-          <Link
-            href={`/shop/${order.shopSlug}`}
-            className="inline-flex min-h-11 flex-1 basis-0 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-2.5 py-2 text-center text-xs font-semibold leading-snug text-white shadow-md transition hover:bg-brand-700 active:scale-[0.99]"
-          >
-            <CartIcon className="h-4 w-4 shrink-0" />
-            {t.trackOrderAgain}
-          </Link>
-        </div>
+        {/* ONE THING TO DO FROM HERE: order again.
+            A "message the shop on WhatsApp" button sat beside this, removed
+            by request (27 Sep): the page, the bell, the spoken alert and the
+            push already tell the customer what the shop did, and the shop's
+            own WhatsApp is one tap away on the shop page this goes to. */}
+        <Link
+          href={`/shop/${order.shopSlug}`}
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-md transition hover:bg-brand-700 active:scale-[0.99]"
+        >
+          <CartIcon className="h-5 w-5 shrink-0" />
+          {t.trackOrderAgain}
+        </Link>
 
         <p className="px-1 text-center text-xs text-slate-500">{t.trackHint}</p>
       </main>
