@@ -213,6 +213,8 @@ type Dictionary = {
   trackChanged: string;
   trackChangedHint: string;
   trackOrderAgain: string;
+  /** Saves the bill PDF of a finished order — where the shop's "your bill" link lands. */
+  trackDownloadBill: string;
   trackNotFound: string;
   trackNotFoundHint: string;
 
@@ -365,6 +367,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     trackChanged: 'The shop changed this order',
     trackChangedHint: 'They did not have everything. This is what is coming, and what it costs.',
     trackOrderAgain: 'Order again from this shop',
+    trackDownloadBill: 'Download the bill (PDF)',
     trackNotFound: 'Order not found',
     trackNotFoundHint: 'This link may be old. Old orders are cleared after a while.',
 
@@ -528,6 +531,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     trackChanged: 'দোকান অর্ডারটা বদলেছে',
     trackChangedHint: 'সব জিনিস ছিল না। যা আসছে আর যত টাকা লাগবে, নিচে দেখুন।',
     trackOrderAgain: 'এই দোকানে আবার অর্ডার করুন',
+    trackDownloadBill: 'বিল নামিয়ে রাখুন (PDF)',
     trackNotFound: 'অর্ডার পাওয়া গেল না',
     trackNotFoundHint: 'লিংকটা পুরনো হতে পারে। পুরনো অর্ডার কিছুদিন পর মুছে যায়।',
 
@@ -692,6 +696,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     trackChanged: 'दुकान ने ऑर्डर बदला है',
     trackChangedHint: 'सब सामान नहीं था। क्या आ रहा है और कितना लगेगा, नीचे देखिए।',
     trackOrderAgain: 'इसी दुकान से दोबारा ऑर्डर करें',
+    trackDownloadBill: 'बिल डाउनलोड करें (PDF)',
     trackNotFound: 'ऑर्डर नहीं मिला',
     trackNotFoundHint: 'लिंक पुराना हो सकता है। पुराने ऑर्डर कुछ समय बाद हटा दिए जाते हैं।',
 

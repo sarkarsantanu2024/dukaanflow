@@ -30,12 +30,13 @@ import { readMyOrders } from '@/lib/my-orders';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatPaise } from '@/lib/money';
-import { billPdfBlob } from '@/lib/bill-pdf';
+import { downloadBillPdf } from '@/lib/bill-pdf';
+import { ownerDict } from '@/lib/owner-i18n';
 import { amountLabel, isLooseUnit, localUnit } from '@/lib/units';
 import { formatClock, formatDay } from '@/lib/time';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { LangToggle } from './LangToggle';
-import { CartIcon, WhatsAppIcon } from '@/components/ui/Icon';
+import { CartIcon, PdfIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { useHtmlLang } from '@/components/ui/useHtmlLang';
 
@@ -50,6 +51,8 @@ export type TrackedOrder = {
   /** Did the shop cut this order down to what they actually had? */
   revised: boolean;
   placedAt: string;
+  /** How it was paid, once the order is done; null before that. */
+  paymentMode: 'CASH' | 'UPI' | 'KHATA' | null;
   customerName: string;
   shopName: string;
   shopSlug: string;
@@ -79,17 +82,8 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
   // when they follow a link out of a notification.
   const [locale, setLocale] = useState<Locale>('bn');
 
-  /** Can this phone hand a PDF to WhatsApp? Asked once, with a stand-in file. */
-  const [canSharePdf, setCanSharePdf] = useState(false);
+  /** The bill PDF is being drawn, so its button cannot be double-tapped. */
   const [sharing, setSharing] = useState(false);
-  useEffect(() => {
-    try {
-      const probe = new File([''], 'order.pdf', { type: 'application/pdf' });
-      setCanSharePdf(Boolean(navigator.canShare?.({ files: [probe] })));
-    } catch {
-      setCanSharePdf(false);
-    }
-  }, []);
   const t = dict(locale);
   const router = useRouter();
   useHtmlLang(locale);
@@ -218,9 +212,10 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
    *
    * The message used to carry only a total and a time, so the owner had to
    * work out which order it was and what was in it. It now lists every line
-   * and the total, in the customer's language. Where the phone can share
-   * files the order also goes as a PDF, the same way the shop's bills do:
-   * the customer picks the shop's chat in the share sheet.
+   * and the total, in the customer's language, and opens THE SHOP'S OWN CHAT
+   * directly. It used to go as a PDF through the share sheet, where the
+   * customer had to find the shop in WhatsApp's contact list; the written list
+   * says everything the PDF did.
    */
   const askText = [
     t.trackAskText
@@ -238,11 +233,20 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
     `${t.total}: ${formatPaise(order.totalAmountPaise)}`,
   ].join('\n');
 
-  async function shareOrder() {
+  /**
+   * THE BILL, SAVED TO THE PHONE — where the shop's "your bill" link lands.
+   *
+   * Drawn here, in the customer's browser, because that is where the Bengali
+   * and Hindi fonts are (see `lib/bill-pdf.ts`). In the customer's language,
+   * with how it was paid once the order is done — the same bill the shop's own
+   * PDF button makes.
+   */
+  async function saveBill() {
     if (!order) return;
     setSharing(true);
     try {
-      const blob = await billPdfBlob(
+      const tb = ownerDict(locale);
+      await downloadBillPdf(
         {
           shopName: order.shopName,
           lines: order.lines.map((line) => ({
@@ -252,26 +256,20 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
             amountPaise: line.amountPaise,
           })),
           totalPaise: order.totalAmountPaise,
+          ...(order.paymentMode ? { paymentMode: order.paymentMode } : {}),
           at: new Date(order.placedAt),
           customerName: order.customerName,
         },
         {
-          bill: t.trackTitle,
-          total: t.total,
-          paidBy: '',
-          paymentMode: { CASH: '', UPI: '', KHATA: '' },
-          credit: order.shopName,
+          bill: tb.billDoc,
+          total: tb.billTotal,
+          paidBy: tb.billPaidBy,
+          paymentMode: { CASH: tb.sellCash, UPI: tb.sellUpi, KHATA: tb.sellKhata },
+          credit: `${tb.billDoc} · ${order.shopName}`,
           unitLocale: locale,
         },
+        `bill-${order.id.slice(0, 8)}.pdf`,
       );
-      const file = new File([blob], `order-${order.id.slice(0, 8)}.pdf`, { type: 'application/pdf' });
-      await navigator.share({ files: [file], text: askText });
-    } catch (error) {
-      // Closing the share sheet is the customer changing their mind. Anything
-      // else: fall back to the plain chat with the list written out.
-      if ((error as { name?: string })?.name !== 'AbortError') {
-        window.location.href = `https://wa.me/${toWhatsAppNumber(order.shopPhone)}?text=${encodeURIComponent(askText)}`;
-      }
     } finally {
       setSharing(false);
     }
@@ -346,6 +344,20 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
             <span>{t.total}</span>
             <span className="tabular-nums">{formatPaise(order.totalAmountPaise)}</span>
           </p>
+
+          {/* The shop's WhatsApp message links here as "your bill": once the
+              order is done, the bill itself is one tap to keep. */}
+          {order.status === 'COMPLETED' && (
+            <button
+              type="button"
+              onClick={() => void saveBill()}
+              disabled={sharing}
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-300 bg-card px-4 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 disabled:opacity-50"
+            >
+              <PdfIcon className="h-5 w-5" />
+              {t.trackDownloadBill}
+            </button>
+          )}
         </section>
 
         {/* The shop is one tap away in both directions: a question goes to
@@ -360,15 +372,6 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
         <div className="flex gap-2">
           <a
             href={`https://wa.me/${toWhatsAppNumber(order.shopPhone)}?text=${encodeURIComponent(askText)}`}
-            onClick={(event) => {
-              // Where the phone can share a file, the order goes as a PDF with
-              // the list as its caption; otherwise the link opens the shop's
-              // chat with the whole list written out.
-              if (!canSharePdf) return;
-              event.preventDefault();
-              void shareOrder();
-            }}
-            aria-busy={sharing}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex min-h-11 flex-1 basis-0 items-center justify-center gap-1.5 rounded-xl bg-[#25D366] px-2.5 py-2 text-center text-xs font-semibold leading-snug text-white shadow-md transition active:scale-[0.99]"
