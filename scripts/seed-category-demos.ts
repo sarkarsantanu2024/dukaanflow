@@ -34,19 +34,26 @@ const prisma = new PrismaClient();
 const TARGETS = BUSINESSES.filter((business) => business.slug !== 'grocery');
 
 /**
- * A shop's worth of items from its own list: up to four from each group, up to
- * sixteen in all — enough to fill a phone screen with variety, not so many
- * that a screenshot is one long category.
+ * A shop's worth of items from its own list: sixteen, taken a round at a time
+ * across its groups — enough to fill a phone screen with variety, and never a
+ * screenshot that is one long category. A list with one group (a bakery) still
+ * gets sixteen from it.
  */
 function demoItems(business: Business): StarterItem[] {
-  const perGroup = new Map<string, number>();
-  const picked: StarterItem[] = [];
+  const groups = new Map<string, StarterItem[]>();
   for (const item of starterCatalogue(business.type)) {
-    const count = perGroup.get(item.category) ?? 0;
-    if (count >= 4) continue;
-    perGroup.set(item.category, count + 1);
-    picked.push(item);
-    if (picked.length >= 16) break;
+    groups.set(item.category, [...(groups.get(item.category) ?? []), item]);
+  }
+  const picked: StarterItem[] = [];
+  for (let round = 0; picked.length < 16; round += 1) {
+    let took = false;
+    for (const list of groups.values()) {
+      if (list[round] && picked.length < 16) {
+        picked.push(list[round]!);
+        took = true;
+      }
+    }
+    if (!took) break;
   }
   return picked;
 }
