@@ -19,19 +19,47 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 const SLUG = 'demo-grocery';
 
-/** Ten items — a real kirana's spread, not ten variations of rice. */
-const ITEMS = [
-  { name: 'Rice', nameBn: 'চাল', nameHi: 'चावल', price: 72, unit: '1 kg', category: 'Staples' },
+/**
+ * A real kirana's spread, not variations of rice. `stock` is set on a few so
+ * the restock list and "only 2 left" have something to show; the rest are
+ * untracked, as most of a real shop's list is.
+ */
+const ITEMS: {
+  name: string;
+  nameBn: string;
+  nameHi: string;
+  price: number;
+  unit: string;
+  category: string;
+  stock?: number;
+}[] = [
+  { name: 'Rice', nameBn: 'চাল', nameHi: 'चावल', price: 72, unit: '1 kg', category: 'Staples', stock: 40 },
+  { name: 'Basmati Rice', nameBn: 'বাসমতী চাল', nameHi: 'बासमती चावल', price: 130, unit: '1 kg', category: 'Staples' },
   { name: 'Atta', nameBn: 'আটা', nameHi: 'आटा', price: 48, unit: '1 kg', category: 'Staples' },
-  { name: 'Dal', nameBn: 'ডাল', nameHi: 'दाल', price: 82, unit: '500 g', category: 'Staples' },
+  { name: 'Dal', nameBn: 'ডাল', nameHi: 'दाल', price: 82, unit: '500 g', category: 'Staples', stock: 2 },
   { name: 'Sugar', nameBn: 'চিনি', nameHi: 'चीनी', price: 45, unit: '1 kg', category: 'Staples' },
-  { name: 'Mustard Oil', nameBn: 'সরিষার তেল', nameHi: 'सरसों का तेल', price: 165, unit: '1 L', category: 'Oil & Ghee' },
-  { name: 'Tea', nameBn: 'চা', nameHi: 'चाय', price: 60, unit: '250 g', category: 'Beverages' },
   { name: 'Salt', nameBn: 'নুন', nameHi: 'नमक', price: 22, unit: '1 kg', category: 'Staples' },
+  { name: 'Mustard Oil', nameBn: 'সরিষার তেল', nameHi: 'सरसों का तेल', price: 165, unit: '1 L', category: 'Oil & Ghee', stock: 0 },
+  { name: 'Ghee', nameBn: 'ঘি', nameHi: 'घी', price: 290, unit: '500 ml', category: 'Oil & Ghee' },
+  { name: 'Tea', nameBn: 'চা', nameHi: 'चाय', price: 60, unit: '250 g', category: 'Beverages' },
+  { name: 'Coffee', nameBn: 'কফি', nameHi: 'कॉफ़ी', price: 95, unit: '50 g', category: 'Beverages' },
+  { name: 'Milk', nameBn: 'দুধ', nameHi: 'दूध', price: 32, unit: '500 ml', category: 'Dairy', stock: 1 },
+  { name: 'Eggs', nameBn: 'ডিম', nameHi: 'अंडे', price: 42, unit: '6 pc', category: 'Dairy' },
   { name: 'Potato', nameBn: 'আলু', nameHi: 'आलू', price: 30, unit: '1 kg', category: 'Vegetables' },
   { name: 'Onion', nameBn: 'পেঁয়াজ', nameHi: 'प्याज', price: 38, unit: '1 kg', category: 'Vegetables' },
   { name: 'Biscuit Pack', nameBn: 'বিস্কুট প্যাকেট', nameHi: 'बिस्कुट पैकेट', price: 20, unit: '1 packet', category: 'Snacks' },
+  { name: 'Bread', nameBn: 'পাউরুটি', nameHi: 'ब्रेड', price: 40, unit: '1 packet', category: 'Snacks' },
+  { name: 'Bath Soap', nameBn: 'সাবান', nameHi: 'साबुन', price: 38, unit: '1 piece', category: 'Daily Needs' },
+  { name: 'Detergent Powder', nameBn: 'ডিটারজেন্ট', nameHi: 'डिटर्जेंट', price: 110, unit: '1 kg', category: 'Daily Needs' },
 ];
+
+/** The regulars, by the documentation numbers below, so orders carry a name. */
+const REGULAR_NAMES: Record<string, string> = {
+  '9800000011': 'Rekha Das',
+  '9800000022': 'Sujit Mondal',
+  '9800000033': 'Anjali Ghosh',
+  '9800000044': 'Bikash Pal',
+};
 
 async function remove() {
   const shop = await prisma.shop.findUnique({ where: { slug: SLUG }, select: { id: true } });
@@ -57,7 +85,7 @@ async function main() {
       // A documentation number, not a real one: 9999900000 is not an
       // allocatable Indian mobile, so a demo order cannot reach a stranger.
       phone: '9999900000',
-      address: 'Dum Dum Road, Kolkata',
+      address: 'Kolkata, West Bengal',
       state: 'WB',
       ownerName: 'Demo Owner',
       locale: 'bn',
@@ -79,11 +107,12 @@ async function main() {
       where: { shopId_name_unit: { shopId: shop.id, name: item.name, unit: item.unit } },
       // The list above is written in rupees because a person maintains it;
       // `price` is dropped here so only the paise figure reaches the row.
-      create: (({ price, ...rest }) => ({
+      create: (({ price, stock, ...rest }) => ({
         shopId: shop.id,
         ...rest,
         pricePaise: rupeesToPaise(price),
-        inStock: true,
+        stockQty: stock ?? null,
+        inStock: stock !== 0,
         // A HUMAN CHOSE THESE PRICES — they are written out in the list above.
         // Without this the rows default to `priced: false`, the storefront
         // filters them out (`where: { priced: true }`), and the demo shop's own
@@ -288,8 +317,8 @@ async function seedTrade(shopId: string) {
         await prisma.order.create({
           data: {
             shopId,
-            customerName: '',
-            customerPhone: PHONES[seed % PHONES.length],
+            customerName: REGULAR_NAMES[PHONES[seed % PHONES.length]!] ?? '',
+            customerPhone: PHONES[seed % PHONES.length]!,
             customerAddress: '',
             customerArea: AREAS[seed % AREAS.length],
             orderType: seed % 4 === 0 ? 'PICKUP' : 'DELIVERY',
