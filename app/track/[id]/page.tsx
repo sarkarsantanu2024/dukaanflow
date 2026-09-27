@@ -74,7 +74,7 @@ export default async function TrackPage({ params }: PageProps) {
           paymentMode: true,
           itemsJson: true,
           customerName: true,
-          shop: { select: { name: true, slug: true, phone: true } },
+          shop: { select: { name: true, slug: true } },
         },
       })
     : null;
@@ -100,7 +100,6 @@ export default async function TrackPage({ params }: PageProps) {
             customerName: order.customerName,
             shopName: order.shop.name,
             shopSlug: order.shop.slug,
-            shopPhone: order.shop.phone,
             lines: toLines(order.itemsJson),
           }
         }
