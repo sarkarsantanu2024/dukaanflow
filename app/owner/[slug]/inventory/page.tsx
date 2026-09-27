@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function InventoryPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const { welcome } = await searchParams;
-  const { shop, plan, settings, roadblock, locale } = await loadOwnerShop(slug);
+  const { shop, plan, settings, roadblock, locale, isAdmin } = await loadOwnerShop(slug);
 
   const items = await prisma.item.findMany({
     where: { shopId: shop.id },
@@ -66,6 +66,7 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
         showWelcome={welcome === '1' && items.length === 0}
         itemLimit={plan.itemLimit}
         unlimited={plan.unlimited}
+        isAdmin={isAdmin}
       />
     </OwnerShell>
   );

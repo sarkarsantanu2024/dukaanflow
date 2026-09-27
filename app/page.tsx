@@ -517,6 +517,9 @@ export default function LandingPage() {
                       <Say t={year.save} />
                     </span>
                   </p>
+                  <p className="mt-1.5 text-sm text-white/85">
+                    <Say t={LANDING.plans.setupLine} />
+                  </p>
                   <p className="mt-4 border-t border-white/20 pt-4 text-base font-bold text-white">
                     <Say t={planItemsLine(plan.id)} />
                     <span className="font-normal text-white/80">

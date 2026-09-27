@@ -296,6 +296,7 @@ export function ItemsManager({
   wide = false,
   shopType = 'OTHER',
   catalogue = [],
+  suggestions = true,
   tools,
   catalogueEntry,
 }: {
@@ -326,6 +327,12 @@ export function ItemsManager({
    * catalogue is a way of adding, so it lives with the other ways.
    */
   catalogueEntry?: { label: string; count: number; open: () => void };
+  /**
+   * Offer the ready-made items a shelf is missing ("also sold")? Off in the
+   * owner's app: the ready-made list is the super admin's setup tool (see the
+   * starter route). The catalogue still fills units and categories as typed.
+   */
+  suggestions?: boolean;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -498,11 +505,11 @@ export function ItemsManager({
         key,
         label: key ? translateCategory(key, locale) : t.categoryNone,
         items: groupItems,
-        missing: catalogue.filter(
-          (entry) => entry.category === key && !alreadyOwned(entry, owned),
-        ),
+        missing: suggestions
+          ? catalogue.filter((entry) => entry.category === key && !alreadyOwned(entry, owned))
+          : [],
       }));
-  }, [visible, items, catalogue, locale, t.categoryNone]);
+  }, [visible, items, catalogue, suggestions, locale, t.categoryNone]);
 
   /**
    * Add-sheet rows that name a shelf an EARLIER row already named.

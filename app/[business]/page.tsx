@@ -292,6 +292,9 @@ export default async function BusinessPage({ params }: Props) {
                 </span>
               </span>
             </p>
+            <p className="mt-1.5 text-sm text-white/85">
+              <Say t={LANDING.plans.setupLine} />
+            </p>
             <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
               {PLAN_INCLUDES.map((line) => (
                 <li key={line.en} className="flex gap-2 text-sm leading-snug text-white/90">

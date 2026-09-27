@@ -777,6 +777,11 @@ export const subscriptionSchema = z.object({
    * made as a custom price rather than by typing a large number into a box.
    */
   trialDays: z.number().int().min(1).max(90).optional(),
+  /**
+   * Record the one-time shop setup fee (`SETUP_FEE_PAISE`). Priced by the
+   * server, like everything else here; recorded once per shop.
+   */
+  setupFee: z.literal(true).optional(),
   method: z.string().trim().max(20).default('UPI'),
   reference: z.string().trim().max(60).default(''),
   note: z.string().trim().max(200).default(''),

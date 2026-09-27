@@ -9,6 +9,7 @@ import {
   GRACE_DAYS,
   LISTING_PAISE_PER_ITEM,
   PLAN_SPECS,
+  SETUP_FEE_PAISE,
   STANDARD_PLAN,
   TRIAL_DAYS,
 } from '@/lib/plans';
@@ -203,12 +204,16 @@ export default async function DashboardPage() {
             </table>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <Rule title="Free trial" body={`${TRIAL_DAYS} days with every feature and no item limit, while a shop is deciding.`} />
             <Rule title="Grace" body={`${GRACE_DAYS} days after a period ends before item editing stops.`} />
             <Rule
               title="Auto-pause"
               body={`${AUTO_PAUSE_DAYS} days unpaid and the shop page stops taking orders. It reopens the moment a payment is recorded.`}
+            />
+            <Rule
+              title="Shop setup"
+              body={`${formatPaise(SETUP_FEE_PAISE)} once per shop — creating it, adding its items, the QR poster. Buys no subscription time.`}
             />
             <Rule
               title="Listing service"

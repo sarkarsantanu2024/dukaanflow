@@ -82,7 +82,9 @@ export async function earnings(monthsBack = 12): Promise<EarningsSummary> {
 
   for (const payment of payments) {
     const { year, month } = shopClock(payment.createdAt);
-    const isListing = payment.kind === 'LISTING';
+    // One-off work: listing items, and the one-time shop setup fee. Neither
+    // repeats on its own, so neither belongs with subscription money.
+    const isListing = payment.kind === 'LISTING' || payment.kind === 'SETUP';
     allTimePaise += payment.amountPaise;
 
     const monthKey = `${year}-${month}`;

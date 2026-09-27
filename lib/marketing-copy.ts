@@ -4,6 +4,7 @@ import {
   AUTO_PAUSE_DAYS,
   LISTING_PAISE_PER_ITEM,
   PLAN_SPECS,
+  SETUP_FEE_PAISE,
   STANDARD_PRICE,
   TRIAL_DAYS,
   planItems,
@@ -458,6 +459,8 @@ export const MORE: { id: MoreId; title: Words; body: Words }[] = [
 /* ------------------------------------------------------------------ */
 
 const LISTING_PRICE = `₹${Math.round(LISTING_PAISE_PER_ITEM / 100)}`;
+/** The one-time shop setup fee, "₹499". */
+const SETUP_PRICE = `₹${Math.round(SETUP_FEE_PAISE / 100)}`;
 
 /** Also published as FAQ structured data, so the English must stand alone. */
 export const FAQ: { q: Words; a: Words }[] = [
@@ -480,9 +483,9 @@ export const FAQ: { q: Words; a: Words }[] = [
       hi: 'कितना खर्च है?',
     },
     a: {
-      en: `One plan: ₹${STANDARD_PRICE} a month, with every feature and unlimited products. Paying for a year costs 10 months. A very small counter selling only a few items can ask us for a lower custom price.`,
-      bn: `একটাই প্ল্যান: মাসে ₹${STANDARD_PRICE}, সব সুবিধা আর যত খুশি জিনিস। এক বছরের জন্য দিলে লাগে ১০ মাসের দাম। অল্প কয়েকটা জিনিসের খুব ছোট কাউন্টার হলে কম দামের জন্য আমাদের বলুন।`,
-      hi: `एक ही प्लान: महीने का ₹${STANDARD_PRICE}, हर सुविधा और असीमित सामान। साल भर का एक साथ देने पर 10 महीने का दाम। कुछ ही सामान वाला बहुत छोटा काउंटर हो तो कम दाम के लिए हमसे कहिए।`,
+      en: `One plan: ₹${STANDARD_PRICE} a month, with every feature and unlimited products, plus a one-time ${SETUP_PRICE} shop setup. Paying for a year costs 10 months. A very small counter selling only a few items can ask us for a lower custom price.`,
+      bn: `একটাই প্ল্যান: মাসে ₹${STANDARD_PRICE}, সব সুবিধা আর যত খুশি জিনিস, সঙ্গে একবারের ${SETUP_PRICE} দোকান সেটআপ। এক বছরের জন্য দিলে লাগে ১০ মাসের দাম। অল্প কয়েকটা জিনিসের খুব ছোট কাউন্টার হলে কম দামের জন্য আমাদের বলুন।`,
+      hi: `एक ही प्लान: महीने का ₹${STANDARD_PRICE}, हर सुविधा और असीमित सामान, साथ में एक बार का ${SETUP_PRICE} दुकान सेटअप। साल भर का एक साथ देने पर 10 महीने का दाम। कुछ ही सामान वाला बहुत छोटा काउंटर हो तो कम दाम के लिए हमसे कहिए।`,
     },
   },
   {
@@ -528,9 +531,9 @@ export const FAQ: { q: Words; a: Words }[] = [
       hi: 'क्या आप मेरा सामान जोड़ सकते हैं?',
     },
     a: {
-      en: `Yes. We can list your whole shop for ${LISTING_PRICE} per item, one time — names, prices and pack sizes in all three languages.`,
-      bn: `হ্যাঁ। জিনিস পিছু ${LISTING_PRICE}, একবারই — নাম, দাম আর প্যাকের মাপ তিন ভাষাতেই আমরা তুলে দিই।`,
-      hi: `हाँ। ${LISTING_PRICE} प्रति सामान, सिर्फ़ एक बार — नाम, दाम और पैक साइज़ तीनों भाषाओं में हम जोड़ देते हैं।`,
+      en: `Yes. The one-time ${SETUP_PRICE} shop setup includes adding your items from our ready-made list, in all three languages. Anything not on the list we can add for ${LISTING_PRICE} per item.`,
+      bn: `হ্যাঁ। একবারের ${SETUP_PRICE} দোকান সেটআপে আমাদের তৈরি তালিকা থেকে আপনার জিনিস তুলে দেওয়া আছে, তিন ভাষাতেই। তালিকার বাইরের জিনিস জিনিস পিছু ${LISTING_PRICE}-এ তুলে দিই।`,
+      hi: `हाँ। एक बार के ${SETUP_PRICE} दुकान सेटअप में हमारी तैयार लिस्ट से आपका सामान जोड़ना शामिल है, तीनों भाषाओं में। लिस्ट से बाहर का सामान ${LISTING_PRICE} प्रति सामान में जोड़ देते हैं।`,
     },
   },
   {
@@ -839,6 +842,11 @@ export const LANDING = {
       en: 'Selling only a handful of items — a few curries and roti, or just tea? Ask us for a custom price, from ₹99 a month.',
       bn: 'মাত্র কয়েকটা জিনিস বেচেন — কয়েকটা তরকারি আর রুটি, বা শুধু চা? কম দামের জন্য আমাদের বলুন, মাসে ₹৯৯ থেকে।',
       hi: 'सिर्फ़ कुछ ही सामान बेचते हैं — कुछ सब्ज़ियाँ और रोटी, या सिर्फ़ चाय? कम दाम के लिए हमसे कहिए, महीने के ₹99 से।',
+    },
+    setupLine: {
+      en: `+ ${SETUP_PRICE} one-time shop setup: we create your shop, add your items and print your QR code`,
+      bn: `+ একবারের ${SETUP_PRICE} দোকান সেটআপ: আমরা দোকান তৈরি করি, জিনিস তুলে দিই আর QR কোড ছাপিয়ে দিই`,
+      hi: `+ एक बार का ${SETUP_PRICE} दुकान सेटअप: हम दुकान बनाते हैं, सामान जोड़ते हैं और QR कोड छापते हैं`,
     },
     customCta: { en: 'Ask on WhatsApp', bn: 'হোয়াটসঅ্যাপে জিজ্ঞেস করুন', hi: 'व्हाट्सएप पर पूछिए' },
   },

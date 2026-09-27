@@ -253,6 +253,18 @@ export function planListingPaise(plan: Plan): number | null {
   return spec.unlimited ? null : listingChargePaise(spec.itemLimit);
 }
 
+/**
+ * THE ONE-TIME SHOP SETUP FEE, in paise: ₹499, for every kind of shop
+ * (decided 2026-09-28 by the owner).
+ *
+ * It pays for the work of starting a shop: the operator creates it, adds its
+ * items from the ready-made list (a super-admin-only tool since the same day),
+ * prints the QR poster and helps the owner sign in. Charged once per shop,
+ * recorded as a Payment of kind SETUP, and it buys no subscription time — the
+ * console refuses a second one for the same shop.
+ */
+export const SETUP_FEE_PAISE = 49_900;
+
 /** What listing `items` items costs, in paise. */
 export function listingChargePaise(items: number): number {
   const counted = Math.max(0, Math.trunc(items));

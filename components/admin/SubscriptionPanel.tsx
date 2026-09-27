@@ -41,6 +41,7 @@ import {
   GRACE_DAYS,
   LISTING_PAISE_PER_ITEM,
   MONTHS_PER_YEAR_PAID,
+  SETUP_FEE_PAISE,
   PLAN_SPECS,
   STANDARD_PLAN,
   amountForMonthsPaise,
@@ -59,6 +60,8 @@ export type SubscriptionState = {
   itemLimit: number;
   /** True when there is no limit in force — the standard plan has none. */
   unlimited: boolean;
+  /** When the one-time setup fee was recorded, or null if it has not been. */
+  setupPaidAt: string | null;
   /**
    * The plan name in force today, which is not always `plan`.
    *
@@ -568,6 +571,31 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
         </p>
       </Block>
 
+      {/* ---- Setup fee ----
+           Once per shop, and it says so: the button is replaced by the date it
+           was taken, and the server refuses a second one anyway. */}
+      <Block
+        when="You set up this shop"
+        title={`Shop setup — ${formatPaise(SETUP_FEE_PAISE)} one time`}
+        hint="Creating the shop, adding its items from the ready-made list, the QR poster and the owner's first sign-in. Charged once per shop. Buys no subscription time."
+      >
+        {state.setupPaidAt ? (
+          <p className="text-sm font-semibold text-brand-700">
+            Paid on {formatDay(state.setupPaidAt)}
+          </p>
+        ) : (
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={() =>
+              post({ setupFee: true, reference }, `Recorded ${formatPaise(SETUP_FEE_PAISE)} setup fee`)
+            }
+          >
+            Record {formatPaise(SETUP_FEE_PAISE)} setup fee
+          </Button>
+        )}
+      </Block>
+
       {/* ---- 3. Listing service ---- */}
       {/* Boxed off from the controls above on purpose. This charges for work
           done and buys the shop no time at all, so it must never be reachable
@@ -824,14 +852,18 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
                 <span className="min-w-0 truncate">
                   {payment.kind === 'LISTING'
                     ? `Listing · ${payment.itemsListed} items`
-                    : PLAN_SPECS[payment.plan].name}{' '}
+                    : payment.kind === 'SETUP'
+                      ? 'Shop setup'
+                      : PLAN_SPECS[payment.plan].name}{' '}
                   · {payment.method}
                 </span>
                 <span className="shrink-0 tabular-nums">
                   {formatPaise(payment.amountPaise)}
                   {/* A one-off bought no period, so an arrow to a date would be
                       claiming it did. */}
-                  {payment.kind !== 'LISTING' && ` → ${formatDay(payment.periodEnd)}`}
+                  {payment.kind !== 'LISTING' &&
+                    payment.kind !== 'SETUP' &&
+                    ` → ${formatDay(payment.periodEnd)}`}
                 </span>
               </li>
             ))}

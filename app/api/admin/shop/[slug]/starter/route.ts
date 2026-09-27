@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { requireShopWrite } from '@/lib/guard';
+import { requireAdmin } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { starterSchema } from '@/lib/validators';
 import { allStarterItems, starterCatalogue } from '@/lib/starter-catalogue';
@@ -38,7 +38,11 @@ type Context = { params: Promise<{ slug: string }> };
 export async function POST(request: Request, { params }: Context) {
   if (!sameOrigin(request)) return fail('Bad request', 403);
   const { slug } = await params;
-  if (!(await requireShopWrite(slug))) return fail('Not authenticated', 401);
+  // SUPER ADMIN ONLY (2026-09-28, by the owner). Adding the ready-made list is
+  // part of the paid shop setup, done by the operator — not something the
+  // shopkeeper does from their own app. Owners still add items by voice,
+  // typing and photo through the items route.
+  if (!(await requireAdmin())) return fail('Not authenticated', 401);
 
   const shop = await prisma.shop.findUnique({ where: { slug }, select: { id: true, type: true } });
   if (!shop) return fail('Shop not found', 404);

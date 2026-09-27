@@ -83,7 +83,15 @@ export default async function ShopDetailPage({ params }: PageProps) {
 
   if (!shop) notFound();
 
-  const billing = await shopEntitlement(shop.id);
+  const [billing, setupPayment] = await Promise.all([
+    shopEntitlement(shop.id),
+    // Looked up on its own, not from the five recent payments below: a setup
+    // taken a year ago must still read as taken.
+    prisma.payment.findFirst({
+      where: { shopId: shop.id, kind: 'SETUP' },
+      select: { createdAt: true },
+    }),
+  ]);
 
   return (
     <>
@@ -186,6 +194,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
             itemCount: billing?.itemCount ?? shop._count.items,
             itemLimit: billing?.itemLimit ?? 25,
             unlimited: billing?.plan.unlimited ?? false,
+            setupPaidAt: setupPayment?.createdAt.toISOString() ?? null,
             // What this shop is actually entitled to TODAY, which is not always
             // `plan`: a trial grants the top tier, and a custom deal overrides
             // both the name and the limit. The panel showed the stored plan

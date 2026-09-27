@@ -32,6 +32,7 @@ export function InventoryScreen({
   unlimited = false,
   shopType,
   allCatalogue,
+  isAdmin = false,
 }: {
   slug: string;
   /** Printed at the top of the supplier's list and its PDF. */
@@ -47,6 +48,12 @@ export function InventoryScreen({
   shopType: ShopType;
   /** Every ready-made list, this shop's own first — the picker's "All items". */
   allCatalogue?: StarterItem[];
+  /**
+   * A super admin looking at this owner screen. Only they see the ready-made
+   * list ("এক চাপে সাধারণ জিনিস যোগ করুন") and the per-shelf suggestions —
+   * adding it is part of the paid shop setup (2026-09-28).
+   */
+  isAdmin?: boolean;
 }) {
   const t = ownerDict(locale);
   const [welcome, setWelcome] = useState(showWelcome);
@@ -111,7 +118,12 @@ export function InventoryScreen({
         locale={locale}
         shopType={shopType}
         catalogue={catalogue}
-        catalogueEntry={{ label: t.starterTitle, count: unlisted.length, open: () => setPicker(true) }}
+        suggestions={isAdmin}
+        catalogueEntry={
+          isAdmin
+            ? { label: t.starterTitle, count: unlisted.length, open: () => setPicker(true) }
+            : undefined
+        }
       />
 
       {/* THE SUPPLIER'S LIST SITS DIRECTLY UNDER THE ITEMS, AND IN SIMPLE MODE.
@@ -132,6 +144,7 @@ export function InventoryScreen({
           speaking, typing and the photo. The picker still opens here. */}
       {/* `inDrawer`, so the picker's own Add bar sits on the drawer's bottom
           edge instead of clearing a tab bar that is not there. */}
+      {isAdmin && (
       <Drawer open={picker} title={t.starterTitle} onClose={() => setPicker(false)}>
         <StarterPicker
           slug={slug}
@@ -143,6 +156,7 @@ export function InventoryScreen({
           inDrawer
         />
       </Drawer>
+      )}
 
       {/* THE SETTINGS THAT USED TO BE HERE HAVE MOVED, and off this tab
           entirely. The customer notice, the delivery terms and the smallest
