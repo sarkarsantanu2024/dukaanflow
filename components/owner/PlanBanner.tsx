@@ -24,6 +24,8 @@ export type PlanState = {
   status: string;
   itemCount: number;
   itemLimit: number;
+  /** No item limit — the standard plan, or a custom deal without one. */
+  unlimited: boolean;
   canEdit: boolean;
   trialDaysLeft: number | null;
   /** The cheapest plan that holds what this shop already lists. */
@@ -54,7 +56,9 @@ export function PlanBanner({
 }) {
   const t = ownerDict(locale);
   const remaining = plan.itemLimit - plan.itemCount;
-  const nearLimit = remaining <= Math.max(3, Math.round(plan.itemLimit * 0.1));
+  // Only a plan that HAS a limit can be near it. The standard plan has none;
+  // only a custom deal ("₹99 for four items") does.
+  const nearLimit = !plan.unlimited && remaining <= Math.max(3, Math.round(plan.itemLimit * 0.1));
 
   const pay = (
     <UpgradeModal

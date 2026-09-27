@@ -43,7 +43,9 @@ export function RenewScreen({
               Bengali and Hindi, a sentence fragment the roadblock completes and
               this line does not. */}
           <span className="text-sm tabular-nums text-slate-500">
-            {plan.itemCount} {t.ofLimit} {plan.itemLimit} {t.itemsCount}
+            {plan.unlimited
+              ? `${plan.itemCount} ${t.itemsCount} · ${t.planUnlimitedItems}`
+              : `${plan.itemCount} ${t.ofLimit} ${plan.itemLimit} ${t.itemsCount}`}
           </span>
         </p>
 

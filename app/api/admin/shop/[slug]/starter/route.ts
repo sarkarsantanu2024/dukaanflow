@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { requireShopWrite } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { starterSchema } from '@/lib/validators';
-import { starterCatalogue } from '@/lib/starter-catalogue';
+import { allStarterItems, starterCatalogue } from '@/lib/starter-catalogue';
 import { checkItemAllowance, markActivated } from '@/lib/billing';
 
 export const runtime = 'nodejs';
@@ -46,8 +46,17 @@ export async function POST(request: Request, { params }: Context) {
   const parsed = starterSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const catalogue = starterCatalogue(shop.type);
-  const picked = catalogue.filter((item) => parsed.data.names.includes(item.name));
+  // The shop's own list first, then anything picked from "All items" that its
+  // own list does not carry — so a name on both is taken at this shop's kind's
+  // pack size and price.
+  const own = starterCatalogue(shop.type);
+  const ownNames = new Set(own.map((item) => item.name));
+  const picked = [
+    ...own.filter((item) => parsed.data.names.includes(item.name)),
+    ...allStarterItems(shop.type).filter(
+      (item) => !ownNames.has(item.name) && parsed.data.names.includes(item.name),
+    ),
+  ];
   if (picked.length === 0) return fail('Nothing selected', 400);
 
   const refusal = await checkItemAllowance(shop.id, picked.length);

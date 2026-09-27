@@ -8,9 +8,8 @@ import {
   AUTO_PAUSE_DAYS,
   GRACE_DAYS,
   LISTING_PAISE_PER_ITEM,
-  PLAN_ORDER,
-  planItems,
   PLAN_SPECS,
+  STANDARD_PLAN,
   TRIAL_DAYS,
 } from '@/lib/plans';
 import { BRAND_NAME } from '@/lib/brand';
@@ -44,7 +43,7 @@ export default async function DashboardPage() {
     earnings(),
     prisma.shop.findMany({
       where: { isDemo: false },
-      select: { plan: true, subscriptionStatus: true, active: true },
+      select: { plan: true, subscriptionStatus: true, active: true, customPricePaise: true },
     }),
     prisma.item.count(),
     prisma.order.count(),
@@ -75,10 +74,27 @@ export default async function DashboardPage() {
     (shop) => shop.subscriptionStatus === 'PAST_DUE' || shop.subscriptionStatus === 'CANCELLED',
   ).length;
 
-  const byPlan = PLAN_ORDER.map((id) => ({
-    spec: PLAN_SPECS[id],
-    shops: shops.filter((shop) => shop.subscriptionStatus === 'ACTIVE' && shop.plan === id).length,
-  }));
+  // One plan is sold; what splits paying shops now is whether they pay the
+  // standard price or one agreed with them alone.
+  const standard = PLAN_SPECS[STANDARD_PLAN];
+  const payingShops = shops.filter((shop) => shop.subscriptionStatus === 'ACTIVE');
+  const onCustom = payingShops.filter((shop) => shop.customPricePaise !== null);
+  const byPlan = [
+    {
+      key: 'standard',
+      label: standard.name,
+      note: 'unlimited items',
+      shops: payingShops.length - onCustom.length,
+      price: formatPaise(rupeesToPaise(standard.price)),
+    },
+    {
+      key: 'custom',
+      label: 'Custom price',
+      note: 'agreed per shop',
+      shops: onCustom.length,
+      price: 'varies',
+    },
+  ];
 
   return (
     <>
@@ -133,17 +149,14 @@ export default async function DashboardPage() {
 
             <Panel title="Who is on what">
               <ul className="space-y-2 text-sm">
-                {byPlan.map(({ spec, shops: count }) => (
-                  <li key={spec.id} className="flex items-baseline justify-between gap-3">
+                {byPlan.map((row) => (
+                  <li key={row.key} className="flex items-baseline justify-between gap-3">
                     <span className="min-w-0 truncate text-slate-700">
-                      {spec.name}
-                      <span className="ml-1.5 text-xs text-slate-400">
-                        {planItems(spec.id)} items
-                      </span>
+                      {row.label}
+                      <span className="ml-1.5 text-xs text-slate-400">{row.note}</span>
                     </span>
                     <span className="shrink-0 tabular-nums text-slate-600">
-                      <strong className="text-slate-900">{count}</strong> ×{' '}
-                      {formatPaise(rupeesToPaise(spec.price))}
+                      <strong className="text-slate-900">{row.shops}</strong> × {row.price}
                     </span>
                   </li>
                 ))}
@@ -168,35 +181,30 @@ export default async function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {PLAN_ORDER.map((id) => {
-                  const spec = PLAN_SPECS[id];
-                  return (
-                    <tr key={id}>
-                      <td className="py-2 pr-3 font-semibold text-slate-900">{spec.name}</td>
-                      <td className="py-2 pr-3 tabular-nums text-slate-600">
-                        {spec.unlimited ? 'unlimited' : `up to ${planItems(spec.id)}`}
-                      </td>
-                      <td className="py-2 pr-3 font-semibold tabular-nums text-brand-700">
-                        {formatPaise(rupeesToPaise(spec.price))}
-                      </td>
-                      <td className="py-2 pr-3 tabular-nums text-slate-500">
-                        {/* Cost per item is meaningless without a ceiling to
-                            divide by — an unlimited plan's is zero and says so
-                            about nothing. */}
-                        {spec.unlimited
-                          ? '—'
-                          : formatPaise(Math.round(rupeesToPaise(spec.price) / spec.itemLimit))}
-                      </td>
-                      <td className="py-2 text-slate-600">{spec.tagline}</td>
-                    </tr>
-                  );
-                })}
+                <tr>
+                  <td className="py-2 pr-3 font-semibold text-slate-900">{standard.name}</td>
+                  <td className="py-2 pr-3 tabular-nums text-slate-600">unlimited</td>
+                  <td className="py-2 pr-3 font-semibold tabular-nums text-brand-700">
+                    {formatPaise(rupeesToPaise(standard.price))}
+                  </td>
+                  <td className="py-2 pr-3 tabular-nums text-slate-500">—</td>
+                  <td className="py-2 text-slate-600">{standard.tagline}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 pr-3 font-semibold text-slate-900">Custom price</td>
+                  <td className="py-2 pr-3 tabular-nums text-slate-600">optional limit</td>
+                  <td className="py-2 pr-3 font-semibold tabular-nums text-brand-700">you agree it</td>
+                  <td className="py-2 pr-3 tabular-nums text-slate-500">—</td>
+                  <td className="py-2 text-slate-600">
+                    A small counter — e.g. ₹99 for four items. Set on the shop&apos;s page.
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Rule title="Free trial" body={`${TRIAL_DAYS} days on the top plan, so nothing is capped while a shop is deciding.`} />
+            <Rule title="Free trial" body={`${TRIAL_DAYS} days with every feature and no item limit, while a shop is deciding.`} />
             <Rule title="Grace" body={`${GRACE_DAYS} days after a period ends before item editing stops.`} />
             <Rule
               title="Auto-pause"

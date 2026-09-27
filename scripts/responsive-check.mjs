@@ -34,7 +34,11 @@ const WIDTHS = [
   { w: 1920, h: 1080, name: '1920 (desktop)' },
 ];
 
-const PAGES = ['/'];
+// PAGES=/,/grocery,/sweet-shop LANGS=en,bn,hi to check other pages in every
+// language: Bengali and Hindi run longer than English and wrap differently, so
+// one language is not a test of the other two.
+const PAGES = (process.env.PAGES ?? '/').split(',').filter(Boolean);
+const LANGS = (process.env.LANGS ?? 'en').split(',').filter(Boolean);
 const base = process.env.BASE ?? 'http://localhost:3000';
 const shots = process.env.SHOTS === '1';
 
@@ -42,10 +46,12 @@ const browser = await chromium.launch();
 let failures = 0;
 
 for (const path of PAGES) {
-  console.log(`\n=== ${path} ===`);
+  for (const lang of LANGS) {
+  console.log(`\n=== ${path} [${lang}] ===`);
   for (const size of WIDTHS) {
     const page = await browser.newPage({ viewport: { width: size.w, height: size.h } });
-    await page.goto(base + path, { waitUntil: 'networkidle', timeout: 60000 });
+    // `?lang=` is read before paint by the landing pages' language switch.
+    await page.goto(`${base}${path}?lang=${lang}`, { waitUntil: 'networkidle', timeout: 60000 });
     await page.waitForTimeout(400);
 
     const report = await page.evaluate(() => {
@@ -102,10 +108,11 @@ for (const path of PAGES) {
     for (const c of report.clipped) console.log(`         ↳ clipped <${c.tag}> "${c.text}"`);
 
     if (shots) {
-      const tag = path === '/' ? 'home' : 'pricing';
-      await page.screenshot({ path: `.responsive/${tag}-${size.w}.png`, fullPage: size.w <= 414 });
+      const tag = path === '/' ? 'home' : path.replace(/[^a-z0-9-]/gi, '');
+      await page.screenshot({ path: `.responsive/${tag}-${lang}-${size.w}.png`, fullPage: size.w <= 414 });
     }
     await page.close();
+  }
   }
 }
 

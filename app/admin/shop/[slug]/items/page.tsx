@@ -6,7 +6,7 @@ import { PencilIcon } from '@/components/ui/Icon';
 import { ItemsManager } from '@/components/admin/ItemsManager';
 import { BulkPanel } from '@/components/admin/BulkPanel';
 import { StarterPanel } from '@/components/admin/StarterPanel';
-import { starterCatalogue } from '@/lib/starter-catalogue';
+import { allStarterItems, starterCatalogue } from '@/lib/starter-catalogue';
 import { shopEntitlement } from '@/lib/billing';
 
 export const dynamic = 'force-dynamic';
@@ -45,6 +45,7 @@ export default async function ItemsPage({ params }: PageProps) {
 
   const billing = await shopEntitlement(shop.id);
   const catalogue = starterCatalogue(shop.type);
+  const everything = allStarterItems(shop.type);
 
   return (
     <>
@@ -67,12 +68,14 @@ export default async function ItemsPage({ params }: PageProps) {
             {
               id: 'starter',
               label: 'Add common items',
-              hint: `${catalogue.length} usual items for this shop type`,
+              hint: `${catalogue.length} usual items for this shop type, ${everything.length} in all`,
               content: (
                 <StarterPanel
                   slug={shop.slug}
                   catalogue={catalogue}
-                  remaining={billing?.remaining ?? 0}
+                  allCatalogue={everything}
+                  // No count to show on the standard plan: it has no limit.
+                  remaining={billing?.plan.unlimited ? undefined : (billing?.remaining ?? 0)}
                 />
               ),
             },

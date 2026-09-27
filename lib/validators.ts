@@ -10,6 +10,16 @@ export const SHOP_TYPES = [
   'ROLL_MOMO',
   'HOME_KITCHEN',
   'BAKERY',
+  'STREET_FOOD',
+  'SWEET_SHOP',
+  'FRUIT_VEG',
+  'DAIRY',
+  'MEAT_FISH',
+  'STATIONERY',
+  'COSMETICS',
+  'HARDWARE',
+  'PUJA_FLOWER',
+  'GARMENTS',
   'OTHER',
 ] as const;
 
@@ -20,6 +30,16 @@ export const SHOP_TYPE_LABELS: Record<(typeof SHOP_TYPES)[number], string> = {
   ROLL_MOMO: 'Roll & Momo',
   HOME_KITCHEN: 'Home Kitchen',
   BAKERY: 'Bakery',
+  STREET_FOOD: 'Street Food / Food Counter',
+  SWEET_SHOP: 'Sweet Shop',
+  FRUIT_VEG: 'Vegetables & Fruits',
+  DAIRY: 'Dairy / Milk Booth',
+  MEAT_FISH: 'Meat & Fish',
+  STATIONERY: 'Stationery & Xerox',
+  COSMETICS: 'Cosmetics & Fancy Store',
+  HARDWARE: 'Hardware & Electricals',
+  PUJA_FLOWER: 'Flowers & Puja Items',
+  GARMENTS: 'Garments & Hosiery',
   OTHER: 'Other',
 };
 

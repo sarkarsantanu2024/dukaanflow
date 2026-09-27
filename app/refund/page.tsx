@@ -43,7 +43,7 @@ export default function RefundPage() {
 
       <h2>Try before you pay</h2>
       <p>
-        Every new shop gets {TRIAL_DAYS} days of the Pro plan free, with no card, no advance and
+        Every new shop gets {TRIAL_DAYS} days free, with every feature, no card, no advance and
         nothing to cancel. That is deliberately the answer to &ldquo;is this worth paying
         for&rdquo; — decide during the trial and you never pay for something you did not want.
       </p>

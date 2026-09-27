@@ -54,6 +54,9 @@ export async function POST(request: Request, { params }: Context) {
           locale: true,
           currentPeriodEnd: true,
           trialEndsAt: true,
+          customItemLimit: true,
+          customPricePaise: true,
+          customPlanName: true,
         },
       },
     },
@@ -114,8 +117,18 @@ export async function POST(request: Request, { params }: Context) {
   const common = {
     shopName: found.shop.name,
     ownerName: found.shop.ownerName,
-    planName: spec?.name ?? found.plan,
-    planItemLimit: spec?.itemLimit ?? 0,
+    // A custom deal's name and limit when the shop has one. Zero means no
+    // limit, which is the standard plan and most custom deals.
+    planName:
+      found.shop.customPricePaise !== null && found.shop.customPlanName
+        ? found.shop.customPlanName
+        : (spec?.name ?? found.plan),
+    planItemLimit:
+      found.shop.customPricePaise !== null && found.shop.customItemLimit !== null
+        ? found.shop.customItemLimit
+        : spec?.unlimited
+          ? 0
+          : (spec?.itemLimit ?? 0),
     months: found.months,
     amountPaise: found.amountPaise,
     renewsOn: periodEnd,

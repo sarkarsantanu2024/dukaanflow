@@ -29,7 +29,9 @@ export function InventoryScreen({
   locale,
   showWelcome,
   itemLimit,
+  unlimited = false,
   shopType,
+  allCatalogue,
 }: {
   slug: string;
   /** Printed at the top of the supplier's list and its PDF. */
@@ -39,15 +41,19 @@ export function InventoryScreen({
   locale: Locale;
   showWelcome: boolean;
   itemLimit: number;
+  /** No item limit, so there is no "of N" and no meter to fill. */
+  unlimited?: boolean;
   /** Drives which units this shop is offered. */
   shopType: ShopType;
+  /** Every ready-made list, this shop's own first — the picker's "All items". */
+  allCatalogue?: StarterItem[];
 }) {
   const t = ownerDict(locale);
   const [welcome, setWelcome] = useState(showWelcome);
   // The common-items catalogue opens in a drawer, and it starts closed.
   const [picker, setPicker] = useState(false);
 
-  const usedShare = itemLimit > 0 ? Math.min(1, items.length / itemLimit) : 0;
+  const usedShare = !unlimited && itemLimit > 0 ? Math.min(1, items.length / itemLimit) : 0;
 
   /**
    * The catalogue minus what this shop already sells.
@@ -62,6 +68,13 @@ export function InventoryScreen({
     const owned = ownedNames(items);
     return catalogue.filter((entry) => !alreadyOwned(entry, owned));
   }, [catalogue, items]);
+
+  /** The same, for every list — what the picker's "All items" view offers. */
+  const unlistedAll = useMemo(() => {
+    if (!allCatalogue) return undefined;
+    const owned = ownedNames(items);
+    return allCatalogue.filter((entry) => !alreadyOwned(entry, owned));
+  }, [allCatalogue, items]);
 
   if (welcome) {
     return (
@@ -123,8 +136,9 @@ export function InventoryScreen({
         <StarterPicker
           slug={slug}
           catalogue={unlisted}
+          allCatalogue={unlistedAll}
           locale={locale}
-          remaining={Math.max(0, itemLimit - items.length)}
+          remaining={unlimited ? undefined : Math.max(0, itemLimit - items.length)}
           onDismiss={() => setPicker(false)}
           inDrawer
         />
@@ -146,10 +160,15 @@ export function InventoryScreen({
           <p className="flex items-baseline gap-1.5">
             <span className="text-2xl font-semibold tabular-nums text-slate-900">{items.length}</span>
             <span className="text-sm text-slate-500">{t.itemsCount}</span>
-            <span className="ml-auto text-xs tabular-nums text-slate-400">
-              {t.ofLimit} {itemLimit}
-            </span>
+            {!unlimited && (
+              <span className="ml-auto text-xs tabular-nums text-slate-400">
+                {t.ofLimit} {itemLimit}
+              </span>
+            )}
           </p>
+          {/* The meter only means something against a limit. On the standard
+              plan there is none, so the count stands alone. */}
+          {!unlimited && (
           <div
             className="mt-2 h-1.5 overflow-hidden rounded-full bg-sunk"
             role="meter"
@@ -163,6 +182,7 @@ export function InventoryScreen({
               style={{ width: `${Math.max(2, Math.round(usedShare * 100))}%` }}
             />
           </div>
+          )}
         </div>
       </section>
     </div>

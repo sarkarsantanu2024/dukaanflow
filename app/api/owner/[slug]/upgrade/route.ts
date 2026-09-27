@@ -5,7 +5,7 @@ import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { paymentRequestSchema } from '@/lib/validators';
 import { canBePaid, operatorPayment, payeeLabel } from '@/lib/payment-settings';
 import { quotePaise } from '@/lib/subscription';
-import type { Plan } from '@/lib/plans';
+import { STANDARD_PLAN, entitlement, monthlyPaiseFor, type Plan, type SubStatus } from '@/lib/plans';
 
 export const runtime = 'nodejs';
 
@@ -50,6 +50,52 @@ function openRequestWhere(shopId: string) {
   };
 }
 
+/** The shop columns that decide what it pays and what it is called. */
+const SHOP_PRICE_SELECT = {
+  id: true,
+  plan: true,
+  subscriptionStatus: true,
+  trialEndsAt: true,
+  currentPeriodEnd: true,
+  customPricePaise: true,
+  customItemLimit: true,
+  customPlanName: true,
+} as const;
+
+/**
+ * The plan name and monthly rate this shop is sold, for the payment dialog.
+ *
+ * The name comes from a custom deal when there is one — "Food counter" — and is
+ * the standard plan's otherwise. The trial is ignored on purpose: during a
+ * trial `entitlement()` reports the trial plan, but what the owner is about to
+ * BUY is what they get after it.
+ */
+function priceFor(shop: {
+  plan: string;
+  subscriptionStatus: string;
+  trialEndsAt: Date | null;
+  currentPeriodEnd: Date | null;
+  customPricePaise: number | null;
+  customItemLimit: number | null;
+  customPlanName: string;
+}) {
+  const after = entitlement({
+    plan: shop.plan as Plan,
+    subscriptionStatus: shop.subscriptionStatus === 'TRIALING' ? 'ACTIVE' : (shop.subscriptionStatus as SubStatus),
+    trialEndsAt: null,
+    currentPeriodEnd: shop.currentPeriodEnd,
+    customPricePaise: shop.customPricePaise,
+    customItemLimit: shop.customItemLimit,
+    customPlanName: shop.customPlanName,
+  });
+  return {
+    planName: after.plan.name,
+    monthlyPaise: monthlyPaiseFor(shop.customPricePaise),
+    customPricePaise: shop.customPricePaise,
+    itemLimit: after.plan.unlimited ? null : after.plan.itemLimit,
+  };
+}
+
 const REQUEST_SHAPE = {
   id: true,
   plan: true,
@@ -66,7 +112,7 @@ export async function GET(request: Request, { params }: Context) {
   const { slug } = await params;
   if (!(await requireShopWrite(slug))) return fail('Not authenticated', 401);
 
-  const shop = await prisma.shop.findUnique({ where: { slug }, select: { id: true } });
+  const shop = await prisma.shop.findUnique({ where: { slug }, select: SHOP_PRICE_SELECT });
   if (!shop) return fail('Shop not found', 404);
 
   const [settings, open, lastRejected] = await Promise.all([
@@ -87,6 +133,9 @@ export async function GET(request: Request, { params }: Context) {
   ]);
 
   return ok({
+    // What this shop pays, so the dialog quotes the same number the POST below
+    // will price the request at — a custom price when the shop has one.
+    price: priceFor(shop),
     payTo: {
       // The QR image and the id, never the whole row — there is nothing secret
       // here, but a client gets what it renders and no more.
@@ -123,13 +172,16 @@ export async function POST(request: Request, { params }: Context) {
   const limit = rateLimit(`upgrade:${clientIp(request)}`, 12, 10 * 60 * 1000);
   if (!limit.ok) return fail('Too many attempts. Please wait a few minutes.', 429);
 
-  const shop = await prisma.shop.findUnique({ where: { slug }, select: { id: true } });
+  const shop = await prisma.shop.findUnique({ where: { slug }, select: SHOP_PRICE_SELECT });
   if (!shop) return fail('Shop not found', 404);
 
   const parsed = paymentRequestSchema.safeParse(await readJson(request));
   if (!parsed.success) return invalid(parsed.error);
 
-  const { plan, months, payerUpiId, payerPhone, screenshotData } = parsed.data;
+  // The plan in the body is ignored: there is one plan for sale. Recording the
+  // standard plan keeps every new payment row on the same value.
+  const { months, payerUpiId, payerPhone, screenshotData } = parsed.data;
+  const plan: Plan = STANDARD_PLAN;
 
   /**
    * ONE OPEN REQUEST PER SHOP.
@@ -151,10 +203,11 @@ export async function POST(request: Request, { params }: Context) {
   const created = await prisma.paymentRequest.create({
     data: {
       shopId: shop.id,
-      plan: plan as Plan,
+      plan,
       months,
-      // Priced here, from the plan list. Never taken from the request body.
-      amountPaise: quotePaise(plan as Plan, months),
+      // Priced here, from the plan list — or the shop's own custom price, which
+      // is what the console would charge it. Never taken from the request body.
+      amountPaise: quotePaise(plan, months, shop.customPricePaise),
       payerUpiId,
       payerPhone,
       screenshotData,

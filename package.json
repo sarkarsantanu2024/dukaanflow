@@ -2,7 +2,7 @@
   "name": "halkhata",
   "version": "0.1.0",
   "private": true,
-  "description": "Halkhata — Scan → Select → Order. QR ordering for Indian kirana shops and small restaurants.",
+  "description": "Halkhata — Scan → Select → Order. QR ordering, khata and billing for every Indian local business.",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -19,6 +19,7 @@
     "reset:shop": "tsx scripts/reset-shop.ts",
     "rollup": "tsx scripts/rollup.ts",
     "demo": "tsx scripts/seed-demo-shop.ts",
+    "demo:categories": "tsx scripts/seed-category-demos.ts",
     "tour:shots": "tsx scripts/tour-screenshots.ts",
     "khata:check": "tsx scripts/khata-voice-check.ts",
     "subscription:check": "tsx scripts/subscription-check.ts",

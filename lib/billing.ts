@@ -102,8 +102,8 @@ export async function checkItemAllowance(
       status: 402,
       message:
         room === 0
-          ? `Your ${state.plan.name} plan holds ${state.itemLimit} items and you have used them all. Upgrade to add more.`
-          : `Your ${state.plan.name} plan has room for ${room} more item${room === 1 ? '' : 's'}. Upgrade to add the rest.`,
+          ? `Your ${state.plan.name} plan holds ${state.itemLimit} items and you have used them all. Ask us to move you to the standard plan for unlimited items.`
+          : `Your ${state.plan.name} plan has room for ${room} more item${room === 1 ? '' : 's'}. Ask us to move you to the standard plan for unlimited items.`,
     };
   }
 

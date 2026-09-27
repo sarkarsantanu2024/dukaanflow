@@ -1,12 +1,24 @@
 /**
  * Subscription plans.
  *
- * Halkhata charges by catalogue size, because catalogue size is what the
- * product is actually worth to a shop: a tea stall with nine items and a kirana
- * with four hundred get very different value from the same software, and item
- * count is the one number both of them already understand. Nothing else is
- * metered — orders, QR scans and customers are all unlimited on every plan, so
- * a shop is never punished for selling well.
+ * ONE FLAT PRICE, EVERYTHING INCLUDED (decided 2026-09-27). Halkhata used to
+ * charge by catalogue size — Basic 20 items up to Enterprise unlimited — and
+ * that stopped fitting the product the day every shop was given the whole
+ * ready-made list of 500+ items for free. Handing an owner five hundred items
+ * and then charging them for the room to keep them reads as a trap. So there is
+ * one standard plan now: unlimited items, every feature, one monthly price
+ * that is easy to say out loud in a village.
+ *
+ * THE CUSTOM PRICE STAYS, and is now the only way a shop pays less. A roadside
+ * food counter selling three curries and a roti can be put on ₹99 a month for
+ * four items — see `customSpec`, and the custom-price box in the console. An
+ * item limit only ever exists on such a deal.
+ *
+ * The `Plan` enum keeps all five values because they are written into existing
+ * shop and payment rows, and renaming or dropping an enum value needs a
+ * destructive migration. Every one of them now reads as the same standard plan
+ * (see `PLAN_SPECS`), so a shop stored as PRO from the old ladder simply shows
+ * the flat plan. New payments are recorded against `STANDARD_PLAN`.
  *
  * Plan prices are whole rupees per month. The listing service below is priced
  * in paise like every other money column here — see lib/money.ts for which unit
@@ -52,9 +64,9 @@ export type PlanSpec = {
  * discount buys back eleven of those decisions, and two months of revenue is a
  * cheap price for a year of certainty.
  *
- * Priced against the market rather than plucked: Pro at ₹249 × 10 is ₹2,490 a
- * year, which sits under Vanij's ₹2,999 and well under Vyapar's ₹3,399 while
- * leaving the monthly rate untouched.
+ * Priced against the market rather than plucked: ₹199 × 10 is ₹1,990 a year,
+ * well under Vanij's ₹2,999 and Vyapar's ₹3,399 while leaving the monthly rate
+ * untouched.
  */
 export const MONTHS_PER_YEAR_PAID = 10;
 
@@ -118,9 +130,8 @@ export function amountForMonthsPaise(
  * them does not sell an upgrade, it just makes the cheap plan feel like a
  * crippled demo and gives a shop on Basic a worse reason to stay.
  *
- * So the ONLY thing a plan buys is catalogue size, which is the one dimension
- * that genuinely tracks how big the shop is — and the one a shopkeeper can
- * check for themselves. Everything else is ticked on every row.
+ * There is now one plan and it has all of it, with no item limit either — see
+ * the note at the top of this file.
  */
 export const EVERY_PLAN_INCLUDES: string[] = [
   'QR shop page and printable poster',
@@ -154,73 +165,60 @@ export function planItems(plan: Plan): string {
   return spec.unlimited ? 'Unlimited' : spec.itemLimit.toLocaleString('en-IN');
 }
 
-/** "Up to 300 items", the one line that differs between plans. */
+/** "Up to 4 items", the line a custom deal with an item limit carries. */
 function catalogueLine(itemLimit: number): string {
   return `Up to ${itemLimit.toLocaleString('en-IN')} items`;
 }
 
-/** A ceiling high enough that no shop reaches it, for the unlimited plan. */
+/**
+ * A ceiling high enough that no shop reaches it — the standard plan's limit.
+ *
+ * Still a number rather than null for the reason given on `PlanSpec.itemLimit`:
+ * every allowance check compares against it, and `unlimited` says how to show it.
+ */
 const NO_CEILING = 1_000_000;
 
-export const PLAN_SPECS: Record<Plan, PlanSpec> = {
-  // The enum value stays FREE because it is written into every existing row and
-  // renaming it would need a migration for no gain — but nothing is free any
-  // more. The name and price a shopkeeper sees are read from here, which is
-  // exactly what this file exists for.
-  FREE: {
-    id: 'FREE',
-    name: 'Basic',
-    price: 99,
-    // Twenty, not fifty. A tea stall or a paan counter genuinely sells twenty
-    // things; a kirana does not, and at fifty a real kirana could sit on the
-    // cheapest plan indefinitely with a catalogue that fits. The limit is the
-    // only thing a plan sells now, so it has to mean something.
-    itemLimit: 20,
-    tagline: 'Enough for a tea stall or a small counter.',
-    features: [catalogueLine(20), ...EVERY_PLAN_INCLUDES],
-  },
-  STARTER: {
-    id: 'STARTER',
-    name: 'Starter',
-    price: 299,
-    itemLimit: 100,
-    tagline: 'The everyday kirana plan.',
-    features: [catalogueLine(100), ...EVERY_PLAN_INCLUDES],
-  },
-  PRO: {
-    id: 'PRO',
-    name: 'Pro',
-    price: 399,
-    itemLimit: 300,
-    tagline: 'A full kirana counter.',
-    features: [catalogueLine(300), ...EVERY_PLAN_INCLUDES],
-  },
-  EX: {
-    id: 'EX',
-    // The enum value stays EX because it is written into existing rows; the
-    // name a shopkeeper reads is "Business", because "EX" told them nothing
-    // about what they were buying.
-    name: 'Business',
-    price: 599,
-    itemLimit: 1000,
-    tagline: 'Full grocery stores and restaurants.',
-    features: [catalogueLine(1000), ...EVERY_PLAN_INCLUDES],
-  },
-  ENTERPRISE: {
-    id: 'ENTERPRISE',
-    name: 'Enterprise',
-    price: 799,
-    // Genuinely no ceiling. A catalogue this big is a wholesaler or a chain,
-    // and counting their items to refuse the next one would be the wrong
-    // conversation to have with the largest customer on the book.
+/** THE monthly price, in whole rupees. Change it here and every screen follows. */
+export const STANDARD_PRICE = 199;
+
+/**
+ * The enum value new payments are recorded against.
+ *
+ * FREE because it is the column's default — every new shop is already stored
+ * as FREE — so the standard plan and a brand-new shop agree without a write.
+ * The name is historical; nothing is free. What a shopkeeper reads is `name`.
+ */
+export const STANDARD_PLAN: Plan = 'FREE';
+
+function standardSpec(id: Plan): PlanSpec {
+  return {
+    id,
+    name: 'Standard',
+    price: STANDARD_PRICE,
     itemLimit: NO_CEILING,
     unlimited: true,
-    tagline: 'Wholesalers, chains and anyone past a thousand lines.',
+    tagline: 'Every feature and unlimited items, for any kind of shop.',
     features: ['Unlimited items', ...EVERY_PLAN_INCLUDES],
-  },
+  };
+}
+
+/**
+ * Every stored plan value reads as the one standard plan.
+ *
+ * Kept as a record over all five values rather than one object so that
+ * `PLAN_SPECS[shop.plan]` — read all over the app — still works for a shop or a
+ * payment row stored under an old ladder value.
+ */
+export const PLAN_SPECS: Record<Plan, PlanSpec> = {
+  FREE: standardSpec('FREE'),
+  STARTER: standardSpec('STARTER'),
+  PRO: standardSpec('PRO'),
+  EX: standardSpec('EX'),
+  ENTERPRISE: standardSpec('ENTERPRISE'),
 };
 
-export const PLAN_ORDER: Plan[] = ['FREE', 'STARTER', 'PRO', 'EX', 'ENTERPRISE'];
+/** The plans offered for sale, in order. One. */
+export const PLAN_ORDER: Plan[] = [STANDARD_PLAN];
 
 /**
  * What Halkhata charges to catalogue a shop's items for them.
@@ -248,7 +246,7 @@ export const LISTING_PAISE_PER_ITEM = 100;
  * is the one worth pricing in front of them.
  *
  * Unlimited plans have no item count to quote against, so they get null and the
- * page says to ask instead.
+ * page says to ask instead — which, with one unlimited plan, is always.
  */
 export function planListingPaise(plan: Plan): number | null {
   const spec = PLAN_SPECS[plan];
@@ -264,13 +262,12 @@ export function listingChargePaise(items: number): number {
 /**
  * Free days when a shop is created, so onboarding is never blocked.
  *
- * The trial grants the TOP plan, not a middle one. A shop being evaluated must
- * never hit a catalogue limit while deciding whether to buy — the owner would
- * read it as the product failing rather than as a tier they have outgrown, and
- * they would be right to, because nobody has quoted them a price yet.
+ * The trial grants the standard plan — unlimited, like everything now. A shop
+ * being evaluated must never hit a catalogue limit while deciding whether to
+ * buy, and that includes one whose custom deal will cap it afterwards.
  */
 export const TRIAL_DAYS = 14;
-export const TRIAL_PLAN: Plan = 'EX';
+export const TRIAL_PLAN: Plan = STANDARD_PLAN;
 
 /**
  * Days after a period ends before item editing stops. A shop whose payment is
@@ -331,7 +328,10 @@ export type ShopBilling = {
 export function customSpec(shop: ShopBilling, fallback: PlanSpec): PlanSpec | null {
   if (shop.customPricePaise === null || shop.customPricePaise === undefined) return null;
 
-  const itemLimit = shop.customItemLimit ?? fallback.itemLimit;
+  // A deal with no item limit keeps the standard plan's: unlimited. A limit is
+  // only ever part of a deal that asked for one — "₹99 for four items".
+  const limited = shop.customItemLimit !== null && shop.customItemLimit !== undefined;
+  const itemLimit = limited ? shop.customItemLimit! : fallback.itemLimit;
   return {
     id: fallback.id,
     name: shop.customPlanName?.trim() || fallback.name,
@@ -339,8 +339,12 @@ export function customSpec(shop: ShopBilling, fallback: PlanSpec): PlanSpec | nu
     // charged and what the console edits; this is only what gets displayed.
     price: Math.round(shop.customPricePaise / 100),
     itemLimit,
+    unlimited: limited ? undefined : fallback.unlimited,
     tagline: fallback.tagline,
-    features: [catalogueLine(itemLimit), ...EVERY_PLAN_INCLUDES],
+    features: [
+      limited || !fallback.unlimited ? catalogueLine(itemLimit) : 'Unlimited items',
+      ...EVERY_PLAN_INCLUDES,
+    ],
   };
 }
 
@@ -520,19 +524,28 @@ export function entitlement(shop: ShopBilling, now = new Date()): Entitlement {
   };
 }
 
-/** The next plan up, or null at the top. */
-export function nextPlanUp(plan: Plan): PlanSpec | null {
-  const index = PLAN_ORDER.indexOf(plan);
-  const next = PLAN_ORDER[index + 1];
-  return next ? PLAN_SPECS[next] : null;
+/**
+ * The plan to sell a shop of this size.
+ *
+ * Always the standard plan now — it holds any catalogue. Kept as a function,
+ * with its argument, because the owner app and the roadblock ask it and a
+ * different answer may one day depend on the count again.
+ */
+export function planFor(_itemCount: number): PlanSpec {
+  return PLAN_SPECS[STANDARD_PLAN];
 }
 
-/** The cheapest plan that fits a catalogue of this size. */
-export function planFor(itemCount: number): PlanSpec {
-  for (const id of PLAN_ORDER) {
-    if (itemCount <= PLAN_SPECS[id].itemLimit) return PLAN_SPECS[id];
-  }
-  return PLAN_SPECS.PRO;
+/**
+ * What one month costs THIS shop, in paise: its custom price when it has one,
+ * else the standard price.
+ *
+ * The owner's payment dialog and the server's quote both read this, so the
+ * figure an owner is shown is the figure their request is priced at. Before the
+ * flat plan, the owner's side ignored custom prices entirely and quoted the
+ * ladder — a shop agreed at ₹99 would have been asked for the list price.
+ */
+export function monthlyPaiseFor(customPricePaise?: number | null): number {
+  return amountForMonthsPaise(STANDARD_PLAN, 1, customPricePaise);
 }
 
 export function formatPlanPrice(spec: PlanSpec): string {

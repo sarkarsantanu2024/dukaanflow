@@ -41,8 +41,8 @@ import {
   GRACE_DAYS,
   LISTING_PAISE_PER_ITEM,
   MONTHS_PER_YEAR_PAID,
-  PLAN_ORDER,
   PLAN_SPECS,
+  STANDARD_PLAN,
   amountForMonthsPaise,
   listingChargePaise,
   standingLabel,
@@ -57,6 +57,8 @@ export type SubscriptionState = {
   itemCount: number;
   /** The limit IN FORCE today — a trial's or a custom deal's, not the plan's. */
   itemLimit: number;
+  /** True when there is no limit in force — the standard plan has none. */
+  unlimited: boolean;
   /**
    * The plan name in force today, which is not always `plan`.
    *
@@ -146,7 +148,9 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
   const router = useRouter();
   const { push } = useToast();
   const { confirm, dialog } = useConfirm();
-  const [plan, setPlan] = useState<Plan>(state.plan);
+  // One plan is sold, so a payment is always recorded against it. A custom
+  // price, below, is the only thing that changes what a shop pays.
+  const plan: Plan = STANDARD_PLAN;
   const [months, setMonths] = useState(1);
   const [reference, setReference] = useState('');
   /** Days of extra free trial to give. Seven is what shops actually ask for. */
@@ -171,8 +175,10 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
    * box says so — see `noHeadroom`. Seeding it is a convenience; agreeing to it
    * has to stay a decision.
    */
+  // Blank means "no limit", which is what the standard plan has and what most
+  // custom deals want too. Only a deal like "₹99 for four items" fills it in.
   const [customLimit, setCustomLimit] = useState(
-    state.customItemLimit === null ? String(state.itemCount) : String(state.customItemLimit),
+    state.customItemLimit === null ? '' : String(state.customItemLimit),
   );
   const [customName, setCustomName] = useState(state.customPlanName);
   /** Whether the item-limit box has been edited. See `noHeadroom`. */
@@ -203,7 +209,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
   const validTrialDays =
     Number.isInteger(trialDayCount) && trialDayCount >= 1 && trialDayCount <= 90;
   const listingPaise = listingChargePaise(listedCount);
-  const usage = state.itemLimit > 0 ? Math.min(1, state.itemCount / state.itemLimit) : 0;
+  const usage = !state.unlimited && state.itemLimit > 0 ? Math.min(1, state.itemCount / state.itemLimit) : 0;
 
   /**
    * The date this payment will actually run to, before it is recorded.
@@ -337,10 +343,13 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
         <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
           <span className="text-lg font-bold text-slate-900">{state.effectivePlanName}</span>
           <span className="text-sm tabular-nums text-slate-600">
-            {state.itemCount} of {state.itemLimit} items used
+            {state.unlimited
+              ? `${state.itemCount} items · no limit`
+              : `${state.itemCount} of ${state.itemLimit} items used`}
           </span>
         </p>
 
+        {!state.unlimited && (
         <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-200">
           <div
             className={clsx(
@@ -350,6 +359,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
             style={{ width: `${Math.max(3, usage * 100)}%` }}
           />
         </div>
+        )}
 
         {/* WHY IT DIFFERS, whenever it does. A free trial grants the top tier
             and a custom deal replaces the ladder entirely; both are legitimate
@@ -360,8 +370,8 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
           <p className="mt-2 text-xs text-slate-600">
             {state.standing === 'trial' ? (
               <>
-                Free trial — the top plan while deciding. Reverts to{' '}
-                <strong>{PLAN_SPECS[state.plan].name}</strong> when it ends.
+                Free trial — every feature, no item limit.
+                {state.customPricePaise !== null && ' Its custom price applies when the trial ends.'}
               </>
             ) : (
               <>
@@ -440,24 +450,13 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
                 moving it makes three other numbers change with no explanation.
                 Saying whose plan it is, and what the shop is on now, costs one
                 line and settles all of it. */}
-            <span className="mb-1 block text-sm font-semibold text-slate-700">
-              Plan to record{' '}
-              <span className="font-normal text-slate-500">
-                · shop is on {PLAN_SPECS[state.plan].name}
-              </span>
-            </span>
-            <select
-              value={plan}
-              onChange={(event) => setPlan(event.target.value as Plan)}
-              className="w-full rounded-xl border border-slate-300 bg-card px-3 py-2.5"
-            >
-              {PLAN_ORDER.map((id) => (
-                <option key={id} value={id}>
-                  {PLAN_SPECS[id].name} — {PLAN_SPECS[id].itemLimit} items · ₹
-                  {PLAN_SPECS[id].price}/mo
-                </option>
-              ))}
-            </select>
+            {/* One plan for sale, so this is a fact rather than a choice. */}
+            <span className="mb-1 block text-sm font-semibold text-slate-700">Plan</span>
+            <p className="rounded-xl border border-slate-200 bg-sunk px-3 py-2.5 text-sm text-slate-800">
+              {state.customPricePaise !== null
+                ? `${state.customPlanName || PLAN_SPECS[plan].name} — custom · ${formatPaise(state.customPricePaise)}/mo`
+                : `${PLAN_SPECS[plan].name} — unlimited items · ₹${PLAN_SPECS[plan].price}/mo`}
+            </p>
           </label>
 
           <Input
@@ -527,19 +526,10 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
           </p>
         )}
 
-        {/* Nothing above changes the shop until this is pressed. An operator
-            picked Basic, saw "Pro" still in force, and took it for a fault. */}
-        {plan !== state.plan && (
-          <p className="mt-3 text-xs text-slate-600">
-            The shop stays on <strong>{PLAN_SPECS[state.plan].name}</strong> until you record
-            this payment.
-          </p>
-        )}
-
         {customRate !== null && (
           <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-800">
             This shop has a custom price, so it is charged {formatPaise(customRate)} a month
-            whichever plan is chosen.
+            instead of the standard {formatPaise(PLAN_SPECS[plan].price * 100)}.
           </p>
         )}
 
@@ -667,7 +657,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
         when="You agreed a special rate"
         title="Custom price for this shop"
         tone="quiet"
-        hint="A rupee amount and an item limit agreed with this shop, instead of one of the four plans. Leave blank to put the shop back on the standard ladder. It takes effect when the trial ends."
+        hint="A monthly price agreed with this shop instead of the standard one — for example ₹99 for a food counter selling four items. The item limit is optional: leave it blank for no limit. Remove the price to put the shop back on the standard plan. It takes effect when the trial ends."
       >
         <div className="flex flex-wrap items-end gap-2">
           <label className="text-xs font-semibold text-slate-700">
@@ -698,7 +688,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
                 setCustomLimit(event.target.value);
               }}
               inputMode="numeric"
-              placeholder={String(PLAN_SPECS[plan].itemLimit)}
+              placeholder="No limit"
               className={clsx(
                 'mt-1 block h-10 w-24 rounded-lg border px-2 text-sm font-normal tabular-nums',
                 noHeadroom ? 'border-amber-400 bg-amber-50' : 'border-slate-300',
@@ -719,8 +709,8 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
               patchShop(
                 {
                   customPricePaise: rupees,
-                  // Blank means "keep the plan's limit", which is what null says
-                  // to `customSpec`.
+                  // Blank means "no limit" — the standard plan's — which is what
+                  // null says to `customSpec`.
                   customItemLimit: Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : null,
                   customPlanName: customName.trim(),
                 },

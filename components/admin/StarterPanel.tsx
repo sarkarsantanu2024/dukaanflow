@@ -21,11 +21,15 @@ import type { StarterItem } from '@/lib/starter-catalogue';
 export function StarterPanel({
   slug,
   catalogue,
+  allCatalogue,
   remaining,
 }: {
   slug: string;
   catalogue: StarterItem[];
-  remaining: number;
+  /** Every list, this shop's own first — the picker's "All items". */
+  allCatalogue?: StarterItem[];
+  /** Room left under a custom item limit; undefined when there is none. */
+  remaining?: number;
 }) {
   const close = useDrawerClose();
 
@@ -33,6 +37,7 @@ export function StarterPanel({
     <StarterPicker
       slug={slug}
       catalogue={catalogue}
+      allCatalogue={allCatalogue}
       // The console is one operator, and it stays English.
       locale="en"
       remaining={remaining}

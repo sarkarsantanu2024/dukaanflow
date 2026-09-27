@@ -19,7 +19,26 @@ type Dictionary = {
   inStock: string;
   outOfStock: string;
   /** The kind of shop, under its name. */
-  shopTypes: Record<'GROCERY' | 'RESTAURANT' | 'TEA_STALL' | 'ROLL_MOMO' | 'HOME_KITCHEN' | 'BAKERY' | 'OTHER', string>;
+  shopTypes: Record<
+    | 'GROCERY'
+    | 'RESTAURANT'
+    | 'TEA_STALL'
+    | 'ROLL_MOMO'
+    | 'HOME_KITCHEN'
+    | 'BAKERY'
+    | 'OTHER'
+    | 'STREET_FOOD'
+    | 'SWEET_SHOP'
+    | 'FRUIT_VEG'
+    | 'DAIRY'
+    | 'MEAT_FISH'
+    | 'STATIONERY'
+    | 'COSMETICS'
+    | 'HARDWARE'
+    | 'PUJA_FLOWER'
+    | 'GARMENTS',
+    string
+  >;
   add: string;
   items: string;
   total: string;
@@ -239,7 +258,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     menu: 'Menu',
     inStock: 'In stock',
     outOfStock: 'Out of stock',
-    shopTypes: { GROCERY: 'Grocery / Kirana', RESTAURANT: 'Restaurant', TEA_STALL: 'Tea Stall', ROLL_MOMO: 'Roll & Momo', HOME_KITCHEN: 'Home Kitchen', BAKERY: 'Bakery', OTHER: 'Shop' },
+    shopTypes: { GROCERY: 'Grocery / Kirana', RESTAURANT: 'Restaurant', TEA_STALL: 'Tea Stall', ROLL_MOMO: 'Roll & Momo', HOME_KITCHEN: 'Home Kitchen', BAKERY: 'Bakery', OTHER: 'Shop', STREET_FOOD: 'Food Counter', SWEET_SHOP: 'Sweet Shop', FRUIT_VEG: 'Vegetables & Fruits', DAIRY: 'Dairy', MEAT_FISH: 'Meat & Fish', STATIONERY: 'Stationery', COSMETICS: 'Cosmetics', HARDWARE: 'Hardware', PUJA_FLOWER: 'Flowers & Puja', GARMENTS: 'Garments' },
     add: 'Add',
     items: 'items',
     total: 'Total',
@@ -401,7 +420,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     menu: 'তালিকা',
     inStock: 'আছে',
     outOfStock: 'শেষ',
-    shopTypes: { GROCERY: 'মুদির দোকান', RESTAURANT: 'রেস্টুরেন্ট', TEA_STALL: 'চায়ের দোকান', ROLL_MOMO: 'রোল আর মোমো', HOME_KITCHEN: 'ঘরের রান্না', BAKERY: 'বেকারি', OTHER: 'দোকান' },
+    shopTypes: { GROCERY: 'মুদির দোকান', RESTAURANT: 'রেস্টুরেন্ট', TEA_STALL: 'চায়ের দোকান', ROLL_MOMO: 'রোল আর মোমো', HOME_KITCHEN: 'ঘরের রান্না', BAKERY: 'বেকারি', OTHER: 'দোকান', STREET_FOOD: 'খাবারের দোকান', SWEET_SHOP: 'মিষ্টির দোকান', FRUIT_VEG: 'সবজি ও ফল', DAIRY: 'দুধের দোকান', MEAT_FISH: 'মাছ-মাংসের দোকান', STATIONERY: 'স্টেশনারি', COSMETICS: 'প্রসাধনী', HARDWARE: 'হার্ডওয়্যার', PUJA_FLOWER: 'ফুল ও পুজোর জিনিস', GARMENTS: 'জামাকাপড়' },
     add: 'যোগ করুন',
     items: 'টি জিনিস',
     total: 'মোট',
@@ -564,7 +583,7 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     menu: 'सूची',
     inStock: 'उपलब्ध',
     outOfStock: 'खत्म',
-    shopTypes: { GROCERY: 'किराना दुकान', RESTAURANT: 'रेस्टोरेंट', TEA_STALL: 'चाय की दुकान', ROLL_MOMO: 'रोल और मोमो', HOME_KITCHEN: 'घर का खाना', BAKERY: 'बेकरी', OTHER: 'दुकान' },
+    shopTypes: { GROCERY: 'किराना दुकान', RESTAURANT: 'रेस्टोरेंट', TEA_STALL: 'चाय की दुकान', ROLL_MOMO: 'रोल और मोमो', HOME_KITCHEN: 'घर का खाना', BAKERY: 'बेकरी', OTHER: 'दुकान', STREET_FOOD: 'खाने की दुकान', SWEET_SHOP: 'मिठाई की दुकान', FRUIT_VEG: 'सब्ज़ी और फल', DAIRY: 'दूध की दुकान', MEAT_FISH: 'मीट और मछली', STATIONERY: 'स्टेशनरी', COSMETICS: 'कॉस्मेटिक्स', HARDWARE: 'हार्डवेयर', PUJA_FLOWER: 'फूल और पूजा सामग्री', GARMENTS: 'कपड़े' },
     add: 'जोड़ें',
     items: 'सामान',
     total: 'कुल',

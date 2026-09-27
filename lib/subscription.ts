@@ -31,6 +31,14 @@ export type Grant = {
    * request was priced at.
    */
   customPricePaise?: number | null;
+  /**
+   * The amount a payment request was ALREADY priced at by the server, for an
+   * activation code. The code buys exactly what its request quoted — which,
+   * for a shop on a custom price, is the custom rate, not the plan's. Never
+   * taken from a request body: only the activate route passes it, reading it
+   * off the stored request.
+   */
+  quotedPaise?: number;
 };
 
 export type GrantResult = { periodEnd: Date; amountPaise: number };
@@ -66,7 +74,7 @@ export async function grantSubscription(grant: Grant): Promise<GrantResult> {
   // Twelve months and up are charged at the yearly rate — two months free — and
   // that rule lives in lib/plans.ts so the console, the pricing page and this
   // can never quote three different numbers for the same year.
-  const amountPaise = amountForMonthsPaise(plan, months, grant.customPricePaise);
+  const amountPaise = grant.quotedPaise ?? amountForMonthsPaise(plan, months, grant.customPricePaise);
 
   await prisma.$transaction([
     prisma.shop.update({
@@ -98,7 +106,14 @@ export async function grantSubscription(grant: Grant): Promise<GrantResult> {
   return { periodEnd, amountPaise };
 }
 
-/** What `months` of `plan` costs right now, in paise. The quote a shop is given. */
-export function quotePaise(plan: Plan, months: number): number {
+/**
+ * What `months` of `plan` costs this shop right now, in paise. The quote a shop
+ * is given — at its custom price when it has one, exactly as the console
+ * charges it.
+ */
+export function quotePaise(plan: Plan, months: number, customPricePaise?: number | null): number {
+  if (customPricePaise !== null && customPricePaise !== undefined) {
+    return amountForMonthsPaise(plan, months, customPricePaise);
+  }
   return rupeesToPaise(priceForMonths(plan, months));
 }

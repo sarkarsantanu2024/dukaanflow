@@ -119,6 +119,9 @@ export async function POST(request: Request, { params }: Context) {
     // to the screenshot and the UPI id the shop sent with it.
     reference: found.id,
     note: 'Activated by code',
+    // Recorded at what the request was priced at — the shop's custom rate when
+    // it has one — so the books match the money the operator saw arrive.
+    quotedPaise: found.amountPaise,
   });
 
   return ok({

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import clsx from 'clsx';
 import {
@@ -20,12 +19,13 @@ import {
 import { SiteFooter } from '@/components/ui/SiteFooter';
 import { BackToTop } from '@/components/marketing/BackToTop';
 import { MobileMenu } from '@/components/marketing/MobileMenu';
-import { BRAND_LOGO, BRAND_NAME, BRAND_WORDMARK } from '@/lib/brand';
+import { BRAND_NAME } from '@/lib/brand';
 import {
   FAQ,
   FEATURES,
   LANDING,
   MORE,
+  PLAN_INCLUDES,
   SAFETY,
   planItemsLine,
   planTagline,
@@ -35,15 +35,16 @@ import {
   type Words,
 } from '@/lib/marketing-copy';
 import { HERO_VIDEO, VIDEOS, screenPath, youtubeId, type ScreenId } from '@/lib/landing-media';
-import { LOCALES } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
 import { firstExisting } from '@/lib/landing-media-files';
-import { LandingLanguage, LangSelect } from '@/components/marketing/LangTabs';
+import { LandingLanguage } from '@/components/marketing/LangTabs';
 import { Say } from '@/components/marketing/Say';
 import { StepList } from '@/components/marketing/StoryLists';
-import { SectionNav, type NavItem } from '@/components/marketing/SectionNav';
+import type { NavItem } from '@/components/marketing/SectionNav';
 import { StickyCta } from '@/components/marketing/StickyCta';
 import { VideoPlayer } from '@/components/marketing/VideoPlayer';
-import { PhoneFrame } from '@/components/marketing/PhoneFrame';
+import { BusinessGrid } from '@/components/marketing/BusinessGrid';
+import { HERO_BOX, LandingHeader, PhoneShot, Section, SectionHead } from '@/components/marketing/LandingKit';
 import { PLAN_ORDER, PLAN_SPECS, TRIAL_DAYS, yearPrice, yearSaving } from '@/lib/plans';
 import { baseUrl } from '@/lib/qr';
 import { supportDetails } from '@/lib/support';
@@ -70,14 +71,14 @@ import { supportDetails } from '@/lib/support';
  * also when the screenshot files are looked for.
  */
 
-const TITLE = `${BRAND_NAME} — Shop Management App for Kirana Stores | QR Orders, Khata & Billing`;
-const DESCRIPTION = `Run your kirana or local shop from your phone: QR code ordering, digital khata, counter billing and bills on WhatsApp. Zero commission. ${TRIAL_DAYS}-day free trial.`;
+const TITLE = `${BRAND_NAME} — Shop Management App for Every Local Business | QR Orders, Khata & Billing`;
+const DESCRIPTION = `Run your grocery store, restaurant, sweet shop, food counter or any local shop from your phone: QR code ordering, digital khata, counter billing and bills on WhatsApp. One plan, ₹${PLAN_SPECS[PLAN_ORDER[0]!].price} a month. Zero commission. ${TRIAL_DAYS}-day free trial.`;
 
 const PREVIEW = {
   url: '/social/link-preview.png',
   width: 1200,
   height: 630,
-  alt: `${BRAND_NAME} — shop management app for kirana stores: QR orders, digital khata and billing`,
+  alt: `${BRAND_NAME} — shop management app for every local business: QR orders, digital khata and billing`,
 };
 
 export const metadata: Metadata = {
@@ -87,6 +88,10 @@ export const metadata: Metadata = {
   keywords: [
     'kirana store app',
     'grocery shop billing app',
+    'restaurant QR menu ordering',
+    'sweet shop billing app',
+    'small business app India',
+    'local shop online store',
     'digital khata',
     'udhaar khata app',
     'QR code ordering',
@@ -115,84 +120,6 @@ export const metadata: Metadata = {
   },
 };
 
-/**
- * THREE WIDTHS, ON PURPOSE (27 Sep, by request: "too narrow", and the bar,
- * the banner and the body should not share one box). The bar runs edge to
- * edge; the banner is the widest block; the body reads a little narrower so
- * lines of text stay comfortable on a big monitor.
- */
-const HEADER_BOX = 'flex w-full items-center gap-4 px-5 py-3 sm:px-8 lg:px-10';
-const HERO_BOX = 'mx-auto w-full max-w-[104rem] px-5 sm:px-8 lg:px-14';
-const BODY_BOX = 'mx-auto w-full max-w-[92rem] px-5 sm:px-8 lg:px-14';
-
-/* ==========================================================================
- * The page's building blocks. Every section is built from these, so the
- * rhythm, headings and cards are the same all the way down.
- * ======================================================================== */
-
-function Section({
-  id,
-  tone = 'plain',
-  children,
-}: {
-  id?: string;
-  /** Alternating grounds, so a long page has landmarks. */
-  tone?: 'plain' | 'card' | 'tint' | 'dark';
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      id={id}
-      className={clsx(
-        'scroll-mt-20 py-16 sm:py-24',
-        tone === 'card' && 'bg-card',
-        tone === 'tint' && 'border-y border-brand-100 bg-cream',
-        tone === 'dark' && 'relative overflow-hidden bg-brand-800 text-white',
-      )}
-    >
-      <div className={clsx('relative', BODY_BOX)}>{children}</div>
-    </section>
-  );
-}
-
-/** Eyebrow, title, lead — the same three parts at the same sizes, every time. */
-function SectionHead({
-  eyebrow,
-  title,
-  lead,
-  align = 'center',
-  tone = 'light',
-}: {
-  eyebrow: Words;
-  title: Words;
-  lead?: Words;
-  align?: 'left' | 'center';
-  tone?: 'light' | 'dark';
-}) {
-  const dark = tone === 'dark';
-  return (
-    <div className={align === 'center' ? 'mx-auto max-w-3xl text-center' : 'max-w-2xl'}>
-      <span
-        className={clsx(
-          'inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em]',
-          // The logo's red marks the label; the green carries the heading.
-          dark ? 'bg-white/15 text-white' : 'bg-accent-50 text-accent-700',
-        )}
-      >
-        <Say t={eyebrow} />
-      </span>
-      <h2 className={clsx('mt-3 text-3xl font-bold leading-tight sm:text-4xl', dark ? 'text-white' : 'text-slate-900')}>
-        <Say t={title} />
-      </h2>
-      {lead && (
-        <p className={clsx('mt-3 text-lg leading-relaxed', dark ? 'text-white/75' : 'text-slate-600')}>
-          <Say t={lead} />
-        </p>
-      )}
-    </div>
-  );
-}
-
 /** The icon a screenshot slot shows until its picture exists. */
 const SCREEN_ICONS: Record<ScreenId, (props: { className?: string }) => React.ReactElement> = {
   products: BoxIcon,
@@ -207,52 +134,11 @@ const SCREEN_ICONS: Record<ScreenId, (props: { className?: string }) => React.Re
 
 /**
  * A phone screenshot in a phone frame — the file from `SCREENS` if it has been
- * added, else the matching product-tour screenshot, else a branded tile of the
- * same shape, so the layout never changes when a picture arrives.
+ * added, else a branded tile of the same shape, so the layout never changes
+ * when a picture arrives. See `PhoneShot`.
  */
 function ScreenShot({ id, alt, label }: { id: ScreenId; alt: string; label: Words }) {
-  // The screen in each language, falling back to the English one.
-  const english = firstExisting(screenPath('en', id));
-  const byLang = LOCALES.map((lang) => ({ lang, src: firstExisting(screenPath(lang, id)) ?? english }));
-  const Icon = SCREEN_ICONS[id];
-  const picture = (src: string) => (
-    <Image
-      src={src}
-      alt={alt}
-      fill
-      quality={90}
-      sizes="(max-width: 640px) 80vw, 24rem"
-      className="object-cover object-top"
-    />
-  );
-  return (
-    <figure>
-      <PhoneFrame>
-        {english ? (
-          byLang.every((entry) => entry.src === english) ? (
-            picture(english)
-          ) : (
-            // All three in the HTML; the page's language shows one (see `Say`).
-            // Hidden ones are `display: none`, so a lazy image is never fetched.
-            byLang.map(({ lang, src }) => (
-              <span key={lang} lang={lang} data-l={lang} className="absolute inset-0">
-                {picture(src!)}
-              </span>
-            ))
-          )
-        ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-4 bg-gradient-to-b from-brand-50 via-card to-accent-50/40 px-6 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-raised">
-              <Icon className="h-8 w-8" />
-            </span>
-            <span className="text-base font-semibold text-brand-800">
-              <Say t={label} />
-            </span>
-          </div>
-        )}
-      </PhoneFrame>
-    </figure>
-  );
+  return <PhoneShot pathFor={(lang) => screenPath(lang as Locale, id)} alt={alt} label={label} Icon={SCREEN_ICONS[id]} />;
 }
 
 /** The icon on each of the smaller features. */
@@ -294,11 +180,9 @@ function StructuredData() {
         description: DESCRIPTION,
         inLanguage: ['en', 'bn', 'hi'],
         offers: {
-          '@type': 'AggregateOffer',
+          '@type': 'Offer',
           priceCurrency: 'INR',
-          lowPrice: Math.min(...prices),
-          highPrice: Math.max(...prices),
-          offerCount: prices.length,
+          price: Math.min(...prices),
         },
       },
       {
@@ -322,6 +206,7 @@ function StructuredData() {
 
 /** Where the top bar jumps to, in page order. */
 const NAV: NavItem[] = [
+  { href: '#businesses', label: LANDING.nav.businesses },
   { href: '#features', label: LANDING.nav.features },
   { href: '#videos', label: LANDING.nav.videos },
   { href: '#how', label: LANDING.nav.how },
@@ -349,50 +234,7 @@ export default function LandingPage() {
 
       {/* The logo's shop-front green. (A red-and-white awning stripe along
           its bottom edge was tried and removed on 27 Sep: it looked busy.) */}
-      <header className="sticky top-0 z-30 bg-brand-900 shadow-raised">
-        <div className={HEADER_BOX}>
-          <Link href="/" aria-label={`${BRAND_NAME} — home`} className="inline-flex shrink-0 items-center gap-2.5">
-            <span className="inline-flex rounded-xl bg-white p-1">
-              <Image
-                src={BRAND_LOGO.master}
-                alt=""
-                width={468}
-                height={468}
-                priority
-                sizes="40px"
-                className="h-9 w-9 sm:h-10 sm:w-10"
-              />
-            </span>
-            <span className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
-              {BRAND_WORDMARK.head}
-              <span className="text-accent-400">{BRAND_WORDMARK.tail}</span>
-            </span>
-          </Link>
-          <SectionNav items={NAV} className="ml-auto hidden items-center gap-1 lg:flex" />
-          <div className="ml-auto flex items-center gap-2 lg:ml-4">
-            {/* The language switch lives here now, not in the hero. On a phone
-                it is inside the menu. */}
-            <div className="hidden sm:block">
-              <LangSelect />
-            </div>
-            <Link
-              href="/admin"
-              className="hidden min-h-10 items-center rounded-xl px-3 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white sm:inline-flex"
-            >
-              <Say t={LANDING.adminSignIn} />
-            </Link>
-            {whatsapp && (
-              <a
-                href={whatsapp}
-                className="hidden min-h-10 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700 sm:inline-flex"
-              >
-                <WhatsAppIcon className="h-4 w-4" />
-                <Say t={LANDING.getYourShop} />
-              </a>
-            )}
-          </div>
-        </div>
-      </header>
+      <LandingHeader nav={NAV} whatsapp={whatsapp} />
 
       <main className="flex-1">
         {/* ==================================================================
@@ -489,10 +331,23 @@ export default function LandingPage() {
         </div>
 
         {/* ==================================================================
+            FOR EVERY KIND OF SHOP — each card opens that business's own page.
+            Halkhata is not a grocery app; this is where the page says so.
+            ================================================================== */}
+        <Section id="businesses">
+          <SectionHead
+            eyebrow={LANDING.businesses.eyebrow}
+            title={LANDING.businesses.title}
+            lead={LANDING.businesses.lead}
+          />
+          <BusinessGrid className="mt-12" />
+        </Section>
+
+        {/* ==================================================================
             FEATURES — one band each: the words on one side, the screen on the
             other, alternating so the page reads as a walk through the app.
             ================================================================== */}
-        <Section id="features">
+        <Section id="features" tone="card">
           <SectionHead
             eyebrow={LANDING.features.eyebrow}
             title={LANDING.features.title}
@@ -632,9 +487,10 @@ export default function LandingPage() {
             ================================================================== */}
         <Section id="plans">
           <SectionHead eyebrow={LANDING.plans.eyebrow} title={LANDING.plans.title} lead={LANDING.plans.lead} />
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {/* ONE PLAN (2026-09-27). The card, and beside it the one other
+              answer there is: a small counter can ask for a custom price. */}
+          <div className="mx-auto mt-12 grid max-w-5xl items-stretch gap-5 lg:grid-cols-[1.35fr_1fr]">
             {plans.map((plan) => {
-              const popular = plan.id === 'PRO';
               const year = yearLine(
                 yearPrice(plan.id).toLocaleString('en-IN'),
                 yearSaving(plan.id).toLocaleString('en-IN'),
@@ -642,45 +498,60 @@ export default function LandingPage() {
               return (
                 <div
                   key={plan.id}
-                  className={clsx(
-                    'relative flex flex-col rounded-2xl p-5',
-                    popular
-                      ? 'bg-brand-600 text-white shadow-float lg:-my-3 lg:py-8'
-                      : 'border border-brand-100 bg-card shadow-raised',
-                  )}
+                  className="relative flex flex-col rounded-3xl bg-brand-600 p-6 text-white shadow-float sm:p-8"
                 >
-                  {popular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent-600 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-raised">
-                      <Say t={LANDING.plans.popular} />
-                    </span>
-                  )}
-                  <h3 className={clsx('font-bold', popular ? 'text-white' : 'text-slate-900')}>{plan.name}</h3>
-                  <p className={clsx('mt-2 text-4xl font-bold tabular-nums', popular ? 'text-white' : 'text-slate-900')}>
+                  <span className="absolute -top-3 left-6 whitespace-nowrap rounded-full bg-accent-600 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-raised">
+                    <Say t={LANDING.plans.popular} />
+                  </span>
+                  <h3 className="text-lg font-bold text-white">{plan.name}</h3>
+                  <p className="mt-2 text-5xl font-bold tabular-nums text-white">
                     &#8377;{plan.price}
-                    <span className={clsx('text-sm font-normal', popular ? 'text-white/70' : 'text-slate-500')}>
+                    <span className="text-base font-normal text-white/75">
                       <Say t={LANDING.plans.perMonth} />
                     </span>
                   </p>
-                  <p className={clsx('mt-2 text-sm font-bold tabular-nums', popular ? 'text-brand-100' : 'text-brand-700')}>
+                  <p className="mt-2 text-sm font-bold tabular-nums text-brand-100">
                     <Say t={year.price} />
-                    <span className={clsx('font-normal', popular ? 'text-white/70' : 'text-slate-500')}>
+                    <span className="font-normal text-white/75">
                       <Say t={year.save} />
                     </span>
                   </p>
-                  <p
-                    className={clsx(
-                      'mt-3 border-t pt-3 text-sm font-bold',
-                      popular ? 'border-white/20 text-white' : 'border-brand-100 text-slate-900',
-                    )}
-                  >
+                  <p className="mt-4 border-t border-white/20 pt-4 text-base font-bold text-white">
                     <Say t={planItemsLine(plan.id)} />
+                    <span className="font-normal text-white/80">
+                      {' · '}
+                      <Say t={planTagline(plan.id)} />
+                    </span>
                   </p>
-                  <p className={clsx('mt-1 text-base', popular ? 'text-white/80' : 'text-slate-500')}>
-                    <Say t={planTagline(plan.id)} />
-                  </p>
+                  <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
+                    {PLAN_INCLUDES.map((line) => (
+                      <li key={line.en} className="flex gap-2 text-sm leading-snug text-white/90">
+                        <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-100" />
+                        <Say t={line} />
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               );
             })}
+
+            <div className="flex flex-col rounded-3xl border border-brand-100 bg-card p-6 shadow-raised sm:p-8">
+              <h3 className="text-lg font-bold text-slate-900">
+                <Say t={LANDING.plans.customTitle} />
+              </h3>
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
+                <Say t={LANDING.plans.customBody} />
+              </p>
+              {whatsapp && (
+                <a
+                  href={whatsapp}
+                  className="mt-6 inline-flex items-center justify-center gap-2 self-start rounded-xl border border-brand-200 bg-card px-5 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50"
+                >
+                  <WhatsAppIcon className="h-4 w-4" />
+                  <Say t={LANDING.plans.customCta} />
+                </a>
+              )}
+            </div>
           </div>
         </Section>
 
