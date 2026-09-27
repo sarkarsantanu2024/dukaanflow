@@ -39,7 +39,10 @@ function attentionFor(
     return `No items after ${daysOld} days — owner may need help`;
   }
 
-  if (shop._count.items >= state.itemLimit) return 'Catalogue full — needs a bigger plan';
+  // Only a custom deal carries an item limit; the standard plan has none.
+  if (!state.plan.unlimited && shop._count.items >= state.itemLimit) {
+    return 'Catalogue full — at its custom item limit';
+  }
   return null;
 }
 
@@ -122,7 +125,8 @@ export default async function AdminDashboard() {
       planState,
       attention: attentionFor(shop, state),
       itemCount: shop._count.items,
-      itemLimit: state.itemLimit,
+      // Null on the standard plan, which has no limit to show.
+      itemLimit: state.plan.unlimited ? null : state.itemLimit,
       orderCount: shop._count.orders,
       hasPin: Boolean(shop.ownerPinHash),
       pinSetAt: shop.ownerPinSetAt ? formatDay(shop.ownerPinSetAt) : null,

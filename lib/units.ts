@@ -37,6 +37,17 @@ const BY_TYPE: Record<ShopType, string[]> = {
   BAKERY: ['1 pc', '1 packet', '1 box', '500 g', '1 kg', '250 g', '6 pc'],
   HOME_KITCHEN: [...SERVING, '1 pc', '1 packet'],
   OTHER: [...WEIGHT, ...VOLUME, ...COUNT, ...PACK, ...SERVING],
+  STREET_FOOD: [...SERVING, '1 pc', '6 pc', '1 packet', '100 g'],
+  SWEET_SHOP: ['1 pc', '250 g', '500 g', '1 kg', '100 g', '1 box', '1 bowl'],
+  // The sabzi seller weighs everything, and sells greens by the bundle.
+  FRUIT_VEG: ['1 kg', '500 g', '250 g', '2 kg', '100 g', '1 pc', '1 dozen', '1 bundle'],
+  DAIRY: ['500 ml', '1 l', '200 ml', '250 g', '500 g', '400 g', '1 packet', '6 pc'],
+  MEAT_FISH: ['1 kg', '500 g', '250 g', '750 g', '1.5 kg', '2 kg', '6 pc', '1 pc'],
+  STATIONERY: ['1 pc', '1 packet', '1 box', '10 pc', '1 dozen'],
+  COSMETICS: ['1 pc', '1 bottle', '1 packet', '50 ml', '100 ml', '200 ml', '100 g'],
+  HARDWARE: ['1 pc', '1 packet', '1 box', '1 kg', '500 g', '1 l'],
+  PUJA_FLOWER: ['1 pc', '1 bundle', '10 pc', '250 g', '100 g', '1 packet'],
+  GARMENTS: ['1 pc', '2 pc', '3 pc', '1 packet'],
 };
 
 export function unitsFor(type: ShopType): string[] {

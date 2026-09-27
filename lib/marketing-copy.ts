@@ -1,6 +1,15 @@
 import { BRAND_NAME } from './brand';
 import type { Locale } from './i18n';
-import { AUTO_PAUSE_DAYS, LISTING_PAISE_PER_ITEM, PLAN_SPECS, TRIAL_DAYS, planItems, type Plan } from './plans';
+import {
+  AUTO_PAUSE_DAYS,
+  LISTING_PAISE_PER_ITEM,
+  PLAN_SPECS,
+  STANDARD_PRICE,
+  TRIAL_DAYS,
+  planItems,
+  type Plan,
+} from './plans';
+import { READY_ITEMS } from './starter-catalogue';
 
 /**
  * The words on the public landing page, in English, Bengali and Hindi.
@@ -13,7 +22,11 @@ import { AUTO_PAUSE_DAYS, LISTING_PAISE_PER_ITEM, PLAN_SPECS, TRIAL_DAYS, planIt
  * jokes — one idea per line, the benefit first. All of it is original writing
  * for this product. English is the default and the one search engines index
  * first, so it carries the terms people search for: kirana, grocery store,
- * billing, khata, udhaar, QR code, WhatsApp.
+ * restaurant, sweet shop, local shop, billing, khata, udhaar, QR code, WhatsApp.
+ *
+ * NOT A GROCERY APP (2026-09-27). Halkhata is for every kind of local business
+ * — see `lib/business-types.ts`. Lines here speak to "your shop" and name the
+ * grocery store only as one example among several.
  *
  * NOTHING ASPIRATIONAL. Every line is something a shop can do today; a feature
  * earns a sentence here when it ships, not before.
@@ -137,9 +150,9 @@ export const FEATURES: Feature[] = [
         hi: 'पैकेट की फ़ोटो लीजिए — ऐप ब्रांड और पैक साइज़ पढ़ लेता है',
       },
       {
-        en: 'Choose from 500+ common grocery items, named in three languages',
-        bn: '৫০০+ চেনা মুদির জিনিস থেকে বেছে নিন, তিন ভাষায় নাম সমেত',
-        hi: '500+ आम किराना सामान में से चुनिए, तीन भाषाओं में नाम के साथ',
+        en: `Choose from ${READY_ITEMS}+ ready-made items for your kind of shop, named in three languages — free`,
+        bn: `আপনার দোকানের ধরন অনুযায়ী ${READY_ITEMS}+ তৈরি জিনিস থেকে বেছে নিন, তিন ভাষায় নাম সমেত — বিনামূল্যে`,
+        hi: `अपनी दुकान के हिसाब से ${READY_ITEMS}+ तैयार सामान में से चुनिए, तीन भाषाओं में नाम के साथ — मुफ़्त`,
       },
       {
         en: 'Sell by kilo, litre, packet or piece — including loose quantities like 250 g',
@@ -455,9 +468,21 @@ export const FAQ: { q: Words; a: Words }[] = [
       hi: `कौन-सी दुकानें ${BRAND_NAME} इस्तेमाल कर सकती हैं?`,
     },
     a: {
-      en: 'Grocery and kirana stores, bakeries, restaurants, tea stalls, home kitchens, tiffin services and other local shops.',
-      bn: 'মুদি ও কিরানা দোকান, বেকারি, রেস্তোরাঁ, চায়ের দোকান, বাড়ির রান্নাঘর, টিফিন সার্ভিস আর অন্যান্য স্থানীয় দোকান।',
-      hi: 'किराना और ग्रॉसरी स्टोर, बेकरी, रेस्टोरेंट, चाय की दुकान, होम किचन, टिफ़िन सर्विस और दूसरी लोकल दुकानें।',
+      en: 'Any local business that sells to nearby customers: grocery stores, restaurants, street-food counters, tea stalls, sweet shops, bakeries, vegetable and fruit sellers, dairies, meat and fish shops, stationery and xerox shops, cosmetics stores, hardware shops, flower and puja shops, garment shops and home kitchens.',
+      bn: 'কাছের গ্রাহকদের কাছে বিক্রি করে এমন যে কোনও স্থানীয় ব্যবসা: মুদির দোকান, রেস্তোরাঁ, খাবারের কাউন্টার, চায়ের দোকান, মিষ্টির দোকান, বেকারি, সবজি ও ফলের দোকান, দুধের দোকান, মাছ-মাংসের দোকান, স্টেশনারি ও জেরক্স, প্রসাধনী, হার্ডওয়্যার, ফুল ও পুজোর দোকান, জামাকাপড়ের দোকান আর বাড়ির রান্না।',
+      hi: 'पास के ग्राहकों को बेचने वाला कोई भी लोकल व्यापार: किराना स्टोर, रेस्टोरेंट, खाने के काउंटर, चाय की दुकान, मिठाई की दुकान, बेकरी, सब्ज़ी और फल की दुकान, दूध की दुकान, मीट और मछली की दुकान, स्टेशनरी और ज़ेरॉक्स, कॉस्मेटिक्स, हार्डवेयर, फूल और पूजा सामग्री, कपड़ों की दुकान और होम किचन।',
+    },
+  },
+  {
+    q: {
+      en: 'How much does it cost?',
+      bn: 'খরচ কত?',
+      hi: 'कितना खर्च है?',
+    },
+    a: {
+      en: `One plan: ₹${STANDARD_PRICE} a month, with every feature and unlimited products. Paying for a year costs 10 months. A very small counter selling only a few items can ask us for a lower custom price.`,
+      bn: `একটাই প্ল্যান: মাসে ₹${STANDARD_PRICE}, সব সুবিধা আর যত খুশি জিনিস। এক বছরের জন্য দিলে লাগে ১০ মাসের দাম। অল্প কয়েকটা জিনিসের খুব ছোট কাউন্টার হলে কম দামের জন্য আমাদের বলুন।`,
+      hi: `एक ही प्लान: महीने का ₹${STANDARD_PRICE}, हर सुविधा और असीमित सामान। साल भर का एक साथ देने पर 10 महीने का दाम। कुछ ही सामान वाला बहुत छोटा काउंटर हो तो कम दाम के लिए हमसे कहिए।`,
     },
   },
   {
@@ -550,37 +575,26 @@ export const FAQ: { q: Words; a: Words }[] = [
 /* Plans                                                              */
 /* ------------------------------------------------------------------ */
 
-const PLAN_TAGLINES: Record<Plan, Words> = {
-  FREE: {
-    en: 'For tea stalls and small counters',
-    bn: 'চায়ের দোকান আর ছোট কাউন্টারের জন্য',
-    hi: 'चाय की दुकान और छोटे काउंटर के लिए',
-  },
-  STARTER: {
-    en: 'For everyday grocery stores',
-    bn: 'রোজকার মুদি দোকানের জন্য',
-    hi: 'रोज़मर्रा की किराना दुकान के लिए',
-  },
-  PRO: {
-    en: 'For well-stocked kirana stores',
-    bn: 'ভরা মুদি দোকানের জন্য',
-    hi: 'भरे-पूरे किराना स्टोर के लिए',
-  },
-  EX: {
-    en: 'For large stores and restaurants',
-    bn: 'বড় দোকান আর রেস্তোরাঁর জন্য',
-    hi: 'बड़े स्टोर और रेस्टोरेंट के लिए',
-  },
-  ENTERPRISE: {
-    en: 'For wholesalers and multi-outlet businesses',
-    bn: 'পাইকারি আর একাধিক দোকানের ব্যবসার জন্য',
-    hi: 'थोक और कई दुकानों वाले व्यापार के लिए',
-  },
+/** One plan, so one line — for any kind of shop, of any size. */
+const PLAN_TAGLINE: Words = {
+  en: 'For any kind of shop, of any size',
+  bn: 'যে কোনও ধরনের, যে কোনও মাপের দোকানের জন্য',
+  hi: 'किसी भी तरह की, किसी भी आकार की दुकान के लिए',
 };
 
-export function planTagline(plan: Plan): Words {
-  return PLAN_TAGLINES[plan];
+export function planTagline(_plan: Plan): Words {
+  return PLAN_TAGLINE;
 }
+
+/** What the one plan includes, in the reader's language. */
+export const PLAN_INCLUDES: Words[] = [
+  { en: 'Your own online store and QR code', bn: 'নিজের অনলাইন দোকান আর QR কোড', hi: 'अपनी ऑनलाइन दुकान और QR कोड' },
+  { en: 'Unlimited orders, with a loud alert for each', bn: 'যত খুশি অর্ডার, প্রতিটায় জোরে আওয়াজ', hi: 'असीमित ऑर्डर, हर एक पर तेज़ आवाज़' },
+  { en: 'Counter billing and bills on WhatsApp', bn: 'কাউন্টারে বিল আর হোয়াটসঅ্যাপে বিল', hi: 'काउंटर बिलिंग और व्हाट्सएप पर बिल' },
+  { en: 'Digital khata with payment reminders', bn: 'তাগাদা সহ ডিজিটাল খাতা', hi: 'भुगतान की याद के साथ डिजिटल खाता' },
+  { en: 'Stock, restock list and daily takings', bn: 'স্টক, মাল তোলার তালিকা আর দিনের হিসাব', hi: 'स्टॉक, माल की लिस्ट और दिन का हिसाब' },
+  { en: 'English, Bengali and Hindi, with voice', bn: 'ইংরেজি, বাংলা আর হিন্দি, মুখে বলার সুবিধা সমেত', hi: 'अंग्रेज़ी, बांग्ला और हिंदी, बोलकर चलाने की सुविधा के साथ' },
+];
 
 /** "300 products", or the unlimited plan's word for it. */
 export function planItemsLine(plan: Plan): Words {
@@ -614,6 +628,7 @@ export const LANDING = {
     how: { en: 'How it works', bn: 'কীভাবে শুরু', hi: 'कैसे शुरू करें' },
     plans: { en: 'Pricing', bn: 'দাম', hi: 'कीमत' },
     faq: { en: 'FAQ', bn: 'প্রশ্ন', hi: 'सवाल' },
+    businesses: { en: 'Shops', bn: 'দোকান', hi: 'दुकानें' },
     /** What a screen reader calls the list of section links. */
     label: { en: 'Sections of this page', bn: 'এই পাতার অংশগুলো', hi: 'इस पेज के हिस्से' },
   },
@@ -627,9 +642,9 @@ export const LANDING = {
 
   hero: {
     eyebrow: {
-      en: 'Shop management app for kirana and local stores',
-      bn: 'মুদি ও স্থানীয় দোকানের জন্য শপ ম্যানেজমেন্ট অ্যাপ',
-      hi: 'किराना और लोकल दुकानों के लिए शॉप मैनेजमेंट ऐप',
+      en: 'Shop management app for every local business',
+      bn: 'প্রতিটা স্থানীয় ব্যবসার জন্য শপ ম্যানেজমেন্ট অ্যাপ',
+      hi: 'हर लोकल व्यापार के लिए शॉप मैनेजमेंट ऐप',
     },
     headline: {
       en: 'Orders, khata and billing — your whole shop on one phone',
@@ -662,8 +677,12 @@ export const LANDING = {
     },
     {
       accent: false,
-      value: { en: '500+', bn: '500+', hi: '500+' },
-      label: { en: 'Ready-made grocery items', bn: 'তৈরি মুদির জিনিস', hi: 'तैयार किराना सामान' },
+      value: { en: `${READY_ITEMS}+`, bn: `${READY_ITEMS}+`, hi: `${READY_ITEMS}+` },
+      label: {
+        en: 'Ready-made items, free for every shop',
+        bn: 'তৈরি জিনিস, প্রতিটা দোকানের জন্য বিনামূল্যে',
+        hi: 'तैयार सामान, हर दुकान के लिए मुफ़्त',
+      },
     },
     {
       accent: false,
@@ -685,10 +704,65 @@ export const LANDING = {
       hi: 'दुकान की हर ज़रूरत, एक ही ऐप में',
     },
     lead: {
-      en: 'Every plan includes every feature. Plans differ only by how many products you list.',
-      bn: 'প্রতিটা প্ল্যানে সব সুবিধা আছে। তফাত শুধু কতগুলো জিনিস রাখতে পারবেন তাতে।',
-      hi: 'हर प्लान में हर सुविधा है। फ़र्क़ सिर्फ़ इतना कि कितना सामान रख सकते हैं।',
+      en: 'One plan with every feature and unlimited products.',
+      bn: 'একটাই প্ল্যান — সব সুবিধা আর যত খুশি জিনিস।',
+      hi: 'एक ही प्लान — हर सुविधा और असीमित सामान।',
     },
+  },
+
+  businesses: {
+    eyebrow: { en: 'For every kind of shop', bn: 'সব ধরনের দোকানের জন্য', hi: 'हर तरह की दुकान के लिए' },
+    title: {
+      en: 'Built for your kind of business',
+      bn: 'আপনার ধরনের ব্যবসার জন্য তৈরি',
+      hi: 'आपके तरह के व्यापार के लिए बना',
+    },
+    lead: {
+      en: 'Each kind of shop gets its own ready-made item list, units and screens. Pick yours to see how it works.',
+      bn: 'প্রতিটা ধরনের দোকান পায় নিজের তৈরি জিনিসের তালিকা, মাপ আর স্ক্রিন। আপনারটা বেছে দেখুন কীভাবে কাজ করে।',
+      hi: 'हर तरह की दुकान को मिलती है अपनी तैयार सामान की लिस्ट, नाप और स्क्रीन। अपनी चुनिए और देखिए कैसे काम करता है।',
+    },
+    see: { en: 'See how it works', bn: 'কীভাবে কাজ করে দেখুন', hi: 'देखिए कैसे काम करता है' },
+  },
+
+  /** The page for one kind of business, at `/<slug>`. */
+  business: {
+    back: { en: 'All kinds of shop', bn: 'সব ধরনের দোকান', hi: 'सभी तरह की दुकानें' },
+    /** The page's own links in the top bar — short, so the bar fits. */
+    navItems: { en: 'Items', bn: 'জিনিস', hi: 'सामान' },
+    navScreens: { en: 'Screens', bn: 'স্ক্রিন', hi: 'स्क्रीन' },
+    readyTitle: {
+      en: 'Ready-made items for your shop',
+      bn: 'আপনার দোকানের জন্য তৈরি জিনিস',
+      hi: 'आपकी दुकान के लिए तैयार सामान',
+    },
+    readyLead: {
+      en: 'Tick what you sell and correct the prices. Every name is already in English, Bengali and Hindi.',
+      bn: 'যা বিক্রি করেন তাতে টিক দিন আর দাম ঠিক করুন। প্রতিটা নাম আগে থেকেই ইংরেজি, বাংলা আর হিন্দিতে।',
+      hi: 'जो बेचते हैं उस पर टिक कीजिए और दाम ठीक कीजिए। हर नाम पहले से अंग्रेज़ी, बांग्ला और हिंदी में है।',
+    },
+    readyCount: {
+      en: 'items ready to add, free',
+      bn: 'টি জিনিস যোগ করার জন্য তৈরি, বিনামূল্যে',
+      hi: 'सामान जोड़ने के लिए तैयार, मुफ़्त',
+    },
+    screensTitle: {
+      en: 'See it in a real shop',
+      bn: 'আসল দোকানে দেখুন',
+      hi: 'असली दुकान में देखिए',
+    },
+    screensLead: {
+      en: 'Screens from our demonstration shop. Open it yourself and try ordering.',
+      bn: 'আমাদের ডেমো দোকানের স্ক্রিন। নিজে খুলে অর্ডার দিয়ে দেখুন।',
+      hi: 'हमारी डेमो दुकान की स्क्रीन। खुद खोलकर ऑर्डर करके देखिए।',
+    },
+    openDemo: { en: 'Open the demo shop', bn: 'ডেমো দোকান খুলুন', hi: 'डेमो दुकान खोलिए' },
+    screens: {
+      storefront: { en: 'What your customers see', bn: 'গ্রাহক যা দেখেন', hi: 'ग्राहक क्या देखते हैं' },
+      products: { en: 'Your item list', bn: 'আপনার জিনিসের তালিকা', hi: 'आपकी सामान की सूची' },
+      billing: { en: 'Counter billing', bn: 'কাউন্টারে বিল', hi: 'काउंटर बिलिंग' },
+    },
+    alsoTitle: { en: 'Everything else is included', bn: 'বাকি সবকিছুও আছে', hi: 'बाकी सब कुछ भी शामिल है' },
   },
 
   more: {
@@ -745,12 +819,23 @@ export const LANDING = {
       hi: 'महीने का एक ही दाम। कोई कमीशन नहीं।',
     },
     lead: {
-      en: `Start with a free ${TRIAL_DAYS}-day trial of the top plan. No advance payment.`,
-      bn: `সবচেয়ে বড় প্ল্যানে ${TRIAL_DAYS} দিন বিনামূল্যে শুরু করুন। আগাম টাকা লাগে না।`,
-      hi: `सबसे बड़े प्लान पर ${TRIAL_DAYS} दिन मुफ़्त शुरू कीजिए। कोई एडवांस नहीं।`,
+      en: `One plan with everything. Start with a free ${TRIAL_DAYS}-day trial — no advance payment.`,
+      bn: `একটাই প্ল্যান, সব কিছু সমেত। ${TRIAL_DAYS} দিন বিনামূল্যে শুরু করুন — আগাম টাকা লাগে না।`,
+      hi: `एक ही प्लान, सब कुछ शामिल। ${TRIAL_DAYS} दिन मुफ़्त शुरू कीजिए — कोई एडवांस नहीं।`,
     },
-    popular: { en: 'Most popular', bn: 'সবচেয়ে জনপ্রিয়', hi: 'सबसे लोकप्रिय' },
+    popular: { en: 'Everything included', bn: 'সব কিছু সমেত', hi: 'सब कुछ शामिल' },
     perMonth: { en: '/month', bn: '/মাস', hi: '/महीना' },
+    customTitle: {
+      en: 'A small counter?',
+      bn: 'ছোট কাউন্টার?',
+      hi: 'छोटा काउंटर?',
+    },
+    customBody: {
+      en: 'Selling only a handful of items — a few curries and roti, or just tea? Ask us for a custom price, from ₹99 a month.',
+      bn: 'মাত্র কয়েকটা জিনিস বেচেন — কয়েকটা তরকারি আর রুটি, বা শুধু চা? কম দামের জন্য আমাদের বলুন, মাসে ₹৯৯ থেকে।',
+      hi: 'सिर्फ़ कुछ ही सामान बेचते हैं — कुछ सब्ज़ियाँ और रोटी, या सिर्फ़ चाय? कम दाम के लिए हमसे कहिए, महीने के ₹99 से।',
+    },
+    customCta: { en: 'Ask on WhatsApp', bn: 'হোয়াটসঅ্যাপে জিজ্ঞেস করুন', hi: 'व्हाट्सएप पर पूछिए' },
   },
 
   faq: {

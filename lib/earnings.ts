@@ -72,7 +72,7 @@ export async function earnings(monthsBack = 12): Promise<EarningsSummary> {
     // What is actually still running, for the recurring figure.
     prisma.shop.findMany({
       where: { subscriptionStatus: 'ACTIVE', isDemo: false },
-      select: { plan: true },
+      select: { plan: true, customPricePaise: true },
     }),
   ]);
 
@@ -107,7 +107,8 @@ export async function earnings(monthsBack = 12): Promise<EarningsSummary> {
   // above: a demo shop takes no money, so it cannot distort what was earned,
   // but it would inflate what is expected next month.
   const monthlyRecurringPaise = activeShops.reduce(
-    (sum, shop) => sum + (PLAN_PRICE_PAISE[shop.plan] ?? 0),
+    // A shop on a custom price is worth that price, not the standard one.
+    (sum, shop) => sum + (shop.customPricePaise ?? PLAN_PRICE_PAISE[shop.plan] ?? 0),
     0,
   );
 

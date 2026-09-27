@@ -1,3 +1,4 @@
+import { BUSINESSES } from '@/lib/business-types';
 import type { MetadataRoute } from 'next';
 import { baseUrl } from '@/lib/qr';
 
@@ -32,7 +33,15 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/pricing', '/privacy', '/terms', '/refund', '/contact'],
+        allow: [
+          '/',
+          '/pricing',
+          '/privacy',
+          '/terms',
+          '/refund',
+          '/contact',
+          ...BUSINESSES.map((business) => `/${business.slug}`),
+        ],
         disallow: ['/owner/', '/admin/', '/track/', '/join/', '/shop/', '/api/'],
       },
     ],

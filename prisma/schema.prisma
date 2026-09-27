@@ -26,6 +26,19 @@ enum ShopType {
   HOME_KITCHEN
   BAKERY
   OTHER
+  /// Appended 2026-09-27, never inserted — Postgres adds enum values at the
+  /// end whatever this file says. Halkhata is for every local business, not
+  /// only groceries; each of these has its own starter list and landing page.
+  STREET_FOOD
+  SWEET_SHOP
+  FRUIT_VEG
+  DAIRY
+  MEAT_FISH
+  STATIONERY
+  COSMETICS
+  HARDWARE
+  PUJA_FLOWER
+  GARMENTS
 }
 
 enum OrderType {

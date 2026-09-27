@@ -58,13 +58,14 @@ export default function TermsPage() {
 
       <h2>Payment, and what happens when it stops</h2>
       <p>
-        Plans are priced per shop by how many items you list, and are set out on the{' '}
-        <a href="/#plans">pricing section</a>, which is the only place prices are stated.{' '}
-        <strong>Prices and plan limits can change.</strong> A change will not alter a period you
+        There is one plan, priced per shop per month with no limit on items, set out on the{' '}
+        <a href="/#plans">pricing section</a>, which is the only place prices are stated. A
+        shop may instead agree a custom price with us, which can carry an item limit.{' '}
+        <strong>Prices can change.</strong> A change will not alter a period you
         have already paid for, and we will tell shopkeepers in the app before a new price applies
         to them.
       </p>
-      <p>A new shop starts on {TRIAL_DAYS} days of the Pro plan, free, with nothing to pay up front.</p>
+      <p>A new shop starts with {TRIAL_DAYS} days free, with every feature and nothing to pay up front.</p>
       <p>When a paid period ends and is not renewed, the service steps down rather than stopping:</p>
       <ul>
         <li>

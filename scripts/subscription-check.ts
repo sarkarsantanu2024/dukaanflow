@@ -13,11 +13,16 @@
 import {
   AUTO_PAUSE_DAYS,
   GRACE_DAYS,
+  PLAN_ORDER,
   PLAN_SPECS,
+  STANDARD_PLAN,
+  STANDARD_PRICE,
   TRIAL_PLAN,
   amountForMonthsPaise,
   entitlement,
   listingChargePaise,
+  monthlyPaiseFor,
+  planFor,
   priceForMonths,
   standingLabel,
   type ShopBilling,
@@ -70,8 +75,8 @@ function shop(overrides: Partial<ShopBilling>): ShopBilling {
   // The screenshot: a new shop (stored PRO, TRIALING) whose trial ended yesterday.
   const e = entitlement(shop({ trialEndsAt: daysFromNow(-1) }), NOW);
   check('trial ended yesterday: not trial any more', e.standing, 'overdue');
-  check('trial ended yesterday: back on stored plan', e.plan.name, 'Pro');
-  check('trial ended yesterday: stored plan limit', e.itemLimit, 300);
+  check('trial ended yesterday: the standard plan', e.plan.name, 'Standard');
+  check('trial ended yesterday: no item limit', e.plan.unlimited, true);
   check('trial ended yesterday: still in grace', e.inGrace, true);
   check('trial ended yesterday: can still edit', e.canEdit, true);
   check('trial ended yesterday: shop page still up', e.autoPaused, false);
@@ -97,8 +102,9 @@ function shop(overrides: Partial<ShopBilling>): ShopBilling {
     NOW,
   );
   check('paid: standing', e.standing, 'active');
-  check('paid: plan', e.plan.name, 'Basic');
-  check('paid: limit', e.itemLimit, 20);
+  check('paid: plan', e.plan.name, 'Standard');
+  check('paid: unlimited', e.plan.unlimited, true);
+  check('paid: price', e.plan.price, STANDARD_PRICE);
   check('paid: label', standingLabel(e.standing, false), 'Paid');
 }
 
@@ -141,7 +147,36 @@ function shop(overrides: Partial<ShopBilling>): ShopBilling {
   check('custom deal: name', after.plan.name, 'Kirana deal');
   check('custom deal: limit', after.itemLimit, 60);
   check('custom deal: price', after.plan.price, 150);
+  check('custom deal with a limit is not unlimited', after.plan.unlimited ?? false, false);
+
+  // "₹99 for four items" — the food counter the flat plan was designed around.
+  const counter = entitlement(
+    shop({ customPricePaise: 9900, customItemLimit: 4, customPlanName: 'Food counter', subscriptionStatus: 'ACTIVE', currentPeriodEnd: daysFromNow(3) }),
+    NOW,
+  );
+  check('food counter: price', counter.plan.price, 99);
+  check('food counter: limit', counter.itemLimit, 4);
+
+  // A custom price with no limit keeps the standard plan's: none.
+  const noLimit = entitlement(
+    shop({ customPricePaise: 15000, customItemLimit: null, subscriptionStatus: 'ACTIVE', currentPeriodEnd: daysFromNow(3) }),
+    NOW,
+  );
+  check('custom price, no limit: unlimited', noLimit.plan.unlimited, true);
+  check('custom price, no limit: standard name', noLimit.plan.name, 'Standard');
 }
+
+/* ---------------- One plan ---------------- */
+
+check('one plan for sale', PLAN_ORDER, [STANDARD_PLAN]);
+check('trial plan is the standard plan', TRIAL_PLAN, STANDARD_PLAN);
+check('flat price is 199', STANDARD_PRICE, 199);
+for (const spec of Object.values(PLAN_SPECS)) {
+  check(`${spec.id}: reads as the standard plan`, [spec.name, spec.price, spec.unlimited], ['Standard', STANDARD_PRICE, true]);
+}
+check('planFor any size is the standard plan', planFor(5000).id, STANDARD_PLAN);
+check('monthly: standard', monthlyPaiseFor(null), 19900);
+check('monthly: custom', monthlyPaiseFor(9900), 9900);
 
 /* ---------------- Dates a payment runs to ---------------- */
 
@@ -169,11 +204,11 @@ check('15 Nov + 3 months crosses the year', addMonths(new Date(2026, 10, 15), 3)
 
 /* ---------------- Prices ---------------- */
 
-check('Basic 1 month', priceForMonths('FREE', 1), 99);
-check('Basic 1 year = 10 months', priceForMonths('FREE', 12), 990);
-check('Pro 18 months = year + 6', priceForMonths('PRO', 18), 399 * 10 + 399 * 6);
-check('Business 24 months = two years', priceForMonths('EX', 24), 599 * 20);
-check('ladder paise match rupees', amountForMonthsPaise('STARTER', 1, null), 29900);
+check('1 month', priceForMonths('FREE', 1), 199);
+check('1 year = 10 months', priceForMonths('FREE', 12), 1990);
+check('18 months = year + 6', priceForMonths('PRO', 18), 199 * 10 + 199 * 6);
+check('24 months = two years', priceForMonths('EX', 24), 199 * 20);
+check('old ladder value costs the same', amountForMonthsPaise('STARTER', 1, null), 19900);
 check('custom price: 1 month', amountForMonthsPaise('FREE', 1, 15000), 15000);
 check('custom price: 1 year = 10 months', amountForMonthsPaise('FREE', 12, 15000), 150000);
 check('custom price of zero is free', amountForMonthsPaise('PRO', 3, 0), 0);

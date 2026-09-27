@@ -12,7 +12,14 @@ import { readOrderLines, type SnapshotNames } from '@/lib/order-snapshot';
 export const dynamic = 'force-dynamic';
 
 /** Shop kinds whose offer changes day to day, and only those. */
-const DAILY_OFFER_SHOPS: ShopType[] = ['HOME_KITCHEN', 'RESTAURANT', 'BAKERY', 'TEA_STALL'];
+const DAILY_OFFER_SHOPS: ShopType[] = [
+  'HOME_KITCHEN',
+  'RESTAURANT',
+  'BAKERY',
+  'TEA_STALL',
+  'STREET_FOOD',
+  'SWEET_SHOP',
+];
 
 type PageProps = {
   params: Promise<{ slug: string }>;

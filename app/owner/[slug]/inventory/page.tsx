@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { InventoryScreen } from '@/components/owner/InventoryScreen';
-import { starterCatalogue } from '@/lib/starter-catalogue';
+import { allStarterItems, starterCatalogue } from '@/lib/starter-catalogue';
 import { BRAND_NAME } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
@@ -60,10 +60,12 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
         shopName={shop.name}
         items={items}
         catalogue={starterCatalogue(shop.type)}
+        allCatalogue={allStarterItems(shop.type)}
         shopType={shop.type}
         locale={locale}
         showWelcome={welcome === '1' && items.length === 0}
         itemLimit={plan.itemLimit}
+        unlimited={plan.unlimited}
       />
     </OwnerShell>
   );

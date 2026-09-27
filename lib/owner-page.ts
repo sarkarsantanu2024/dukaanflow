@@ -81,6 +81,12 @@ export async function loadOwnerShop(slug: string) {
         subscriptionStatus: true,
         trialEndsAt: true,
         currentPeriodEnd: true,
+        // A deal agreed with this shop alone — its price, name and any item
+        // limit. Without these the owner app showed the standard plan to a
+        // shop the console had put on a custom one.
+        customPricePaise: true,
+        customItemLimit: true,
+        customPlanName: true,
       },
     }),
     prisma.item.count({ where: { shop: { slug } } }),
@@ -112,6 +118,7 @@ export async function loadOwnerShop(slug: string) {
     status: billing?.status ?? 'ACTIVE',
     itemCount: billing?.itemCount ?? 0,
     itemLimit: billing?.itemLimit ?? 25,
+    unlimited: billing?.plan.unlimited ?? false,
     canEdit: billing?.canEdit ?? true,
     trialDaysLeft: billing?.trialDaysLeft ?? null,
     // The cheapest plan that actually holds this shop's catalogue, so the
@@ -124,6 +131,7 @@ export async function loadOwnerShop(slug: string) {
       planName: billing?.plan.name ?? PLAN_SPECS.FREE.name,
       itemCount: billing?.itemCount ?? 0,
       itemLimit: billing?.itemLimit ?? 25,
+      unlimited: billing?.plan.unlimited ?? false,
       trialDaysLeft: billing?.trialDaysLeft ?? null,
       paidTo: shop.currentPeriodEnd,
     }),
@@ -181,6 +189,7 @@ function roadblockFor(
       planName: billing.plan.name,
       itemCount: billing.itemCount,
       itemLimit: billing.itemLimit,
+      unlimited: billing.plan.unlimited ?? false,
       trialDaysLeft: billing.trialDaysLeft,
       paidTo: shop.currentPeriodEnd,
     }),
@@ -203,7 +212,14 @@ function roadblockFor(
 function supportUrl(
   shopName: string,
   slug: string,
-  state: { planName: string; itemCount: number; itemLimit: number; trialDaysLeft: number | null; paidTo: Date | null },
+  state: {
+    planName: string;
+    itemCount: number;
+    itemLimit: number;
+    unlimited: boolean;
+    trialDaysLeft: number | null;
+    paidTo: Date | null;
+  },
 ): string {
   const support = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '';
   if (!support) return '';
@@ -236,7 +252,9 @@ function supportUrl(
   const text = encodeURIComponent(
     [
       `${BRAND_NAME} — ${shopName} (${slug})`,
-      `Plan: ${state.planName} · ${state.itemCount}/${state.itemLimit} items`,
+      state.unlimited
+        ? `Plan: ${state.planName} · ${state.itemCount} items`
+        : `Plan: ${state.planName} · ${state.itemCount}/${state.itemLimit} items`,
       standing,
       '',
       '', // Where the owner types. The blank line above it is the whole point.

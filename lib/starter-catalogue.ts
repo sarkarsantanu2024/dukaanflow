@@ -854,6 +854,270 @@ const HOME_KITCHEN: StarterItem[] = [
   { name: 'Sweet', nameBn: 'মিষ্টি', nameHi: 'मिठाई', unit: '1 pc', pricePaise: 2000, category: 'Extras' },
 ];
 
+/* ------------------------------------------------------------------------- *
+ * THE OTHER KINDS OF LOCAL BUSINESS (added 2026-09-27).
+ *
+ * Halkhata is not a grocery app, and a shop that has never listed a grocery
+ * item must not be made to look like one. Every category the console can pick
+ * gets its own list, so a sweet shop opens on rosogolla and sandesh, a hardware
+ * counter on nails and taps, and the five hundred grocery items stay out of
+ * sight until an owner goes looking for them under "All items".
+ *
+ * Where a grocery aisle already IS the business — the vegetable seller, the
+ * milk booth, the stationery counter — the list is that aisle taken from the
+ * grocery list plus what such a shop sells that a kirana does not, rather than
+ * a second copy that would drift. Prices are a starting point, exactly as the
+ * note at the top of this file says.
+ *
+ * Every category named here needs an entry in `CATEGORY_VOCAB` in
+ * `lib/speech.ts`, or it reaches a Bengali shop page as an English chip.
+ * ------------------------------------------------------------------------- */
+
+/** One aisle of the grocery list, for a shop whose whole business it is. */
+function groceryAisles(...categories: string[]): StarterItem[] {
+  return GROCERY.filter((item) => categories.includes(item.category));
+}
+
+/** A roadside food counter or stall: plates, snacks and a cup of something. */
+const STREET_FOOD: StarterItem[] = [
+  { name: 'Phuchka', nameBn: 'ফুচকা', nameHi: 'पानी पूरी', unit: '6 pc', pricePaise: 2000, category: 'Street Food' },
+  { name: 'Jhal Muri', nameBn: 'ঝালমুড়ি', nameHi: 'झालमुड़ी', unit: '1 packet', pricePaise: 2000, category: 'Street Food' },
+  { name: 'Papri Chaat', nameBn: 'পাপড়ি চাট', nameHi: 'पापड़ी चाट', unit: '1 plate', pricePaise: 4000, category: 'Street Food' },
+  { name: 'Aloo Tikki', nameBn: 'আলু টিক্কি', nameHi: 'आलू टिक्की', unit: '1 plate', pricePaise: 3000, category: 'Street Food' },
+  { name: 'Dahi Vada', nameBn: 'দই বড়া', nameHi: 'दही वड़ा', unit: '1 plate', pricePaise: 4000, category: 'Street Food' },
+  { name: 'Samosa', nameBn: 'সিঙাড়া', nameHi: 'समोसा', unit: '1 pc', pricePaise: 1200, category: 'Street Food' },
+  { name: 'Kachori', nameBn: 'কচুরি', nameHi: 'कचौरी', unit: '1 pc', pricePaise: 1200, category: 'Street Food' },
+  { name: 'Vada Pav', nameBn: 'বড়া পাও', nameHi: 'वड़ा पाव', unit: '1 pc', pricePaise: 2000, category: 'Street Food' },
+  { name: 'Pav Bhaji', nameBn: 'পাও ভাজি', nameHi: 'पाव भाजी', unit: '1 plate', pricePaise: 6000, category: 'Street Food' },
+  { name: 'Chole Bhature', nameBn: 'ছোলে বাটুরে', nameHi: 'छोले भटूरे', unit: '1 plate', pricePaise: 7000, category: 'Street Food' },
+  { name: 'Ghugni', nameBn: 'ঘুগনি', nameHi: 'घुगनी', unit: '1 bowl', pricePaise: 2500, category: 'Street Food' },
+  { name: 'Aloo Chop', nameBn: 'আলুর চপ', nameHi: 'आलू चॉप', unit: '1 pc', pricePaise: 1000, category: 'Street Food' },
+  { name: 'Beguni', nameBn: 'বেগুনি', nameHi: 'बैंगन पकौड़ा', unit: '1 pc', pricePaise: 1000, category: 'Street Food' },
+  { name: 'Pakora', nameBn: 'পকোড়া', nameHi: 'पकौड़ा', unit: '100 g', pricePaise: 3000, category: 'Street Food' },
+  { name: 'Veg Chowmein', nameBn: 'ভেজ চাউমিন', nameHi: 'वेज चाउमिन', unit: '1 plate', pricePaise: 5000, category: 'Street Food' },
+  { name: 'Egg Roll', nameBn: 'ডিম রোল', nameHi: 'अंडा रोल', unit: '1 pc', pricePaise: 4000, category: 'Street Food' },
+  { name: 'Maggi', nameBn: 'ম্যাগি', nameHi: 'मैगी', unit: '1 plate', pricePaise: 4000, category: 'Street Food' },
+  { name: 'Veg Sandwich', nameBn: 'ভেজ স্যান্ডউইচ', nameHi: 'वेज सैंडविच', unit: '1 pc', pricePaise: 4000, category: 'Street Food' },
+  { name: 'Bread Omelette', nameBn: 'ব্রেড অমলেট', nameHi: 'ब्रेड ऑमलेट', unit: '1 plate', pricePaise: 4000, category: 'Street Food' },
+  { name: 'Roti', nameBn: 'রুটি', nameHi: 'रोटी', unit: '1 pc', pricePaise: 800, category: 'Meals' },
+  { name: 'Paratha', nameBn: 'পরোটা', nameHi: 'पराठा', unit: '1 pc', pricePaise: 1500, category: 'Meals' },
+  { name: 'Puri Sabzi', nameBn: 'পুরি সবজি', nameHi: 'पूरी सब्ज़ी', unit: '1 plate', pricePaise: 4000, category: 'Meals' },
+  { name: 'Rice Plate', nameBn: 'ভাতের থালা', nameHi: 'चावल की थाली', unit: '1 plate', pricePaise: 5000, category: 'Meals' },
+  { name: 'Tadka', nameBn: 'তড়কা', nameHi: 'तड़का', unit: '1 plate', pricePaise: 5000, category: 'Meals' },
+  { name: 'Veg Curry', nameBn: 'সবজির তরকারি', nameHi: 'सब्ज़ी करी', unit: '1 plate', pricePaise: 4000, category: 'Meals' },
+  { name: 'Egg Curry', nameBn: 'ডিমের ঝোল', nameHi: 'अंडा करी', unit: '1 plate', pricePaise: 6000, category: 'Meals' },
+  { name: 'Chicken Curry', nameBn: 'চিকেন কারি', nameHi: 'चिकन करी', unit: '1 plate', pricePaise: 10000, category: 'Meals' },
+  { name: 'Fish Curry', nameBn: 'মাছের ঝোল', nameHi: 'मछली करी', unit: '1 plate', pricePaise: 9000, category: 'Meals' },
+  { name: 'Tea', nameBn: 'চা', nameHi: 'चाय', unit: '1 cup', pricePaise: 1000, category: 'Beverages' },
+  { name: 'Lemon Water', nameBn: 'লেবুর জল', nameHi: 'नींबू पानी', unit: '1 glass', pricePaise: 1500, category: 'Beverages' },
+  { name: 'Sugarcane Juice', nameBn: 'আখের রস', nameHi: 'गन्ने का रस', unit: '1 glass', pricePaise: 2000, category: 'Beverages' },
+  { name: 'Lassi', nameBn: 'লস্যি', nameHi: 'लस्सी', unit: '1 glass', pricePaise: 3500, category: 'Beverages' },
+  { name: 'Cold Drink', nameBn: 'ঠান্ডা পানীয়', nameHi: 'कोल्ड ड्रिंक', unit: '250 ml', pricePaise: 2000, category: 'Beverages' },
+  { name: 'Water Bottle', nameBn: 'জলের বোতল', nameHi: 'पानी की बोतल', unit: '1 l', pricePaise: 2000, category: 'Beverages' },
+];
+
+/** The mishti shop: the counter, the curd pots and the morning kachori. */
+const SWEET_SHOP: StarterItem[] = [
+  { name: 'Rasgulla', nameBn: 'রসগোল্লা', nameHi: 'रसगुल्ला', unit: '1 pc', pricePaise: 1500, category: 'Sweets' },
+  { name: 'Sandesh', nameBn: 'সন্দেশ', nameHi: 'संदेश', unit: '1 pc', pricePaise: 1500, category: 'Sweets' },
+  { name: 'Nolen Gur Sandesh', nameBn: 'নলেন গুড়ের সন্দেশ', nameHi: 'नलेन गुड़ संदेश', unit: '1 pc', pricePaise: 2000, category: 'Sweets' },
+  { name: 'Rajbhog', nameBn: 'রাজভোগ', nameHi: 'राजभोग', unit: '1 pc', pricePaise: 2500, category: 'Sweets' },
+  { name: 'Chamcham', nameBn: 'চমচম', nameHi: 'चमचम', unit: '1 pc', pricePaise: 2000, category: 'Sweets' },
+  { name: 'Pantua', nameBn: 'পান্তুয়া', nameHi: 'पंतुआ', unit: '1 pc', pricePaise: 1500, category: 'Sweets' },
+  { name: 'Langcha', nameBn: 'ল্যাংচা', nameHi: 'लैंगचा', unit: '1 pc', pricePaise: 2000, category: 'Sweets' },
+  { name: 'Gulab Jamun', nameBn: 'গোলাপ জাম', nameHi: 'गुलाब जामुन', unit: '1 pc', pricePaise: 1500, category: 'Sweets' },
+  { name: 'Kalakand', nameBn: 'কালাকাঁদ', nameHi: 'कलाकंद', unit: '250 g', pricePaise: 12000, category: 'Sweets' },
+  { name: 'Kaju Katli', nameBn: 'কাজু বরফি', nameHi: 'काजू कतली', unit: '250 g', pricePaise: 25000, category: 'Sweets' },
+  { name: 'Milk Barfi', nameBn: 'দুধের বরফি', nameHi: 'दूध की बर्फी', unit: '250 g', pricePaise: 12000, category: 'Sweets' },
+  { name: 'Besan Ladoo', nameBn: 'বেসনের লাড্ডু', nameHi: 'बेसन लड्डू', unit: '250 g', pricePaise: 10000, category: 'Sweets' },
+  { name: 'Motichoor Ladoo', nameBn: 'মতিচুরের লাড্ডু', nameHi: 'मोतीचूर लड्डू', unit: '250 g', pricePaise: 10000, category: 'Sweets' },
+  { name: 'Jalebi', nameBn: 'জিলিপি', nameHi: 'जलेबी', unit: '250 g', pricePaise: 6000, category: 'Sweets' },
+  { name: 'Peda', nameBn: 'প্যাঁড়া', nameHi: 'पेड़ा', unit: '250 g', pricePaise: 12000, category: 'Sweets' },
+  { name: 'Soan Papdi', nameBn: 'শোনপাপড়ি', nameHi: 'सोन पापड़ी', unit: '250 g', pricePaise: 8000, category: 'Sweets' },
+  { name: 'Mihidana', nameBn: 'মিহিদানা', nameHi: 'मिहीदाना', unit: '250 g', pricePaise: 8000, category: 'Sweets' },
+  { name: 'Sitabhog', nameBn: 'সীতাভোগ', nameHi: 'सीताभोग', unit: '250 g', pricePaise: 8000, category: 'Sweets' },
+  { name: 'Malpua', nameBn: 'মালপোয়া', nameHi: 'मालपुआ', unit: '1 pc', pricePaise: 1500, category: 'Sweets' },
+  { name: 'Rabri', nameBn: 'রাবড়ি', nameHi: 'रबड़ी', unit: '100 g', pricePaise: 6000, category: 'Sweets' },
+  { name: 'Payesh', nameBn: 'পায়েস', nameHi: 'खीर', unit: '1 bowl', pricePaise: 4000, category: 'Sweets' },
+  { name: 'Mishti Doi', nameBn: 'মিষ্টি দই', nameHi: 'मीठा दही', unit: '500 g', pricePaise: 9000, category: 'Dairy' },
+  { name: 'Curd', nameBn: 'দই', nameHi: 'दही', unit: '500 g', pricePaise: 6000, category: 'Dairy' },
+  { name: 'Paneer', nameBn: 'পনির', nameHi: 'पनीर', unit: '250 g', pricePaise: 11000, category: 'Dairy' },
+  { name: 'Chhana', nameBn: 'ছানা', nameHi: 'छेना', unit: '250 g', pricePaise: 9000, category: 'Dairy' },
+  { name: 'Samosa', nameBn: 'সিঙাড়া', nameHi: 'समोसा', unit: '1 pc', pricePaise: 1200, category: 'Snacks' },
+  { name: 'Kachori', nameBn: 'কচুরি', nameHi: 'कचौरी', unit: '1 pc', pricePaise: 1200, category: 'Snacks' },
+  { name: 'Nimki', nameBn: 'নিমকি', nameHi: 'निमकी', unit: '250 g', pricePaise: 5000, category: 'Snacks' },
+  { name: 'Dhokla', nameBn: 'ধোকলা', nameHi: 'ढोकला', unit: '250 g', pricePaise: 6000, category: 'Snacks' },
+  { name: 'Sweet Box', nameBn: 'মিষ্টির বাক্স', nameHi: 'मिठाई का डिब्बा', unit: '1 box', pricePaise: 25000, category: 'Sweets' },
+];
+
+/** The sabzi seller: every vegetable and fruit on the grocery list. */
+const FRUIT_VEG: StarterItem[] = groceryAisles('Vegetables', 'Fruits');
+
+/** The milk booth: the grocery list's dairy, plus the bread and eggs beside it. */
+const DAIRY: StarterItem[] = [
+  ...groceryAisles('Dairy'),
+  { name: 'Hen Egg', nameBn: 'মুরগির ডিম', nameHi: 'मुर्गी का अंडा', unit: '6 pc', pricePaise: 4200, category: 'Eggs' },
+  { name: 'Duck Egg', nameBn: 'হাঁসের ডিম', nameHi: 'बत्तख का अंडा', unit: '6 pc', pricePaise: 6000, category: 'Eggs' },
+  { name: 'Sliced Bread', nameBn: 'পাউরুটি', nameHi: 'ब्रेड', unit: '1 packet', pricePaise: 4500, category: 'Bakery' },
+];
+
+/** The chicken, mutton and fish counter, sold by weight. */
+const MEAT_FISH: StarterItem[] = [
+  { name: 'Chicken with Skin', nameBn: 'চামড়া সহ মুরগি', nameHi: 'चमड़ी वाला चिकन', unit: '1 kg', pricePaise: 18000, category: 'Chicken' },
+  { name: 'Chicken without Skin', nameBn: 'চামড়া ছাড়া মুরগি', nameHi: 'बिना चमड़ी का चिकन', unit: '1 kg', pricePaise: 24000, category: 'Chicken' },
+  { name: 'Boneless Chicken', nameBn: 'বোনলেস চিকেন', nameHi: 'बोनलेस चिकन', unit: '500 g', pricePaise: 18000, category: 'Chicken' },
+  { name: 'Chicken Leg Piece', nameBn: 'চিকেন লেগ পিস', nameHi: 'चिकन लेग पीस', unit: '500 g', pricePaise: 15000, category: 'Chicken' },
+  { name: 'Chicken Liver', nameBn: 'মুরগির মেটে', nameHi: 'चिकन कलेजी', unit: '250 g', pricePaise: 5000, category: 'Chicken' },
+  { name: 'Desi Chicken', nameBn: 'দেশি মুরগি', nameHi: 'देसी मुर्गा', unit: '1 kg', pricePaise: 45000, category: 'Chicken' },
+  { name: 'Mutton', nameBn: 'খাসির মাংস', nameHi: 'मटन', unit: '1 kg', pricePaise: 80000, category: 'Mutton' },
+  { name: 'Mutton Keema', nameBn: 'মাটন কিমা', nameHi: 'मटन कीमा', unit: '500 g', pricePaise: 42000, category: 'Mutton' },
+  { name: 'Mutton Liver', nameBn: 'খাসির মেটে', nameHi: 'मटन कलेजी', unit: '250 g', pricePaise: 20000, category: 'Mutton' },
+  { name: 'Rohu', nameBn: 'রুই মাছ', nameHi: 'रोहू मछली', unit: '1 kg', pricePaise: 26000, category: 'Fish' },
+  { name: 'Katla', nameBn: 'কাতলা মাছ', nameHi: 'कतला मछली', unit: '1 kg', pricePaise: 30000, category: 'Fish' },
+  { name: 'Hilsa', nameBn: 'ইলিশ মাছ', nameHi: 'हिलसा मछली', unit: '1 kg', pricePaise: 150000, category: 'Fish' },
+  { name: 'Pomfret', nameBn: 'পমফ্রেট', nameHi: 'पॉम्फ्रेट', unit: '1 kg', pricePaise: 60000, category: 'Fish' },
+  { name: 'Bhetki', nameBn: 'ভেটকি মাছ', nameHi: 'भेटकी मछली', unit: '1 kg', pricePaise: 50000, category: 'Fish' },
+  { name: 'Pabda', nameBn: 'পাবদা মাছ', nameHi: 'पाबदा मछली', unit: '1 kg', pricePaise: 45000, category: 'Fish' },
+  { name: 'Tangra', nameBn: 'ট্যাংরা মাছ', nameHi: 'टेंगरा मछली', unit: '1 kg', pricePaise: 40000, category: 'Fish' },
+  { name: 'Parshe', nameBn: 'পার্শে মাছ', nameHi: 'पार्शे मछली', unit: '1 kg', pricePaise: 40000, category: 'Fish' },
+  { name: 'Koi', nameBn: 'কই মাছ', nameHi: 'कवई मछली', unit: '1 kg', pricePaise: 40000, category: 'Fish' },
+  { name: 'Magur', nameBn: 'মাগুর মাছ', nameHi: 'मांगुर मछली', unit: '1 kg', pricePaise: 50000, category: 'Fish' },
+  { name: 'Bata', nameBn: 'বাটা মাছ', nameHi: 'बाटा मछली', unit: '1 kg', pricePaise: 22000, category: 'Fish' },
+  { name: 'Tilapia', nameBn: 'তেলাপিয়া মাছ', nameHi: 'तिलापिया मछली', unit: '1 kg', pricePaise: 20000, category: 'Fish' },
+  { name: 'Prawns', nameBn: 'চিংড়ি মাছ', nameHi: 'झींगा', unit: '500 g', pricePaise: 30000, category: 'Fish' },
+  { name: 'Crab', nameBn: 'কাঁকড়া', nameHi: 'केकड़ा', unit: '1 kg', pricePaise: 50000, category: 'Fish' },
+  { name: 'Hen Egg', nameBn: 'মুরগির ডিম', nameHi: 'मुर्गी का अंडा', unit: '6 pc', pricePaise: 4200, category: 'Eggs' },
+  { name: 'Duck Egg', nameBn: 'হাঁসের ডিম', nameHi: 'बत्तख का अंडा', unit: '6 pc', pricePaise: 6000, category: 'Eggs' },
+];
+
+/** The stationery counter near a school, and the photocopy machine in it. */
+const STATIONERY: StarterItem[] = [
+  ...groceryAisles('Stationery'),
+  { name: 'Ball Pen Box', nameBn: 'বল পেনের বাক্স', nameHi: 'बॉल पेन का डिब्बा', unit: '1 box', pricePaise: 10000, category: 'Stationery' },
+  { name: 'Gel Pen', nameBn: 'জেল পেন', nameHi: 'जेल पेन', unit: '1 pc', pricePaise: 1000, category: 'Stationery' },
+  { name: 'Geometry Box', nameBn: 'জ্যামিতি বাক্স', nameHi: 'ज्योमेट्री बॉक्स', unit: '1 pc', pricePaise: 8000, category: 'Stationery' },
+  { name: 'Scale', nameBn: 'স্কেল', nameHi: 'स्केल', unit: '1 pc', pricePaise: 1000, category: 'Stationery' },
+  { name: 'Register', nameBn: 'রেজিস্টার খাতা', nameHi: 'रजिस्टर', unit: '1 pc', pricePaise: 8000, category: 'Stationery' },
+  { name: 'Exam Pad', nameBn: 'এক্সাম প্যাড', nameHi: 'एग्ज़ाम पैड', unit: '1 pc', pricePaise: 6000, category: 'Stationery' },
+  { name: 'A4 Paper', nameBn: 'এ৪ কাগজ', nameHi: 'ए4 पेपर', unit: '1 packet', pricePaise: 30000, category: 'Office' },
+  { name: 'Stapler', nameBn: 'স্ট্যাপলার', nameHi: 'स्टेपलर', unit: '1 pc', pricePaise: 8000, category: 'Office' },
+  { name: 'Stapler Pins', nameBn: 'স্ট্যাপলারের পিন', nameHi: 'स्टेपलर पिन', unit: '1 box', pricePaise: 1500, category: 'Office' },
+  { name: 'Marker Pen', nameBn: 'মার্কার পেন', nameHi: 'मार्कर पेन', unit: '1 pc', pricePaise: 3000, category: 'Office' },
+  { name: 'Highlighter', nameBn: 'হাইলাইটার', nameHi: 'हाइलाइटर', unit: '1 pc', pricePaise: 3000, category: 'Office' },
+  { name: 'Calculator', nameBn: 'ক্যালকুলেটর', nameHi: 'कैलकुलेटर', unit: '1 pc', pricePaise: 25000, category: 'Office' },
+  { name: 'Scissors', nameBn: 'কাঁচি', nameHi: 'कैंची', unit: '1 pc', pricePaise: 4000, category: 'Office' },
+  { name: 'Colour Pencils', nameBn: 'রঙিন পেন্সিল', nameHi: 'रंगीन पेंसिल', unit: '1 box', pricePaise: 6000, category: 'Art & Craft' },
+  { name: 'Crayons', nameBn: 'মোম রং', nameHi: 'क्रेयॉन', unit: '1 box', pricePaise: 5000, category: 'Art & Craft' },
+  { name: 'Sketch Pens', nameBn: 'স্কেচ পেন', nameHi: 'स्केच पेन', unit: '1 box', pricePaise: 6000, category: 'Art & Craft' },
+  { name: 'Drawing Book', nameBn: 'আঁকার খাতা', nameHi: 'ड्रॉइंग बुक', unit: '1 pc', pricePaise: 4000, category: 'Art & Craft' },
+  { name: 'Water Colour', nameBn: 'জল রং', nameHi: 'वॉटर कलर', unit: '1 box', pricePaise: 8000, category: 'Art & Craft' },
+  { name: 'Photocopy', nameBn: 'ফটোকপি', nameHi: 'फ़ोटोकॉपी', unit: '1 pc', pricePaise: 200, category: 'Services' },
+  { name: 'Colour Print', nameBn: 'রঙিন প্রিন্ট', nameHi: 'कलर प्रिंट', unit: '1 pc', pricePaise: 1000, category: 'Services' },
+  { name: 'Lamination', nameBn: 'ল্যামিনেশন', nameHi: 'लेमिनेशन', unit: '1 pc', pricePaise: 3000, category: 'Services' },
+];
+
+/** The cosmetics and "fancy" store. */
+const COSMETICS: StarterItem[] = [
+  ...groceryAisles('Personal Care', 'Baby Care'),
+  { name: 'Lipstick', nameBn: 'লিপস্টিক', nameHi: 'लिपस्टिक', unit: '1 pc', pricePaise: 15000, category: 'Cosmetics' },
+  { name: 'Nail Polish', nameBn: 'নেল পলিশ', nameHi: 'नेल पॉलिश', unit: '1 pc', pricePaise: 6000, category: 'Cosmetics' },
+  { name: 'Face Wash', nameBn: 'ফেস ওয়াশ', nameHi: 'फेस वॉश', unit: '100 ml', pricePaise: 12000, category: 'Cosmetics' },
+  { name: 'Sunscreen', nameBn: 'সানস্ক্রিন', nameHi: 'सनस्क्रीन', unit: '50 ml', pricePaise: 20000, category: 'Cosmetics' },
+  { name: 'Body Lotion', nameBn: 'বডি লোশন', nameHi: 'बॉडी लोशन', unit: '200 ml', pricePaise: 18000, category: 'Cosmetics' },
+  { name: 'Face Powder', nameBn: 'ফেস পাউডার', nameHi: 'फेस पाउडर', unit: '1 pc', pricePaise: 10000, category: 'Cosmetics' },
+  { name: 'Perfume', nameBn: 'পারফিউম', nameHi: 'परफ़्यूम', unit: '1 bottle', pricePaise: 25000, category: 'Cosmetics' },
+  { name: 'Mehendi Cone', nameBn: 'মেহেন্দি কোন', nameHi: 'मेहंदी कोन', unit: '1 pc', pricePaise: 2000, category: 'Cosmetics' },
+  { name: 'Alta', nameBn: 'আলতা', nameHi: 'आलता', unit: '1 bottle', pricePaise: 3000, category: 'Cosmetics' },
+  { name: 'Hair Clip', nameBn: 'চুলের ক্লিপ', nameHi: 'हेयर क्लिप', unit: '1 pc', pricePaise: 2000, category: 'Accessories' },
+  { name: 'Hair Band', nameBn: 'হেয়ার ব্যান্ড', nameHi: 'हेयर बैंड', unit: '1 pc', pricePaise: 2000, category: 'Accessories' },
+  { name: 'Bangles', nameBn: 'চুড়ি', nameHi: 'चूड़ियाँ', unit: '12 pc', pricePaise: 6000, category: 'Accessories' },
+  { name: 'Earrings', nameBn: 'কানের দুল', nameHi: 'झुमके', unit: '1 pc', pricePaise: 8000, category: 'Accessories' },
+  { name: 'Safety Pin', nameBn: 'সেফটিপিন', nameHi: 'सेफ़्टी पिन', unit: '1 packet', pricePaise: 1000, category: 'Accessories' },
+];
+
+/** The hardware and electrical counter. */
+const HARDWARE: StarterItem[] = [
+  ...groceryAisles('Electricals'),
+  { name: 'Electric Wire', nameBn: 'বিদ্যুতের তার', nameHi: 'बिजली का तार', unit: '1 pc', pricePaise: 150000, category: 'Electricals' },
+  { name: 'Switch', nameBn: 'সুইচ', nameHi: 'स्विच', unit: '1 pc', pricePaise: 4000, category: 'Electricals' },
+  { name: 'Socket', nameBn: 'সকেট', nameHi: 'सॉकेट', unit: '1 pc', pricePaise: 6000, category: 'Electricals' },
+  { name: 'MCB', nameBn: 'এমসিবি', nameHi: 'एमसीबी', unit: '1 pc', pricePaise: 25000, category: 'Electricals' },
+  { name: 'Insulation Tape', nameBn: 'ইনসুলেশন টেপ', nameHi: 'इंसुलेशन टेप', unit: '1 pc', pricePaise: 2000, category: 'Electricals' },
+  { name: 'Hammer', nameBn: 'হাতুড়ি', nameHi: 'हथौड़ा', unit: '1 pc', pricePaise: 25000, category: 'Tools' },
+  { name: 'Screwdriver', nameBn: 'স্ক্রুড্রাইভার', nameHi: 'पेचकस', unit: '1 pc', pricePaise: 8000, category: 'Tools' },
+  { name: 'Pliers', nameBn: 'প্লাস', nameHi: 'प्लास', unit: '1 pc', pricePaise: 15000, category: 'Tools' },
+  { name: 'Measuring Tape', nameBn: 'মাপার ফিতে', nameHi: 'नापने का फ़ीता', unit: '1 pc', pricePaise: 12000, category: 'Tools' },
+  { name: 'Nails', nameBn: 'পেরেক', nameHi: 'कील', unit: '500 g', pricePaise: 6000, category: 'Fittings' },
+  { name: 'Screws', nameBn: 'স্ক্রু', nameHi: 'पेंच', unit: '1 packet', pricePaise: 5000, category: 'Fittings' },
+  { name: 'Wall Plug', nameBn: 'ওয়াল প্লাগ', nameHi: 'वॉल प्लग', unit: '1 packet', pricePaise: 3000, category: 'Fittings' },
+  { name: 'Door Hinge', nameBn: 'দরজার কবজা', nameHi: 'दरवाज़े का कब्ज़ा', unit: '1 pc', pricePaise: 6000, category: 'Fittings' },
+  { name: 'Tower Bolt', nameBn: 'টাওয়ার বোল্ট', nameHi: 'टावर बोल्ट', unit: '1 pc', pricePaise: 8000, category: 'Fittings' },
+  { name: 'Padlock', nameBn: 'তালা', nameHi: 'ताला', unit: '1 pc', pricePaise: 20000, category: 'Fittings' },
+  { name: 'Water Tap', nameBn: 'জলের কল', nameHi: 'पानी का नल', unit: '1 pc', pricePaise: 25000, category: 'Plumbing' },
+  { name: 'PVC Pipe', nameBn: 'পিভিসি পাইপ', nameHi: 'पीवीसी पाइप', unit: '1 pc', pricePaise: 30000, category: 'Plumbing' },
+  { name: 'Teflon Tape', nameBn: 'টেফলন টেপ', nameHi: 'टेफ़्लॉन टेप', unit: '1 pc', pricePaise: 2000, category: 'Plumbing' },
+  { name: 'M-Seal', nameBn: 'এম-সিল', nameHi: 'एम-सील', unit: '1 packet', pricePaise: 5000, category: 'Plumbing' },
+  { name: 'Wall Paint', nameBn: 'দেয়ালের রং', nameHi: 'दीवार का पेंट', unit: '1 l', pricePaise: 30000, category: 'Paint' },
+  { name: 'Paint Brush', nameBn: 'রঙের ব্রাশ', nameHi: 'पेंट ब्रश', unit: '1 pc', pricePaise: 6000, category: 'Paint' },
+  { name: 'Wall Putty', nameBn: 'ওয়াল পুটি', nameHi: 'वॉल पुट्टी', unit: '1 kg', pricePaise: 4000, category: 'Paint' },
+  { name: 'Sandpaper', nameBn: 'শিরিষ কাগজ', nameHi: 'रेगमाल', unit: '1 pc', pricePaise: 1000, category: 'Paint' },
+  { name: 'Fevicol', nameBn: 'ফেভিকল', nameHi: 'फ़ेविकोल', unit: '200 g', pricePaise: 8000, category: 'Paint' },
+];
+
+/** Flowers and everything else a puja needs. */
+const PUJA_FLOWER: StarterItem[] = [
+  { name: 'Marigold Garland', nameBn: 'গাঁদা ফুলের মালা', nameHi: 'गेंदे की माला', unit: '1 pc', pricePaise: 3000, category: 'Flowers' },
+  { name: 'Marigold', nameBn: 'গাঁদা ফুল', nameHi: 'गेंदा फूल', unit: '250 g', pricePaise: 4000, category: 'Flowers' },
+  { name: 'Rose', nameBn: 'গোলাপ', nameHi: 'गुलाब', unit: '1 pc', pricePaise: 1000, category: 'Flowers' },
+  { name: 'Lotus', nameBn: 'পদ্ম', nameHi: 'कमल', unit: '1 pc', pricePaise: 3000, category: 'Flowers' },
+  { name: 'Hibiscus', nameBn: 'জবা ফুল', nameHi: 'गुड़हल', unit: '10 pc', pricePaise: 2000, category: 'Flowers' },
+  { name: 'Rajanigandha', nameBn: 'রজনীগন্ধা', nameHi: 'रजनीगंधा', unit: '1 bundle', pricePaise: 4000, category: 'Flowers' },
+  { name: 'Bouquet', nameBn: 'ফুলের তোড়া', nameHi: 'गुलदस्ता', unit: '1 pc', pricePaise: 25000, category: 'Flowers' },
+  { name: 'Tulsi Leaves', nameBn: 'তুলসী পাতা', nameHi: 'तुलसी के पत्ते', unit: '1 bundle', pricePaise: 1000, category: 'Flowers' },
+  { name: 'Bel Leaves', nameBn: 'বেলপাতা', nameHi: 'बेलपत्र', unit: '1 bundle', pricePaise: 1000, category: 'Flowers' },
+  { name: 'Durba Grass', nameBn: 'দূর্বা ঘাস', nameHi: 'दूर्वा घास', unit: '1 bundle', pricePaise: 1000, category: 'Flowers' },
+  { name: 'Mango Leaves', nameBn: 'আমের পল্লব', nameHi: 'आम के पत्ते', unit: '1 bundle', pricePaise: 1500, category: 'Flowers' },
+  { name: 'Banana Leaf', nameBn: 'কলাপাতা', nameHi: 'केले का पत्ता', unit: '1 pc', pricePaise: 500, category: 'Flowers' },
+  ...groceryAisles('Puja Items'),
+  { name: 'Agarbatti', nameBn: 'ধূপকাঠি', nameHi: 'अगरबत्ती', unit: '1 packet', pricePaise: 3000, category: 'Puja Items' },
+  { name: 'Betel Leaf', nameBn: 'পান পাতা', nameHi: 'पान का पत्ता', unit: '10 pc', pricePaise: 2000, category: 'Puja Items' },
+  { name: 'Supari', nameBn: 'সুপারি', nameHi: 'सुपारी', unit: '100 g', pricePaise: 5000, category: 'Puja Items' },
+  { name: 'Puja Coconut', nameBn: 'পুজোর নারকেল', nameHi: 'पूजा का नारियल', unit: '1 pc', pricePaise: 4000, category: 'Puja Items' },
+  { name: 'Kumkum', nameBn: 'কুমকুম', nameHi: 'कुमकुम', unit: '1 packet', pricePaise: 1500, category: 'Puja Items' },
+  { name: 'Chandan', nameBn: 'চন্দন', nameHi: 'चंदन', unit: '1 pc', pricePaise: 3000, category: 'Puja Items' },
+  { name: 'Mauli Thread', nameBn: 'লাল সুতো', nameHi: 'मौली', unit: '1 pc', pricePaise: 1000, category: 'Puja Items' },
+  { name: 'Brass Kalash', nameBn: 'পিতলের ঘট', nameHi: 'पीतल का कलश', unit: '1 pc', pricePaise: 30000, category: 'Puja Items' },
+];
+
+/** The garments and hosiery shop. Priced per piece. */
+const GARMENTS: StarterItem[] = [
+  { name: 'Shirt', nameBn: 'শার্ট', nameHi: 'शर्ट', unit: '1 pc', pricePaise: 45000, category: 'Menswear' },
+  { name: 'T-Shirt', nameBn: 'টি-শার্ট', nameHi: 'टी-शर्ट', unit: '1 pc', pricePaise: 25000, category: 'Menswear' },
+  { name: 'Trousers', nameBn: 'প্যান্ট', nameHi: 'पैंट', unit: '1 pc', pricePaise: 60000, category: 'Menswear' },
+  { name: 'Jeans', nameBn: 'জিন্স', nameHi: 'जींस', unit: '1 pc', pricePaise: 80000, category: 'Menswear' },
+  { name: 'Kurta', nameBn: 'পাঞ্জাবি', nameHi: 'कुर्ता', unit: '1 pc', pricePaise: 50000, category: 'Menswear' },
+  { name: 'Lungi', nameBn: 'লুঙ্গি', nameHi: 'लुंगी', unit: '1 pc', pricePaise: 20000, category: 'Menswear' },
+  { name: 'Vest', nameBn: 'গেঞ্জি', nameHi: 'बनियान', unit: '1 pc', pricePaise: 12000, category: 'Menswear' },
+  { name: 'Saree', nameBn: 'শাড়ি', nameHi: 'साड़ी', unit: '1 pc', pricePaise: 80000, category: 'Womenswear' },
+  { name: 'Salwar Suit', nameBn: 'সালোয়ার কামিজ', nameHi: 'सलवार सूट', unit: '1 pc', pricePaise: 90000, category: 'Womenswear' },
+  { name: 'Kurti', nameBn: 'কুর্তি', nameHi: 'कुर्ती', unit: '1 pc', pricePaise: 40000, category: 'Womenswear' },
+  { name: 'Nightie', nameBn: 'নাইটি', nameHi: 'नाइटी', unit: '1 pc', pricePaise: 30000, category: 'Womenswear' },
+  { name: 'Blouse', nameBn: 'ব্লাউজ', nameHi: 'ब्लाउज़', unit: '1 pc', pricePaise: 25000, category: 'Womenswear' },
+  { name: 'Petticoat', nameBn: 'সায়া', nameHi: 'पेटीकोट', unit: '1 pc', pricePaise: 20000, category: 'Womenswear' },
+  { name: 'Leggings', nameBn: 'লেগিংস', nameHi: 'लेगिंग्स', unit: '1 pc', pricePaise: 20000, category: 'Womenswear' },
+  { name: 'Dupatta', nameBn: 'ওড়না', nameHi: 'दुपट्टा', unit: '1 pc', pricePaise: 20000, category: 'Womenswear' },
+  { name: 'Kids Frock', nameBn: 'বাচ্চাদের ফ্রক', nameHi: 'बच्चों की फ्रॉक', unit: '1 pc', pricePaise: 35000, category: 'Kidswear' },
+  { name: 'Kids Shorts', nameBn: 'বাচ্চাদের হাফপ্যান্ট', nameHi: 'बच्चों का निक्कर', unit: '1 pc', pricePaise: 15000, category: 'Kidswear' },
+  { name: 'School Uniform', nameBn: 'স্কুলের পোশাক', nameHi: 'स्कूल यूनिफ़ॉर्म', unit: '1 pc', pricePaise: 50000, category: 'Kidswear' },
+  { name: 'Baby Set', nameBn: 'শিশুর জামার সেট', nameHi: 'बेबी सेट', unit: '1 pc', pricePaise: 30000, category: 'Kidswear' },
+  { name: 'Socks', nameBn: 'মোজা', nameHi: 'मोज़े', unit: '1 pc', pricePaise: 5000, category: 'Accessories' },
+  { name: 'Handkerchief', nameBn: 'রুমাল', nameHi: 'रूमाल', unit: '3 pc', pricePaise: 6000, category: 'Accessories' },
+  { name: 'Gamchha', nameBn: 'গামছা', nameHi: 'गमछा', unit: '1 pc', pricePaise: 8000, category: 'Home Linen' },
+  { name: 'Towel', nameBn: 'তোয়ালে', nameHi: 'तौलिया', unit: '1 pc', pricePaise: 20000, category: 'Home Linen' },
+  { name: 'Bedsheet', nameBn: 'বিছানার চাদর', nameHi: 'चादर', unit: '1 pc', pricePaise: 50000, category: 'Home Linen' },
+  { name: 'Pillow Cover', nameBn: 'বালিশের ওয়াড়', nameHi: 'तकिये का कवर', unit: '1 pc', pricePaise: 10000, category: 'Home Linen' },
+];
+
 /** Roll & momo counters share the restaurant list, trimmed to what they sell. */
 const ROLL_MOMO: StarterItem[] = RESTAURANT.filter((item) =>
   ['Rolls', 'Momo', 'Chinese', 'Beverages'].includes(item.category),
@@ -866,11 +1130,48 @@ const BY_TYPE: Record<ShopType, StarterItem[]> = {
   ROLL_MOMO: ROLL_MOMO,
   HOME_KITCHEN: HOME_KITCHEN,
   BAKERY: BAKERY,
-  OTHER: GROCERY,
+  // A shop the console could not place has no list of its own — it USED to get
+  // the grocery list, which is exactly how a tailor or a phone shop ended up
+  // looking like a kirana. Its picker opens on "All items" instead.
+  OTHER: [],
+  STREET_FOOD: STREET_FOOD,
+  SWEET_SHOP: SWEET_SHOP,
+  FRUIT_VEG: FRUIT_VEG,
+  DAIRY: DAIRY,
+  MEAT_FISH: MEAT_FISH,
+  STATIONERY: STATIONERY,
+  COSMETICS: COSMETICS,
+  HARDWARE: HARDWARE,
+  PUJA_FLOWER: PUJA_FLOWER,
+  GARMENTS: GARMENTS,
 };
 
 export function starterCatalogue(type: ShopType): StarterItem[] {
-  return BY_TYPE[type] ?? GROCERY;
+  return BY_TYPE[type] ?? [];
+}
+
+/**
+ * Every ready-made item, this shop's own list first — the picker's "All items".
+ *
+ * Every owner may take anything from any list: a sweet shop that also sells
+ * cold drinks, a tea stall with biscuits. The shop's own list leads, so where
+ * two lists carry the same name (Lassi by the glass at a stall, by the 200 ml
+ * pot at a kirana) the shop gets its own kind's version. Deduplicated by name,
+ * because that is what `starterSchema` sends and the starter route matches on.
+ */
+export function allStarterItems(type: ShopType): StarterItem[] {
+  const seen = new Set<string>();
+  const out: StarterItem[] = [];
+  const order = [starterCatalogue(type), ...Object.values(BY_TYPE)];
+  for (const list of order) {
+    for (const item of list) {
+      const key = item.name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(item);
+    }
+  }
+  return out;
 }
 
 /** The name to show a starter item under, in the owner's language. */
@@ -1175,3 +1476,10 @@ export function categoryForNames(names: string[], catalogue: StarterItem[]): str
 
   return '';
 }
+
+/**
+ * How many ready-made items there are across every list, rounded DOWN to a
+ * fifty — the "700+" the landing page quotes. Derived, so it can never claim
+ * more than the lists hold.
+ */
+export const READY_ITEMS = Math.floor(allStarterItems('OTHER').length / 50) * 50;

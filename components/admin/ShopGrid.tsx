@@ -50,7 +50,8 @@ export type ShopRow = {
   attention: string | null;
   itemCount: number;
   ownerImageData: string;
-  itemLimit: number;
+  /** Null when the shop has no item limit. */
+  itemLimit: number | null;
   orderCount: number;
   /** Whether the owner can sign in at all. The PIN itself is a hash — see ShopPinBadge. */
   hasPin: boolean;
@@ -262,8 +263,8 @@ export function ShopGrid({ shops }: { shops: ShopRow[] }) {
 
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-3 text-xs text-slate-500">
                 <span className="tabular-nums">
-                  <strong className="font-semibold text-slate-700">{shop.itemCount}</strong>/
-                  {shop.itemLimit} items
+                  <strong className="font-semibold text-slate-700">{shop.itemCount}</strong>
+                  {shop.itemLimit !== null && `/${shop.itemLimit}`} items
                 </span>
                 <span className="tabular-nums">{shop.orderCount} orders</span>
                 {/* THE SLUG IS THE LINK, SO IT IS THE BUTTON.

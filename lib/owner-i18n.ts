@@ -325,6 +325,9 @@ type OwnerDictionary = {
   starterHint: string;
   starterAdd: string;
   starterSkip: string;
+  /** The picker's two views: this kind of shop's list, and every list. */
+  starterOwnList: string;
+  starterAllItems: string;
   starterAdded: string;
   pinLabel: string;
   pinHint: string;
@@ -1010,6 +1013,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterHint: 'Pick what you sell, then say or type the prices.',
     starterAdd: 'Add selected',
     starterSkip: 'Not now',
+    starterOwnList: 'For your shop',
+    starterAllItems: 'All items',
     starterAdded: 'added — now set their prices',
     pinLabel: 'PIN',
     // What signing in is FOR, not what the box below already says.
@@ -1573,6 +1578,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterHint: 'আপনি যা বিক্রি করেন বেছে নিন, তারপর দাম বলুন বা লিখুন।',
     starterAdd: 'বাছাই করা যোগ করুন',
     starterSkip: 'এখন নয়',
+    starterOwnList: 'আপনার দোকানের',
+    starterAllItems: 'সব জিনিস',
     starterAdded: 'যোগ হয়েছে — এবার দাম দিন',
     pinLabel: 'পিন',
     pinHint: 'ফোন থেকেই দোকান চালান — দাম, স্টক, অর্ডার আর খাতা। ৬ অঙ্কের পিন দিয়ে ঢুকুন।',
@@ -2132,6 +2139,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     starterHint: 'जो आप बेचते हैं चुनिए, फिर दाम बोलिए या लिखिए।',
     starterAdd: 'चुने हुए जोड़ें',
     starterSkip: 'अभी नहीं',
+    starterOwnList: 'आपकी दुकान के लिए',
+    starterAllItems: 'सारा सामान',
     starterAdded: 'जुड़ गए — अब दाम डालिए',
     pinLabel: 'पिन',
     pinHint: 'फोन से ही दुकान चलाइए — दाम, स्टॉक, ऑर्डर और खाता। 6 अंकों के पिन से साइन इन कीजिए।',

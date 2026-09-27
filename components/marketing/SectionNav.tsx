@@ -48,6 +48,9 @@ export function SectionNav({ items, className }: { items: NavItem[]; className?:
       frame = 0;
       let current: string | null = null;
       for (const item of items) {
+        // A link to another page ("/#plans", from a business page) is not a
+        // selector — querySelector would throw — and has no section here.
+        if (!item.href.startsWith('#')) continue;
         const section = document.querySelector(item.href);
         if (!section) continue;
         if (section.getBoundingClientRect().top <= HEADER_OFFSET) current = item.href;

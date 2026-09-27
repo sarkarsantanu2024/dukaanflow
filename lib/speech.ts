@@ -1456,6 +1456,28 @@ const CATEGORY_VOCAB: Vocab[] = [
   { en: 'Rice', hi: 'चावल', bn: 'চাল' },
   { en: 'Dal', hi: 'दाल', bn: 'ডাল' },
   { en: 'Other', hi: 'अन्य', bn: 'অন্যান্য' },
+  // The headings of the lists for the other kinds of local business, added
+  // with them on 2026-09-27. Same rule: a heading missing here reaches a
+  // Bengali or Hindi shop page as an English chip.
+  { en: 'Street Food', hi: 'स्ट्रीट फ़ूड', bn: 'মুখরোচক খাবার' },
+  { en: 'Eggs', hi: 'अंडे', bn: 'ডিম' },
+  { en: 'Chicken', hi: 'चिकन', bn: 'মুরগি' },
+  { en: 'Mutton', hi: 'मटन', bn: 'খাসির মাংস' },
+  { en: 'Fish', hi: 'मछली', bn: 'মাছ' },
+  { en: 'Office', hi: 'ऑफ़िस का सामान', bn: 'অফিসের জিনিস' },
+  { en: 'Art & Craft', hi: 'ड्रॉइंग और क्राफ़्ट', bn: 'আঁকা ও হাতের কাজ' },
+  { en: 'Services', hi: 'सेवाएँ', bn: 'পরিষেবা' },
+  { en: 'Cosmetics', hi: 'कॉस्मेटिक्स', bn: 'প্রসাধনী' },
+  { en: 'Accessories', hi: 'एक्सेसरीज़', bn: 'টুকিটাকি' },
+  { en: 'Tools', hi: 'औज़ार', bn: 'যন্ত্রপাতি' },
+  { en: 'Fittings', hi: 'फ़िटिंग्स', bn: 'ফিটিংস' },
+  { en: 'Plumbing', hi: 'प्लंबिंग', bn: 'প্লাম্বিং' },
+  { en: 'Paint', hi: 'पेंट', bn: 'রং' },
+  { en: 'Flowers', hi: 'फूल', bn: 'ফুল' },
+  { en: 'Menswear', hi: 'पुरुषों के कपड़े', bn: 'ছেলেদের পোশাক' },
+  { en: 'Womenswear', hi: 'महिलाओं के कपड़े', bn: 'মেয়েদের পোশাক' },
+  { en: 'Kidswear', hi: 'बच्चों के कपड़े', bn: 'বাচ্চাদের পোশাক' },
+  { en: 'Home Linen', hi: 'घर के कपड़े', bn: 'ঘরের কাপড়' },
 ];
 
 const CATEGORY_BY_FORM = new Map<string, Vocab>();

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { baseUrl } from '@/lib/qr';
+import { BUSINESSES } from '@/lib/business-types';
 
 /**
  * The pages that are meant to be found.
@@ -26,5 +27,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/refund`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    // One page per kind of business — marketing pages, like the ones above.
+    ...BUSINESSES.map((business) => ({
+      url: `${base}/${business.slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
   ];
 }

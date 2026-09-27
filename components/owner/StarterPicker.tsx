@@ -39,14 +39,22 @@ import type { Locale } from '@/lib/i18n';
 
 export function StarterPicker({
   slug,
-  catalogue,
+  catalogue: ownCatalogue,
+  allCatalogue,
   locale,
   remaining,
   onDismiss,
   inDrawer = false,
 }: {
   slug: string;
+  /** This kind of shop's own list — what the picker opens on. */
   catalogue: StarterItem[];
+  /**
+   * Every ready-made list, own first, behind an "All items" switch. A sweet
+   * shop sees sweets until its owner asks for more; the grocery list is never
+   * the face of a shop that does not sell groceries.
+   */
+  allCatalogue?: StarterItem[];
   locale: Locale;
   /**
    * Room left on the plan. The server refuses an over-limit batch outright, so
@@ -73,6 +81,9 @@ export function StarterPicker({
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false);
+  // A shop with no list of its own (OTHER) opens on everything.
+  const [showAll, setShowAll] = useState(ownCatalogue.length === 0 && !!allCatalogue);
+  const catalogue = showAll && allCatalogue ? allCatalogue : ownCatalogue;
 
   const groups = useMemo(() => {
     const byCategory = new Map<string, StarterItem[]>();
@@ -87,6 +98,13 @@ export function StarterPicker({
   // The first group opens so the picker never looks like an empty box; the
   // rest stay shut so the whole list is one screen of headings.
   const [open, setOpen] = useState<Set<string>>(() => new Set(groups.slice(0, 1).map(([c]) => c)));
+
+  /** Switching lists keeps what was ticked, and opens the new list's first group. */
+  function chooseList(all: boolean) {
+    setShowAll(all);
+    const list = all && allCatalogue ? allCatalogue : ownCatalogue;
+    if (list[0]) setOpen(new Set([list[0].category]));
+  }
 
   /** Matches all three languages, so a Bengali owner can type চাল or "rice". */
   const matches = useMemo(() => {
@@ -223,6 +241,26 @@ export function StarterPicker({
     <section className="rounded-2xl border border-brand-200 bg-brand-50/60 p-4">
       <h2 className="font-semibold text-slate-900">{t.starterTitle}</h2>
       <p className="mt-1 text-sm text-slate-600">{t.starterHint}</p>
+
+      {/* Only when there is something to switch between. */}
+      {allCatalogue && ownCatalogue.length > 0 && allCatalogue.length > ownCatalogue.length && (
+        <div role="group" className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-slate-900/[.06] p-1">
+          {[false, true].map((all) => (
+            <button
+              key={String(all)}
+              type="button"
+              aria-pressed={showAll === all}
+              onClick={() => chooseList(all)}
+              className={clsx(
+                'min-h-10 rounded-lg px-2 text-sm font-semibold transition',
+                showAll === all ? 'bg-card text-brand-700 shadow-raised' : 'text-slate-600',
+              )}
+            >
+              {all ? t.starterAllItems : t.starterOwnList}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* The same search field as the shop page and the till. */}
       <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-900/[.06] pl-3 pr-1.5 transition-colors focus-within:bg-slate-900/[.09]">

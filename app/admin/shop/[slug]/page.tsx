@@ -185,6 +185,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
             status: shop.subscriptionStatus,
             itemCount: billing?.itemCount ?? shop._count.items,
             itemLimit: billing?.itemLimit ?? 25,
+            unlimited: billing?.plan.unlimited ?? false,
             // What this shop is actually entitled to TODAY, which is not always
             // `plan`: a trial grants the top tier, and a custom deal overrides
             // both the name and the limit. The panel showed the stored plan

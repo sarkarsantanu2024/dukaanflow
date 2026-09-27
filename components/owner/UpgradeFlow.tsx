@@ -35,7 +35,7 @@ import { useToast } from '@/components/ui/Toast';
 import { CheckIcon, CloseIcon, WhatsAppIcon } from '@/components/ui/Icon';
 import { ownerDict } from '@/lib/owner-i18n';
 import { formatPaise } from '@/lib/money';
-import { PLAN_ORDER, PLAN_SPECS, priceForMonths, type Plan } from '@/lib/plans';
+import { PLAN_SPECS, STANDARD_PLAN, amountForMonthsPaise, type Plan } from '@/lib/plans';
 import type { Locale } from '@/lib/i18n';
 
 type PayTo = {
@@ -59,20 +59,29 @@ type OpenRequest = {
 
 type Rejected = { plan: Plan; months: number; reviewNote: string } | null;
 
+/**
+ * What this shop is sold, from the server: the standard plan, or its own
+ * custom deal. `itemLimit` is null when the plan has no limit.
+ */
+type Price = {
+  planName: string;
+  monthlyPaise: number;
+  customPricePaise: number | null;
+  itemLimit: number | null;
+};
+
 /** The two periods a shop can buy. Anything else is a conversation. */
 const PERIODS = [1, 12] as const;
 
 export function UpgradeFlow({
   slug,
   locale,
-  itemCount,
-  /** The cheapest plan that holds what this shop already lists. */
-  suggested,
   helpUrl,
   onActivated,
 }: {
   slug: string;
   locale: Locale;
+  /** Kept for callers; with one plan for sale neither decides anything now. */
   itemCount: number;
   suggested: Plan;
   /** wa.me link to the operator, or "" when no support number is configured. */
@@ -88,7 +97,10 @@ export function UpgradeFlow({
   const [open, setOpen] = useState<OpenRequest | null>(null);
   const [rejected, setRejected] = useState<Rejected>(null);
 
-  const [plan, setPlan] = useState<Plan>(suggested);
+  const [price, setPrice] = useState<Price | null>(null);
+  // One plan is for sale. What varies between shops is the price — a custom
+  // deal replaces it — and that comes from the server with `price`.
+  const plan: Plan = STANDARD_PLAN;
   const [months, setMonths] = useState<number>(1);
   const [screenshot, setScreenshot] = useState('');
 
@@ -112,10 +124,10 @@ export function UpgradeFlow({
       if (!response.ok) throw new Error('load failed');
       const body = await response.json();
       setPayTo(body.payTo);
+      setPrice(body.price ?? null);
       setOpen(body.request);
       setRejected(body.lastRejected);
       if (body.request) {
-        setPlan(body.request.plan);
         setMonths(body.request.months);
       }
     } catch {
@@ -129,8 +141,11 @@ export function UpgradeFlow({
     void load();
   }, [load]);
 
-  const priceRupees = priceForMonths(plan, months);
-  const spec = PLAN_SPECS[plan];
+  /** What `count` months cost this shop, in whole rupees — its custom rate if it has one. */
+  const rupeesFor = (count: number) =>
+    Math.round(amountForMonthsPaise(plan, count, price?.customPricePaise) / 100);
+  const priceRupees = rupeesFor(months);
+  const planName = price?.planName ?? PLAN_SPECS[plan].name;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -229,7 +244,7 @@ export function UpgradeFlow({
       <div className="space-y-4">
         <div className="rounded-xl bg-sunk p-3.5">
           <p className="text-sm font-semibold text-slate-900">
-            {PLAN_SPECS[open.plan]?.name} · {open.months === 12 ? t.perYear : t.perMonth} ·{' '}
+            {planName} · {open.months === 12 ? t.perYear : t.perMonth} ·{' '}
             <span className="tabular-nums">{formatPaise(open.amountPaise)}</span>
           </p>
           <p className="mt-1 text-sm text-slate-600">
@@ -289,33 +304,21 @@ export function UpgradeFlow({
         </p>
       )}
 
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700">{t.renewChoosePlan}</span>
-        <select
-          value={plan}
-          onChange={(event) => setPlan(event.target.value as Plan)}
-          className="h-12 w-full rounded-xl border border-slate-300 bg-card px-3 text-base font-semibold text-slate-900"
-        >
-          {PLAN_ORDER.map((id) => {
-            const option = PLAN_SPECS[id];
-            return (
-              <option key={id} value={id} disabled={option.itemLimit < itemCount}>
-                {option.name} — ₹{option.price}
-                {t.perMonthShort} · {option.itemLimit.toLocaleString('en-IN')} {t.itemsCount}
-                {option.itemLimit < itemCount ? ` (${t.planTooSmall})` : ''}
-              </option>
-            );
-          })}
-        </select>
-      </label>
+      {/* ONE PLAN, SO NO DROPDOWN. There used to be a choice of five sizes
+          here; there is one plan now and the only thing that differs between
+          shops is a custom price, which the server has already applied. */}
+      <div className="flex items-baseline justify-between gap-2 rounded-xl border border-slate-300 bg-card px-3 py-2.5">
+        <span className="text-base font-semibold text-slate-900">{planName}</span>
+        <span className="text-base font-semibold tabular-nums text-slate-900">
+          ₹{rupeesFor(1).toLocaleString('en-IN')}
+          <span className="text-sm font-normal text-slate-500">{t.perMonthShort}</span>
+        </span>
+      </div>
 
-      {/* The chosen plan's details, under the dropdown rather than inside it.
-          A <select> option cannot hold more than one line, and "what do I get"
-          is the question the dropdown raises. */}
       <ul className="space-y-1.5 rounded-xl bg-sunk p-3 text-sm text-slate-700">
         {/* In the owner's language. `spec.features` is the English the console reads. */}
         {[
-          spec.unlimited ? t.planUnlimitedItems : t.planUpTo.replace('{n}', spec.itemLimit.toLocaleString('en-IN')),
+          price?.itemLimit ? t.planUpTo.replace('{n}', price.itemLimit.toLocaleString('en-IN')) : t.planUnlimitedItems,
           ...t.planIncludes,
         ].map((feature) => (
           <li key={feature} className="flex gap-2">
@@ -343,7 +346,7 @@ export function UpgradeFlow({
                 {option === 12 ? t.perYear : t.perMonth}
               </span>
               <span className="block text-lg font-semibold tabular-nums text-brand-700">
-                ₹{priceForMonths(plan, option).toLocaleString('en-IN')}
+                ₹{rupeesFor(option).toLocaleString('en-IN')}
               </span>
               {option === 12 && (
                 <span className="block text-xs font-semibold text-brand-700">{t.twoMonthsFree}</span>

@@ -64,6 +64,7 @@ type Template = {
   greeting: (owner: string) => string;
   received: string;
   planLine: (plan: string, limit: string) => string;
+  planUnlimitedLine: (plan: string) => string;
   paidLine: (period: string, amount: string) => string;
   untilLine: (date: string) => string;
   codeLine: (code: string) => string;
@@ -78,6 +79,7 @@ const TEMPLATES: Record<Locale, Template> = {
     greeting: (owner) => (owner ? `Namaste ${owner},` : 'Namaste,'),
     received: 'Payment received — thank you.',
     planLine: (plan, limit) => `Plan: ${plan} (up to ${limit} items)`,
+    planUnlimitedLine: (plan) => `Plan: ${plan} (unlimited items)`,
     paidLine: (period, amount) => `Paid: ${period} — ${amount}`,
     untilLine: (date) => `Runs until: ${date}`,
     codeLine: (code) => `Your activation code is ${code}`,
@@ -90,6 +92,7 @@ const TEMPLATES: Record<Locale, Template> = {
     greeting: (owner) => (owner ? `নমস্কার ${owner},` : 'নমস্কার,'),
     received: 'আপনার টাকা পেয়েছি — ধন্যবাদ।',
     planLine: (plan, limit) => `প্ল্যান: ${plan} (${limit}টি জিনিস পর্যন্ত)`,
+    planUnlimitedLine: (plan) => `প্ল্যান: ${plan} (যত খুশি জিনিস)`,
     paidLine: (period, amount) => `দিলেন: ${period} — ${amount}`,
     untilLine: (date) => `চলবে: ${date} পর্যন্ত`,
     codeLine: (code) => `আপনার কোড ${code}`,
@@ -102,6 +105,7 @@ const TEMPLATES: Record<Locale, Template> = {
     greeting: (owner) => (owner ? `नमस्ते ${owner},` : 'नमस्ते,'),
     received: 'आपका भुगतान मिल गया — धन्यवाद।',
     planLine: (plan, limit) => `प्लान: ${plan} (${limit} सामान तक)`,
+    planUnlimitedLine: (plan) => `प्लान: ${plan} (असीमित सामान)`,
     paidLine: (period, amount) => `दिया: ${period} — ${amount}`,
     untilLine: (date) => `चलेगा: ${date} तक`,
     codeLine: (code) => `आपका कोड ${code} है`,
@@ -129,7 +133,11 @@ export function activationMessage(input: ActivationMessage): string {
     t.greeting(input.ownerName.trim()),
     '',
     t.received,
-    t.planLine(input.planName, input.planItemLimit.toLocaleString('en-IN')),
+    // Zero is "no limit": the standard plan. Printing its sentinel would read
+    // "up to 1,000,000 items".
+    input.planItemLimit > 0
+      ? t.planLine(input.planName, input.planItemLimit.toLocaleString('en-IN'))
+      : t.planUnlimitedLine(input.planName),
     t.paidLine(periodLabel(t, input.months), formatPaise(input.amountPaise)),
     t.untilLine(formatDate(input.renewsOn, input.locale)),
     '',
