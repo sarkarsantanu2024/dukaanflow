@@ -2,18 +2,18 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import clsx from 'clsx';
-import { SavedShops } from '@/components/customer/SavedShops';
 import {
   BellIcon,
   BoxIcon,
-  CartIcon,
+  CalendarIcon,
   ChartIcon,
   CheckIcon,
+  InstallIcon,
   MicIcon,
-  PdfIcon,
   PhoneIcon,
   QrIcon,
   RupeeIcon,
+  TruckIcon,
   UsersIcon,
   WhatsAppIcon,
 } from '@/components/ui/Icon';
@@ -25,119 +25,118 @@ import {
   FAQ,
   FEATURES,
   LANDING,
+  MORE,
   SAFETY,
-  includesLine,
-  listingOffer,
   planItemsLine,
   planTagline,
   yearLine,
   type FeatureId,
+  type MoreId,
   type Words,
 } from '@/lib/marketing-copy';
-import { LandingLanguage, LangSelect, LangTabs } from '@/components/marketing/LangTabs';
+import { HERO_VIDEO, VIDEOS, screenPath, youtubeId, type ScreenId } from '@/lib/landing-media';
+import { LOCALES } from '@/lib/i18n';
+import { firstExisting } from '@/lib/landing-media-files';
+import { LandingLanguage, LangSelect } from '@/components/marketing/LangTabs';
 import { Say } from '@/components/marketing/Say';
-import { ProblemList, StepList } from '@/components/marketing/StoryLists';
-import { HeroJourney } from '@/components/marketing/HeroJourney';
+import { StepList } from '@/components/marketing/StoryLists';
 import { SectionNav, type NavItem } from '@/components/marketing/SectionNav';
 import { StickyCta } from '@/components/marketing/StickyCta';
-import {
-  EVERY_PLAN_INCLUDES,
-  LISTING_PAISE_PER_ITEM,
-  PLAN_ORDER,
-  PLAN_SPECS,
-  yearPrice,
-  yearSaving,
-} from '@/lib/plans';
-import type { Locale } from '@/lib/i18n';
-import { formatPaise } from '@/lib/money';
+import { VideoPlayer } from '@/components/marketing/VideoPlayer';
+import { PhoneFrame } from '@/components/marketing/PhoneFrame';
+import { PLAN_ORDER, PLAN_SPECS, TRIAL_DAYS, yearPrice, yearSaving } from '@/lib/plans';
 import { baseUrl } from '@/lib/qr';
 import { supportDetails } from '@/lib/support';
 
 /**
- * THE ONE PAGE THIS BUSINESS WANTS FOUND, and until now the only one it had
- * shut out.
+ * THE PUBLIC LANDING PAGE — rewritten 2026-09-27, by request.
  *
- * The root layout marks everything `noindex` so that shops, orders and the
- * console cannot leak into search — a sound default — and each public page opts
- * itself back in. `/pricing` already did. This one never did, so the landing
- * page, the headline the whole positioning rests on, could not appear on Google
- * at all while the page listing the prices could.
+ * What changed, and why:
+ * - The hero says what the product is in one plain sentence, with a video
+ *   beside it (`lib/landing-media.ts`). The old headline was the Bengali voice
+ *   command itself, which only made sense to somebody who already knew the app,
+ *   and the animated phone beside it rendered small and blurry.
+ * - The language tabs left the hero. The switch is in the top bar (and the
+ *   phone menu), where it changes the whole page just the same.
+ * - Every feature has its own band with a screenshot slot. Screenshots and
+ *   videos are listed in `lib/landing-media.ts`; files go under
+ *   `public/landing/`.
+ * - The "every plan includes" box under the prices is gone; the features
+ *   section says it once, and the listing offer became an FAQ answer.
+ * - The copy is original, plain and professional (`lib/marketing-copy.ts`).
  *
- * THE LINK PREVIEW NEEDS A PICTURE, AND AN ADDRESS. This page is passed round
- * on WhatsApp far more than it is searched for, and a link with no `og:image`
- * arrives as a bare grey line of text under somebody's message — the one
- * chance to look like something, spent. The card is `public/social/
- * link-preview.png`, 1200×630, made by `npm run social:preview`. It has to be
- * an absolute URL for a crawler to fetch it, which is what `metadataBase` is
- * for; the base is `baseUrl()`, the same one the sitemap, robots and every
- * printed QR use, so the canonical address and the card follow the domain
- * wherever it moves.
- *
- * The description is kept under 160 characters. Past that, Google cuts it
- * mid-sentence and WhatsApp shows two lines of it anyway.
+ * The root layout marks everything `noindex`; this page opts back in.
+ * Everything below is a server component, prerendered at build time, which is
+ * also when the screenshot files are looked for.
  */
+
+const TITLE = `${BRAND_NAME} — Shop Management App for Kirana Stores | QR Orders, Khata & Billing`;
+const DESCRIPTION = `Run your kirana or local shop from your phone: QR code ordering, digital khata, counter billing and bills on WhatsApp. Zero commission. ${TRIAL_DAYS}-day free trial.`;
+
 const PREVIEW = {
   url: '/social/link-preview.png',
   width: 1200,
   height: 630,
-  alt: `${BRAND_NAME} — say “চাল ১ কেজি ১০০” and your shop is online: QR orders, udhaar khata, no commission`,
+  alt: `${BRAND_NAME} — shop management app for kirana stores: QR orders, digital khata and billing`,
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl()),
-  title: `${BRAND_NAME} — speak your shop online, khata and all`,
-  description:
-    'List your kirana’s items by speaking, take orders from a QR at your counter and keep the udhaar khata. One price a month, no commission on any order.',
+  title: TITLE,
+  description: DESCRIPTION,
+  keywords: [
+    'kirana store app',
+    'grocery shop billing app',
+    'digital khata',
+    'udhaar khata app',
+    'QR code ordering',
+    'online store for local shops',
+    'WhatsApp bill',
+    'shop management app India',
+    'inventory app for small shops',
+  ],
   robots: { index: true, follow: true },
   alternates: { canonical: '/' },
   openGraph: {
-    title: `${BRAND_NAME} — speak your shop online`,
-    description:
-      'Voice cataloguing in Bangla, Hindi and English. QR ordering. Udhaar khata. No commission.',
+    title: `${BRAND_NAME} — Orders, khata and billing for your shop`,
+    description: DESCRIPTION,
     type: 'website',
     url: '/',
     siteName: BRAND_NAME,
     locale: 'en_IN',
+    alternateLocale: ['bn_IN', 'hi_IN'],
     images: [PREVIEW],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${BRAND_NAME} — speak your shop online`,
-    description:
-      'Voice cataloguing in Bangla, Hindi and English. QR ordering. Udhaar khata. No commission.',
+    title: `${BRAND_NAME} — Orders, khata and billing for your shop`,
+    description: DESCRIPTION,
     images: [PREVIEW],
   },
 };
 
+/**
+ * THREE WIDTHS, ON PURPOSE (27 Sep, by request: "too narrow", and the bar,
+ * the banner and the body should not share one box). The bar runs edge to
+ * edge; the banner is the widest block; the body reads a little narrower so
+ * lines of text stay comfortable on a big monitor.
+ */
+const HEADER_BOX = 'flex w-full items-center gap-4 px-5 py-3 sm:px-8 lg:px-10';
+const HERO_BOX = 'mx-auto w-full max-w-[104rem] px-5 sm:px-8 lg:px-14';
+const BODY_BOX = 'mx-auto w-full max-w-[92rem] px-5 sm:px-8 lg:px-14';
+
 /* ==========================================================================
- * THE PAGE'S OWN SMALL DESIGN SYSTEM.
- *
- * A landing page is one long column of sections, and the thing that makes it
- * read as designed rather than as a pile is that every section is built the
- * same way: the same rhythm down the page, the same three-part heading, the
- * same card. Before, each section invented its own spacing and its own heading
- * size, which is exactly what "not well organised" looks like from the outside.
- *
- * So the rhythm is stated once, here, and nothing below sets its own padding.
+ * The page's building blocks. Every section is built from these, so the
+ * rhythm, headings and cards are the same all the way down.
  * ======================================================================== */
 
-/** One band of the page. `tone` alternates the ground so sections separate. */
 function Section({
   id,
   tone = 'plain',
   children,
 }: {
   id?: string;
-  /**
-   * The ground this band sits on.
-   *
-   * THREE GROUNDS, ALTERNATING, and that is what stops a long page reading as
-   * one undifferentiated document. Every section used to be the same grey with
-   * the same white cards on it, so eight screens of scrolling had no landmarks
-   * in them at all — a reader could not tell they had moved. `card` is the
-   * pale band, `plain` the page's own tint, and `dark` the brand panel that
-   * the screenshots are shown against.
-   */
+  /** Alternating grounds, so a long page has landmarks. */
   tone?: 'plain' | 'card' | 'tint' | 'dark';
   children: React.ReactNode;
 }) {
@@ -145,60 +144,44 @@ function Section({
     <section
       id={id}
       className={clsx(
-        'scroll-mt-24 py-20 sm:py-24',
+        'scroll-mt-20 py-16 sm:py-24',
         tone === 'card' && 'bg-card',
         tone === 'tint' && 'border-y border-brand-100 bg-cream',
-        tone === 'dark' && 'relative overflow-hidden bg-brand-600 text-white',
+        tone === 'dark' && 'relative overflow-hidden bg-brand-800 text-white',
       )}
     >
-      <div className="relative mx-auto max-w-[100rem] px-5 sm:px-8 lg:px-12">{children}</div>
+      <div className={clsx('relative', BODY_BOX)}>{children}</div>
     </section>
   );
 }
 
-/**
- * Eyebrow, title, lead — in that order, at that size, every time.
- *
- * `align` is the only variation, because a grid of cards wants a left-aligned
- * heading and a single column wants a centred one, and picking per section is
- * how a page ends up with five different heading treatments.
- */
+/** Eyebrow, title, lead — the same three parts at the same sizes, every time. */
 function SectionHead({
   eyebrow,
   title,
   lead,
-  align = 'left',
+  align = 'center',
   tone = 'light',
 }: {
   eyebrow: Words;
   title: Words;
   lead?: Words;
   align?: 'left' | 'center';
-  /** `dark` for a heading sitting on the brand panel. */
   tone?: 'light' | 'dark';
 }) {
   const dark = tone === 'dark';
   return (
-    <div className={align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}>
-      {/* THE EYEBROW IS A PILL, not four faint grey capitals. Small, low
-          contrast, letter-spaced type is the single most skippable thing a
-          page can put above a heading, and this page is read at arm's length
-          on somebody else's phone. A filled chip is a shape the eye finds
-          before it reads anything. */}
+    <div className={align === 'center' ? 'mx-auto max-w-3xl text-center' : 'max-w-2xl'}>
       <span
         className={clsx(
           'inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em]',
-          dark ? 'bg-white/15 text-brand-100' : 'bg-brand-50 text-brand-700',
+          // The logo's red marks the label; the green carries the heading.
+          dark ? 'bg-white/15 text-white' : 'bg-accent-50 text-accent-700',
         )}
       >
         <Say t={eyebrow} />
       </span>
-      <h2
-        className={clsx(
-          'mt-3 text-3xl font-bold leading-tight sm:text-[2.5rem]',
-          dark ? 'text-white' : 'text-slate-900',
-        )}
-      >
+      <h2 className={clsx('mt-3 text-3xl font-bold leading-tight sm:text-4xl', dark ? 'text-white' : 'text-slate-900')}>
         <Say t={title} />
       </h2>
       {lead && (
@@ -210,205 +193,165 @@ function SectionHead({
   );
 }
 
-/**
- * A real screen from the product, in a phone.
- *
- * NO STOCK PHOTOGRAPHY OF SMILING SHOPKEEPERS. A stock photo says a designer
- * was here; a screenshot says the thing exists. These are the same images the
- * console's product tour uses — `public/tour/`, 780×1688 — so they are already
- * kept current, and the page gets better every time somebody retakes one.
- */
-function PhoneShot({
-  src,
-  alt,
-  caption,
-  priority = false,
-}: {
-  src: string;
-  alt: string;
-  caption: Words;
-  priority?: boolean;
-}) {
-  return (
-    <figure className="flex flex-col items-center">
-      <div className="w-full max-w-[15rem] overflow-hidden rounded-[1.75rem] border-[6px] border-slate-800 bg-slate-800 shadow-raised">
-        <Image
-          src={src}
-          alt={alt}
-          width={780}
-          height={1688}
-          priority={priority}
-          sizes="(max-width: 640px) 60vw, 240px"
-          className="h-auto w-full rounded-[1.25rem]"
-        />
-      </div>
-      {/* `currentColor`, so one component serves the pale band and the dark
-          one — the caption takes the colour of whatever section it is in. */}
-      <figcaption className="mt-3 text-center text-base font-medium opacity-80">
-        <Say t={caption} />
-      </figcaption>
-    </figure>
-  );
-}
-
-/**
- * An illustration beside a heading, in a frame of a fixed shape.
- *
- * THE FRAME IS THE POINT. These drawings arrive square, about 1100px, with a
- * generous margin of empty cream around the subject — which is right for the
- * file and wrong for the page. Dropped into a column next to a three-line
- * heading, a square opens a hole half a screen tall: the heading sits at the
- * top of its column, the picture runs on past the bottom of it, and the reader
- * scrolls through a band of nothing to reach the cards underneath.
- *
- * So the picture is cropped to a landscape frame by `object-cover` instead of
- * being allowed to set the row's height. The subject stays; the empty margin —
- * the part that was costing the space — is what gets cut. The row is then as
- * tall as the heading, which is how tall it should have been.
- */
-function SectionArt({
-  src,
-  alt,
-  caption,
-  className,
-}: {
-  src: string;
-  alt: string;
-  caption?: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <figure className={clsx('w-full max-w-sm lg:justify-self-end', className)}>
-      <div className="relative aspect-[5/4] overflow-hidden rounded-3xl border border-brand-100 bg-cream shadow-raised">
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes="(max-width: 1024px) 70vw, 24rem"
-          /* COVER, AND THE FILES ARE CUT TO MATCH. Each drawing in
-             `public/marketing/` is saved at exactly 5:4 with the faces inside
-             the frame, so cover has nothing left to crop. Do not drop a square
-             illustration in here without cutting it first: cover takes its
-             crop off the top, and the top is where the faces are. */
-          className="object-cover"
-        />
-      </div>
-      {caption && (
-        <figcaption className="mt-3 text-center text-base text-slate-600">{caption}</figcaption>
-      )}
-    </figure>
-  );
-}
-
-/**
- * The illustrations, and what each one is for.
- *
- * GENERATED, NOT PHOTOGRAPHED, AND NOT STOCK. A stock photograph of a grocery
- * shop is overwhelmingly a Western supermarket aisle — bright ceilings, long
- * refrigerated runs, trolleys — and putting that on a product built for a
- * counter shop in Dum Dum tells a shopkeeper in one glance that it was not made
- * for them. These were drawn to the brand's own three colours instead: the
- * green, the awning red and the cream, with a red-and-white awning over the
- * shop exactly as the logo has.
- *
- * They live in `public/marketing/`, at 1200px and around 200–300KB each, which
- * is the size they are actually drawn at on a laptop and twice what a phone
- * needs. This page is read on rural 4G; an illustration that costs a second of
- * loading has spent more than it is worth.
- */
-const ART = {
-  shop: {
-    src: '/marketing/shop.png',
-    alt: 'A busy kirana shop under a red and white awning — shelves of jars and packets, sacks of pulses, the owner serving at the counter and a queue of customers waiting, one of them scanning the QR card',
-  },
-  owner: {
-    src: '/marketing/owner.png',
-    alt: 'A shop owner in a green apron speaking into his phone',
-  },
-  customer: {
-    src: '/marketing/customer.png',
-    alt: 'A customer at a kirana shop counter scanning the shop’s QR card with her phone while the owner serves her, shelves of packets, jars and oil behind him',
-  },
-} as const;
-
-/** Where the top bar jumps to, in the order the page answers questions. */
-const NAV: NavItem[] = [
-  { href: '#what', label: LANDING.nav.what },
-  { href: '#how', label: LANDING.nav.how },
-  { href: '#why', label: LANDING.nav.why },
-  { href: '#plans', label: LANDING.nav.plans },
-];
-
-/**
- * The picture on each feature card. The words are `FEATURES` in
- * `lib/marketing-copy.ts`, matched by id, so the copy file stays free of JSX
- * and a card added there without an icon here fails the type check.
- */
-const FEATURE_ICONS: Record<FeatureId, (props: { className?: string }) => React.ReactElement> = {
-  speak: MicIcon,
-  catalogue: BoxIcon,
-  qr: QrIcon,
+/** The icon a screenshot slot shows until its picture exists. */
+const SCREEN_ICONS: Record<ScreenId, (props: { className?: string }) => React.ReactElement> = {
+  products: BoxIcon,
+  storefront: QrIcon,
   orders: BellIcon,
   khata: UsersIcon,
-  till: RupeeIcon,
-  units: CartIcon,
-  stock: CheckIcon,
+  billing: RupeeIcon,
+  stock: TruckIcon,
   reports: ChartIcon,
-  bill: PdfIcon,
-  simple: PhoneIcon,
-  customers: WhatsAppIcon,
+  setup: QrIcon,
 };
 
-/** The catalogue-it-for-you offer in one language, the price in bold. */
-function ListingOffer({ lang }: { lang: Locale }) {
-  const offer = listingOffer(formatPaise(LISTING_PAISE_PER_ITEM));
+/**
+ * A phone screenshot in a phone frame — the file from `SCREENS` if it has been
+ * added, else the matching product-tour screenshot, else a branded tile of the
+ * same shape, so the layout never changes when a picture arrives.
+ */
+function ScreenShot({ id, alt, label }: { id: ScreenId; alt: string; label: Words }) {
+  // The screen in each language, falling back to the English one.
+  const english = firstExisting(screenPath('en', id));
+  const byLang = LOCALES.map((lang) => ({ lang, src: firstExisting(screenPath(lang, id)) ?? english }));
+  const Icon = SCREEN_ICONS[id];
+  const picture = (src: string) => (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      quality={90}
+      sizes="(max-width: 640px) 80vw, 24rem"
+      className="object-cover object-top"
+    />
+  );
   return (
-    <>
-      {offer.before[lang]}
-      <strong className="font-semibold text-brand-700">{offer.strong[lang]}</strong>
-      {offer.after[lang]}
-    </>
+    <figure>
+      <PhoneFrame>
+        {english ? (
+          byLang.every((entry) => entry.src === english) ? (
+            picture(english)
+          ) : (
+            // All three in the HTML; the page's language shows one (see `Say`).
+            // Hidden ones are `display: none`, so a lazy image is never fetched.
+            byLang.map(({ lang, src }) => (
+              <span key={lang} lang={lang} data-l={lang} className="absolute inset-0">
+                {picture(src!)}
+              </span>
+            ))
+          )
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center gap-4 bg-gradient-to-b from-brand-50 via-card to-accent-50/40 px-6 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-raised">
+              <Icon className="h-8 w-8" />
+            </span>
+            <span className="text-base font-semibold text-brand-800">
+              <Say t={label} />
+            </span>
+          </div>
+        )}
+      </PhoneFrame>
+    </figure>
   );
 }
+
+/** The icon on each of the smaller features. */
+const MORE_ICONS: Record<MoreId, (props: { className?: string }) => React.ReactElement> = {
+  today: CalendarIcon,
+  simple: PhoneIcon,
+  install: InstallIcon,
+  languages: UsersIcon,
+  readback: MicIcon,
+  delivery: TruckIcon,
+  broadcast: WhatsAppIcon,
+  payments: RupeeIcon,
+};
+
+/** What each feature's screenshot shows, for screen readers and search. */
+const SCREEN_ALT: Record<FeatureId, string> = {
+  products: `${BRAND_NAME} product list, with items added by voice and photo`,
+  storefront: `A customer's view of the shop's online store, opened from its QR code`,
+  orders: `${BRAND_NAME} orders screen with a new order alert`,
+  khata: `${BRAND_NAME} digital khata with each customer's credit balance`,
+  billing: `${BRAND_NAME} counter billing screen`,
+  stock: `${BRAND_NAME} stock and restock list`,
+  reports: `${BRAND_NAME} daily takings, split into cash, UPI and credit`,
+};
+
+/** Search-engine structured data: the product, its prices and the FAQ. */
+function StructuredData() {
+  const site = baseUrl();
+  const prices = PLAN_ORDER.map((id) => PLAN_SPECS[id].price);
+  const data = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'SoftwareApplication',
+        name: BRAND_NAME,
+        url: site,
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Android, iOS, Web browser',
+        description: DESCRIPTION,
+        inLanguage: ['en', 'bn', 'hi'],
+        offers: {
+          '@type': 'AggregateOffer',
+          priceCurrency: 'INR',
+          lowPrice: Math.min(...prices),
+          highPrice: Math.max(...prices),
+          offerCount: prices.length,
+        },
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: FAQ.map((entry) => ({
+          '@type': 'Question',
+          name: entry.q.en,
+          acceptedAnswer: { '@type': 'Answer', text: entry.a.en },
+        })),
+      },
+    ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      // Built from our own constants, never from user input.
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }}
+    />
+  );
+}
+
+/** Where the top bar jumps to, in page order. */
+const NAV: NavItem[] = [
+  { href: '#features', label: LANDING.nav.features },
+  { href: '#videos', label: LANDING.nav.videos },
+  { href: '#how', label: LANDING.nav.how },
+  { href: '#plans', label: LANDING.nav.plans },
+  { href: '#faq', label: LANDING.nav.faq },
+];
 
 export default function LandingPage() {
   const support = supportDetails();
-  // Read off the ladder in its own order, never retyped here.
   const plans = PLAN_ORDER.map((id) => PLAN_SPECS[id]);
   const whatsapp = support.phone
     ? `https://wa.me/91${support.phone}?text=${encodeURIComponent(
-        `I want a ${BRAND_NAME} shop. My shop's name is `,
+        `Hello, I would like to start a ${BRAND_NAME} free trial for my shop. Shop name: `,
       )}`
     : null;
+  const heroVideo = youtubeId(HERO_VIDEO.youtube);
 
   return (
-    // THE ROOT CARRIES THE LANGUAGE. `data-landing` is what the language rules
-    // in `app/globals.css` hang from, and `data-lang` is set on it by the
-    // script `LandingLanguage` renders — before paint, from a `?lang=` link or
-    // the last visit — which is also why this one element is allowed to
-    // disagree with the server's HTML when React takes over.
+    // THE ROOT CARRIES THE LANGUAGE: `data-lang` is set on it by the script
+    // `LandingLanguage` renders, before paint — see `app/globals.css`.
     <div data-landing="" suppressHydrationWarning className="flex min-h-dvh flex-col bg-card">
-      {/* First, so its script runs before any of the words below are painted. */}
       <LandingLanguage />
-      {/* Where the back-to-top button sends the keyboard, so tabbing after it
-          resumes at the top of the page rather than in the footer. */}
+      <StructuredData />
       <span id="top" tabIndex={-1} className="sr-only" />
-      {/* THE BAR THAT SAYS THIS IS A PRODUCT AND NOT A SPLASH SCREEN.
-          A page with one headline and two buttons reads as an app that is
-          still loading. */}
-      <header className="sticky top-0 z-30 bg-black">
-        <div className="mx-auto flex max-w-[100rem] items-center gap-4 px-5 py-3 sm:px-8 lg:px-12">
-          {/* THE MARK ON A SMALL WHITE TILE, THE NAME IN TYPE. The supplied
-              lockup is drawn for a light ground: its dark green "Halk" all but
-              vanishes on black, and putting the whole lockup on a white plate
-              made a slab. Only the illustration needs the tile, the way an app
-              icon has one. The name is set in white with "khata" in the
-              logo's red, which reads on black where it would not on green. */}
-          <Link
-            href="/"
-            aria-label={`${BRAND_NAME} — home`}
-            className="inline-flex shrink-0 items-center gap-2.5"
-          >
+
+      {/* The logo's shop-front green. (A red-and-white awning stripe along
+          its bottom edge was tried and removed on 27 Sep: it looked busy.) */}
+      <header className="sticky top-0 z-30 bg-brand-900 shadow-raised">
+        <div className={HEADER_BOX}>
+          <Link href="/" aria-label={`${BRAND_NAME} — home`} className="inline-flex shrink-0 items-center gap-2.5">
             <span className="inline-flex rounded-xl bg-white p-1">
               <Image
                 src={BRAND_LOGO.master}
@@ -425,14 +368,10 @@ export default function LandingPage() {
               <span className="text-accent-400">{BRAND_WORDMARK.tail}</span>
             </span>
           </Link>
-          {/* The section you are reading is marked as you scroll — see
-              `SectionNav`. Four words that never change are decoration; a bar
-              that answers "where am I in this page" is a map. */}
-          <SectionNav items={NAV} className="ml-auto hidden items-center gap-2 lg:flex" />
-          <div className="ml-auto flex items-center gap-2 lg:ml-6">
-            {/* The app's own language select, in the bar, from a tablet up.
-                On a phone the bar has room for the mark and one button and no
-                more; the switch is in the hero and in the menu there. */}
+          <SectionNav items={NAV} className="ml-auto hidden items-center gap-1 lg:flex" />
+          <div className="ml-auto flex items-center gap-2 lg:ml-4">
+            {/* The language switch lives here now, not in the hero. On a phone
+                it is inside the menu. */}
             <div className="hidden sm:block">
               <LangSelect />
             </div>
@@ -445,7 +384,7 @@ export default function LandingPage() {
             {whatsapp && (
               <a
                 href={whatsapp}
-                className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700"
+                className="hidden min-h-10 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700 sm:inline-flex"
               >
                 <WhatsAppIcon className="h-4 w-4" />
                 <Say t={LANDING.getYourShop} />
@@ -457,114 +396,31 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* ==================================================================
-            HERO — two columns, because one centred column of text with two
-            buttons under it is a splash screen. The claim on the left, the
-            product itself on the right: a landing page for something visual
-            has to show the thing within the first screen.
-
-            The headline is unchanged and must stay unchanged. It used to lead
-            with "Scan → Select → Order", which is a true description of the
-            product and a sentence every competitor can write without changing
-            a word. What none of them ask a shopkeeper to do is talk. So the
-            headline IS the demonstration: the exact sentence an owner says, in
-            the script they think in.
+            HERO — what it is, in one sentence, and a video that shows it.
             ================================================================== */}
-        {/* ==================================================================
-            THE HERO IS CREAM, NOT DEEP GREEN AND NOT WHITE.
-
-            A banner painted in the dark brand green made the page look like
-            enterprise software wearing an Indian logo, and it put the loudest
-            colour on the page in the one place a reader has not agreed to
-            anything yet. White was the other failure: a document. The cream
-            (#f9f3eb) is the third colour of the identity and the one that does
-            the most work — paper, a paper bag, the page of a khata — so the
-            fold is unmistakably this brand without shouting, and the green and
-            the red are left free to mark the things that matter.
-
-            It was a light column on the same grey the rest of the page sits
-            on, and the whole fold read as a document. The shops this is sold
-            to are shown it on a phone, in a bazaar, by somebody holding it up
-            — it has half a second to look like something, and a wall of grey
-            does not survive that. So the fold is the brand at full strength:
-            the deep green, the alpona of a Bengali threshold, and the product
-            itself glowing against it.
-
-            The headline is unchanged and must stay unchanged. It used to lead
-            with "Scan → Select → Order", which is a true description of the
-            product and a sentence every competitor can write without changing
-            a word. What none of them ask a shopkeeper to do is talk. So the
-            headline IS the demonstration: the exact sentence an owner says, in
-            the script they think in.
-            ================================================================== */}
-        <section className="relative overflow-hidden bg-cream text-slate-900">
+        <section className="relative overflow-hidden bg-cream">
+          {/* The logo's two colours as soft light behind the banner. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-brand-200/45 blur-3xl"
+            className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-brand-200/45 blur-3xl"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-accent-100/50 blur-3xl"
+            className="pointer-events-none absolute -bottom-48 -left-32 h-[28rem] w-[28rem] rounded-full bg-accent-100/50 blur-3xl"
           />
-
-          <div className="relative mx-auto grid max-w-[100rem] items-center gap-12 px-5 pb-24 pt-14 sm:px-8 sm:pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20 lg:px-12 lg:pb-28">
+          <div className={clsx('relative grid items-center gap-12 pb-28 pt-12 sm:pt-16 lg:grid-cols-[1fr_1.15fr] lg:gap-20 lg:pb-32', HERO_BOX)}>
             <div className="text-center lg:text-left">
-              {/* THE LANGUAGE IS CHOSEN FIRST, before a word of the claim.
-                  Everything below this — the menu, the prices, the questions,
-                  the foot — follows it; see `LangTabs`. It is the first thing
-                  in the fold because the person holding the phone may not be
-                  able to read the default, and every other control on the page
-                  assumes they can. */}
-              <LangTabs className="mb-6" />
-
-              {/* EVERY LANGUAGE IS MARKED AS ITSELF — `Say` wraps each in its
-                  own `lang`. The document is `lang="en"`, and a screen reader
-                  handed Bengali script under an English `lang` reads it out in
-                  English phonemes, which is unintelligible. It is also what
-                  tells a search engine, and a browser's own translate prompt,
-                  that this page is not only English. */}
-              <p className="inline-flex items-center gap-2 rounded-full bg-card px-3.5 py-1.5 text-sm font-semibold text-brand-700 shadow-raised ring-1 ring-brand-100">
-                <MicIcon className="h-4 w-4" />
-                <Say t={LANDING.hero.badge} />
+              <p className="inline-flex items-center gap-2 rounded-full bg-card px-3.5 py-1.5 text-sm font-semibold text-accent-700 shadow-raised ring-1 ring-accent-100">
+                <span aria-hidden className="h-2 w-2 rounded-full bg-accent-500" />
+                <Say t={LANDING.hero.eyebrow} />
               </p>
-
-              {/* Bigger than it was, and bigger than a web headline usually
-                  is. This is read at arm's length on a phone held up by
-                  somebody else, and it is Bengali or Hindi, which need the
-                  size more than Latin does.
-
-                  ON THE ENGLISH PAGE IT IS STILL THE BENGALI SENTENCE — that
-                  is the demonstration, and it is marked `lang="bn"` so it is
-                  read as Bengali. The Hindi page says the Hindi one. */}
-              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
-                <Say
-                  t={LANDING.hero.headline}
-                  en={<span lang="bn">{LANDING.hero.headline.en}</span>}
-                />
+              <h1 className="mt-5 text-4xl font-bold leading-[1.12] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.4rem]">
+                <Say t={LANDING.hero.headline} />
               </h1>
-
-              <p className="mx-auto mt-5 max-w-md text-xl text-slate-800 lg:mx-0">
-                <Say t={LANDING.hero.said} />
-                <span className="mt-1 block text-lg text-slate-600">
-                  <Say t={LANDING.hero.anyLanguage} />
-                </span>
+              <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-slate-700 lg:mx-0">
+                <Say t={LANDING.hero.lead} />
               </p>
 
-              {/* The QR half, demoted to what it is: the second sentence. It
-                  said "lands in your WhatsApp", which stopped being true when
-                  the handoff was removed — orders land in the owner's own app
-                  now, and saying otherwise sold a shopkeeper a flow they would
-                  not find. */}
-              <p className="mx-auto mt-5 max-w-lg text-slate-600 lg:mx-0">
-                <Say t={LANDING.hero.qr} />
-              </p>
-
-              {/* On the cream the buttons are the brand at full strength —
-                  green for the action, and a plain bordered one beside it.
-
-                  The English page keeps the Bengali half of each label. A
-                  reader who has not found the switch yet may still be the one
-                  who will run the shop, and "দোকান খুলুন" on the green button
-                  is the one line they must not miss. */}
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
                 {whatsapp && (
                   <a
@@ -572,94 +428,59 @@ export default function LandingPage() {
                     className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-bold text-white shadow-float transition hover:bg-brand-700"
                   >
                     <WhatsAppIcon className="h-5 w-5" />
-                    <Say
-                      t={LANDING.getYourShop}
-                      en={
-                        <>
-                          <span lang="bn">{LANDING.getYourShop.bn}</span> ·{' '}
-                          {LANDING.getYourShop.en}
-                        </>
-                      }
-                    />
+                    <Say t={LANDING.getYourShop} />
                   </a>
                 )}
                 <a
-                  href="#plans"
-                  className="rounded-xl border border-brand-200 bg-card px-6 py-3.5 text-base font-semibold text-brand-700 transition hover:bg-brand-50"
+                  href="#videos"
+                  className="inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-card px-6 py-3.5 text-base font-semibold text-brand-700 transition hover:bg-brand-50"
                 >
-                  <Say
-                    t={LANDING.hero.seePricing}
-                    en={
-                      <>
-                        <span lang="bn">{LANDING.hero.seePricing.bn}</span> ·{' '}
-                        {LANDING.hero.seePricing.en}
-                      </>
-                    }
-                  />
+                  <svg viewBox="0 0 24 24" aria-hidden className="h-5 w-5 fill-current">
+                    <path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l11.01-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14Z" />
+                  </svg>
+                  <Say t={LANDING.hero.watch} />
                 </a>
               </div>
 
-              {/* The four objections that decide it, answered before they are
-                  asked. Every one is a fact about the product, not a boast. */}
-              <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-base text-slate-600 lg:justify-start">
-                {[
-                  ...LANDING.hero.checks,
-                  { en: 'বাংলা · हिन्दी · English', bn: 'বাংলা · हिन्दी · English', hi: 'বাংলা · हिन्दी · English' },
-                ].map((line) => (
+              <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-2 text-left text-base text-slate-700 sm:flex sm:flex-wrap sm:justify-center lg:justify-start">
+                {LANDING.hero.checks.map((line) => (
                   <li key={line.en} className="inline-flex items-center gap-1.5">
-                    <CheckIcon className="h-4 w-4 text-brand-600" />
+                    <CheckIcon className="h-4 w-4 shrink-0 text-brand-600" />
                     <Say t={line} />
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* THE PRODUCT, PLAYING ITSELF, ON THE FIRST SCREEN.
-                This was two still screenshots side by side. A still says
-                "there is an app"; it cannot say that the owner SPEAKS the
-                item, the customer SCANS the QR, the order ARRIVES and the
-                khata ADDS ITSELF UP — which is the argument, and is a
-                sequence. Somebody who watches one loop has understood the
-                product without reading a word of English. */}
-            <div className="relative">
-              {/* A halo behind the phone, so the bezel has something to be dark
-                  against and the screen reads as lit rather than pasted on. */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute left-1/2 top-1/2 h-[26rem] w-[26rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-200/40 blur-3xl"
+            <div>
+              <VideoPlayer
+                videoId={heroVideo}
+                thumb={firstExisting(HERO_VIDEO.thumb)}
+                title={HERO_VIDEO.title}
+                size="hero"
+                priority
               />
-              <div className="relative">
-                <HeroJourney />
-              </div>
+              <p className="mt-3 text-center text-sm text-slate-500">
+                <Say t={HERO_VIDEO.blurb} />
+              </p>
             </div>
           </div>
         </section>
 
-        {/* ==================================================================
-            THE NUMBERS, ON CARDS THAT STRADDLE THE FOLD.
-
-            Four facts, at a size that can be read across a room, lifted onto
-            the boundary between the green panel and the page so the two bands
-            are stitched together rather than stacked. This is the one place on
-            the page where a figure is allowed to be enormous: "0%" is the
-            whole commercial argument and it deserves to be the biggest thing
-            after the headline.
-            ================================================================== */}
-        <div className="relative z-10 mx-auto -mt-16 max-w-[100rem] px-5 sm:px-8 lg:px-12">
-          <dl className="grid gap-3 rounded-3xl border border-brand-100 bg-card p-5 shadow-float sm:grid-cols-2 lg:grid-cols-4 lg:gap-5 lg:p-7">
+        {/* The four numbers, on a card that straddles the fold. */}
+        <div className={clsx('relative z-10 -mt-16', HERO_BOX)}>
+          <dl className="grid grid-cols-2 gap-4 rounded-3xl border border-brand-100 bg-card p-5 shadow-float lg:grid-cols-4 lg:p-7">
             {LANDING.stats.map((stat) => (
-              <div key={stat.label.en} className="px-2 py-1">
+              <div key={stat.label.en} className="px-1">
                 <dd
                   className={clsx(
                     'text-3xl font-bold tabular-nums lg:text-4xl',
-                    // The commission figure is the commercial argument, so it
-                    // takes the mark's other colour and the eye finds it first.
                     stat.accent ? 'text-accent-600' : 'text-brand-700',
                   )}
                 >
                   <Say t={stat.value} />
                 </dd>
-                <dt className="mt-1 text-base leading-snug text-slate-600">
+                <dt className="mt-1 text-sm leading-snug text-slate-600 sm:text-base">
                   <Say t={stat.label} />
                 </dt>
               </div>
@@ -668,77 +489,72 @@ export default function LandingPage() {
         </div>
 
         {/* ==================================================================
-            THE SAFETY PROMISE, HIGH UP AND IN PLAIN WORDS.
-
-            A shopkeeper being offered a shop app by a company they have not
-            heard of is right to be suspicious, and everything above this is
-            asking them to trust a stranger. The honest answer is not softer
-            marketing: it is a list of the things a fraud would ask for and we
-            do not. See `SAFETY` in `lib/marketing-copy.ts` — and keep it true.
+            FEATURES — one band each: the words on one side, the screen on the
+            other, alternating so the page reads as a walk through the app.
             ================================================================== */}
-        <section className="border-y border-glass-edge bg-card py-10">
-          <div className="mx-auto max-w-[100rem] px-5 sm:px-8 lg:px-12">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {SAFETY.map((line) => (
-                <div key={line.en} className="flex gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
-                    <CheckIcon className="h-4 w-4" />
+        <Section id="features">
+          <SectionHead
+            eyebrow={LANDING.features.eyebrow}
+            title={LANDING.features.title}
+            lead={LANDING.features.lead}
+          />
+          <div className="mt-14 space-y-20 sm:space-y-24">
+            {FEATURES.map((feature, index) => (
+              <article
+                key={feature.id}
+                className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16"
+              >
+                <div className={clsx(index % 2 === 1 && 'lg:order-2')}>
+                  <span className="text-sm font-bold uppercase tracking-[0.12em] text-accent-600">
+                    <Say t={feature.eyebrow} />
                   </span>
-                  {/* One language now, the reader's. This was the English with
-                      the Bengali under it in grey, which made the Bengali the
-                      footnote on the one promise a Bengali-reading owner most
-                      needs to read. */}
-                  <p className="text-base leading-relaxed text-slate-700">
-                    <Say t={line} />
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ================================================================== */}
-        <Section id="what" tone="tint">
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
-            <SectionHead
-              eyebrow={LANDING.what.eyebrow}
-              title={LANDING.what.title}
-              lead={LANDING.what.lead}
-            />
-            {/* The shop at its busiest — the counter with people at it, which
-                is the state this product is for. An empty shop front is a
-                picture of a building; a queue is a picture of a trade. */}
-            <SectionArt src={ART.shop.src} alt={ART.shop.alt} className="mx-auto" />
-          </div>
-
-          {/* THE CARDS CARRY THEIR OWN COLOUR NOW.
-              Twelve identical white boxes with twelve identical green tiles is
-              a spreadsheet: the eye finds no way in and reads none of them.
-              The tile colour walks down the brand's own ramp, which gives the
-              grid a rhythm without introducing a second hue — and the card
-              lifts and warms on hover, so a cursor has something to find. */}
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((feature, i) => {
-              const Icon = FEATURE_ICONS[feature.id];
-              const tile = ['bg-brand-600', 'bg-brand-500', 'bg-brand-700'][i % 3];
-              return (
-                <div
-                  key={feature.id}
-                  className="group rounded-2xl border border-brand-100 bg-card p-6 shadow-raised transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-float"
-                >
-                  <span
-                    className={clsx(
-                      'inline-flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-raised transition group-hover:scale-105',
-                      tile,
-                    )}
-                  >
-                    <Icon className="h-6 w-6" />
-                  </span>
-                  <h3 className="mt-4 text-lg font-bold text-slate-900">
+                  <h3 className="mt-2 text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
                     <Say t={feature.title} />
                   </h3>
-                  <p className="mt-2 text-base leading-relaxed text-slate-600">
-                    <Say t={feature.body} />
+                  <p className="mt-3 text-lg leading-relaxed text-slate-600">
+                    <Say t={feature.lead} />
+                  </p>
+                  <ul className="mt-6 space-y-3">
+                    {feature.points.map((point) => (
+                      <li key={point.en} className="flex gap-3 text-base leading-relaxed text-slate-700">
+                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+                          <CheckIcon className="h-4 w-4" />
+                        </span>
+                        <Say t={point} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className={clsx('relative', index % 2 === 1 && 'lg:order-1')}>
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-100/70 blur-3xl"
+                  />
+                  <div className="relative">
+                    <ScreenShot id={feature.id} alt={SCREEN_ALT[feature.id]} label={feature.eyebrow} />
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </Section>
+
+        {/* The smaller things, as a compact grid. */}
+        <Section tone="tint">
+          <SectionHead eyebrow={LANDING.more.eyebrow} title={LANDING.more.title} />
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {MORE.map((item) => {
+              const Icon = MORE_ICONS[item.id];
+              return (
+                <div key={item.id} className="rounded-2xl border border-brand-100 bg-card p-5 shadow-raised">
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-3 font-bold text-slate-900">
+                    <Say t={item.title} />
+                  </h3>
+                  <p className="mt-1 text-base leading-relaxed text-slate-600">
+                    <Say t={item.body} />
                   </p>
                 </div>
               );
@@ -746,120 +562,78 @@ export default function LandingPage() {
           </div>
         </Section>
 
-        {/* ================================================================== */}
-        {/* THE SCREENS GO ON THE DARK BAND, and this is the one section where
-            the ground is doing real work rather than decorating. Every screen
-            of this product is a pale card; four pale cards on a pale page are
-            four grey rectangles. On the brand panel they are lit objects. */}
-        <Section tone="dark">
+        {/* ==================================================================
+            VIDEOS — landscape cards, each a thumbnail that plays in place.
+            ================================================================== */}
+        <Section id="videos" tone="dark">
           <SectionHead
             tone="dark"
-            eyebrow={LANDING.screens.eyebrow}
-            title={LANDING.screens.title}
-            lead={LANDING.screens.lead}
-            align="center"
+            eyebrow={LANDING.videos.eyebrow}
+            title={LANDING.videos.title}
+            lead={LANDING.videos.lead}
           />
-          <div className="mt-10 grid grid-cols-2 gap-6 lg:grid-cols-4">
-            <PhoneShot
-              src="/tour/02-items.png"
-              alt="The item list, with prices and what is out of stock"
-              caption={LANDING.screens.items}
-            />
-            <PhoneShot
-              src="/tour/05-orders.png"
-              alt="Orders waiting, confirmed and completed"
-              caption={LANDING.screens.orders}
-            />
-            <PhoneShot
-              src="/tour/06-khata.png"
-              alt="The khata, with each customer’s running balance"
-              caption={LANDING.screens.khata}
-            />
-            <PhoneShot
-              src="/tour/07-sell.png"
-              alt="The counter till, ringing up a walk-in sale"
-              caption={LANDING.screens.till}
-            />
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {VIDEOS.map((video) => (
+              <article key={video.id}>
+                <VideoPlayer videoId={youtubeId(video.youtube)} thumb={firstExisting(video.thumb)} title={video.title} />
+                <h3 className="mt-3 font-semibold text-white">
+                  <Say t={video.title} />
+                </h3>
+                <p className="mt-0.5 text-sm text-white/70">
+                  <Say t={video.blurb} />
+                </p>
+              </article>
+            ))}
           </div>
         </Section>
 
-        {/* ================================================================== */}
+        {/* ==================================================================
+            HOW IT WORKS — four steps, and the QR poster the shop ends up with.
+            ================================================================== */}
+        {/* HOW IT WORKS — the four steps as an infographic, the section's
+            own picture (27 Sep, by request). */}
         <Section id="how">
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
-            <SectionHead
-              eyebrow={LANDING.how.eyebrow}
-              title={LANDING.how.title}
-              lead={LANDING.how.lead}
-            />
-
-            {/* THE PRODUCT'S OWN DRAWING, not a stock photograph, and the file
-                it comes from says why: stock photography of grocery shops is
-                overwhelmingly Western supermarket aisles, and a shopkeeper in
-                Dum Dum can see in one glance that it was not made for them.
-                This is the shape they actually stand in front of. It is also
-                about a kilobyte of markup that takes the brand's colours and
-                has no licence to get wrong — see `components/ui/ShopArt.tsx`. */}
-            {/* The owner, doing the one thing this product asks of him. */}
-            <SectionArt
-              src={ART.owner.src}
-              alt={ART.owner.alt}
-              className="mx-auto hidden sm:block"
-              caption={<Say t={LANDING.how.ownerSays} />}
-            />
-          </div>
-
-          {/* These two lists had their own English/বাংলা tabs, which changed
-              the list and nothing around it. The language is the page's now,
-              chosen once at the top — see `LangTabs`. */}
-          <div className="mt-10">
+          <SectionHead eyebrow={LANDING.how.eyebrow} title={LANDING.how.title} lead={LANDING.how.lead} />
+          <div className="mx-auto mt-14 max-w-6xl rounded-3xl border border-brand-100 bg-card px-6 py-10 shadow-raised sm:px-10 lg:py-14">
             <StepList />
+            {whatsapp && (
+              <div className="mt-12 flex justify-center">
+                <a
+                  href={whatsapp}
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-bold text-white shadow-float transition hover:bg-brand-700"
+                >
+                  <WhatsAppIcon className="h-5 w-5" />
+                  <Say t={LANDING.getYourShop} />
+                </a>
+              </div>
+            )}
           </div>
         </Section>
 
-        {/* ================================================================== */}
-        <Section id="why" tone="tint">
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
-            <SectionHead
-              eyebrow={LANDING.why.eyebrow}
-              title={LANDING.why.title}
-              lead={LANDING.why.lead}
-            />
-            {/* The other half of the shop: the customer who scans. */}
-            <SectionArt
-              src={ART.customer.src}
-              alt={ART.customer.alt}
-              className="mx-auto hidden sm:block"
-            />
-          </div>
-
-          <div className="mt-10">
-            <ProblemList />
+        {/* The promises that decide trust, in plain words. */}
+        <Section tone="tint">
+          <SectionHead eyebrow={LANDING.trust.eyebrow} title={LANDING.trust.title} />
+          <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2">
+            {SAFETY.map((line) => (
+              <div key={line.en} className="flex gap-3 rounded-2xl border border-brand-100 bg-card p-5">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
+                  <CheckIcon className="h-4 w-4" />
+                </span>
+                <p className="text-base leading-relaxed text-slate-700">
+                  <Say t={line} />
+                </p>
+              </div>
+            ))}
           </div>
         </Section>
 
-        {/* ================================================================== */}
-        <Section id="plans" tone="tint">
-          <SectionHead
-            eyebrow={LANDING.plans.eyebrow}
-            title={LANDING.plans.title}
-            lead={LANDING.plans.lead}
-            align="center"
-          />
-
-          {/* THE WHOLE OF THE PRICING IS HERE NOW, not a teaser pointing at a
-              second page. A shopkeeper deciding whether to buy should not have
-              to leave the page that convinced them, and the numbers below — the
-              month, the year, what a year saves, what the plan holds — are the
-              only ones there are. `/pricing` still answers and sends whoever
-              follows an old link straight back to this section.
-
-              The ladder is read off `PLAN_SPECS`, never retyped. A price that
-              lives in two files is a price that will be wrong in one of them
-              the first time it changes. */}
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {/* ==================================================================
+            PRICING — read off `PLAN_SPECS`, never retyped.
+            ================================================================== */}
+        <Section id="plans">
+          <SectionHead eyebrow={LANDING.plans.eyebrow} title={LANDING.plans.title} lead={LANDING.plans.lead} />
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {plans.map((plan) => {
-              // The plan most kiranas land on, marked so the eye has somewhere
-              // to start. Five equal cards is five decisions.
               const popular = plan.id === 'PRO';
               const year = yearLine(
                 yearPrice(plan.id).toLocaleString('en-IN'),
@@ -869,10 +643,10 @@ export default function LandingPage() {
                 <div
                   key={plan.id}
                   className={clsx(
-                    'relative flex flex-col rounded-2xl p-5 transition',
+                    'relative flex flex-col rounded-2xl p-5',
                     popular
                       ? 'bg-brand-600 text-white shadow-float lg:-my-3 lg:py-8'
-                      : 'border border-brand-100 bg-card shadow-raised hover:-translate-y-1 hover:shadow-float',
+                      : 'border border-brand-100 bg-card shadow-raised',
                   )}
                 >
                   {popular && (
@@ -880,46 +654,19 @@ export default function LandingPage() {
                       <Say t={LANDING.plans.popular} />
                     </span>
                   )}
-                  <h3 className={clsx('font-bold', popular ? 'text-white' : 'text-slate-900')}>
-                    {plan.name}
-                  </h3>
-                  <p
-                    className={clsx(
-                      'mt-2 text-4xl font-bold tabular-nums',
-                      popular ? 'text-white' : 'text-slate-900',
-                    )}
-                  >
+                  <h3 className={clsx('font-bold', popular ? 'text-white' : 'text-slate-900')}>{plan.name}</h3>
+                  <p className={clsx('mt-2 text-4xl font-bold tabular-nums', popular ? 'text-white' : 'text-slate-900')}>
                     &#8377;{plan.price}
-                    <span
-                      className={clsx(
-                        'text-sm font-normal',
-                        popular ? 'text-white/70' : 'text-slate-500',
-                      )}
-                    >
-                      {' '}
+                    <span className={clsx('text-sm font-normal', popular ? 'text-white/70' : 'text-slate-500')}>
                       <Say t={LANDING.plans.perMonth} />
                     </span>
                   </p>
-
-                  {/* THE YEARLY PRICE ON THE CARD, NOT BEHIND A TOGGLE. A shop
-                      that pays once a year has one chance to leave instead of
-                      twelve, which matters more to this business than the two
-                      months given away — so the offer has to be read, not
-                      discovered. */}
-                  <p
-                    className={clsx(
-                      'mt-2 text-sm font-bold tabular-nums',
-                      popular ? 'text-brand-100' : 'text-brand-700',
-                    )}
-                  >
+                  <p className={clsx('mt-2 text-sm font-bold tabular-nums', popular ? 'text-brand-100' : 'text-brand-700')}>
                     <Say t={year.price} />
-                    <span
-                      className={clsx('font-normal', popular ? 'text-white/70' : 'text-slate-500')}
-                    >
+                    <span className={clsx('font-normal', popular ? 'text-white/70' : 'text-slate-500')}>
                       <Say t={year.save} />
                     </span>
                   </p>
-
                   <p
                     className={clsx(
                       'mt-3 border-t pt-3 text-sm font-bold',
@@ -928,81 +675,21 @@ export default function LandingPage() {
                   >
                     <Say t={planItemsLine(plan.id)} />
                   </p>
-                  <p className={clsx('mt-1 text-base', popular ? 'text-white/75' : 'text-slate-500')}>
+                  <p className={clsx('mt-1 text-base', popular ? 'text-white/80' : 'text-slate-500')}>
                     <Say t={planTagline(plan.id)} />
                   </p>
                 </div>
               );
             })}
           </div>
-
-          {/* WHAT EVERY PLAN INCLUDES, IN FULL. The plans differ by item count
-              and by nothing else, which is the fairest thing about this pricing
-              and the easiest thing to miss — so the list is stated once,
-              plainly, under all five cards rather than repeated inside each. */}
-          <div className="mt-6 rounded-3xl border border-brand-100 bg-card p-6 shadow-raised sm:p-8">
-            <h3 className="text-lg font-bold text-slate-900">
-              <Say t={LANDING.plans.everyPlan} />
-            </h3>
-            <ul className="mt-4 grid gap-x-8 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
-              {EVERY_PLAN_INCLUDES.map((feature) => (
-                <li key={feature} className="flex gap-2.5 text-base text-slate-700">
-                  <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <span>
-                    <Say t={includesLine(feature)} />
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            {/* The two things a shopkeeper asks next, answered where they ask
-                them rather than on a page they have to go and find. */}
-            <div className="mt-6 grid gap-4 border-t border-brand-100 pt-6 sm:grid-cols-2">
-              <div>
-                <p className="font-semibold text-slate-900">
-                  <Say t={LANDING.plans.listForYou} />
-                </p>
-                <p className="mt-1 text-base text-slate-600">
-                  {/* Each language puts the price where its sentence wants it,
-                      so the bold part is placed per language, not once. */}
-                  <Say
-                    en={<ListingOffer lang="en" />}
-                    bn={<ListingOffer lang="bn" />}
-                    hi={<ListingOffer lang="hi" />}
-                  />
-                </p>
-              </div>
-              <div>
-                <p className="font-semibold text-slate-900">
-                  <Say t={LANDING.plans.stopPaying} />
-                </p>
-                <p className="mt-1 text-base text-slate-600">
-                  <Say t={LANDING.plans.stopPayingBody} />
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <p className="mt-6 text-center text-base text-slate-500">
-            <Say t={LANDING.plans.money} />
-          </p>
         </Section>
 
-        {/* ================================================================== */}
-        <Section tone="tint">
-          <SectionHead
-            eyebrow={LANDING.faq.eyebrow}
-            title={LANDING.faq.title}
-            align="center"
-          />
-          {/* A native accordion: no JavaScript, works with the keyboard, and
-              searchable by the browser's own find. */}
+        {/* FAQ — a native accordion: no JavaScript, keyboard-friendly. */}
+        <Section id="faq" tone="tint">
+          <SectionHead eyebrow={LANDING.faq.eyebrow} title={LANDING.faq.title} />
           <div className="mx-auto mt-10 max-w-3xl space-y-3">
             {FAQ.map((entry) => (
-              <details
-                key={entry.q.en}
-                className="group rounded-2xl border border-brand-100 bg-card px-5 py-4"
-              >
+              <details key={entry.q.en} className="group rounded-2xl border border-brand-100 bg-card px-5 py-4">
                 <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-900">
                   <span>
                     <Say t={entry.q} />
@@ -1022,21 +709,16 @@ export default function LandingPage() {
           </div>
         </Section>
 
-        {/* ================================================================== */}
-        <section className="px-5 py-20 sm:px-6 sm:py-24">
-          <div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-brand-600 bg-chrome px-6 py-12 text-center text-white">
-            <h2 className="relative text-3xl font-bold sm:text-4xl">
+        {/* The last call to action. */}
+        <section className="px-5 py-16 sm:px-6 sm:py-24">
+          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-brand-800 px-6 pb-12 pt-14 text-center text-white shadow-float">
+            <h2 className="text-3xl font-bold sm:text-4xl">
               <Say t={LANDING.cta.title} />
             </h2>
-            {/* ON A DARK PANEL THE BUTTONS INVERT. A brand-600 button on a
-                brand-800 ground is two greens a hair apart — the call to
-                action stops being the loudest thing on the panel, which is the
-                only job it has. The card colour carries brand text instead,
-                exactly as the pricing page's hero does. */}
-            <p className="relative mx-auto mt-3 max-w-xl text-white/85">
+            <p className="mx-auto mt-3 max-w-xl text-white/85">
               <Say t={LANDING.cta.body} />
             </p>
-            <div className="relative mt-7 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
               {whatsapp && (
                 <a
                   href={whatsapp}
@@ -1049,24 +731,17 @@ export default function LandingPage() {
               {support.phone && (
                 <a
                   href={`tel:+91${support.phone}`}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20"
                 >
                   <PhoneIcon className="h-5 w-5" />
                   {support.phone}
                 </a>
               )}
             </div>
-
-            {/* The way back for somebody who scanned a QR once and is now at
-                home. Renders nothing on a phone that has never ordered, which
-                is every visitor to this page except the customers it is for. */}
-            <SavedShops />
           </div>
         </section>
       </main>
 
-      {/* Who built it, who to ring, and the four policy pages. It is the only
-          thing on every page, which is what makes it the right place for them. */}
       <StickyCta whatsapp={whatsapp} />
       <BackToTop />
       <MobileMenu items={NAV} whatsapp={whatsapp} />
