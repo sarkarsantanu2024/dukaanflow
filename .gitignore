@@ -22,7 +22,7 @@ khata-backup-*.json
 # directory a verification build uses so it cannot kill a running dev server.
 .responsive/
 .next-verify/
-.dev.log
+.dev*.log
 
 # QA reports stay local: they hold phone numbers, test credentials and screenshots,
 # and this repository is public. Never commit anything under qa-report/.
