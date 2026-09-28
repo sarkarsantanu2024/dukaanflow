@@ -9,6 +9,7 @@
  * A server component: nothing here changes while somebody is reading it.
  */
 
+import { MarketingAnalytics } from '@/components/marketing/MarketingAnalytics';
 import Link from 'next/link';
 import { BrandMark } from '@/components/ui/BrandMark';
 import { BackButton } from '@/components/ui/BackButton';
@@ -27,6 +28,8 @@ export function LegalPage({
 }) {
   return (
     <div className="min-h-dvh bg-sunk">
+      {/* Contact and the policies are marketing pages — see MarketingAnalytics. */}
+      <MarketingAnalytics />
       <header className="border-b border-slate-200 bg-card">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-3 sm:px-5 sm:py-4">
           {/* Reached from the footer of a shop or an order page: back returns
@@ -35,7 +38,7 @@ export function LegalPage({
             <BackButton tone="light" fallback="/" label="Back" />
             <BrandMark href="/" className="text-base" />
           </div>
-          <Link href="/#plans" className="text-sm font-semibold text-brand-700 hover:underline">
+          <Link href="/#plans" className="text-base font-semibold text-brand-700 hover:underline">
             Pricing
           </Link>
         </div>
@@ -44,7 +47,7 @@ export function LegalPage({
       <main className="mx-auto max-w-3xl px-5 py-10">
         <h1 className="text-3xl font-semibold text-slate-900">{title}</h1>
         <p className="mt-2 text-slate-600">{intro}</p>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-base text-slate-500">
           {COMPANY.name} · Last updated {COMPANY.policiesUpdated}
         </p>
 

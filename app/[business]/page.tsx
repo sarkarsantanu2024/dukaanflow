@@ -9,7 +9,9 @@ import { LandingLanguage } from '@/components/marketing/LangTabs';
 import { Say } from '@/components/marketing/Say';
 import type { NavItem } from '@/components/marketing/SectionNav';
 import { StickyCta } from '@/components/marketing/StickyCta';
-import { BusinessGrid, BUSINESS_MARK } from '@/components/marketing/BusinessGrid';
+import { MarketingAnalytics } from '@/components/marketing/MarketingAnalytics';
+import { BusinessGrid } from '@/components/marketing/BusinessGrid';
+import { BUSINESS_ICON } from '@/components/marketing/BusinessIcon';
 import { HERO_BOX, LandingHeader, PhoneShot, Section, SectionHead } from '@/components/marketing/LandingKit';
 import { BRAND_NAME } from '@/lib/brand';
 import {
@@ -61,6 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     robots: { index: true, follow: true },
     alternates: { canonical: `/${business.slug}` },
+    twitter: { card: 'summary_large_image', title, description },
     openGraph: {
       title,
       description,
@@ -69,7 +72,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: BRAND_NAME,
       locale: 'en_IN',
       alternateLocale: ['bn_IN', 'hi_IN'],
-      images: [{ url: '/social/link-preview.png', width: 1200, height: 630, alt: title }],
     },
   };
 }
@@ -135,6 +137,7 @@ export default async function BusinessPage({ params }: Props) {
   return (
     <div data-landing="" suppressHydrationWarning className="flex min-h-dvh flex-col bg-card">
       <LandingLanguage />
+      <MarketingAnalytics />
       <span id="top" tabIndex={-1} className="sr-only" />
       <LandingHeader nav={NAV} whatsapp={whatsapp} />
 
@@ -150,19 +153,20 @@ export default async function BusinessPage({ params }: Props) {
               <div>
                 <Link
                   href="/#businesses"
-                  className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800"
+                  className="inline-flex min-h-10 items-center gap-1.5 text-base font-semibold text-brand-700 hover:text-brand-800"
                 >
                   <ArrowLeftIcon className="h-4 w-4" />
                   <Say t={LANDING.business.back} />
                 </Link>
               </div>
-              <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-card px-3.5 py-1.5 text-sm font-semibold text-accent-700 shadow-raised ring-1 ring-accent-100">
-                <span aria-hidden className="text-base leading-none">
-                  {BUSINESS_MARK[business.slug]}
-                </span>
+              <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-card px-3.5 py-1.5 text-base font-semibold text-accent-700 shadow-raised ring-1 ring-accent-100">
+                {(() => {
+                  const Icon = BUSINESS_ICON[business.slug];
+                  return <Icon className="h-5 w-5 text-brand-700" />;
+                })()}
                 <Say t={business.name} />
               </p>
-              <h1 className="mt-5 text-4xl font-bold leading-[1.12] tracking-tight text-slate-900 sm:text-5xl">
+              <h1 className="mt-5 text-4xl font-bold leading-[1.22] tracking-tight text-slate-900 sm:text-5xl">
                 <Say t={business.headline} />
               </h1>
               <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-slate-700 lg:mx-0">
@@ -202,7 +206,7 @@ export default async function BusinessPage({ params }: Props) {
               </div>
             </div>
 
-            <div className="mx-auto w-full max-w-sm">
+            <div className="mx-auto w-full max-w-md">
               <PhoneShot
                 pathFor={shotPath(business, 'storefront')}
                 alt={`${business.demoName} — the shop page customers open from the QR code`}
@@ -233,7 +237,7 @@ export default async function BusinessPage({ params }: Props) {
                   {list.map((item) => (
                     <li
                       key={`${item.name}-${item.unit}`}
-                      className="rounded-full bg-brand-50 px-3 py-1 text-sm text-brand-800"
+                      className="rounded-full bg-brand-50 px-3 py-1 text-base text-brand-800"
                     >
                       <Say t={{ en: item.name, bn: item.nameBn || item.name, hi: item.nameHi || item.name }} />
                     </li>
@@ -251,9 +255,9 @@ export default async function BusinessPage({ params }: Props) {
             title={LANDING.business.screensTitle}
             lead={hasDemo ? LANDING.business.screensLead : LANDING.business.screensLeadNoDemo}
           />
-          <div className="mx-auto mt-12 grid max-w-5xl gap-10 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto mt-12 grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-3">
             {BUSINESS_SCREENS.map((screen) => (
-              <div key={screen} className="mx-auto w-full max-w-xs">
+              <div key={screen} className="mx-auto w-full max-w-sm">
                 <PhoneShot
                   pathFor={shotPath(business, screen)}
                   alt={`${business.demoName} — ${LANDING.business.screens[screen].en}`}
@@ -282,7 +286,7 @@ export default async function BusinessPage({ params }: Props) {
         {/* THE PLAN — the same one for every kind of shop. */}
         <Section id="plan">
           <SectionHead eyebrow={LANDING.plans.eyebrow} title={LANDING.business.alsoTitle} lead={LANDING.plans.lead} />
-          <div className="mx-auto mt-10 max-w-3xl rounded-3xl bg-brand-600 p-6 text-white shadow-float sm:p-8">
+          <div className="mx-auto mt-10 max-w-5xl rounded-3xl bg-brand-600 p-6 text-white shadow-float sm:p-8">
             <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="text-lg font-bold">{plan.name}</span>
               <span className="text-4xl font-bold tabular-nums">
@@ -292,18 +296,18 @@ export default async function BusinessPage({ params }: Props) {
                 </span>
               </span>
             </p>
-            <p className="mt-1.5 text-sm text-white/85">
+            <p className="mt-1.5 text-base text-white/85">
               <Say t={LANDING.plans.setupLine} />
             </p>
             <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
               {PLAN_INCLUDES.map((line) => (
-                <li key={line.en} className="flex gap-2 text-sm leading-snug text-white/90">
+                <li key={line.en} className="flex gap-2 text-base leading-snug text-white/90">
                   <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-100" />
                   <Say t={line} />
                 </li>
               ))}
             </ul>
-            <p className="mt-5 border-t border-white/20 pt-4 text-sm text-white/85">
+            <p className="mt-5 border-t border-white/20 pt-4 text-base text-white/85">
               <Say t={LANDING.plans.customBody} />
             </p>
           </div>
@@ -320,7 +324,7 @@ export default async function BusinessPage({ params }: Props) {
 
         {/* The last call to action, as on the home page. */}
         <section className="px-5 py-16 sm:px-6 sm:py-24">
-          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-brand-800 px-6 pb-12 pt-14 text-center text-white shadow-float">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-brand-800 px-6 pb-12 pt-14 text-center text-white shadow-float">
             <h2 className="text-3xl font-bold sm:text-4xl">
               <Say t={LANDING.cta.title} />
             </h2>

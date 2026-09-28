@@ -54,9 +54,9 @@ export const VIDEOS: LandingVideo[] = [
     thumb: '/landing/videos/setup.jpg',
     title: { en: 'Setting up your shop', bn: 'দোকান চালু করা', hi: 'दुकान शुरू करना' },
     blurb: {
-      en: 'From your first sign-in to a printed QR code',
-      bn: 'প্রথম লগইন থেকে QR কোড ছাপানো পর্যন্ত',
-      hi: 'पहले लॉगिन से QR कोड छापने तक',
+      en: 'From your first sign-in to your QR code PDF',
+      bn: 'প্রথম লগইন থেকে QR কোডের PDF পর্যন্ত',
+      hi: 'पहले लॉगिन से QR कोड के PDF तक',
     },
   },
   {

@@ -134,7 +134,7 @@ export function amountForMonthsPaise(
  * the note at the top of this file.
  */
 export const EVERY_PLAN_INCLUDES: string[] = [
-  'QR shop page and printable poster',
+  'QR shop page and QR code PDF',
   'Voice listing in English, Hindi and Bengali',
   // NOT "orders on WhatsApp". Orders do not arrive on WhatsApp and never
   // have on this product: a customer scans the QR, orders on the shop's own
@@ -259,7 +259,8 @@ export function planListingPaise(plan: Plan): number | null {
  *
  * It pays for the work of starting a shop: the operator creates it, adds its
  * items from the ready-made list (a super-admin-only tool since the same day),
- * prints the QR poster and helps the owner sign in. Charged once per shop,
+ * sends the owner the QR code as a PDF — shop name, number and owner photo on
+ * it — and helps the owner sign in. Charged once per shop,
  * recorded as a Payment of kind SETUP, and it buys no subscription time — the
  * console refuses a second one for the same shop.
  */

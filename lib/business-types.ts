@@ -84,9 +84,9 @@ export const BUSINESSES: Business[] = [
     },
     points: [
       {
-        en: '540+ ready-made items — groceries, milk, curd, bread and eggs — in three languages',
-        bn: '৫৪০+ তৈরি জিনিস — মুদির মাল, দুধ, দই, পাউরুটি আর ডিম — তিন ভাষায়',
-        hi: '540+ तैयार सामान — किराना, दूध, दही, ब्रेड और अंडे — तीन भाषाओं में',
+        en: '540+ ready-made items — groceries, milk, curd, bread and eggs — added for you at setup, in three languages',
+        bn: '৫৪০+ তৈরি জিনিস — মুদির মাল, দুধ, দই, পাউরুটি আর ডিম — সেটআপে আমরাই তুলে দিই, তিন ভাষায়',
+        hi: '540+ तैयार सामान — किराना, दूध, दही, ब्रेड और अंडे — सेटअप में हम जोड़ देते हैं, तीन भाषाओं में',
       },
       {
         en: 'Sell 250 g, 1.5 kg or half a litre — any amount, priced correctly',
@@ -116,7 +116,7 @@ export const BUSINESSES: Business[] = [
       hi: 'ग्राहक QR से रोल, मोमो, चाउमिन ऑर्डर करते हैं और तैयार होने पर ले जाते हैं। काउंटर पर लाइन नहीं।',
     },
     points: [
-      { en: 'Egg, chicken and paneer rolls, momos and chowmein ready to tick', bn: 'ডিম, চিকেন, পনির রোল, মোমো আর চাউমিন — শুধু টিক দিন', hi: 'अंडा, चिकन, पनीर रोल, मोमो और चाउमिन — बस टिक कीजिए' },
+      { en: 'Egg, chicken and paneer rolls, momos and chowmein — added for you at setup', bn: 'ডিম, চিকেন, পনির রোল, মোমো আর চাউমিন — সেটআপে আমরাই তুলে দিই', hi: 'अंडा, चिकन, पनीर रोल, मोमो और चाउमिन — सेटअप में हम जोड़ देते हैं' },
       { en: 'Priced per piece, per plate or per set of eight', bn: 'পিস, প্লেট বা আটটার সেট হিসেবে দাম', hi: 'पीस, प्लेट या आठ के सेट के हिसाब से दाम' },
       { en: 'A loud alert for every new order', bn: 'প্রতিটা নতুন অর্ডারে জোরে আওয়াজ', hi: 'हर नए ऑर्डर पर तेज़ आवाज़' },
     ],
@@ -137,7 +137,7 @@ export const BUSINESSES: Business[] = [
       hi: 'नियमित ग्राहकों को आज का मेन्यू भेजिए, QR से ऑर्डर लीजिए और हर टिफ़िन ग्राहक का मासिक हिसाब रखिए।',
     },
     points: [
-      { en: 'Veg, egg, fish and chicken thalis ready to tick', bn: 'ভেজ, ডিম, মাছ আর চিকেন থালি — শুধু টিক দিন', hi: 'वेज, अंडा, मछली और चिकन थाली — बस टिक कीजिए' },
+      { en: 'Veg, egg, fish and chicken thalis — added for you at setup', bn: 'ভেজ, ডিম, মাছ আর চিকেন থালি — সেটআপে আমরাই তুলে দিই', hi: 'वेज, अंडा, मछली और चिकन थाली — सेटअप में हम जोड़ देते हैं' },
       { en: 'Write today’s menu once and share it on WhatsApp', bn: 'আজকের মেনু একবার লিখে হোয়াটসঅ্যাপে পাঠান', hi: 'आज का मेन्यू एक बार लिखकर व्हाट्सएप पर भेजिए' },
       { en: 'Monthly khata for tiffin customers', bn: 'টিফিন গ্রাহকদের মাসিক খাতা', hi: 'टिफ़िन ग्राहकों का मासिक खाता' },
     ],
@@ -158,7 +158,7 @@ export const BUSINESSES: Business[] = [
       hi: 'रसगुल्ला पीस में और संदेश वज़न से बेचिए, त्योहार और पार्टी के ऑर्डर पहले लीजिए, बिल व्हाट्सएप पर भेजिए।',
     },
     points: [
-      { en: 'Rasgulla, sandesh, mishti doi, ladoo and more, ready to tick', bn: 'রসগোল্লা, সন্দেশ, মিষ্টি দই, লাড্ডু আর আরও — শুধু টিক দিন', hi: 'रसगुल्ला, संदेश, मीठा दही, लड्डू और भी — बस टिक कीजिए' },
+      { en: 'Rasgulla, sandesh, mishti doi, ladoo and more — added for you at setup', bn: 'রসগোল্লা, সন্দেশ, মিষ্টি দই, লাড্ডু আর আরও — সেটআপে আমরাই তুলে দিই', hi: 'रसगुल्ला, संदेश, मीठा दही, लड्डू और भी — सेटअप में हम जोड़ देते हैं' },
       { en: 'Sell by piece, 250 g, half a kilo or the box', bn: 'পিস, ২৫০ গ্রাম, আধ কেজি বা বাক্স হিসেবে বিক্রি', hi: 'पीस, 250 ग्राम, आधा किलो या डिब्बे के हिसाब से बिक्री' },
       { en: 'A festival notice on your page, and big orders taken ahead', bn: 'পাতায় উৎসবের নোটিস, আর বড় অর্ডার আগে থেকেই', hi: 'पेज पर त्योहार का नोटिस, और बड़े ऑर्डर पहले से' },
     ],
@@ -180,7 +180,7 @@ export const BUSINESSES: Business[] = [
       hi: 'ग्राहक 750 ग्राम चिकन या एक किलो रोहू ऑर्डर करते हैं; आपको ठीक पता होता है क्या काटना है। रविवार के ऑर्डर पिछली रात आ जाते हैं।',
     },
     points: [
-      { en: 'Chicken cuts, mutton, river fish, prawns and eggs ready to tick', bn: 'মুরগির কাট, খাসি, নদীর মাছ, চিংড়ি আর ডিম — শুধু টিক দিন', hi: 'चिकन के कट, मटन, नदी की मछली, झींगा और अंडे — बस टिक कीजिए' },
+      { en: 'Chicken cuts, mutton, river fish, prawns and eggs — added for you at setup', bn: 'মুরগির কাট, খাসি, নদীর মাছ, চিংড়ি আর ডিম — সেটআপে আমরাই তুলে দিই', hi: 'चिकन के कट, मटन, नदी की मछली, झींगा और अंडे — सेटअप में हम जोड़ देते हैं' },
       { en: 'Sell any weight — 750 g, 1.5 kg — priced by the kilo', bn: 'যে কোনও ওজন — ৭৫০ গ্রাম, দেড় কেজি — কেজি দরে', hi: 'कोई भी वज़न — 750 ग्राम, डेढ़ किलो — किलो के भाव से' },
       { en: 'Change the day’s rate for fish in seconds', bn: 'মাছের আজকের দর বদলান কয়েক সেকেন্ডে', hi: 'मछली का आज का भाव सेकंडों में बदलिए' },
     ],
@@ -202,7 +202,7 @@ export const BUSINESSES: Business[] = [
       hi: 'अभिभावक QR से स्कूल की लिस्ट ऑर्डर करते हैं, एक टैप में फ़ोटोकॉपी और प्रिंट का बिल, और ऑफ़िस का मासिक हिसाब।',
     },
     points: [
-      { en: 'Notebooks, pens, geometry boxes, art supplies and office items ready to tick', bn: 'খাতা, কলম, জ্যামিতি বাক্স, আঁকার আর অফিসের জিনিস — শুধু টিক দিন', hi: 'कॉपी, पेन, ज्योमेट्री बॉक्स, ड्रॉइंग और ऑफ़िस का सामान — बस टिक कीजिए' },
+      { en: 'Notebooks, pens, geometry boxes, art supplies and office items — added for you at setup', bn: 'খাতা, কলম, জ্যামিতি বাক্স, আঁকার আর অফিসের জিনিস — সেটআপে আমরাই তুলে দিই', hi: 'कॉपी, पेन, ज्योमेट्री बॉक्स, ड्रॉइंग और ऑफ़िस का सामान — सेटअप में हम जोड़ देते हैं' },
       { en: 'Photocopy, colour print and lamination billed per page', bn: 'ফটোকপি, রঙিন প্রিন্ট আর ল্যামিনেশন — পাতা হিসেবে বিল', hi: 'फ़ोटोकॉपी, कलर प्रिंट और लेमिनेशन — पेज के हिसाब से बिल' },
       { en: 'Monthly credit for schools and offices', bn: 'স্কুল আর অফিসের মাসিক বাকি', hi: 'स्कूल और ऑफ़िस का मासिक उधार' },
     ],
@@ -224,7 +224,7 @@ export const BUSINESSES: Business[] = [
       hi: 'माला और त्योहार के ऑर्डर पहले लीजिए, खुले फूल वज़न से बेचिए, और रोज़ की पूजा वाले घरों का खाता रखिए।',
     },
     points: [
-      { en: 'Flowers, leaves, diyas, incense and puja items ready to tick', bn: 'ফুল, পাতা, প্রদীপ, ধূপ আর পুজোর জিনিস — শুধু টিক দিন', hi: 'फूल, पत्ते, दीये, अगरबत्ती और पूजा सामग्री — बस टिक कीजिए' },
+      { en: 'Flowers, leaves, diyas, incense and puja items — added for you at setup', bn: 'ফুল, পাতা, প্রদীপ, ধূপ আর পুজোর জিনিস — সেটআপে আমরাই তুলে দিই', hi: 'फूल, पत्ते, दीये, अगरबत्ती और पूजा सामग्री — सेटअप में हम जोड़ देते हैं' },
       { en: 'Home delivery or pickup — you choose', bn: 'হোম ডেলিভারি বা দোকান থেকে নেওয়া — আপনি ঠিক করুন', hi: 'होम डिलीवरी या पिकअप — आप तय कीजिए' },
       { en: 'Post a notice for festival timings', bn: 'উৎসবের সময় নোটিসে জানান', hi: 'त्योहार का समय नोटिस में बताइए' },
     ],

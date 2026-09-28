@@ -104,7 +104,7 @@ export function VideoPlayer({
               </span>
             )}
             {!videoId && (
-              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+              <span className="rounded-full bg-white/15 px-3 py-1 text-base font-semibold backdrop-blur">
                 <Say t={SOON} />
               </span>
             )}

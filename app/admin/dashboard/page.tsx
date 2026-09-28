@@ -213,7 +213,7 @@ export default async function DashboardPage() {
             />
             <Rule
               title="Shop setup"
-              body={`${formatPaise(SETUP_FEE_PAISE)} once per shop — creating it, adding its items, the QR poster. Buys no subscription time.`}
+              body={`${formatPaise(SETUP_FEE_PAISE)} once per shop — creating it, adding its items, sending the QR code PDF. Buys no subscription time.`}
             />
             <Rule
               title="Listing service"

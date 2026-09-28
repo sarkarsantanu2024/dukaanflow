@@ -63,7 +63,7 @@ export function BackToTop() {
         // which owns the bottom edge. Below `lg` it also stacks above the
         // floating menu button (`MobileMenu`).
         'fixed bottom-40 right-4 z-40 sm:bottom-24 sm:right-6 lg:bottom-6 inline-flex items-center gap-2 rounded-full border border-glass-edge',
-        'bg-glass px-4 py-3 text-sm font-semibold text-slate-700 shadow-float backdrop-blur',
+        'bg-glass px-4 py-3 text-base font-semibold text-slate-700 shadow-float backdrop-blur',
         'transition duration-200 hover:bg-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
         // Clear of a phone's home bar.
         'mb-[env(safe-area-inset-bottom)]',

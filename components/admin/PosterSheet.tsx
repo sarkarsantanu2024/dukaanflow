@@ -48,14 +48,18 @@ export function PosterSheet({
   shopName,
   slug,
   address,
+  phone = '',
   ownerImage = '',
 }: {
   shopName: string;
   slug: string;
-  // No `phone`. The sheet took the shop's number only to print it under "Order
-  // on WhatsApp", and that panel is gone — leaving the prop would have kept a
-  // dead argument threaded from the page for a line nobody renders.
   address: string;
+  /**
+   * The shop's number, under its name (back by request, 2026-09-28: the QR PDF
+   * sent at setup carries the shop's name, number and the owner's photo). A
+   * number to CALL the shop — not an order channel; orders go through the QR.
+   */
+  phone?: string;
   /**
    * The owner's photograph, as the data URL the shop record holds. Optional,
    * and most shops have none — the sheet closes the gap it leaves rather than
@@ -183,6 +187,7 @@ export function PosterSheet({
 
       line(shopName, top, 74, '#0f172a', '800');
       line(address, top + 56, 30, '#475569');
+      if (phone) line(`Phone · ফোন · फ़ोन:  +91 ${phone}`, top + 100, 30, '#0f172a', '700');
 
       // All three, because the poster goes on a wall in Bengal and the printed
       // version has always carried them. Everything below the name shifts by
@@ -292,6 +297,11 @@ export function PosterSheet({
 
         <h1 className="text-4xl font-black leading-tight text-slate-900">{shopName}</h1>
         {address && <p className="mt-2 text-base text-slate-600">{address}</p>}
+        {phone && (
+          <p className="mt-1 text-lg font-bold text-slate-900">
+            Phone · ফোন · फ़ोन: +91 {phone}
+          </p>
+        )}
 
         <div className="mt-6 space-y-1">
           <p className="text-2xl font-bold text-brand-700">Scan to Order</p>

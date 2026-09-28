@@ -65,7 +65,7 @@ export function SiteFooter({
           reason, which reads as a mistake. The credit and the number are one
           thought; the four policies are another; so each gets a line and
           neither can split the other. */}
-      <div className="mx-auto flex max-w-6xl flex-col items-center px-4 text-center text-[12px] py-1 leading-tight text-slate-500">
+      <div className="mx-auto flex max-w-6xl flex-col items-center px-4 text-center text-base py-1 leading-tight text-slate-500">
         <p className="flex flex-wrap items-center justify-center gap-x-2.5">
           <span>
             {labels?.poweredBy ?? "Powered by"}{" "}

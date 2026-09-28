@@ -3,14 +3,17 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { NavMemory } from '@/components/ui/BackButton';
 import './globals.css';
 import { BRAND_GREEN, BRAND_NAME } from '@/lib/brand';
+import { baseUrl } from '@/lib/qr';
 
 export const metadata: Metadata = {
-  // "Scan → Select → Order" described the product accurately and described
-  // every competitor equally well. The voice line is the part nobody else
-  // claims, so it is the part that goes in the tab and the link preview.
-  title: `${BRAND_NAME} — বলুন, দোকান সাজান`,
+  // Absolute links for every page's share image (`opengraph-image`). Without
+  // it a page that does not set its own resolves them against localhost.
+  metadataBase: new URL(baseUrl()),
+  // The fallback for any page without its own title — the product's line as
+  // the owner put it on 2026-09-28: daily orders ahead, the counter crowd fast.
+  title: `${BRAND_NAME} — রোজের অর্ডার আগে, কাউন্টারের ভিড় দ্রুত`,
   description:
-    'Speak your shelf into a shop. Say "চাল ১ কেজি ১০০" and the item is listed, priced and live — in Bangla, Hindi or English. Customers order from a counter QR, and the order lands in your app.',
+    'Take daily and bulk orders ahead by QR and bill the counter crowd fast. Digital khata, stock and bills on WhatsApp — in Bengali, Hindi or English.',
   robots: { index: false, follow: false },
 };
 
