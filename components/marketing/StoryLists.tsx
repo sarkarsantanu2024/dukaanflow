@@ -50,12 +50,12 @@ export function StepList() {
               >
                 <Icon className="h-8 w-8" />
               </span>
-              <span className="absolute -right-1 -top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white ring-4 ring-card">
+              <span className="absolute -right-1 -top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-base font-bold text-white ring-4 ring-card">
                 {index + 1}
               </span>
             </div>
             <div className="pt-2 lg:mt-5 lg:max-w-[17rem] lg:pt-0">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent-600">
+              <p className="text-base font-bold uppercase tracking-[0.14em] text-accent-600">
                 <Say
                   en={`Step ${index + 1}`}
                   bn={`ধাপ ${index + 1}`}

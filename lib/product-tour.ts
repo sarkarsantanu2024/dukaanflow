@@ -43,7 +43,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'The items go in',
     point: 'This is where shops give up, so there are four ways through it.',
     detail:
-      'One tap from the starter catalogue of things a shop of that kind always carries, already named in Bengali, Hindi and English. Or speak them. Or photograph a written list. Or we catalogue it for them at ₹1 an item. Prices are the only thing the owner must set — nothing reaches a customer unpriced.',
+      'At setup (₹499, once) we add them from the ready-made list for that kind of shop, already named in Bengali, Hindi and English — that list is ours to use, not the owner’s. After that the owner speaks them, types them or photographs them, or we catalogue the rest at ₹1 an item. Prices are the only thing the owner must set — nothing reaches a customer unpriced.',
     screenshot: '02-items.png',
   },
   {
@@ -112,17 +112,17 @@ export const TOUR_ANSWERS: { question: string; answer: string }[] = [
   {
     question: 'Do you take a commission on my orders?',
     answer:
-      'Never. You pay a fixed monthly amount for the size of your catalogue and keep every rupee of every order. Orders, customers and QR scans are unlimited on every plan.',
+      'Never. You pay one fixed monthly price — ₹199, with no item limit — and keep every rupee of every order. Orders, customers and QR scans are unlimited.',
   },
   {
     question: 'What if I stop paying?',
     answer:
-      'Your shop page and QR keep working and customers can still order — you only lose the ability to add or change items. After three months with no payment the page stops taking orders, and it comes straight back when you pay. Nothing is ever deleted.',
+      'Your shop page and QR keep working and customers can still order — you only lose the ability to add or change items. After 30 days with no payment the page stops taking orders, and it comes straight back when you pay. Nothing is ever deleted.',
   },
   {
     question: 'I cannot type. Can I still list my items?',
     answer:
-      'Yes. Speak the item names in Bengali, Hindi or English, or tap them from the ready-made list for your kind of shop. If you would rather not do it at all, we will do it for you and charge for the work.',
+      'Yes. At setup we add your common items from the ready-made list for your kind of shop. After that, speak the names in Bengali, Hindi or English, or take a photo. If you would rather not do it at all, we will do it for you and charge for the work.',
   },
   {
     question: 'Where does the money from an order go?',

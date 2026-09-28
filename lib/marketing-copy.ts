@@ -57,17 +57,17 @@ export const STEPS: Step[] = [
   {
     title: { en: 'We set up your shop', bn: 'আমরা দোকান তৈরি করি', hi: 'हम दुकान तैयार करते हैं' },
     body: {
-      en: 'We create your online store, print your QR code and help you sign in. There is nothing to install.',
-      bn: 'আমরা আপনার অনলাইন দোকান তৈরি করি, QR কোড ছাপিয়ে দিই আর লগইন করতে সাহায্য করি। কিছু ইনস্টল করতে হয় না।',
-      hi: 'हम आपकी ऑनलाइन दुकान बनाते हैं, QR कोड छापते हैं और लॉगिन करने में मदद करते हैं। कुछ इंस्टॉल नहीं करना।',
+      en: 'We create your online store, send you your QR code as a PDF — with your shop name, number and photo — and help you sign in. There is nothing to install.',
+      bn: 'আমরা আপনার অনলাইন দোকান তৈরি করি, দোকানের নাম, নম্বর আর আপনার ছবি সহ QR কোডের PDF পাঠিয়ে দিই আর লগইন করতে সাহায্য করি। কিছু ইনস্টল করতে হয় না।',
+      hi: 'हम आपकी ऑनलाइन दुकान बनाते हैं, दुकान के नाम, नंबर और आपकी फ़ोटो के साथ QR कोड का PDF भेजते हैं और लॉगिन करने में मदद करते हैं। कुछ इंस्टॉल नहीं करना।',
     },
   },
   {
     title: { en: 'Add your products', bn: 'জিনিস যোগ করুন', hi: 'सामान जोड़ें' },
     body: {
-      en: 'Speak them, photograph them or pick from ready-made items. Or let us add them for you.',
-      bn: 'মুখে বলে, ছবি তুলে বা তৈরি তালিকা থেকে বেছে নিন। চাইলে আমরাই যোগ করে দিই।',
-      hi: 'बोलकर, फ़ोटो खींचकर या तैयार लिस्ट से चुनिए। चाहें तो हम ही जोड़ देते हैं।',
+      en: 'We add your common items from our ready-made list during setup. Add anything else yourself by speaking, typing or taking a photo.',
+      bn: 'সেটআপের সময় আমাদের তৈরি তালিকা থেকে আপনার চেনা জিনিস আমরাই তুলে দিই। বাকি জিনিস নিজে মুখে বলে, লিখে বা ছবি তুলে যোগ করুন।',
+      hi: 'सेटअप के समय हमारी तैयार लिस्ट से आपका आम सामान हम ही जोड़ देते हैं। बाकी सामान खुद बोलकर, लिखकर या फ़ोटो से जोड़िए।',
     },
   },
   {
@@ -151,9 +151,9 @@ export const FEATURES: Feature[] = [
         hi: 'पैकेट की फ़ोटो लीजिए — ऐप ब्रांड और पैक साइज़ पढ़ लेता है',
       },
       {
-        en: `Choose from ${READY_ITEMS}+ ready-made items for your kind of shop, named in three languages — free`,
-        bn: `আপনার দোকানের ধরন অনুযায়ী ${READY_ITEMS}+ তৈরি জিনিস থেকে বেছে নিন, তিন ভাষায় নাম সমেত — বিনামূল্যে`,
-        hi: `अपनी दुकान के हिसाब से ${READY_ITEMS}+ तैयार सामान में से चुनिए, तीन भाषाओं में नाम के साथ — मुफ़्त`,
+        en: `${READY_ITEMS}+ ready-made items for your kind of shop, named in three languages — we add yours at setup`,
+        bn: `আপনার দোকানের ধরন অনুযায়ী ${READY_ITEMS}+ তৈরি জিনিস, তিন ভাষায় নাম সমেত — সেটআপে আপনারগুলো আমরাই তুলে দিই`,
+        hi: `अपनी दुकान के हिसाब से ${READY_ITEMS}+ तैयार सामान, तीन भाषाओं में नाम के साथ — सेटअप में आपका सामान हम जोड़ देते हैं`,
       },
       {
         en: 'Sell by kilo, litre, packet or piece — including loose quantities like 250 g',
@@ -668,7 +668,7 @@ export const LANDING = {
       },
       { en: 'Zero commission', bn: 'শূন্য কমিশন', hi: 'ज़ीरो कमीशन' },
       { en: 'No app to install', bn: 'অ্যাপ ইনস্টল নয়', hi: 'ऐप इंस्टॉल नहीं' },
-      { en: 'Setup help included', bn: 'চালু করতে সাহায্য', hi: 'सेटअप में मदद' },
+      { en: `We set up your shop — ${SETUP_PRICE} once`, bn: `আমরাই দোকান সাজিয়ে দিই — একবার ${SETUP_PRICE}`, hi: `दुकान हम तैयार करते हैं — एक बार ${SETUP_PRICE}` },
     ] satisfies Words[],
   },
 
@@ -682,9 +682,9 @@ export const LANDING = {
       accent: false,
       value: { en: `${READY_ITEMS}+`, bn: `${READY_ITEMS}+`, hi: `${READY_ITEMS}+` },
       label: {
-        en: 'Ready-made items, free for every shop',
-        bn: 'তৈরি জিনিস, প্রতিটা দোকানের জন্য বিনামূল্যে',
-        hi: 'तैयार सामान, हर दुकान के लिए मुफ़्त',
+        en: 'Ready-made items, added for you at setup',
+        bn: 'তৈরি জিনিস, সেটআপে আমরাই তুলে দিই',
+        hi: 'तैयार सामान, सेटअप में हम जोड़ते हैं',
       },
     },
     {
@@ -740,14 +740,14 @@ export const LANDING = {
       hi: 'आपकी दुकान के लिए तैयार सामान',
     },
     readyLead: {
-      en: 'Tick what you sell and correct the prices. Every name is already in English, Bengali and Hindi.',
-      bn: 'যা বিক্রি করেন তাতে টিক দিন আর দাম ঠিক করুন। প্রতিটা নাম আগে থেকেই ইংরেজি, বাংলা আর হিন্দিতে।',
-      hi: 'जो बेचते हैं उस पर टिक कीजिए और दाम ठीक कीजिए। हर नाम पहले से अंग्रेज़ी, बांग्ला और हिंदी में है।',
+      en: 'During setup we add the ones you sell, and you correct the prices. Every name is already in English, Bengali and Hindi.',
+      bn: 'সেটআপের সময় আপনি যা বিক্রি করেন তা আমরাই তুলে দিই, আপনি শুধু দাম ঠিক করে নিন। প্রতিটা নাম আগে থেকেই ইংরেজি, বাংলা আর হিন্দিতে।',
+      hi: 'सेटअप के समय आप जो बेचते हैं वह हम जोड़ देते हैं, आप बस दाम ठीक कर लीजिए। हर नाम पहले से अंग्रेज़ी, बांग्ला और हिंदी में है।',
     },
     readyCount: {
-      en: 'items ready to add, free',
-      bn: 'টি জিনিস যোগ করার জন্য তৈরি, বিনামূল্যে',
-      hi: 'सामान जोड़ने के लिए तैयार, मुफ़्त',
+      en: 'ready-made items for this kind of shop',
+      bn: 'টি তৈরি জিনিস, এই ধরনের দোকানের জন্য',
+      hi: 'तैयार सामान, इस तरह की दुकान के लिए',
     },
     screensTitle: {
       en: 'See it in a real shop',
@@ -844,9 +844,9 @@ export const LANDING = {
       hi: 'सिर्फ़ कुछ ही सामान बेचते हैं — कुछ सब्ज़ियाँ और रोटी, या सिर्फ़ चाय? कम दाम के लिए हमसे कहिए, महीने के ₹99 से।',
     },
     setupLine: {
-      en: `+ ${SETUP_PRICE} one-time shop setup: we create your shop, add your items and print your QR code`,
-      bn: `+ একবারের ${SETUP_PRICE} দোকান সেটআপ: আমরা দোকান তৈরি করি, জিনিস তুলে দিই আর QR কোড ছাপিয়ে দিই`,
-      hi: `+ एक बार का ${SETUP_PRICE} दुकान सेटअप: हम दुकान बनाते हैं, सामान जोड़ते हैं और QR कोड छापते हैं`,
+      en: `+ ${SETUP_PRICE} one-time shop setup: we create your shop, add your items and send you a PDF of your QR code with your shop name, number and photo`,
+      bn: `+ একবারের ${SETUP_PRICE} দোকান সেটআপ: আমরা দোকান তৈরি করি, জিনিস তুলে দিই আর দোকানের নাম, নম্বর ও আপনার ছবি সহ QR কোডের PDF পাঠিয়ে দিই`,
+      hi: `+ एक बार का ${SETUP_PRICE} दुकान सेटअप: हम दुकान बनाते हैं, सामान जोड़ते हैं और दुकान के नाम, नंबर व आपकी फ़ोटो के साथ QR कोड का PDF भेजते हैं`,
     },
     customCta: { en: 'Ask on WhatsApp', bn: 'হোয়াটসঅ্যাপে জিজ্ঞেস করুন', hi: 'व्हाट्सएप पर पूछिए' },
   },

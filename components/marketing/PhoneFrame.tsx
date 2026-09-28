@@ -13,7 +13,7 @@ import clsx from 'clsx';
 
 export function PhoneFrame({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={clsx('relative mx-auto w-full max-w-[20rem] sm:max-w-[22rem] lg:max-w-[23.5rem]', className)}>
+    <div className={clsx('relative mx-auto w-full max-w-[21rem] sm:max-w-[24rem] lg:max-w-[27rem]', className)}>
       {/* Side buttons: volume on the left, power on the right. */}
       <span aria-hidden className="absolute -left-[3px] top-[18%] h-10 w-[4px] rounded-l-md bg-slate-700" />
       <span aria-hidden className="absolute -left-[3px] top-[26%] h-16 w-[4px] rounded-l-md bg-slate-700" />
@@ -22,7 +22,7 @@ export function PhoneFrame({ children, className }: { children: React.ReactNode;
       <div className="rounded-[3rem] bg-slate-900 p-[11px] shadow-[0_30px_60px_-20px_rgba(3,74,36,0.45),0_0_0_1px_rgba(255,255,255,0.06)_inset] ring-1 ring-slate-950">
         <div className="overflow-hidden rounded-[2.4rem] bg-card">
           {/* Status bar */}
-          <div className="flex h-9 items-center justify-between bg-brand-800 px-6 text-[13px] font-semibold text-white">
+          <div className="flex h-9 items-center justify-between bg-brand-800 px-6 text-base font-semibold text-white">
             <span>9:41</span>
             <span aria-hidden className="flex items-center gap-1.5">
               <svg viewBox="0 0 18 12" className="h-3 w-[18px] fill-current">

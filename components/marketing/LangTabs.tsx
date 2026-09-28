@@ -198,7 +198,7 @@ export function LangTabs({
           className={clsx(
             // 40px tall: the floor this product holds every tap target to.
             // Narrower in the menu, whose panel is 16rem across.
-            'min-h-10 rounded-lg py-1.5 text-sm font-semibold transition',
+            'min-h-10 rounded-lg py-1.5 text-base font-semibold transition',
             dark ? 'px-2' : 'px-4',
             lang === option
               ? dark

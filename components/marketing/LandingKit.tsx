@@ -30,8 +30,8 @@ import { PhoneFrame } from './PhoneFrame';
  * lines of text stay comfortable on a big monitor.
  */
 export const HEADER_BOX = 'flex w-full items-center gap-4 px-5 py-3 sm:px-8 lg:px-10';
-export const HERO_BOX = 'mx-auto w-full max-w-[104rem] px-5 sm:px-8 lg:px-14';
-export const BODY_BOX = 'mx-auto w-full max-w-[92rem] px-5 sm:px-8 lg:px-14';
+export const HERO_BOX = 'mx-auto w-full max-w-[110rem] px-5 sm:px-8 lg:px-10';
+export const BODY_BOX = 'mx-auto w-full max-w-[100rem] px-5 sm:px-8 lg:px-10';
 
 export function Section({
   id,
@@ -74,10 +74,10 @@ export function SectionHead({
 }) {
   const dark = tone === 'dark';
   return (
-    <div className={align === 'center' ? 'mx-auto max-w-3xl text-center' : 'max-w-2xl'}>
+    <div className={align === 'center' ? 'mx-auto max-w-4xl text-center' : 'max-w-3xl'}>
       <span
         className={clsx(
-          'inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em]',
+          'inline-flex rounded-full px-3 py-1 text-base font-bold uppercase tracking-[0.12em]',
           // The logo's red marks the label; the green carries the heading.
           dark ? 'bg-white/15 text-white' : 'bg-accent-50 text-accent-700',
         )}
@@ -130,14 +130,14 @@ export function LandingHeader({ nav, whatsapp }: { nav: NavItem[]; whatsapp: str
           </div>
           <Link
             href="/admin"
-            className="hidden min-h-10 items-center rounded-xl px-3 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white sm:inline-flex"
+            className="hidden min-h-10 items-center rounded-xl px-3 text-base font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white sm:inline-flex"
           >
             <Say t={LANDING.adminSignIn} />
           </Link>
           {whatsapp && (
             <a
               href={whatsapp}
-              className="hidden min-h-10 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700 sm:inline-flex"
+              className="hidden min-h-10 items-center gap-2 rounded-xl bg-brand-600 px-4 text-base font-semibold text-white transition hover:bg-brand-700 sm:inline-flex"
             >
               <WhatsAppIcon className="h-4 w-4" />
               <Say t={LANDING.getYourShop} />
@@ -176,7 +176,7 @@ export function PhoneShot({
       alt={alt}
       fill
       quality={90}
-      sizes="(max-width: 640px) 80vw, 24rem"
+      sizes="(max-width: 640px) 85vw, 27rem"
       className="object-cover object-top"
     />
   );

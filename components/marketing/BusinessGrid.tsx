@@ -13,22 +13,7 @@ import { ChevronRightIcon } from '@/components/ui/Icon';
 import { BUSINESSES, type BusinessSlug } from '@/lib/business-types';
 import { LANDING } from '@/lib/marketing-copy';
 import { Say } from './Say';
-
-/**
- * One picture per kind of shop. Emoji rather than drawn icons: they are what
- * the shopkeeper's own phone keyboard shows for the same thing, they cost no
- * bytes, and they read at a glance where a line icon of a "sweet" would not.
- * Decorative — the name beside each says the same thing in words.
- */
-export const BUSINESS_MARK: Record<BusinessSlug, string> = {
-  grocery: '🛒',
-  'roll-momo': '🥟',
-  'home-kitchen': '🍱',
-  'sweet-shop': '🍬',
-  'meat-fish': '🐟',
-  stationery: '✏️',
-  'flowers-puja': '🌼',
-};
+import { BUSINESS_ICON } from './BusinessIcon';
 
 export function BusinessGrid({
   className,
@@ -46,17 +31,22 @@ export function BusinessGrid({
             href={`/${business.slug}`}
             className="group flex h-full items-center gap-3 rounded-2xl border border-brand-100 bg-card p-4 shadow-raised transition hover:border-brand-300 hover:shadow-float focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
           >
-            <span
-              aria-hidden
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-2xl"
-            >
-              {BUSINESS_MARK[business.slug]}
-            </span>
+            {(() => {
+              const Icon = BUSINESS_ICON[business.slug];
+              return (
+                <span
+                  aria-hidden
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100 transition group-hover:bg-brand-600 group-hover:text-white"
+                >
+                  <Icon className="h-7 w-7" />
+                </span>
+              );
+            })()}
             <span className="min-w-0 flex-1">
               <span className="block font-bold leading-snug text-slate-900">
                 <Say t={business.name} />
               </span>
-              <span className="mt-0.5 block text-sm text-brand-700">
+              <span className="mt-0.5 block text-base text-brand-700">
                 <Say t={LANDING.businesses.see} />
               </span>
             </span>

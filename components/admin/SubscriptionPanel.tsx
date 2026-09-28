@@ -577,7 +577,7 @@ export function SubscriptionPanel({ slug, state }: { slug: string; state: Subscr
       <Block
         when="You set up this shop"
         title={`Shop setup — ${formatPaise(SETUP_FEE_PAISE)} one time`}
-        hint="Creating the shop, adding its items from the ready-made list, the QR poster and the owner's first sign-in. Charged once per shop. Buys no subscription time."
+        hint="Creating the shop, adding its items from the ready-made list, the QR code PDF (shop name, number and owner photo) sent to the owner, and their first sign-in. Charged once per shop. Buys no subscription time."
       >
         {state.setupPaidAt ? (
           <p className="text-sm font-semibold text-brand-700">

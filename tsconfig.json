@@ -31,9 +31,10 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    ".next-verify/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-verify/types/**/*.ts"
+    ".next-pixel/types/**/*.ts"
   ],
   "//": "scripts/ is excluded because `next build` typechecks everything this file includes, and the operator tools in there import `playwright`, which is a local-only tool and not a dependency of the deployed app. Leaving them in failed the Vercel build with \"Cannot find module 'playwright'\" while building fine on a laptop that happened to have it. The scripts are still typechecked — by tsconfig.scripts.json, via `npm run typecheck`.",
   "exclude": [

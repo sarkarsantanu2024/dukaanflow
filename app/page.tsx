@@ -42,6 +42,7 @@ import { Say } from '@/components/marketing/Say';
 import { StepList } from '@/components/marketing/StoryLists';
 import type { NavItem } from '@/components/marketing/SectionNav';
 import { StickyCta } from '@/components/marketing/StickyCta';
+import { MarketingAnalytics } from '@/components/marketing/MarketingAnalytics';
 import { VideoPlayer } from '@/components/marketing/VideoPlayer';
 import { BusinessGrid } from '@/components/marketing/BusinessGrid';
 import { HERO_BOX, LandingHeader, PhoneShot, Section, SectionHead } from '@/components/marketing/LandingKit';
@@ -74,12 +75,6 @@ import { supportDetails } from '@/lib/support';
 const TITLE = `${BRAND_NAME} — Shop Management App for Every Local Business | QR Orders, Khata & Billing`;
 const DESCRIPTION = `Take daily and bulk orders ahead by QR code and bill the counter crowd fast — for grocery stores, sweet shops, meat and fish shops, stationery and more: digital khata, counter billing and bills on WhatsApp. One plan, ₹${PLAN_SPECS[PLAN_ORDER[0]!].price} a month. Zero commission. ${TRIAL_DAYS}-day free trial.`;
 
-const PREVIEW = {
-  url: '/social/link-preview.png',
-  width: 1200,
-  height: 630,
-  alt: `${BRAND_NAME} — shop management app for every local business: QR orders, digital khata and billing`,
-};
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl()),
@@ -111,13 +106,11 @@ export const metadata: Metadata = {
     siteName: BRAND_NAME,
     locale: 'en_IN',
     alternateLocale: ['bn_IN', 'hi_IN'],
-    images: [PREVIEW],
   },
   twitter: {
     card: 'summary_large_image',
     title: `${BRAND_NAME} — Orders, khata and billing for your shop`,
     description: DESCRIPTION,
-    images: [PREVIEW],
   },
 };
 
@@ -230,6 +223,7 @@ export default function LandingPage() {
     // `LandingLanguage` renders, before paint — see `app/globals.css`.
     <div data-landing="" suppressHydrationWarning className="flex min-h-dvh flex-col bg-card">
       <LandingLanguage />
+      <MarketingAnalytics />
       <StructuredData />
       <span id="top" tabIndex={-1} className="sr-only" />
 
@@ -253,11 +247,11 @@ export default function LandingPage() {
           />
           <div className={clsx('relative grid items-center gap-12 pb-28 pt-12 sm:pt-16 lg:grid-cols-[1fr_1.15fr] lg:gap-20 lg:pb-32', HERO_BOX)}>
             <div className="text-center lg:text-left">
-              <p className="inline-flex items-center gap-2 rounded-full bg-card px-3.5 py-1.5 text-sm font-semibold text-accent-700 shadow-raised ring-1 ring-accent-100">
+              <p className="inline-flex items-center gap-2 rounded-full bg-card px-3.5 py-1.5 text-base font-semibold text-accent-700 shadow-raised ring-1 ring-accent-100">
                 <span aria-hidden className="h-2 w-2 rounded-full bg-accent-500" />
                 <Say t={LANDING.hero.eyebrow} />
               </p>
-              <h1 className="mt-5 text-4xl font-bold leading-[1.12] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.4rem]">
+              <h1 className="mt-5 text-4xl font-bold leading-[1.22] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.4rem]">
                 <Say t={LANDING.hero.headline} />
               </h1>
               <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-slate-700 lg:mx-0">
@@ -303,7 +297,7 @@ export default function LandingPage() {
                 size="hero"
                 priority
               />
-              <p className="mt-3 text-center text-sm text-slate-500">
+              <p className="mt-3 text-center text-base text-slate-500">
                 <Say t={HERO_VIDEO.blurb} />
               </p>
             </div>
@@ -323,7 +317,7 @@ export default function LandingPage() {
                 >
                   <Say t={stat.value} />
                 </dd>
-                <dt className="mt-1 text-sm leading-snug text-slate-600 sm:text-base">
+                <dt className="mt-1 text-base leading-snug text-slate-600 sm:text-base">
                   <Say t={stat.label} />
                 </dt>
               </div>
@@ -361,7 +355,7 @@ export default function LandingPage() {
                 className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16"
               >
                 <div className={clsx(index % 2 === 1 && 'lg:order-2')}>
-                  <span className="text-sm font-bold uppercase tracking-[0.12em] text-accent-600">
+                  <span className="text-base font-bold uppercase tracking-[0.12em] text-accent-600">
                     <Say t={feature.eyebrow} />
                   </span>
                   <h3 className="mt-2 text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
@@ -435,7 +429,7 @@ export default function LandingPage() {
                 <h3 className="mt-3 font-semibold text-white">
                   <Say t={video.title} />
                 </h3>
-                <p className="mt-0.5 text-sm text-white/70">
+                <p className="mt-0.5 text-base text-white/70">
                   <Say t={video.blurb} />
                 </p>
               </article>
@@ -450,7 +444,7 @@ export default function LandingPage() {
             own picture (27 Sep, by request). */}
         <Section id="how">
           <SectionHead eyebrow={LANDING.how.eyebrow} title={LANDING.how.title} lead={LANDING.how.lead} />
-          <div className="mx-auto mt-14 max-w-6xl rounded-3xl border border-brand-100 bg-card px-6 py-10 shadow-raised sm:px-10 lg:py-14">
+          <div className="mx-auto mt-14 max-w-7xl rounded-3xl border border-brand-100 bg-card px-6 py-10 shadow-raised sm:px-10 lg:py-14">
             <StepList />
             {whatsapp && (
               <div className="mt-12 flex justify-center">
@@ -469,7 +463,7 @@ export default function LandingPage() {
         {/* The promises that decide trust, in plain words. */}
         <Section tone="tint">
           <SectionHead eyebrow={LANDING.trust.eyebrow} title={LANDING.trust.title} />
-          <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2">
+          <div className="mx-auto mt-10 grid max-w-6xl gap-4 sm:grid-cols-2">
             {SAFETY.map((line) => (
               <div key={line.en} className="flex gap-3 rounded-2xl border border-brand-100 bg-card p-5">
                 <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
@@ -490,7 +484,7 @@ export default function LandingPage() {
           <SectionHead eyebrow={LANDING.plans.eyebrow} title={LANDING.plans.title} lead={LANDING.plans.lead} />
           {/* ONE PLAN (2026-09-27). The card, and beside it the one other
               answer there is: a small counter can ask for a custom price. */}
-          <div className="mx-auto mt-12 grid max-w-5xl items-stretch gap-5 lg:grid-cols-[1.35fr_1fr]">
+          <div className="mx-auto mt-12 grid max-w-6xl items-stretch gap-5 lg:grid-cols-[1.35fr_1fr]">
             {plans.map((plan) => {
               const year = yearLine(
                 yearPrice(plan.id).toLocaleString('en-IN'),
@@ -501,7 +495,7 @@ export default function LandingPage() {
                   key={plan.id}
                   className="relative flex flex-col rounded-3xl bg-brand-600 p-6 text-white shadow-float sm:p-8"
                 >
-                  <span className="absolute -top-3 left-6 whitespace-nowrap rounded-full bg-accent-600 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-raised">
+                  <span className="absolute -top-3 left-6 whitespace-nowrap rounded-full bg-accent-600 px-3 py-1 text-base font-bold uppercase tracking-wide text-white shadow-raised">
                     <Say t={LANDING.plans.popular} />
                   </span>
                   <h3 className="text-lg font-bold text-white">{plan.name}</h3>
@@ -511,13 +505,13 @@ export default function LandingPage() {
                       <Say t={LANDING.plans.perMonth} />
                     </span>
                   </p>
-                  <p className="mt-2 text-sm font-bold tabular-nums text-brand-100">
+                  <p className="mt-2 text-base font-bold tabular-nums text-brand-100">
                     <Say t={year.price} />
                     <span className="font-normal text-white/75">
                       <Say t={year.save} />
                     </span>
                   </p>
-                  <p className="mt-1.5 text-sm text-white/85">
+                  <p className="mt-1.5 text-base text-white/85">
                     <Say t={LANDING.plans.setupLine} />
                   </p>
                   <p className="mt-4 border-t border-white/20 pt-4 text-base font-bold text-white">
@@ -529,7 +523,7 @@ export default function LandingPage() {
                   </p>
                   <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
                     {PLAN_INCLUDES.map((line) => (
-                      <li key={line.en} className="flex gap-2 text-sm leading-snug text-white/90">
+                      <li key={line.en} className="flex gap-2 text-base leading-snug text-white/90">
                         <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-100" />
                         <Say t={line} />
                       </li>
@@ -549,7 +543,7 @@ export default function LandingPage() {
               {whatsapp && (
                 <a
                   href={whatsapp}
-                  className="mt-6 inline-flex items-center justify-center gap-2 self-start rounded-xl border border-brand-200 bg-card px-5 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50"
+                  className="mt-6 inline-flex items-center justify-center gap-2 self-start rounded-xl border border-brand-200 bg-card px-5 py-3 text-base font-semibold text-brand-700 transition hover:bg-brand-50"
                 >
                   <WhatsAppIcon className="h-4 w-4" />
                   <Say t={LANDING.plans.customCta} />
@@ -562,7 +556,7 @@ export default function LandingPage() {
         {/* FAQ — a native accordion: no JavaScript, keyboard-friendly. */}
         <Section id="faq" tone="tint">
           <SectionHead eyebrow={LANDING.faq.eyebrow} title={LANDING.faq.title} />
-          <div className="mx-auto mt-10 max-w-3xl space-y-3">
+          <div className="mx-auto mt-10 max-w-5xl space-y-3">
             {FAQ.map((entry) => (
               <details key={entry.q.en} className="group rounded-2xl border border-brand-100 bg-card px-5 py-4">
                 <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-900">
@@ -586,7 +580,7 @@ export default function LandingPage() {
 
         {/* The last call to action. */}
         <section className="px-5 py-16 sm:px-6 sm:py-24">
-          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-brand-800 px-6 pb-12 pt-14 text-center text-white shadow-float">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-brand-800 px-6 pb-12 pt-14 text-center text-white shadow-float">
             <h2 className="text-3xl font-bold sm:text-4xl">
               <Say t={LANDING.cta.title} />
             </h2>

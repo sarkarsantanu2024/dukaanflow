@@ -91,13 +91,25 @@ export default function PrivacyPage() {
       <h2>What we do not do</h2>
       <ul>
         <li>We do not sell or rent anyone&rsquo;s information.</li>
-        <li>We do not run advertising networks, ad pixels or third-party behavioural trackers on
-          these pages.</li>
+        <li>We do not run advertising or tracking scripts on a shop&rsquo;s own page, on the order
+          and order-tracking pages, or inside the shopkeeper and operator apps. Buyers ordering
+          from a shop are never tracked by us.</li>
         <li>We do not take a commission on orders, so we have no reason to profile buyers.</li>
         <li>We never see or store a card number, a UPI PIN or a bank credential. A UPI payment
           happens in the customer&rsquo;s own payment app, between them and the shop.</li>
         <li>One shop can never see another shop&rsquo;s customers, orders or credit book.</li>
       </ul>
+
+      <h2>Measuring our own website</h2>
+      <p>
+        On our public marketing pages only — the home page, the page for each kind of business,
+        and the contact and policy pages — we may use Meta Pixel (Facebook) and Google Analytics
+        to count visits and to see whether our adverts reach shopkeepers. These services set their
+        own cookies and receive your browser&rsquo;s visit details, such as the page, the device
+        and an approximate location. We use this only to understand and improve our marketing,
+        never to profile a shop&rsquo;s customers. You can block these cookies in your
+        browser&rsquo;s settings, and the site works the same without them.
+      </p>
 
       <h2>Why we are allowed to hold it</h2>
       <p>
@@ -111,7 +123,8 @@ export default function PrivacyPage() {
       <h2>Who else touches it</h2>
       <p>
         Only the services that have to, and only so the product can run: our hosting and database
-        providers, and the browser vendor&rsquo;s push service when a notification is sent. We do
+        providers, the browser vendor&rsquo;s push service when a notification is sent, and —
+        for visits to our marketing pages only — Meta and Google, as described above. We do
         not pass information to anyone else except where the law requires it.
       </p>
 
