@@ -34,8 +34,14 @@ function notify() {
   for (const listener of listeners) listener();
 }
 
-/** Idempotent: called from every shop page mount, does its work once. */
-export function watchInstallPrompt(): void {
+/**
+ * Idempotent: called from every shop page mount, does its work once.
+ *
+ * `scope` is where the worker is registered. The default is right for
+ * customers. The owner app passes `/owner/<slug>/` so an owner's installed app
+ * opens on their own shop.
+ */
+export function watchInstallPrompt(scope = '/shop/'): void {
   if (started || typeof window === 'undefined') return;
   started = true;
 
@@ -47,7 +53,7 @@ export function watchInstallPrompt(): void {
    * want. The MANIFEST stays per shop, so each still installs as its own icon
    * with its own name — see `app/shop.webmanifest/route.ts`.
    */
-  navigator.serviceWorker?.register('/admin-sw.js', { scope: '/shop/' }).catch(() => {
+  navigator.serviceWorker?.register('/admin-sw.js', { scope }).catch(() => {
     // Without it the page works exactly as it always did; it simply cannot be
     // installed or read on a dead signal. Never worth an error in front of a
     // shopper.
@@ -82,6 +88,19 @@ export function subscribeInstallPrompt(listener: () => void): () => void {
   return () => {
     listeners.delete(listener);
   };
+}
+
+/**
+ * Which instructions a phone needs when the browser never offers the prompt:
+ * an in-app browser (WhatsApp, Facebook) cannot install at all, iPhones only
+ * install from Safari's Share menu, and everything else is Chrome's ⋮ menu.
+ */
+export function installPlatform(): 'inApp' | 'ios' | 'android' {
+  if (typeof window === 'undefined') return 'android';
+  const ua = window.navigator.userAgent;
+  if (/\bFBAN|\bFBAV|\bFB_IAB|Instagram|WhatsApp|Line\/|MicroMessenger/i.test(ua)) return 'inApp';
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+  return 'android';
 }
 
 export function isStandalone(): boolean {

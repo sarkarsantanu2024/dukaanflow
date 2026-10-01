@@ -7,6 +7,7 @@ import { OrdersScreen, type OwnerOrder } from '@/components/owner/OrdersScreen';
 import { KeepScreenAwake } from '@/components/owner/KeepScreenAwake';
 import { BRAND_NAME } from '@/lib/brand';
 import { readOrderLines, type SnapshotNames } from '@/lib/order-snapshot';
+import { appStatus } from '@/lib/order-status';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,7 +145,7 @@ export default async function OrdersPage({ params }: PageProps) {
     customerPhone: row.customerPhone,
     customerAddress: row.customerAddress,
     orderType: row.orderType,
-    status: row.status,
+    status: appStatus(row.status),
     totalAmountPaise: row.totalAmountPaise,
     deliveryFeePaise: row.deliveryFeePaise,
     revised: row.revisedAt !== null,

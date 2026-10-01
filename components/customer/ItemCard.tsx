@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { Badge } from '@/components/ui/Badge';
 import { CartIcon } from '@/components/ui/Icon';
 import { formatPaise } from '@/lib/money';
-import { amountLabel, isLooseUnit, localUnit, MOST_PER_LINE, rateUnit } from '@/lib/units';
+import { amountLabel, isLooseUnit, localUnit, MOST_PER_LINE, stockCount } from '@/lib/units';
 import { AmountStepper } from './AmountStepper';
 import type { Locale } from '@/lib/i18n';
 import { dict } from '@/lib/i18n';
@@ -330,7 +330,7 @@ export function ItemCard({
                 {/* "500 g", not "0.5". The count is a decimal in multiples of
                     the pack, and a raw one is a number nobody in this chain
                     speaks. Counted goods keep the plain number. */}
-                {localUnit(amountLabel(item.unit, item.stockQty) ?? `${item.stockQty} ${rateUnit(item.unit)}`.trim(), locale)}
+                {localUnit(amountLabel(item.unit, item.stockQty) ?? stockCount(item.stockQty, item.unit), locale)}
               </Badge>
             ))}
         </span>

@@ -267,3 +267,13 @@ export function monthWindow(now: Date = new Date()): { from: Date; to: Date } {
   // Month 13 is January of the next year — see `shopMonthStart`.
   return { from: shopMonthStart(year, month), to: shopMonthStart(year, month + 1) };
 }
+
+/**
+ * The whole of last month, on the shop's own clock. The owner app goes back
+ * this far and no further; longer periods are the console's report.
+ */
+export function lastMonthWindow(now: Date = new Date()): { from: Date; to: Date } {
+  const { year, month } = shopClock(now);
+  // Month 0 is December of the year before — see `shopMonthStart`.
+  return { from: shopMonthStart(year, month - 1), to: shopMonthStart(year, month) };
+}

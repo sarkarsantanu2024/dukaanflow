@@ -59,9 +59,11 @@ import {
   toWhatsAppNumber,
 } from '@/lib/whatsapp';
 import { QRCodeCanvas } from 'qrcode.react';
-import { upiPayUrlWithAmount } from '@/lib/qr';
+import { baseUrl, upiPayUrlWithAmount } from '@/lib/qr';
 import { ownerDict } from '@/lib/owner-i18n';
 import { LOCALES, type Locale } from '@/lib/i18n';
+import { isWaiting, WAITING_STATUSES, type OrderStatus } from '@/lib/order-status';
+import { Modal } from '@/components/ui/Modal';
 
 /**
  * An ordered line in the owner's language, falling back to the primary name.
@@ -76,7 +78,7 @@ function lineName(
   return line.name;
 }
 
-export type OrderStatus = 'NEW' | 'CONFIRMED' | 'READY' | 'COMPLETED' | 'CANCELLED';
+export type { OrderStatus };
 
 export type OwnerOrder = {
   id: string;
@@ -162,16 +164,32 @@ const ORDERS_POLL_MS = 20_000;
 
 type Tab = 'ALL' | OrderStatus;
 
-const TAB_ORDER: Tab[] = ['NEW', 'CONFIRMED', 'READY', 'COMPLETED', 'ALL', 'CANCELLED'];
+/** The pack pop-up is offered on orders with more lines than this. */
+const PACK_FROM = 5;
+
+/** A stable key for one line: the index is in it because old lines have no item id. */
+function packLineKey(line: { itemId: string }, index: number): string {
+  return `${line.itemId}#${index}`;
+}
+
+function packTicksKey(orderId: string): string {
+  return `halkhata:packed:${orderId}`;
+}
+
+function packedDoneKey(orderId: string): string {
+  return `halkhata:packed-done:${orderId}`;
+}
+
+const TAB_ORDER: Tab[] = ['NEW', 'CONFIRMED', 'COMPLETED', 'ALL', 'CANCELLED'];
 
 /**
  * The states an order can still be worked in.
  *
  * A completed one is a record, and a cancelled one no longer exists — turning
  * an order away now removes it. So the whole action grid is shown for these
- * three and for nothing else.
+ * two and for nothing else.
  */
-const WORKABLE: OrderStatus[] = ['NEW', 'CONFIRMED', 'READY'];
+const WORKABLE: OrderStatus[] = WAITING_STATUSES;
 
 /**
  * One action on an order, as an equal tile: icon over word.
@@ -424,7 +442,7 @@ export function OrdersScreen({
       messageFor(order),
       paid ? `${tc.billPaidBy}: ${modes[order.paymentMode]}` : '',
       '',
-      `${tc.billSeeOnline} ${window.location.origin}/track/${order.id}`,
+      `${tc.billSeeOnline} ${baseUrl()}/track/${order.id}`,
     ]
       .filter((line, index, all) => line !== '' || (index > 0 && all[index - 1] !== ''))
       .join('\n');
@@ -536,6 +554,71 @@ export function OrdersScreen({
    * the end, rather than twice on the way.
    */
   const [revising, setRevising] = useState<string | null>(null);
+
+  /**
+   * PACKING A BIG ORDER, IN A POP-UP ON THIS SCREEN (2026-10-01).
+   *
+   * It used to carry the order over to the Sell tab, which locked the till
+   * while it was loaded and asked the owner to "leave this order" to sell
+   * anything else. Now the list opens over the order itself: a tick per line,
+   * and "all packed" once every line is ticked, after which the card says so.
+   *
+   * Offered only above PACK_FROM lines — a short order is read off its card.
+   *
+   * The ticks live on this phone, not in the database: they are a note to the
+   * one person holding the phone while they fill a bag, and nobody else needs
+   * them. They survive a reload, because the app can be killed mid-pack.
+   */
+  const [packing, setPacking] = useState<OwnerOrder | null>(null);
+  const [ticks, setTicks] = useState<Record<string, boolean>>({});
+  const [packedIds, setPackedIds] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    try {
+      const done = new Set<string>();
+      for (const order of orders) {
+        if (window.localStorage.getItem(packedDoneKey(order.id)) === '1') done.add(order.id);
+      }
+      setPackedIds(done);
+    } catch {
+      // Storage refused: no badges, and packing still works for the visit.
+    }
+  }, [orders]);
+
+  function openPacking(order: OwnerOrder) {
+    try {
+      const saved = window.localStorage.getItem(packTicksKey(order.id));
+      setTicks(saved ? (JSON.parse(saved) as Record<string, boolean>) : {});
+    } catch {
+      setTicks({});
+    }
+    setPacking(order);
+  }
+
+  function toggleTick(key: string) {
+    if (!packing) return;
+    setTicks((current) => {
+      const next = { ...current, [key]: !current[key] };
+      if (!next[key]) delete next[key];
+      try {
+        window.localStorage.setItem(packTicksKey(packing.id), JSON.stringify(next));
+      } catch {
+        // The tick still holds for this visit.
+      }
+      return next;
+    });
+  }
+
+  function finishPacking() {
+    if (!packing) return;
+    try {
+      window.localStorage.setItem(packedDoneKey(packing.id), '1');
+      window.localStorage.removeItem(packTicksKey(packing.id));
+    } catch {
+      // The badge simply will not survive a reload.
+    }
+    setPackedIds((current) => new Set(current).add(packing.id));
+    setPacking(null);
+  }
   const [revision, setRevision] = useState<Record<string, number>>({});
   /**
    * The message waiting to be sent about an order that has just been changed.
@@ -562,11 +645,10 @@ export function OrdersScreen({
       ALL: orders.length,
       NEW: 0,
       CONFIRMED: 0,
-      READY: 0,
       COMPLETED: 0,
       CANCELLED: 0,
     };
-    for (const order of orders) tally[order.status === 'READY' ? 'CONFIRMED' : order.status] += 1;
+    for (const order of orders) tally[order.status] += 1;
     return tally;
   }, [orders]);
 
@@ -595,8 +677,7 @@ export function OrdersScreen({
     return { count, takingsPaise };
   }, [orders]);
 
-  // A READY order is still waiting: it is packed and nobody has it yet.
-  const waiting = counts.NEW + counts.CONFIRMED + counts.READY;
+  const waiting = counts.NEW + counts.CONFIRMED;
 
   /**
    * What is still to go out, oldest first — the round, in the order it should
@@ -605,10 +686,7 @@ export function OrdersScreen({
   const pending = useMemo(
     () =>
       orders
-        .filter(
-          (order) =>
-            order.status === 'NEW' || order.status === 'CONFIRMED' || order.status === 'READY',
-        )
+        .filter((order) => isWaiting(order.status))
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     [orders],
   );
@@ -664,8 +742,7 @@ export function OrdersScreen({
     // where an order gets forgotten on a busy evening. The badge on each card
     // and the time under the name are what now have to carry that, so if
     // orders start going stale, this sort is the first thing to look at.
-    const rank = (status: OrderStatus) =>
-      status === 'NEW' || status === 'CONFIRMED' || status === 'READY' ? 0 : 1;
+    const rank = (status: OrderStatus) => (isWaiting(status) ? 0 : 1);
     return orders.filter((order) => order.status !== 'COMPLETED').sort((a, b) => {
       const byRank = rank(a.status) - rank(b.status);
       if (byRank !== 0) return byRank;
@@ -1104,7 +1181,6 @@ export function OrdersScreen({
   const statusLabel: Record<OrderStatus, string> = {
     NEW: t.orderNew,
     CONFIRMED: t.orderConfirmed,
-    READY: t.orderConfirmed,
     COMPLETED: t.orderCompleted,
     CANCELLED: t.orderCancelled,
   };
@@ -1258,45 +1334,103 @@ export function OrdersScreen({
           cards whose tick boxes feed it, offers tick-all and untick-all, and
           wears the helper's purple, the same as the "send to helper" button on
           each card. Only the ticked orders go — see `forHelper`. */}
+      {/* ONE LINE UNTIL SOMETHING IS TICKED (2026-10-01).
+          It was a tall violet box with a full-width "Send 0 ticked orders"
+          button, so the order the owner opened the screen for sat below the
+          fold, under a button that looked pressable and did nothing. Now it is
+          a single row, and the send button appears once an order is ticked.
+          It is there for a single order too: the owner sends one order to the
+          helper as often as several (the user's correction, same day). */}
       {view === 'live' && pending.length > 0 && (
-        <section className="rounded-2xl border border-violet-200 bg-violet-50 p-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="mr-auto text-sm font-medium text-violet-900">{t.helperTickHint}</p>
+        <section className="rounded-2xl border border-violet-200 bg-violet-50 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <TruckIcon className="h-4 w-4 shrink-0 text-violet-700" />
+            <p className="mr-auto min-w-0 text-xs font-medium leading-snug text-violet-900">{t.helperTickHint}</p>
             <button
               type="button"
-              onClick={() => setForHelper(new Set(pending.map((order) => order.id)))}
-              className="min-h-10 rounded-lg bg-white/70 px-3 text-xs font-medium text-violet-900 transition hover:bg-white"
+              onClick={() =>
+                setForHelper(
+                  helperOrders.length === pending.length ? new Set() : new Set(pending.map((order) => order.id)),
+                )
+              }
+              className="min-h-10 shrink-0 rounded-lg bg-white/70 px-3 text-xs font-medium text-violet-900 transition hover:bg-white"
             >
-              {t.restockAll}
-            </button>
-            <button
-              type="button"
-              onClick={() => setForHelper(new Set())}
-              className="min-h-10 rounded-lg bg-white/70 px-3 text-xs font-medium text-violet-900 transition hover:bg-white"
-            >
-              {t.restockClear}
+              {helperOrders.length === pending.length ? t.restockClear : t.restockAll}
             </button>
           </div>
-          <a
-            href={`https://wa.me/${labourPhone ? toWhatsAppNumber(labourPhone) : ''}?text=${encodeURIComponent(
-              helperMessage(helperOrders),
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-disabled={helperOrders.length === 0}
-            onClick={(event) => {
-              if (helperOrders.length === 0) event.preventDefault();
-            }}
-            className={clsx(
-              'mt-2 flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 font-semibold text-white shadow-sm transition hover:bg-violet-700',
-              helperOrders.length === 0 && 'cursor-not-allowed opacity-50',
-            )}
-          >
-            <TruckIcon className="h-5 w-5" />
-            {t.helperSendTicked.replace('{n}', String(helperOrders.length))}
-          </a>
+          {helperOrders.length > 0 && (
+            <a
+              href={`https://wa.me/${labourPhone ? toWhatsAppNumber(labourPhone) : ''}?text=${encodeURIComponent(
+                helperMessage(helperOrders),
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+            >
+              <TruckIcon className="h-5 w-5 shrink-0" />
+              {t.helperSendTicked.replace('{n}', String(helperOrders.length))}
+            </a>
+          )}
         </section>
       )}
+
+      <Modal
+        open={packing !== null}
+        title={packing ? `${t.orderToTill} · ${packing.customerName || packing.customerPhone}` : ''}
+        onClose={() => setPacking(null)}
+        size="md"
+        closeOnBack
+        footer={
+          packing && (
+            <button
+              type="button"
+              disabled={!packing.lines.every((line, index) => ticks[packLineKey(line, index)])}
+              onClick={finishPacking}
+              className="h-12 w-full rounded-xl bg-brand-600 font-semibold text-white disabled:opacity-40"
+            >
+              {t.packSubmit}
+            </button>
+          )
+        }
+      >
+        {packing && (
+          <ul className="space-y-1.5">
+            {packing.lines.map((line, index) => {
+              const key = packLineKey(line, index);
+              const done = Boolean(ticks[key]);
+              return (
+                <li key={key}>
+                  <button
+                    type="button"
+                    onClick={() => toggleTick(key)}
+                    aria-pressed={done}
+                    className={clsx(
+                      'flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition',
+                      done ? 'border-brand-200 bg-brand-50' : 'border-slate-200 bg-card',
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2',
+                        done ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300',
+                      )}
+                    >
+                      {done && <CheckIcon className="h-4 w-4" />}
+                    </span>
+                    <span className={clsx('min-w-0 flex-1 truncate text-sm font-medium', done ? 'text-slate-400 line-through' : 'text-slate-900')}>
+                      {lineName(line, locale)}
+                      {line.unit && !isLooseUnit(line.unit) ? ` · ${localUnit(line.unit, locale)}` : ''}
+                    </span>
+                    <span className={clsx('shrink-0 text-sm font-semibold tabular-nums', done ? 'text-slate-400' : 'text-slate-700')}>
+                      {lineAmount(line, locale)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Modal>
 
       {/* The status filter strip lived here. Five chips, four of them usually
           reading zero, above a list short enough to read whole — it cost a row
@@ -1367,11 +1501,17 @@ export function OrdersScreen({
                     {t.revisedBadge}
                   </span>
                 )}
+                {packedIds.has(order.id) && isWaiting(order.status) && (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+                    <CheckIcon className="h-3.5 w-3.5" />
+                    {t.packedBadge}
+                  </span>
+                )}
                 <span
                   className={clsx(
                     'shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold',
                     order.status === 'NEW' && 'bg-amber-50 text-amber-700',
-                    (order.status === 'CONFIRMED' || order.status === 'READY') && 'bg-blue-50 text-blue-700',
+                    order.status === 'CONFIRMED' && 'bg-blue-50 text-blue-700',
                     order.status === 'COMPLETED' && 'bg-green-50 text-green-700',
                     order.status === 'CANCELLED' && 'bg-slate-100 text-slate-500',
                   )}
@@ -1405,13 +1545,17 @@ export function OrdersScreen({
                           key={`${order.id}-revise-${index}`}
                           className="flex items-center gap-2 rounded-lg bg-card px-2.5 py-2"
                         >
-                          <span className="min-w-0 flex-1 truncate text-sm text-slate-700">
-                            {lineName(line, locale)}
-                            {line.unit && !isLooseUnit(line.unit) ? ` · ${localUnit(line.unit, locale)}` : ''}
+                          {/* The name on its own line and what was ordered under it.
+                              On one line, "ছিল …" was the part cut off — and it is
+                              the part the owner is checking against. */}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm text-slate-700">
+                              {lineName(line, locale)}
+                              {line.unit && !isLooseUnit(line.unit) ? ` · ${localUnit(line.unit, locale)}` : ''}
+                            </span>
                             {next !== line.quantity && (
-                              <span className="text-slate-400">
-                                {' '}
-                                · {t.reviseWas} {lineAmount(line, locale)}
+                              <span className="block text-xs text-slate-500">
+                                {t.reviseWas} {lineAmount(line, locale)}
                               </span>
                             )}
                           </span>
@@ -1431,11 +1575,11 @@ export function OrdersScreen({
                                     [line.itemId]: Math.max(0, reviseStep(line.unit, next, -1)),
                                   }))
                                 }
-                                className="h-10 w-10 rounded text-lg font-semibold text-slate-700"
+                                className="h-9 w-9 rounded text-base font-semibold text-slate-700"
                               >
                                 −
                               </button>
-                              <span className="w-16 text-center font-semibold tabular-nums">
+                              <span className="w-[4.5rem] text-center text-sm font-semibold tabular-nums">
                                 {lineAmount({ unit: line.unit, quantity: next }, locale)}
                               </span>
                               <button
@@ -1451,7 +1595,7 @@ export function OrdersScreen({
                                     ),
                                   }))
                                 }
-                                className="h-10 w-10 rounded text-lg font-semibold text-slate-700 disabled:opacity-30"
+                                className="h-9 w-9 rounded text-base font-semibold text-slate-700 disabled:opacity-30"
                               >
                                 +
                               </button>
@@ -1639,7 +1783,9 @@ export function OrdersScreen({
                         type="button"
                         disabled={busyId === order.id}
                         onClick={() => void completeAndSend(order, true, 'UPI')}
-                        className="h-11 rounded-xl bg-brand-600 text-sm font-semibold text-white disabled:opacity-50"
+                        // Same weight as Cash: a filled UPI read as already chosen,
+                        // and an owner tapped it for a customer who paid cash.
+                        className="h-11 rounded-xl border border-slate-300 bg-card text-sm font-semibold text-slate-800 disabled:opacity-50"
                       >
                         {t.sellUpi}
                       </button>
@@ -1669,17 +1815,17 @@ export function OrdersScreen({
                           phone and four where there is room — never a wrap that
                           moves a button somewhere new. */}
                       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        {/* THE OWNER WHO IS ALSO THE PACKER. A shop with nobody
-                            to help reads the order here and picks the goods off
-                            the Sell grid, which meant a tab switch per line.
-                            This carries it to the till, where it stays on screen
-                            with a tick box per line. */}
-                        <Tile
-                          href={`/owner/${slug}/sell?order=${order.id}`}
-                          icon={CartIcon}
-                          label={t.orderToTill}
-                          tone="blue"
-                        />
+                        {/* THE OWNER WHO IS ALSO THE PACKER: the order's list
+                            with a tick per line, in a pop-up over this screen.
+                            Only on big orders — see `PACK_FROM`. */}
+                        {order.lines.length > PACK_FROM && (
+                          <Tile
+                            onClick={() => openPacking(order)}
+                            icon={CartIcon}
+                            label={t.orderToTill}
+                            tone="blue"
+                          />
+                        )}
 
                         {/* ONE ORDER TO THE HELPER. The "Ready — tell them"
                             tile that sat here is gone by request: owners did

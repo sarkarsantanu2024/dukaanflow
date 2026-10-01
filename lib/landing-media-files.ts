@@ -1,4 +1,5 @@
-import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 /**
@@ -16,6 +17,21 @@ export function publicFileExists(src: string): boolean {
     return existsSync(path.join(process.cwd(), 'public', src));
   } catch {
     return false;
+  }
+}
+
+/**
+ * `src` with a short hash of the file's contents as `?v=`, for <Image>.
+ *
+ * next/image keeps its resized copy under the URL, so a screenshot retaken at
+ * the same path kept showing the old picture. A new hash means a new URL.
+ */
+export function versionedSrc(src: string): string {
+  try {
+    const hash = createHash('sha1').update(readFileSync(path.join(process.cwd(), 'public', src))).digest('hex');
+    return `${src}?v=${hash.slice(0, 8)}`;
+  } catch {
+    return src;
   }
 }
 

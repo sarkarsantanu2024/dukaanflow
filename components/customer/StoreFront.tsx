@@ -13,11 +13,11 @@ import { CartBar } from './CartBar';
 import { CartDrawer, type CartLine } from './CartDrawer';
 import { CheckoutSheet, type CheckoutSubmit } from './CheckoutSheet';
 import { RepeatOrder, rememberOrder } from './RepeatOrder';
+import { MyOrderBar } from './MyOrderBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { formatDay } from '@/lib/time';
 import { Modal } from '@/components/ui/Modal';
-import { InstallBar } from './InstallBar';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { voiceErrorText } from '@/components/voice/errors';
@@ -518,8 +518,6 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
     // empty grey. The footer is the last thing on the page now, so it is the
     // one place that has to clear the basket button.
     <div className="min-h-dvh bg-slate-100">
-      {/* "Keep this shop on your phone", pinned to the top — see `InstallBar`. */}
-      <InstallBar locale={locale} />
       <ShopHeader shop={shop} locale={locale} onLocaleChange={changeLocale} payLabel={t.payViaUpi} />
 
       {/* One column of controls above one grid of items, at every width — the
@@ -659,25 +657,6 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           </>
         )}
 
-        {/* Below the menu, not above it. This is what the shopper bought LAST
-            time; the shop's actual list is what they came for, and a panel
-            offering four old items was standing between them and it. Folded
-            shut as well, so it is an answer to a question the shopper can ask
-            rather than one asked of them on arrival.
-
-            Still only while the basket is empty — once they have begun
-            choosing, suggesting they start over is noise. */}
-        {totalItems === 0 && (
-          <RepeatOrder
-            slug={shop.slug}
-            items={items}
-            locale={locale}
-            onRepeat={(lines) => {
-              for (const line of lines) addQuantity(line.id, line.quantity);
-            }}
-          />
-        )}
-
       </main>
       {/* "Powered by Halkhata" used to sit here, inside `main`, above the
           repeat-order panel — a footer in the middle of the page. It has moved
@@ -694,6 +673,23 @@ export function StoreFront({ shop, items }: { shop: ShopSummary; items: Customer
           takes a click — a fixed box here once swallowed taps and left a card
           underneath refusing to respond. */}
       <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-3 px-4">
+          {/* WHILE THE BASKET IS EMPTY: the way back to this phone's order
+              (`MyOrderBar`), and "same as last time" (`RepeatOrder`). Both go
+              the moment the first item is chosen — from then on the basket is
+              the only thing worth the bottom of the screen. */}
+          {totalItems === 0 && !cartOpen && (
+            <>
+              <MyOrderBar slug={shop.slug} locale={locale} refreshKey={placed?.orderId} />
+              <RepeatOrder
+                slug={shop.slug}
+                items={items}
+                locale={locale}
+                onRepeat={(lines) => {
+                  for (const line of lines) addQuantity(line.id, line.quantity);
+                }}
+              />
+            </>
+          )}
           {!cartOpen && (
             <CartBar
               totalItems={totalItems}

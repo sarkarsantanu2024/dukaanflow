@@ -89,8 +89,8 @@ export function ShutterSwitch({
       disabled={busy}
       onClick={toggle}
       title={open ? t.shutterCloseAction : t.shutterOpenAction}
-      // The words beside the switch are hidden on a phone, so without this it
-      // had no name at all there — a screen reader said only "switch".
+      // No words beside the switch (removed 2026-10-01, by request): the colour
+      // carries the state, and this is its name for a screen reader.
       aria-label={open ? t.shutterOpen : t.shutterClosed}
       className={clsx(
         'inline-flex h-10 shrink-0 items-center gap-2 rounded-lg px-2 transition disabled:opacity-60',
@@ -113,17 +113,6 @@ export function ShutterSwitch({
             open ? 'left-[1.15rem]' : 'left-0.5',
           )}
         />
-      </span>
-      {/* Hidden on the narrowest phones, where the header has four other things
-          on it — the switch itself still reads, and its colour carries the
-          state. */}
-      <span
-        className={clsx(
-          'hidden truncate text-sm font-semibold sm:inline',
-          open ? 'text-white/85' : 'text-amber-200',
-        )}
-      >
-        {open ? t.shutterOpen : t.shutterClosed}
       </span>
     </button>
   );

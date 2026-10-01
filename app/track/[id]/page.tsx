@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { SiteFooter } from '@/components/ui/SiteFooter';
 import { TrackScreen, type TrackedOrder } from '@/components/customer/TrackScreen';
 import { BRAND_NAME } from '@/lib/brand';
+import { appStatus } from '@/lib/order-status';
 
 /**
  * One order, as its customer sees it.
@@ -86,7 +87,7 @@ export default async function TrackPage({ params }: PageProps) {
         order={
           order && {
             id: order.id,
-            status: order.status,
+            status: appStatus(order.status),
             orderType: order.orderType,
             totalAmountPaise: order.totalAmountPaise,
             deliveryFeePaise: order.deliveryFeePaise,

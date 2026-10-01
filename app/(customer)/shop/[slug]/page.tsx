@@ -201,6 +201,9 @@ export default async function ShopPage({ params }: PageProps) {
       {/* Outside the storefront, so it is the last thing on the page rather
           than another block inside the menu. */}
       <SiteFooter />
+      {/* Room for the bars fixed to the bottom (basket, your order, same as
+          last time), so the footer can scroll clear of them. */}
+      <div aria-hidden className="h-36 bg-card" />
     </>
   );
 }

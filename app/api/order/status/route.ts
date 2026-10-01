@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { fail, ok } from '@/lib/http';
+import { appStatus } from '@/lib/order-status';
 
 export const runtime = 'nodejs';
 
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
   return ok({
     orders: orders.map((order) => ({
       id: order.id,
-      status: order.status,
+      status: appStatus(order.status),
       revisedAt: order.revisedAt?.toISOString() ?? null,
       totalAmountPaise: order.totalAmountPaise,
       createdAt: order.createdAt.toISOString(),

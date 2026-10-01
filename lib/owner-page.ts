@@ -53,6 +53,8 @@ export async function loadOwnerShop(slug: string) {
         slug: true,
         type: true,
         phone: true,
+        // For the shop QR the owner downloads from the home screen.
+        address: true,
         upiId: true,
         upiQrData: true,
         labourPhone: true,

@@ -74,6 +74,17 @@ export function rateUnit(unit: string): string {
 }
 
 /**
+ * A counted stock figure, for the till's badge: "48 packet", and for a pack of
+ * several, "14 × 6 pc". Without the × a pack of six printed as "14 6 pc",
+ * which reads as a hundred and forty-six.
+ */
+export function stockCount(quantity: number, unit: string): string {
+  const per = rateUnit(unit);
+  if (!per) return String(quantity);
+  return /^\d/.test(per) ? `${quantity} × ${per}` : `${quantity} ${per}`;
+}
+
+/**
  * The canonical spelling of a unit, so two ways of typing one thing become one
  * item rather than two rows a customer cannot tell apart.
  *
