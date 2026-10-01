@@ -30,6 +30,7 @@
 
 import { SHOP_TYPE_LABELS } from '@/lib/validators';
 import { CustomerBell } from './CustomerBell';
+import { InstallButton } from './InstallButton';
 import { upiPayUrl } from '@/lib/qr';
 import { LangToggle } from './LangToggle';
 import { BrandMark } from '@/components/ui/BrandMark';
@@ -120,6 +121,8 @@ export function ShopHeader({
               page is actually read. */}
           {/* The shop's updates on this phone's orders — see `CustomerBell`. */}
           <div className="ml-auto flex items-center gap-1">
+            {/* Keep the shop on the phone — see `InstallButton`. */}
+            <InstallButton locale={locale} />
             <CustomerBell locale={locale} />
             <LangToggle value={locale} onChange={onLocaleChange} />
           </div>

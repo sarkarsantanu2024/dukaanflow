@@ -240,6 +240,13 @@ type Dictionary = {
   saveShopNow: string;
   saveShopLater: string;
   saveShopIos: string;
+  /** The install button and its help sheet, for phones that never offer the prompt. */
+  installApp: string;
+  installHowTitle: string;
+  installHowAndroid: string;
+  installHowIos: string;
+  installHowInApp: string;
+  installHowOk: string;
   savedShopsTitle: string;
   savedShopsHint: string;
   savedShopsForget: string;
@@ -391,6 +398,12 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     saveShopNow: 'Add to home screen',
     saveShopLater: 'Not now',
     saveShopIos: 'Tap Share, then “Add to Home Screen”.',
+    installApp: 'Install app',
+    installHowTitle: 'How to install',
+    installHowAndroid: 'In Chrome, tap ⋮ (the three dots) at the top right, then “Add to Home screen” or “Install app”.',
+    installHowIos: 'In Safari, tap Share (the square with an arrow) at the bottom, then “Add to Home Screen”.',
+    installHowInApp: 'This page is open inside WhatsApp or Facebook. Open it in Chrome first: tap ⋮ (the three dots) and choose “Open in Chrome”.',
+    installHowOk: 'OK',
     savedShopsTitle: 'Shops you have ordered from',
     savedShopsHint: 'Kept on this phone only.',
     savedShopsForget: 'Remove',
@@ -553,6 +566,12 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     saveShopNow: 'হোম স্ক্রিনে রাখুন',
     saveShopLater: 'এখন নয়',
     saveShopIos: 'Share চেপে “Add to Home Screen” বেছে নিন।',
+    installApp: 'অ্যাপ ইনস্টল করুন',
+    installHowTitle: 'কীভাবে ইনস্টল করবেন',
+    installHowAndroid: 'Chrome-এ ওপরে ডানদিকে ⋮ (তিনটে ডট) চাপুন, তারপর “Add to Home screen” বা “Install app” চাপুন।',
+    installHowIos: 'Safari-তে নিচের Share (তীর-দেওয়া চৌকো) চাপুন, তারপর “Add to Home Screen”।',
+    installHowInApp: 'পাতাটা হোয়াটসঅ্যাপ বা ফেসবুকের ভিতরে খোলা আছে। আগে Chrome-এ খুলুন: ⋮ (তিনটে ডট) চেপে “Open in Chrome” বাছুন।',
+    installHowOk: 'ঠিক আছে',
     savedShopsTitle: 'যেসব দোকানে অর্ডার করেছেন',
     savedShopsHint: 'শুধু এই ফোনেই রাখা আছে।',
     savedShopsForget: 'সরান',
@@ -716,6 +735,12 @@ export const DICTIONARIES: Record<Locale, Dictionary> = {
     saveShopNow: 'होम स्क्रीन पर रखें',
     saveShopLater: 'अभी नहीं',
     saveShopIos: 'Share दबाकर “Add to Home Screen” चुनिए।',
+    installApp: 'ऐप इंस्टॉल करें',
+    installHowTitle: 'कैसे इंस्टॉल करें',
+    installHowAndroid: 'Chrome में ऊपर दाईं ओर ⋮ (तीन बिंदु) दबाएँ, फिर “Add to Home screen” या “Install app” दबाएँ।',
+    installHowIos: 'Safari में नीचे Share (तीर वाला चौकोर) दबाएँ, फिर “Add to Home Screen”।',
+    installHowInApp: 'यह पेज व्हाट्सऐप या फ़ेसबुक के अंदर खुला है। पहले Chrome में खोलें: ⋮ (तीन बिंदु) दबाकर “Open in Chrome” चुनें।',
+    installHowOk: 'ठीक है',
     savedShopsTitle: 'जिन दुकानों से आपने ऑर्डर किया',
     savedShopsHint: 'सिर्फ़ इसी फोन में रखा है।',
     savedShopsForget: 'हटाएँ',

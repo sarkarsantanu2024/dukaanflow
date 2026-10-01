@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { loadOwnerShop } from '@/lib/owner-page';
 import { OwnerShell } from '@/components/owner/OwnerShell';
 import { TodayScreen } from '@/components/owner/TodayScreen';
-import { drawerForToday, monthWindow, takingsBetween, todayWindow } from '@/lib/takings';
+import { drawerForToday, lastMonthWindow, monthWindow, takingsBetween, todayWindow } from '@/lib/takings';
+import { WAITING_STATUSES } from '@/lib/order-status';
 import { needsRestock, type RestockItem } from '@/lib/restock';
 import { customerBalances } from '@/lib/khata';
 import { BRAND_NAME } from '@/lib/brand';
@@ -26,17 +27,17 @@ export default async function OwnerHome({ params }: PageProps) {
   const { shop, plan, settings, roadblock, locale } = await loadOwnerShop(slug);
   const day = todayWindow();
   const period = monthWindow();
+  const previous = lastMonthWindow();
 
   // Everything the briefing needs, worked out from the same queries the rest of
-  // the app trusts, in one round of parallel reads. Today's and this month's
-  // takings and the cash drawer moved here from the khata "হিসাব" tab — this is
-  // where the day starts, so the opening cash and what came in belong here.
-  // READY is no longer a step (see `orderStatusSchema`); an old order still
-  // marked READY is waiting like any other.
-  const [ordersWaiting, deliveries, items, balances, today, month] = await Promise.all([
-    prisma.order.count({ where: { shopId: shop.id, status: { in: ['NEW', 'CONFIRMED', 'READY'] } } }),
+  // the app trusts, in one round of parallel reads. Today's, this month's and
+  // last month's takings and the cash drawer moved here from the khata "হিসাব"
+  // tab — this is where the day starts, so the opening cash and what came in
+  // belong here. Anything older than last month is the console's report.
+  const [ordersWaiting, deliveries, items, balances, today, month, lastMonth] = await Promise.all([
+    prisma.order.count({ where: { shopId: shop.id, status: { in: WAITING_STATUSES } } }),
     prisma.order.count({
-      where: { shopId: shop.id, orderType: 'DELIVERY', status: { in: ['NEW', 'CONFIRMED', 'READY'] } },
+      where: { shopId: shop.id, orderType: 'DELIVERY', status: { in: WAITING_STATUSES } },
     }),
     prisma.item.findMany({
       where: { shopId: shop.id },
@@ -54,6 +55,7 @@ export default async function OwnerHome({ params }: PageProps) {
     customerBalances(shop.id),
     takingsBetween(shop.id, day.from, day.to),
     takingsBetween(shop.id, period.from, period.to),
+    takingsBetween(shop.id, previous.from, previous.to),
   ]);
 
   const drawer = await drawerForToday(shop.id, today);
@@ -78,7 +80,10 @@ export default async function OwnerHome({ params }: PageProps) {
         counts={{ ordersWaiting, lowStock, deliveries, owing }}
         today={today}
         month={month}
+        lastMonth={lastMonth}
         drawer={drawer}
+        shop={{ name: shop.name, address: shop.address, phone: shop.phone, ownerImageData: shop.ownerImageData }}
+        restockItems={items as RestockItem[]}
       />
     </OwnerShell>
   );

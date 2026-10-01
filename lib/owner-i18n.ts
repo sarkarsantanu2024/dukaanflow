@@ -552,15 +552,10 @@ type OwnerDictionary = {
    * an order to the till"; they pack it. The button says that now.
    */
   orderToTill: string;
-  orderTillHeading: string;
-  /** Rendered as "3/7 <this>", so it is the word after the count. */
-  orderTillProgress: string;
-  orderTillLeave: string;
-  /** Why a tap on the grid did nothing while an order is loaded. */
-  orderTillLocked: string;
-  /** The order finished somewhere else between the tap and the screen. */
-  orderTillGone: string;
-  orderTillDone: string;
+  /** The pack pop-up's button, enabled once every line is ticked. */
+  packSubmit: string;
+  /** On an order's card once it has been packed on this phone. */
+  packedBadge: string;
 
   /** Turning an order away removes it from the queue for good. */
   orderRemoved: string;
@@ -704,7 +699,6 @@ type OwnerDictionary = {
   /** Prioritised cards. `{n}` is replaced with the count, so word order stays
    *  the shop's language's own. */
   todayOrdersWaiting: string;
-  todayOrdersReady: string;
   todayLowStock: string;
   todayKhataOutstanding: string;
   todayDelivery: string;
@@ -720,6 +714,26 @@ type OwnerDictionary = {
   todayCredit: string;
   /** Shown in place of the cards when nothing needs attention. */
   todayAllQuiet: string;
+  /** The `{n}` lines above, when n is one. */
+  todayOrdersWaitingOne: string;
+  todayLowStockOne: string;
+  todayKhataOutstandingOne: string;
+  todayDeliveryOne: string;
+  /** The third takings tab: the month before this one. */
+  takingsLastMonth: string;
+  /** The shop's own QR card on the home screen. `{shop}` and `{link}` in the message. */
+  shopQrTitle: string;
+  shopQrHint: string;
+  shopQrDownload: string;
+  shopQrSend: string;
+  shopQrNumber: string;
+  shopQrSendGo: string;
+  shopQrBadNumber: string;
+  shopQrMessage: string;
+  shopQrShare: string;
+  shopQrFailed: string;
+  installCardTitle: string;
+  installCardHint: string;
 };
 
 export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
@@ -881,8 +895,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     markCancelled: 'Cancel order',
     markCancelledConfirm: 'The customer is not served and the order cannot be brought back.',
     ordersAll: 'All',
-    ordersToday: 'Today',
-    ordersTakings: 'Takings',
+    ordersToday: 'Orders today',
+    ordersTakings: 'From orders',
     ordersWaiting: 'Waiting',
     ordersSendRound: 'Send list on WhatsApp',
     orderToHelper: 'Send to helper',
@@ -1187,12 +1201,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     revisedBadge: 'Changed',
 
     orderToTill: 'Pack this order',
-    orderTillHeading: 'Packing this order',
-    orderTillProgress: 'packed',
-    orderTillLeave: 'Leave this order',
-    orderTillLocked: 'Finish or leave this order before ringing up anything else.',
-    orderTillGone: 'That order is already finished.',
-    orderTillDone: 'Order completed',
+    packSubmit: 'All packed',
+    packedBadge: 'Packed',
     orderRemoved: 'Order removed',
     orderRemovedTell: 'Tell {name} it is cancelled.',
 
@@ -1289,7 +1299,6 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     todayGreetingEvening: 'Good evening 👋',
     todaySubtitle: 'Here is your shop today',
     todayOrdersWaiting: '{n} orders waiting',
-    todayOrdersReady: '{n} ready to hand over',
     todayLowStock: '{n} items running low',
     todayKhataOutstanding: '{n} customers owe money',
     todayDelivery: '{n} deliveries to make',
@@ -1302,6 +1311,23 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     todayUpi: 'UPI',
     todayCredit: 'Udhaar',
     todayAllQuiet: 'All caught up — nothing needs attention right now.',
+    todayOrdersWaitingOne: '1 order waiting',
+    todayLowStockOne: '1 item running low',
+    todayKhataOutstandingOne: '1 customer owes money',
+    todayDeliveryOne: '1 delivery to make',
+    takingsLastMonth: 'Last month',
+    shopQrTitle: 'Your shop QR',
+    shopQrHint: 'Print it for the counter, or send it to a customer.',
+    shopQrDownload: 'Download QR',
+    shopQrSend: 'Send on WhatsApp',
+    shopQrNumber: 'Their WhatsApp number',
+    shopQrSendGo: 'Send',
+    shopQrBadNumber: 'Type a 10-digit mobile number.',
+    shopQrMessage: 'Order from {shop} on your phone. Tap this link, or scan our QR at the shop: {link}',
+    shopQrShare: 'Share the QR picture',
+    shopQrFailed: 'Could not make the QR file. Try again.',
+    installCardTitle: 'Put Halkhata on your home screen',
+    installCardHint: 'It opens in one tap, like any app. No Play Store needed.',
   },
 
   bn: {
@@ -1462,8 +1488,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     markCancelled: 'অর্ডার বাতিল',
     markCancelledConfirm: 'খদ্দের জিনিস পাবে না, আর অর্ডারটা আর ফেরানো যাবে না।',
     ordersAll: 'সব',
-    ordersToday: 'আজ',
-    ordersTakings: 'আজকের টাকা',
+    ordersToday: 'আজকের অর্ডার',
+    ordersTakings: 'অর্ডারের টাকা',
     ordersWaiting: 'বাকি আছে',
     ordersSendRound: 'তালিকা WhatsApp-এ পাঠান',
     orderToHelper: 'হেল্পারকে পাঠান',
@@ -1752,12 +1778,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     revisedBadge: 'বদলেছে',
 
     orderToTill: 'অর্ডারটা গোছান',
-    orderTillHeading: 'এই অর্ডারটা গোছাচ্ছি',
-    orderTillProgress: 'গোছানো হয়েছে',
-    orderTillLeave: 'এই অর্ডার ছেড়ে দিন',
-    orderTillLocked: 'আগে এই অর্ডারটা শেষ করুন বা ছেড়ে দিন, তারপর অন্য কিছু বিক্রি করুন।',
-    orderTillGone: 'ওই অর্ডারটা আগেই শেষ হয়ে গেছে।',
-    orderTillDone: 'অর্ডার সম্পূর্ণ হল',
+    packSubmit: 'সব গোছানো হয়ে গেছে',
+    packedBadge: 'গোছানো',
     orderRemoved: 'অর্ডার সরানো হল',
     orderRemovedTell: '{name}-কে জানিয়ে দিন যে অর্ডারটা বাতিল।',
 
@@ -1854,10 +1876,9 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     todayGreetingEvening: 'শুভ সন্ধ্যা 👋',
     todaySubtitle: 'আজকের দোকানের খবর',
     todayOrdersWaiting: '{n}টি অর্ডার অপেক্ষা করছে',
-    todayOrdersReady: '{n}টি অর্ডার তৈরি',
     todayLowStock: '{n}টি মাল কমে গেছে',
     todayKhataOutstanding: '{n} জনের টাকা বাকি',
-    todayDelivery: '{n}টি Delivery বাকি',
+    todayDelivery: '{n}টি ডেলিভারি বাকি',
     todaySeeOrders: 'অর্ডার দেখুন',
     todaySeeStock: 'মাল দেখুন',
     todaySeeKhata: 'বাকি দেখুন',
@@ -1867,6 +1888,23 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     todayUpi: 'UPI',
     todayCredit: 'বাকি',
     todayAllQuiet: 'সব ঠিক আছে — এখন আলাদা করে কিছু করার নেই।',
+    todayOrdersWaitingOne: '১টি অর্ডার অপেক্ষা করছে',
+    todayLowStockOne: '১টি মাল কমে গেছে',
+    todayKhataOutstandingOne: '১ জনের টাকা বাকি',
+    todayDeliveryOne: '১টি ডেলিভারি বাকি',
+    takingsLastMonth: 'গত মাস',
+    shopQrTitle: 'দোকানের QR',
+    shopQrHint: 'কাউন্টারে লাগাতে প্রিন্ট করুন, বা খদ্দেরকে পাঠান।',
+    shopQrDownload: 'QR ডাউনলোড',
+    shopQrSend: 'হোয়াটসঅ্যাপে পাঠান',
+    shopQrNumber: 'যাকে পাঠাবেন তার হোয়াটসঅ্যাপ নম্বর',
+    shopQrSendGo: 'পাঠান',
+    shopQrBadNumber: '১০ সংখ্যার মোবাইল নম্বর লিখুন।',
+    shopQrMessage: '{shop} থেকে ফোনেই অর্ডার করুন। এই লিঙ্কে চাপুন, বা দোকানে আমাদের QR স্ক্যান করুন: {link}',
+    shopQrShare: 'QR ছবি শেয়ার করুন',
+    shopQrFailed: 'QR ফাইল বানানো গেল না। আবার চেষ্টা করুন।',
+    installCardTitle: 'হালখাতা ফোনের হোম স্ক্রিনে রাখুন',
+    installCardHint: 'অ্যাপের মতো এক চাপে খুলবে। Play Store লাগবে না।',
   },
 
   hi: {
@@ -2027,8 +2065,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     markCancelled: 'ऑर्डर रद्द',
     markCancelledConfirm: 'ग्राहक को सामान नहीं मिलेगा, और ऑर्डर वापस नहीं आएगा।',
     ordersAll: 'सब',
-    ordersToday: 'आज',
-    ordersTakings: 'आज की कमाई',
+    ordersToday: 'आज के ऑर्डर',
+    ordersTakings: 'ऑर्डर से कमाई',
     ordersWaiting: 'बाकी है',
     ordersSendRound: 'सूची WhatsApp पर भेजें',
     orderToHelper: 'हेल्पर को भेजें',
@@ -2317,12 +2355,8 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     revisedBadge: 'बदला',
 
     orderToTill: 'यह ऑर्डर पैक करें',
-    orderTillHeading: 'यह ऑर्डर पैक कर रहे हैं',
-    orderTillProgress: 'पैक हुआ',
-    orderTillLeave: 'यह ऑर्डर छोड़ें',
-    orderTillLocked: 'पहले यह ऑर्डर पूरा करें या छोड़ें, फिर कुछ और बेचें।',
-    orderTillGone: 'वह ऑर्डर पहले ही पूरा हो चुका है।',
-    orderTillDone: 'ऑर्डर पूरा हुआ',
+    packSubmit: 'सब पैक हो गया',
+    packedBadge: 'पैक',
     orderRemoved: 'ऑर्डर हटाया गया',
     orderRemovedTell: '{name} को बता दें कि ऑर्डर रद्द है।',
 
@@ -2419,7 +2453,6 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     todayGreetingEvening: 'शुभ संध्या 👋',
     todaySubtitle: 'आज आपकी दुकान का हाल',
     todayOrdersWaiting: '{n} ऑर्डर बाकी हैं',
-    todayOrdersReady: '{n} ऑर्डर तैयार',
     todayLowStock: '{n} सामान कम हैं',
     todayKhataOutstanding: '{n} ग्राहकों का उधार बाकी',
     todayDelivery: '{n} डिलीवरी बाकी',
@@ -2432,6 +2465,23 @@ export const OWNER_DICTIONARIES: Record<Locale, OwnerDictionary> = {
     todayUpi: 'UPI',
     todayCredit: 'उधार',
     todayAllQuiet: 'सब ठीक है — अभी अलग से कुछ करना नहीं है।',
+    todayOrdersWaitingOne: '1 ऑर्डर बाकी है',
+    todayLowStockOne: '1 सामान कम है',
+    todayKhataOutstandingOne: '1 ग्राहक का उधार बाकी',
+    todayDeliveryOne: '1 डिलीवरी बाकी',
+    takingsLastMonth: 'पिछला महीना',
+    shopQrTitle: 'दुकान का QR',
+    shopQrHint: 'काउंटर पर लगाने के लिए प्रिंट करें, या ग्राहक को भेजें।',
+    shopQrDownload: 'QR डाउनलोड',
+    shopQrSend: 'व्हाट्सऐप पर भेजें',
+    shopQrNumber: 'जिसे भेजना है उसका व्हाट्सऐप नंबर',
+    shopQrSendGo: 'भेजें',
+    shopQrBadNumber: '10 अंकों का मोबाइल नंबर लिखें।',
+    shopQrMessage: '{shop} से फ़ोन पर ऑर्डर करें। इस लिंक पर टैप करें, या दुकान पर हमारा QR स्कैन करें: {link}',
+    shopQrShare: 'QR फ़ोटो शेयर करें',
+    shopQrFailed: 'QR फ़ाइल नहीं बन पाई। फिर कोशिश करें।',
+    installCardTitle: 'हालखाता फ़ोन की होम स्क्रीन पर रखें',
+    installCardHint: 'ऐप की तरह एक टैप में खुलेगा। Play Store की ज़रूरत नहीं।',
   },
 };
 

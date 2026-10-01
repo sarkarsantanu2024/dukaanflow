@@ -13,6 +13,7 @@
 
 import { LOCALES, type Locale } from './i18n';
 import { plainPaise } from './money';
+import type { OrderStatus } from './order-status';
 
 /**
  * The language to write to a customer in: the one they ordered in, or the
@@ -172,7 +173,7 @@ export function newOrderNotification(input: {
 export function orderStatusNotification(input: {
   locale: Locale;
   shopName: string;
-  status: 'NEW' | 'CONFIRMED' | 'READY' | 'COMPLETED' | 'CANCELLED';
+  status: OrderStatus;
   orderType: 'DELIVERY' | 'PICKUP';
 }): { title: string; body: string } | null {
   const t = pushDict(input.locale);

@@ -14,9 +14,9 @@
  * hunting for the difference — so anything that is NOT settled money is held
  * out below the line and labelled, rather than quietly folded in.
  *
- * Today and this month, because those are the two questions actually asked —
- * one at closing, one when the rent is due. Anything finer belongs in the
- * spreadsheet the khata already exports.
+ * Today, this month and last month — one at closing, one when the rent is due,
+ * and the month just finished (added 2026-10-01: on the 1st, "this month" is
+ * one day old). Anything older is the console's 3- and 6-month report.
  */
 
 import { useState } from 'react';
@@ -29,18 +29,21 @@ import type { Drawer, Takings } from '@/lib/takings';
 // `DrawerPanel` is no longer rendered here — see the note at the reckoning
 // below. Restoring it needs this import back as well as the line itself.
 
-type Period = 'today' | 'month';
+type Period = 'today' | 'month' | 'lastMonth';
 
 export function TakingsPanel({
   slug,
   today,
   month,
+  lastMonth,
   drawer,
   locale,
 }: {
   slug: string;
   today: Takings;
   month: Takings;
+  /** As far back as the owner app goes; longer periods are the console's report. */
+  lastMonth: Takings;
   /**
    * Today's cash drawer, or null before the owner has typed the opening float.
    *
@@ -53,7 +56,7 @@ export function TakingsPanel({
 }) {
   const t = ownerDict(locale);
   const [period, setPeriod] = useState<Period>('today');
-  const figures = period === 'today' ? today : month;
+  const figures = period === 'today' ? today : period === 'month' ? month : lastMonth;
 
   /**
    * The three ways money is taken.
@@ -138,6 +141,7 @@ export function TakingsPanel({
               [
                 { id: 'today' as const, label: t.takingsToday },
                 { id: 'month' as const, label: t.takingsMonth },
+                { id: 'lastMonth' as const, label: t.takingsLastMonth },
               ]
             ).map((option) => (
               <button
@@ -146,7 +150,7 @@ export function TakingsPanel({
                 onClick={() => setPeriod(option.id)}
                 aria-pressed={period === option.id}
                 className={clsx(
-                  'h-10 flex-1 rounded-full text-sm font-medium transition',
+                  'h-10 flex-1 rounded-full px-1 text-sm font-medium leading-tight transition',
                   period === option.id
                     ? 'bg-card text-brand-800 shadow-raised'
                     : 'text-white/70 hover:text-white',

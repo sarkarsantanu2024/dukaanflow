@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import clsx from 'clsx';
 import { ownerDict } from '@/lib/owner-i18n';
@@ -5,6 +8,11 @@ import { BellIcon, BoxIcon, CheckIcon, RupeeIcon, TruckIcon } from '@/components
 import { StartDayRow } from './StartDayRow';
 import { QuietShopArt } from '@/components/ui/Ornament';
 import { TakingsPanel } from './TakingsPanel';
+import { ShopQrCard, type PosterShop } from './ShopQrCard';
+import { OwnerInstallCard } from './OwnerInstallCard';
+import { RestockCard } from './RestockCard';
+import { Modal } from '@/components/ui/Modal';
+import type { RestockItem } from '@/lib/restock';
 import type { Locale } from '@/lib/i18n';
 import type { Drawer, Takings } from '@/lib/takings';
 
@@ -70,8 +78,9 @@ const CHIP: Record<Tone, string> = {
  * wallpaper.
  */
 
-function fill(template: string, n: number): string {
-  return template.replace('{n}', String(n));
+/** `{n}` filled in, with the singular line when n is one: "1 order", not "1 orders". */
+function fill(template: string, one: string, n: number): string {
+  return n === 1 ? one : template.replace('{n}', String(n));
 }
 
 /** One line of the briefing: an icon in a tinted chip, what it is, the way to act. */
@@ -81,26 +90,28 @@ function ActionCard({
   label,
   action,
   href,
+  onClick,
 }: {
   tone: Tone;
   icon: React.ReactNode;
   label: string;
   action: string;
-  href: string;
+  /** Where it goes — or `onClick`, for a card that opens a pop-up here. */
+  href?: string;
+  onClick?: () => void;
 }) {
-  return (
-    <Link
-      href={href}
-      className={clsx(
-        // `rounded-3xl` and `p-4`: the radius and the air are most of what
-        // separates an interface that looks made from one that looks assembled.
-        // No border — on a green ground the shadow is the edge, and a hairline
-        // as well reads as a box drawn round a card.
-        'flex items-center gap-3 rounded-2xl border border-glass-edge bg-glass p-3 shadow-raised transition',
-        'hover:shadow-float active:scale-[0.99]',
-        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
-      )}
-    >
+  const className = clsx(
+    'w-full text-left',
+    // `rounded-3xl` and `p-4`: the radius and the air are most of what
+    // separates an interface that looks made from one that looks assembled.
+    // No border — on a green ground the shadow is the edge, and a hairline
+    // as well reads as a box drawn round a card.
+    'flex items-center gap-3 rounded-2xl border border-glass-edge bg-glass p-3 shadow-raised transition',
+    'hover:shadow-float active:scale-[0.99]',
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
+  );
+  const content = (
+    <>
       {/* A step larger, and ringed. The icon is the fastest thing on the card
           to recognise and the slowest thing to read, so it gets the size. */}
       <span
@@ -119,7 +130,16 @@ function ActionCard({
       <span className="shrink-0 rounded-full bg-brand-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm">
         {action}
       </span>
+    </>
+  );
+  return href ? (
+    <Link href={href} className={className}>
+      {content}
     </Link>
+  ) : (
+    <button type="button" onClick={onClick} className={className}>
+      {content}
+    </button>
   );
 }
 
@@ -129,7 +149,10 @@ export function TodayScreen({
   counts,
   today,
   month,
+  lastMonth,
   drawer,
+  shop,
+  restockItems,
 }: {
   slug: string;
   locale: Locale;
@@ -138,20 +161,27 @@ export function TodayScreen({
    *  that used to live behind a tab on the khata screen, now on the home. */
   today: Takings;
   month: Takings;
+  /** The whole of last month — as far back as the owner app goes. */
+  lastMonth: Takings;
   drawer: Drawer | null;
+  /** What the shop's QR poster prints. */
+  shop: PosterShop;
+  /** The shop's list, for the supplier's order list in the low-stock pop-up. */
+  restockItems: RestockItem[];
 }) {
   const t = ownerDict(locale);
+  const [restockOpen, setRestockOpen] = useState(false);
 
   // Urgency order — §85. Only the ones with something to say are built.
-  const cards: { key: string; tone: Tone; icon: React.ReactNode; label: string; action: string; href: string }[] = [];
+  const cards: { key: string; tone: Tone; icon: React.ReactNode; label: string; action: string; href?: string; onClick?: () => void }[] = [];
   if (counts.ordersWaiting > 0)
-    cards.push({ key: 'waiting', tone: 'red', icon: <BellIcon />, label: fill(t.todayOrdersWaiting, counts.ordersWaiting), action: t.todaySeeOrders, href: `/owner/${slug}/orders` });
+    cards.push({ key: 'waiting', tone: 'red', icon: <BellIcon />, label: fill(t.todayOrdersWaiting, t.todayOrdersWaitingOne, counts.ordersWaiting), action: t.todaySeeOrders, href: `/owner/${slug}/orders` });
   if (counts.lowStock > 0)
-    cards.push({ key: 'low', tone: 'amber', icon: <BoxIcon />, label: fill(t.todayLowStock, counts.lowStock), action: t.todaySeeStock, href: `/owner/${slug}/inventory` });
+    cards.push({ key: 'low', tone: 'amber', icon: <BoxIcon />, label: fill(t.todayLowStock, t.todayLowStockOne, counts.lowStock), action: t.todaySeeStock, onClick: () => setRestockOpen(true) });
   if (counts.deliveries > 0)
-    cards.push({ key: 'delivery', tone: 'sky', icon: <TruckIcon />, label: fill(t.todayDelivery, counts.deliveries), action: t.todaySeeOrders, href: `/owner/${slug}/orders` });
+    cards.push({ key: 'delivery', tone: 'sky', icon: <TruckIcon />, label: fill(t.todayDelivery, t.todayDeliveryOne, counts.deliveries), action: t.todaySeeOrders, href: `/owner/${slug}/orders` });
   if (counts.owing > 0)
-    cards.push({ key: 'khata', tone: 'yellow', icon: <RupeeIcon />, label: fill(t.todayKhataOutstanding, counts.owing), action: t.todaySeeKhata, href: `/owner/${slug}/khata` });
+    cards.push({ key: 'khata', tone: 'yellow', icon: <RupeeIcon />, label: fill(t.todayKhataOutstanding, t.todayKhataOutstandingOne, counts.owing), action: t.todaySeeKhata, href: `/owner/${slug}/khata` });
 
   return (
     <div className="space-y-4">
@@ -167,7 +197,7 @@ export function TodayScreen({
       {cards.length > 0 ? (
         <div className="space-y-2">
           {cards.map((c) => (
-            <ActionCard key={c.key} tone={c.tone} icon={c.icon} label={c.label} action={c.action} href={c.href} />
+            <ActionCard key={c.key} tone={c.tone} icon={c.icon} label={c.label} action={c.action} href={c.href} onClick={c.onClick} />
           ))}
         </div>
       ) : (
@@ -187,7 +217,19 @@ export function TodayScreen({
           float is set — moved off the khata screen's "হিসাব" tab, which no
           longer exists. Its own today/month switch lives inside it; the opening
           cash it used to ask for is the row at the top of this screen now. */}
-      <TakingsPanel slug={slug} today={today} month={month} drawer={drawer} locale={locale} />
+      {/* Until the app is on the home screen. Gone once it is. */}
+      <OwnerInstallCard slug={slug} locale={locale} />
+
+      <TakingsPanel slug={slug} today={today} month={month} lastMonth={lastMonth} drawer={drawer} locale={locale} />
+
+      {/* The shop's own QR: download the poster, or send the shop to a number. */}
+      <ShopQrCard slug={slug} shop={shop} locale={locale} />
+
+      {/* THE SUPPLIER'S ORDER LIST, over the home screen (2026-10-01, by
+          request) rather than at the foot of the Items tab. */}
+      <Modal open={restockOpen} title={t.restockTitle} onClose={() => setRestockOpen(false)} size="md" closeOnBack>
+        <RestockCard slug={slug} shopName={shop.name} items={restockItems} locale={locale} panel />
+      </Modal>
     </div>
   );
 }

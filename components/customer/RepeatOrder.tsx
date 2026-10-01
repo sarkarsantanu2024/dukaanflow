@@ -20,6 +20,7 @@ import { amountLabel, localUnit } from '@/lib/units';
 import { dict, type Locale } from '@/lib/i18n';
 import type { CustomerItem } from './ItemCard';
 import { itemName } from './ItemCard';
+import { CloseIcon } from '@/components/ui/Icon';
 
 const KEY = 'halkhata:last-order';
 
@@ -96,89 +97,85 @@ export function RepeatOrder({
   // Lines, not the sum of the amounts: "1.25 items" is not a count.
   const count = available.length;
 
+  /**
+   * FIXED TO THE BOTTOM, WITH A ✕ (2026-10-01, by request).
+   *
+   * It sat folded shut below the menu, where a shopper had to scroll past the
+   * whole list to find it. It is now a bar fixed to the bottom of the screen
+   * while the basket is empty — the parent stops drawing it the moment the
+   * first item goes in — and ✕ puts it away for this visit. The list opens
+   * upward from the bar, so the bar never moves under the thumb.
+   */
   return (
-    <section className="mt-6 overflow-hidden rounded-2xl border border-glass-edge bg-glass shadow-raised">
-      {/* Folded shut. Down here below the menu it is a thing the shopper can
-          go and look for, not a panel that greets them with somebody else's
-          shopping — and the summary line is enough to decide whether opening
-          it is worth the tap. */}
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-3 bg-brand-50 px-4 py-3 text-left transition hover:bg-brand-100"
-      >
-        <span className="min-w-0 flex-1">
-          <span className="block font-semibold text-slate-900">{t.repeatTitle}</span>
-          <span className="mt-0.5 block truncate text-xs text-slate-500">
-            {count} {t.items} · {formatPaise(total)}
-          </span>
-        </span>
-        <span
-          aria-hidden
-          className={clsx(
-            'shrink-0 text-slate-400 transition-transform',
-            open && 'rotate-180',
-          )}
-        >
-          ▾
-        </span>
-      </button>
-
-      {/* One item per row on white, with the quantity as a chip rather than
-          "× 1" tacked onto the name. The old list ran four dense grey lines of
-          "Atta · 1 kg × 1" against a right-aligned price — three numbers per
-          line, in two units, with nothing separating the pack size from how
-          many of them. Nobody could see at a glance what they were about to
-          re-order, which is the only thing this panel is for. */}
+    <section className="pointer-events-auto w-full max-w-lg self-center overflow-hidden rounded-2xl border border-brand-200 bg-card shadow-float">
       {open && (
         <>
-      <ul className="divide-y divide-slate-100">
-        {available.map(({ item, quantity }) => (
-          <li key={item.id} className="flex items-center gap-3 px-4 py-2">
-            {/* The amount for anything weighed — a chip reading "0.25" is the
-                stored fraction of a pack, which is meaningless to a shopper.
-                Counted items keep the plain number they always had. */}
-            <span className="flex h-7 min-w-[1.75rem] shrink-0 items-center justify-center rounded-lg bg-brand-100 px-1.5 text-sm font-semibold tabular-nums text-brand-800">
-              {localUnit(amountLabel(item.unit, quantity) ?? String(quantity), locale)}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-slate-800">
-                {itemName(item, locale)}
-              </span>
-              {item.unit && <span className="block text-xs text-slate-400">{localUnit(item.unit, locale)}</span>}
-            </span>
-            <span className="shrink-0 text-sm tabular-nums text-slate-600">
-              {formatPaise(linePaise(item.pricePaise, quantity))}
-            </span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-sunk p-3">
-        <button
-          type="button"
-          onClick={() => {
-            onRepeat(available.map((line) => ({ id: line.item.id, quantity: line.quantity })));
-            setOrder(null);
-          }}
-          className="h-11 rounded-xl bg-brand-600 px-5 font-semibold text-white transition hover:bg-brand-700"
-        >
-          {t.repeatAdd} · {formatPaise(total)}
-        </button>
-        <span className="text-xs text-slate-500">
-          {count} {t.items}
-        </span>
-        <button
-          type="button"
-          onClick={dismiss}
-          className="ml-auto h-11 rounded-xl px-3 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-slate-700"
-        >
-          {t.repeatDismiss}
-        </button>
-      </div>
+          <ul className="max-h-[45vh] divide-y divide-slate-100 overflow-y-auto">
+            {available.map(({ item, quantity }) => (
+              <li key={item.id} className="flex items-center gap-3 px-4 py-2">
+                {/* The amount for anything weighed — a chip reading "0.25" is the
+                    stored fraction of a pack, which is meaningless to a shopper. */}
+                <span className="flex h-7 min-w-[1.75rem] shrink-0 items-center justify-center rounded-lg bg-brand-100 px-1.5 text-sm font-semibold tabular-nums text-brand-800">
+                  {localUnit(amountLabel(item.unit, quantity) ?? String(quantity), locale)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-slate-800">{itemName(item, locale)}</span>
+                  {item.unit && <span className="block text-xs text-slate-400">{localUnit(item.unit, locale)}</span>}
+                </span>
+                <span className="shrink-0 text-sm tabular-nums text-slate-600">
+                  {formatPaise(linePaise(item.pricePaise, quantity))}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex items-center gap-2 border-y border-slate-100 bg-sunk p-3">
+            <button
+              type="button"
+              onClick={() => {
+                onRepeat(available.map((line) => ({ id: line.item.id, quantity: line.quantity })));
+                setOrder(null);
+              }}
+              className="h-11 flex-1 rounded-xl bg-brand-600 px-4 font-semibold text-white transition hover:bg-brand-700"
+            >
+              {t.repeatAdd} · {formatPaise(total)}
+            </button>
+            <button
+              type="button"
+              onClick={dismiss}
+              className="h-11 shrink-0 rounded-xl px-3 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-slate-700"
+            >
+              {t.repeatDismiss}
+            </button>
+          </div>
         </>
       )}
+
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          aria-expanded={open}
+          className="flex min-w-0 flex-1 items-center gap-3 bg-brand-50 px-4 py-3 text-left transition hover:bg-brand-100"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold text-slate-900">{t.repeatTitle}</span>
+            <span className="mt-0.5 block truncate text-xs text-slate-500">
+              {count} {t.items} · {formatPaise(total)}
+            </span>
+          </span>
+          <span aria-hidden className={clsx('shrink-0 text-slate-400 transition-transform', !open && 'rotate-180')}>
+            ▾
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setOrder(null)}
+          aria-label={t.saveShopLater}
+          className="flex h-full min-h-14 w-12 shrink-0 items-center justify-center bg-brand-50 text-slate-500 transition hover:bg-brand-100 hover:text-slate-800"
+        >
+          <CloseIcon className="h-4 w-4" />
+        </button>
+      </div>
     </section>
   );
 }

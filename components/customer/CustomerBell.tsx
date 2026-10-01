@@ -29,10 +29,11 @@ import { readMyOrders } from '@/lib/my-orders';
 import { formatPaise } from '@/lib/money';
 import { formatClock, formatDay, formatIsoDay } from '@/lib/time';
 import { dict, type Locale } from '@/lib/i18n';
+import { isWaiting, type OrderStatus } from '@/lib/order-status';
 
 type OrderState = {
   id: string;
-  status: 'NEW' | 'CONFIRMED' | 'READY' | 'COMPLETED' | 'CANCELLED';
+  status: OrderStatus;
   revisedAt: string | null;
   totalAmountPaise: number;
   createdAt: string;
@@ -160,7 +161,7 @@ export function CustomerBell({
       const payload = (await response.json()) as { orders?: OrderState[] };
       const found = new Map((payload.orders ?? []).map((order) => [order.id, order]));
       openRef.current = (payload.orders ?? []).some(
-        (order) => order.status === 'NEW' || order.status === 'CONFIRMED' || order.status === 'READY',
+        (order) => isWaiting(order.status),
       );
       // WHAT THE SHOP DID: changed the order, could not take it, or finished
       // it (bill on WhatsApp). The same three things the customer's phone is

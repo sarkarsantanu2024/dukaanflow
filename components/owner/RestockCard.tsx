@@ -47,6 +47,7 @@ export function RestockCard({
   shopName,
   items,
   locale,
+  panel = false,
 }: {
   /** Keys the order amounts kept on this phone — see `orderQty`. */
   slug: string;
@@ -54,6 +55,11 @@ export function RestockCard({
   /** The shop's whole list. What needs reordering is worked out from it here. */
   items: RestockItem[];
   locale: Locale;
+  /**
+   * Drawn inside the home screen's pop-up (2026-10-01, by request): always
+   * open, with no fold of its own — the pop-up's title and ✕ are its header.
+   */
+  panel?: boolean;
 }) {
   const t = ownerDict(locale);
   const { push } = useToast();
@@ -269,6 +275,7 @@ export function RestockCard({
   // with full shelves should not be shown an empty list every time it opens the
   // Items tab — one quiet line, and out of the way.
   if (wanted.length === 0) {
+    if (panel) return <p className="text-sm text-slate-500">{t.restockNone}</p>;
     return (
       <section className="flex items-center gap-3 rounded-2xl border border-glass-edge bg-glass px-4 py-3 shadow-raised">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
@@ -297,39 +304,8 @@ export function RestockCard({
    * readable size, with each row as short as a name, its status and a box.
    * The send bar sits at the foot of the open card.
    */
-  return (
-    <section className="overflow-hidden rounded-2xl border border-glass-edge bg-glass shadow-raised">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-sunk/50"
-      >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
-          <TruckIcon className="h-5 w-5" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-base font-semibold leading-tight text-slate-900">{t.restockTitle}</span>
-          <span className="mt-1 flex flex-wrap gap-1.5">
-            {outCount > 0 && (
-              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-sm font-semibold tabular-nums text-rose-700">
-                {outCount} {t.restockOut}
-              </span>
-            )}
-            {lowCount > 0 && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-sm font-semibold tabular-nums text-amber-800">
-                {lowCount} {t.runningLowCount}
-              </span>
-            )}
-          </span>
-        </span>
-        <ChevronRightIcon
-          className={clsx('h-5 w-5 shrink-0 text-slate-400 transition-transform', open && 'rotate-90')}
-        />
-      </button>
-
-      {open && (
-        <>
+  const body = (
+    <>
           <div className="flex flex-wrap items-center gap-2 border-t border-slate-200/70 px-4 py-2">
             <p className="mr-auto text-sm text-slate-600">{t.restockHint}</p>
             <div className="inline-flex rounded-xl bg-sunk p-1 text-sm font-medium" role="group" aria-label={t.restockPicked}>
@@ -455,7 +431,7 @@ export function RestockCard({
                 type="button"
                 onClick={sendToSupplier}
                 disabled={noneTicked || building}
-                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-base font-semibold text-white shadow-sm transition hover:bg-[#1eb457] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-3 py-1.5 text-sm font-semibold leading-tight text-white shadow-sm transition hover:bg-[#1eb457] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <WhatsAppIcon className="h-5 w-5" />
                 {t.restockSend} · <span className="tabular-nums">{chosen.length}</span>
@@ -474,7 +450,7 @@ export function RestockCard({
                     if (noneTicked) event.preventDefault();
                   }}
                   className={clsx(
-                    'inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-base font-semibold text-white shadow-sm transition',
+                    'inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-3 py-1.5 text-sm font-semibold leading-tight text-white shadow-sm transition',
                     noneTicked ? 'cursor-not-allowed opacity-50' : 'hover:bg-[#1eb457]',
                   )}
                 >
@@ -494,8 +470,43 @@ export function RestockCard({
               </>
             )}
           </footer>
-        </>
-      )}
+    </>
+  );
+
+  if (panel) return <div className="overflow-hidden rounded-2xl border border-slate-200">{body}</div>;
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-glass-edge bg-glass shadow-raised">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-sunk/50"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
+          <TruckIcon className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-base font-semibold leading-tight text-slate-900">{t.restockTitle}</span>
+          <span className="mt-1 flex flex-wrap gap-1.5">
+            {outCount > 0 && (
+              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-sm font-semibold tabular-nums text-rose-700">
+                {outCount} {t.restockOut}
+              </span>
+            )}
+            {lowCount > 0 && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-sm font-semibold tabular-nums text-amber-800">
+                {lowCount} {t.runningLowCount}
+              </span>
+            )}
+          </span>
+        </span>
+        <ChevronRightIcon
+          className={clsx('h-5 w-5 shrink-0 text-slate-400 transition-transform', open && 'rotate-90')}
+        />
+      </button>
+
+      {open && body}
     </section>
   );
 }

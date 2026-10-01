@@ -24,7 +24,8 @@
 
 import { useEffect, useState } from 'react';
 import { CustomerBell } from './CustomerBell';
-import { BackButton } from '@/components/ui/BackButton';
+import { InstallButton } from './InstallButton';
+import { AlponaMotif } from '@/components/ui/Ornament';
 import { readMyOrders } from '@/lib/my-orders';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -38,12 +39,13 @@ import { LangToggle } from './LangToggle';
 import { CartIcon, PdfIcon } from '@/components/ui/Icon';
 import { dict, LOCALES, type Locale } from '@/lib/i18n';
 import { useHtmlLang } from '@/components/ui/useHtmlLang';
+import { isWaiting, type OrderStatus } from '@/lib/order-status';
 
 const LOCALE_STORAGE_KEY = 'halkhata:locale';
 
 export type TrackedOrder = {
   id: string;
-  status: 'NEW' | 'CONFIRMED' | 'READY' | 'COMPLETED' | 'CANCELLED';
+  status: OrderStatus;
   orderType: 'DELIVERY' | 'PICKUP';
   totalAmountPaise: number;
   deliveryFeePaise: number;
@@ -116,8 +118,7 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
   // Worth watching while the shop is still working on it, and while it is packed
   // and not yet collected — a customer refreshing this page is asking exactly
   // "has anything happened?".
-  const waiting =
-    order?.status === 'NEW' || order?.status === 'CONFIRMED' || order?.status === 'READY';
+  const waiting = order ? isWaiting(order.status) : false;
 
   useEffect(() => {
     if (!waiting) return;
@@ -140,14 +141,18 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
   }, [order, orderId]);
   const shopHref = order ? `/shop/${order.shopSlug}` : rememberedSlug ? `/shop/${rememberedSlug}` : '/';
 
+  /**
+   * THE SHOP PAGE'S OWN BAR, and no back arrow (2026-10-01, by request): the
+   * order page looked like a different app from the shop it came from. The
+   * mark goes to the shop; the phone's back button goes wherever they came
+   * from, and the shop page then offers the way back here — see `MyOrderBar`.
+   */
   const header = (
-    <header className="sticky top-0 z-20 bg-chrome">
-      <div className="mx-auto flex max-w-lg items-center gap-1 px-2 py-2.5 sm:gap-3 sm:px-4">
-        {/* A visible way back: to the screen they came from, or else the shop. */}
-        <BackButton fallback={shopHref} label={t.back} />
-        {/* Back to the shop the order is from, never the landing page. */}
+    <header className="z-20 bg-chrome">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
         <BrandMark href={shopHref} tone="dark" className="text-sm" />
         <div className="ml-auto flex items-center gap-1">
+          <InstallButton locale={locale} />
           <CustomerBell locale={locale} viewingOrderId={orderId} />
           <LangToggle value={locale} onChange={changeLocale} />
         </div>
@@ -189,13 +194,7 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
    * shop has it" and "the shop has accepted it" is real to the shopkeeper and
    * means nothing to the person waiting — orders arrive accepted anyway, and
    * two near-identical states would only look like something had stalled.
-   *
-   * READY and COMPLETED, on the other hand, must not read the same. A finished,
-   * paid order used to be told it was "ready and on its way to you" — a message
-   * about a bag the customer was already holding, because "ready" and "done"
-   * were one state. Ready is ready; done is done.
    */
-  // No "ready" step any more: an order still marked READY is being prepared.
   const state =
     order.status === 'COMPLETED'
         ? { tone: 'bg-green-50 text-green-800', line: t.trackStateDone }
@@ -252,18 +251,22 @@ export function TrackScreen({ order, orderId }: { order: TrackedOrder | null; or
     <div className="min-h-dvh bg-slate-100">
       {header}
 
-      <main className="mx-auto max-w-lg space-y-3 px-4 py-4">
-        <section className="rounded-2xl border border-glass-edge bg-glass p-4 shadow-raised">
-          <p className="text-sm text-slate-500">{order.shopName}</p>
-          <h1 className="text-xl font-semibold text-slate-900">{t.trackTitle}</h1>
-          <p className="mt-0.5 text-xs text-slate-500">
-            {t.trackPlaced} {formatDay(order.placedAt)} · {formatClock(order.placedAt)} ·{' '}
-            {order.orderType === 'DELIVERY' ? t.delivery : t.pickup}
-          </p>
+      <main className="mx-auto max-w-lg space-y-3 px-4 pb-6 pt-3">
+        {/* The shop page's dark card, so this reads as the same shop. */}
+        <section className="relative overflow-hidden rounded-2xl bg-hero p-4 shadow-float">
+          <AlponaMotif className="pointer-events-none absolute -right-6 -top-10 h-36 w-36 text-white/10" />
+          <div className="relative">
+            <p className="text-sm text-brand-100">{order.shopName}</p>
+            <h1 className="text-xl font-medium text-white">{t.trackTitle}</h1>
+            <p className="mt-0.5 text-xs text-brand-100">
+              {t.trackPlaced} {formatDay(order.placedAt)} · {formatClock(order.placedAt)} ·{' '}
+              {order.orderType === 'DELIVERY' ? t.delivery : t.pickup}
+            </p>
 
-          <p className={`mt-3 rounded-xl px-3 py-2 text-sm font-semibold ${state.tone}`}>
-            {state.line}
-          </p>
+            <p className={`mt-3 rounded-xl px-3 py-2 text-sm font-semibold ${state.tone}`}>
+              {state.line}
+            </p>
+          </div>
         </section>
 
         {/* SAID FIRST, IN AMBER, ABOVE THE LIST.

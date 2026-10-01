@@ -6,28 +6,13 @@ import { Button } from '@/components/ui/Button';
 import { PrinterIcon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { shopUrl } from '@/lib/qr';
-import { BRAND_GREEN, BRAND_LOGO, BRAND_LOGO_ALT } from '@/lib/brand';
-import { supportDetails } from '@/lib/support';
+import { BRAND_LOGO, BRAND_LOGO_ALT } from '@/lib/brand';
+import { drawPoster, posterCreditLine, savePosterPdf } from '@/lib/poster-canvas';
 
 /**
- * Loads one image for the canvas copy of the poster.
- *
- * Resolves to null rather than rejecting. A missing owner photo or a logo that
- * failed to fetch must not cost the operator the whole PDF — the poster's job
- * is the QR code, and everything else on the sheet is decoration around it.
- */
-function loadImage(src: string): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
-    if (!src) return resolve(null);
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = src;
-  });
-}
-
-/**
- * A4 "Scan to Order" poster the admin prints and hands to the shop.
+ * A4 "Scan to Order" poster the admin prints and hands to the shop. The PDF
+ * download is drawn by `lib/poster-canvas.ts`, which the owner's own "Download
+ * QR" on the home screen shares, so both hand out the same sheet.
  *
  * THE PDF IS A PICTURE OF THE POSTER, NOT TEXT LAID OUT AGAIN.
  *
@@ -72,182 +57,15 @@ export function PosterSheet({
   const [exporting, setExporting] = useState(false);
   const link = shopUrl(slug);
 
-  /**
-   * The same credit line the shop's own page carries at its foot. It used to
-   * read "Powered by Halkhata" here and something else on the web, so the
-   * poster on the wall and the page behind the QR named two different
-   * companies.
-   */
-  const support = supportDetails();
-  const creditLine = support.phone
-    ? `Powered by ${support.name} · For support ${support.phone}`
-    : `Powered by ${support.name}`;
-
-  /**
-   * NO RECRUITMENT LINE HERE, BY DECISION.
-   *
-   * This sheet used to close with a question aimed past the customer at the
-   * shop next door — "আপনার দোকানও? বলুন…" — on the reasoning that a poster
-   * already hanging in a market is the cheapest acquisition channel there is.
-   * Removed on request: the poster now talks to one reader only, the customer
-   * standing at this counter, and everything on it serves the scan.
-   */
+  const creditLine = posterCreditLine();
 
   async function downloadPdf() {
     setExporting(true);
     try {
-      const shopCanvas = sheetRef.current?.querySelector<HTMLCanvasElement>('canvas[data-qr="shop"]');
-
-      // A4 at 150dpi. Enough to print sharply, small enough to send on
-      // WhatsApp without the poster arriving as a 12MB file.
-      const width = 1240;
-      const height = 1754;
-      const sheet = document.createElement('canvas');
-      sheet.width = width;
-      sheet.height = height;
-      const ctx = sheet.getContext('2d');
-      if (!ctx) throw new Error('no canvas');
-
-      const centre = width / 2;
-      const body = '"Noto Sans", "Noto Sans Bengali", "Noto Sans Devanagari", system-ui, sans-serif';
-
-      // Both optional. Fetched together so a slow logo does not serialise
-      // behind a slow photograph while the operator waits.
-      const [logo, owner] = await Promise.all([
-        loadImage(BRAND_LOGO.master),
-        loadImage(ownerImage),
-      ]);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, width, height);
-
-      /**
-       * THE WATERMARK GOES DOWN FIRST, AND THE QR'S CARD GOES OVER IT.
-       *
-       * A watermark behind a QR code is not a style question, it is a scan
-       * failure: the code needs high contrast between its modules and their
-       * ground, and a phone camera in the low light of a shop doorway has very
-       * little to spare. Drawing it first and painting an opaque white card
-       * under the code means the mark shows everywhere on the sheet except the
-       * one place it would cost the poster its only job.
-       *
-       * 5% is the ceiling. Above that it survives a cheap mono laser printer as
-       * grey mush behind the Bengali text rather than as a tint.
-       */
-      if (logo) {
-        const mark = 760;
-        ctx.globalAlpha = 0.05;
-        ctx.drawImage(logo, centre - mark / 2, height / 2 - mark / 2, mark, mark);
-        ctx.globalAlpha = 1;
-      }
-
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-
-      const line = (text: string, y: number, size: number, colour: string, weight = '400') => {
-        if (!text) return;
-        ctx.fillStyle = colour;
-        ctx.font = `${weight} ${size}px ${body}`;
-        ctx.fillText(text, centre, y, width - 120);
-      };
-
-      /**
-       * THE OWNER'S FACE, ABOVE HIS OWN NAME.
-       *
-       * A stranger at the counter is being asked to scan a code and hand over
-       * an order to a name they have to trust. The face behind the counter is
-       * the thing that makes the sheet belong to *this* shop rather than being
-       * a generic notice somebody taped up, and it is the same face they are
-       * looking at while they read it.
-       *
-       * Cropped to a circle by clipping rather than by resizing, so a portrait
-       * or a landscape snap both fill the disc instead of arriving letterboxed.
-       */
-      let top = 150;
-      if (owner) {
-        const d = 168;
-        const cx = centre;
-        const cy = 128;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(cx, cy, d / 2, 0, Math.PI * 2);
-        ctx.clip();
-        const scale = Math.max(d / owner.width, d / owner.height);
-        const w = owner.width * scale;
-        const h = owner.height * scale;
-        ctx.drawImage(owner, cx - w / 2, cy - h / 2, w, h);
-        ctx.restore();
-        ctx.strokeStyle = BRAND_GREEN;
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.arc(cx, cy, d / 2, 0, Math.PI * 2);
-        ctx.stroke();
-        top = 288;
-      }
-
-      line(shopName, top, 74, '#0f172a', '800');
-      line(address, top + 56, 30, '#475569');
-      if (phone) line(`Phone · ফোন · फ़ोन:  +91 ${phone}`, top + 100, 30, '#0f172a', '700');
-
-      // All three, because the poster goes on a wall in Bengal and the printed
-      // version has always carried them. Everything below the name shifts by
-      // the same amount so a shop with no photograph loses the gap, not the
-      // spacing.
-      const drop = top - 150;
-      line('Scan to Order', 300 + drop, 50, BRAND_GREEN, '700');
-      line('স্ক্যান করে অর্ডার করুন', 362 + drop, 50, BRAND_GREEN, '700');
-      line('स्कैन करके ऑर्डर करें', 424 + drop, 50, BRAND_GREEN, '700');
-
-      if (shopCanvas) {
-        // Smaller when a face is on the sheet, so the two together still clear
-        // the WhatsApp panel. 560 is still 94mm on A4 — far past the ~30mm a
-        // phone needs at arm's length.
-        const box = owner ? 560 : 620;
-        const frameTop = 470 + drop;
-        // An opaque card under the code, so the watermark laid down earlier
-        // cannot eat into the quiet zone the scanner reads.
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(centre - box / 2 - 20, frameTop, box + 40, box + 40);
-        // The frame the printed poster has, so the two look like one poster.
-        ctx.strokeStyle = BRAND_GREEN;
-        ctx.lineWidth = 8;
-        ctx.strokeRect(centre - box / 2 - 20, frameTop, box + 40, box + 40);
-        ctx.drawImage(shopCanvas, centre - box / 2, frameTop + 20, box, box);
-      }
-
-      const afterQr = owner ? 1190 + drop - 60 : 1190;
-      line('Just open your phone camera — no app needed', afterQr, 28, '#334155', '600');
-      line('ফোনের ক্যামেরা খুলুন · আলাদা অ্যাপ লাগবে না', afterQr + 42, 28, '#334155', '600');
-      line('फोन का कैमरा खोलिए · अलग ऐप की ज़रूरत नहीं', afterQr + 84, 28, '#334155', '600');
-
-      line(link, afterQr + 140, 24, '#64748b');
-
-      /**
-       * NO "ORDER ON WHATSAPP" PANEL. It was telling the customer something
-       * that stopped being true.
-       *
-       * Orders have not gone to WhatsApp since the handoff was removed from
-       * `app/api/order/route.ts` — they land in the owner's own app, where the
-       * bell counts them and each one can be worked. This sheet was still
-       * printing the shop's number under the words "Order on WhatsApp", so a
-       * poster on a wall was inviting customers into a channel where nobody
-       * was listening for orders any more, and around the QR that does work.
-       *
-       * The QR is the order path. A poster with two of them had one that lost.
-       */
-
-      // The mark above the credit, small and solid — the watermark behind the
-      // sheet is a texture and reads as nothing in particular at a glance.
-      if (logo) {
-        const m = 52;
-        ctx.drawImage(logo, centre - m / 2, 1592, m, m);
-      }
-      line(creditLine, 1676, 20, '#94a3b8');
-
-      const { jsPDF } = await import('jspdf');
-      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-      doc.addImage(sheet.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
-      doc.save(`halkhata-${slug}-poster.pdf`);
+      const qr = sheetRef.current?.querySelector<HTMLCanvasElement>('canvas[data-qr="shop"]');
+      if (!qr) throw new Error('no qr');
+      const sheet = await drawPoster({ shopName, address, phone, ownerImage, link, qr });
+      await savePosterPdf(sheet, slug);
     } catch {
       push('Could not build the PDF. Use Print instead.', 'error');
     } finally {

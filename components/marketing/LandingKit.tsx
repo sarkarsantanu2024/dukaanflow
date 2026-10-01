@@ -17,7 +17,7 @@ import { WhatsAppIcon } from '@/components/ui/Icon';
 import { BRAND_LOGO, BRAND_NAME, BRAND_WORDMARK } from '@/lib/brand';
 import { LANDING, type Words } from '@/lib/marketing-copy';
 import { LOCALES } from '@/lib/i18n';
-import { firstExisting } from '@/lib/landing-media-files';
+import { firstExisting, versionedSrc } from '@/lib/landing-media-files';
 import { LangSelect } from './LangTabs';
 import { Say } from './Say';
 import { SectionNav, type NavItem } from './SectionNav';
@@ -172,7 +172,7 @@ export function PhoneShot({
   const byLang = LOCALES.map((lang) => ({ lang, src: firstExisting(pathFor(lang)) ?? english }));
   const picture = (src: string) => (
     <Image
-      src={src}
+      src={versionedSrc(src)}
       alt={alt}
       fill
       quality={90}

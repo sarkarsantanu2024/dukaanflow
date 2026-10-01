@@ -12,7 +12,6 @@ import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/Button';
 import { ItemsManager, type AdminItem } from '@/components/admin/ItemsManager';
-import { RestockCard } from './RestockCard';
 import type { ShopType } from '@prisma/client';
 import { StarterPicker } from './StarterPicker';
 import { Drawer } from '@/components/ui/Drawer';
@@ -126,17 +125,12 @@ export function InventoryScreen({
         }
       />
 
-      {/* THE SUPPLIER'S LIST SITS DIRECTLY UNDER THE ITEMS, AND IN SIMPLE MODE.
-          It is not a setting — it is a job, done weekly, standing at the
-          counter with a vendor in front of you, and the moment it is needed is
-          too short to go hunting behind "More settings" for it. It costs one
-          quiet line on a shop whose shelves are full. */}
+      {/* THE SUPPLIER'S LIST MOVED TO THE HOME SCREEN (2026-10-01, by
+          request): the "items running low" card there opens it in a pop-up. */}
       {/* The list ends here: a highlighted rule rather than empty space, by
           request — it separates the list from the cards about it without
           costing a screen of scrolling. */}
       <div aria-hidden className="h-0.5 rounded-full bg-gradient-to-r from-transparent via-brand-500 to-transparent" />
-
-      <RestockCard slug={slug} shopName={shopName} items={items} locale={locale} />
 
       {/* THE COMMON-ITEMS CARD IS GONE FROM THIS TAB, BY REQUEST. Picking from
           the ready-made list is a way of adding an item, so it is now one row

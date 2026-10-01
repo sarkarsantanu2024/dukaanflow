@@ -32,7 +32,6 @@ import { ShopClock } from "./ShopClock";
 import { OwnerBell } from "./OwnerBell";
 import { useStickyTop } from "@/components/ui/useStickyTop";
 import { Spinner } from "@/components/ui/Spinner";
-import { OwnerInstallButton } from "./OwnerInstallButton";
 import { ShutterSwitch } from "./ShutterSwitch";
 import { ownerDict } from "@/lib/owner-i18n";
 import { LOCALE_LABELS, LOCALES, type Locale } from "@/lib/i18n";
@@ -195,8 +194,6 @@ export function OwnerHeader({
             </option>
           ))}
         </select>
-
-        <OwnerInstallButton slug={slug} label={t.installNow} />
 
         {/* THE SHUTTER TOOK THE PAY LINK'S PLACE, and the swap is the point.
             A route to the payment screen is important and wanted about twice a

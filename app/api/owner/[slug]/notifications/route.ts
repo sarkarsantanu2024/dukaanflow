@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireShopWrite } from '@/lib/guard';
 import { fail, ok } from '@/lib/http';
+import { WAITING_STATUSES } from '@/lib/order-status';
 
 export const runtime = 'nodejs';
 
@@ -15,9 +16,6 @@ type Context = { params: Promise<{ slug: string }> };
  * Orders. Only what the bell prints: who, their number, how much, when. Which of
  * these the owner has read or removed lives on their phone, not here — see
  * `OwnerBell`.
- *
- * READY is included only because old orders may still carry it; nothing sets
- * it any more.
  */
 export async function GET(_request: Request, { params }: Context) {
   const { slug } = await params;
@@ -27,7 +25,7 @@ export async function GET(_request: Request, { params }: Context) {
   if (!shop) return fail('Shop not found', 404);
 
   const orders = await prisma.order.findMany({
-    where: { shopId: shop.id, status: { in: ['NEW', 'CONFIRMED', 'READY'] } },
+    where: { shopId: shop.id, status: { in: WAITING_STATUSES } },
     orderBy: { createdAt: 'desc' },
     take: 30,
     select: {

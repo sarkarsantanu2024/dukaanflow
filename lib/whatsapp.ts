@@ -1,6 +1,7 @@
 import { toAsciiDigits } from '@/lib/digits';
 import { plainPaise } from './money';
 import { amountLabel, localUnit, type UnitLocale } from './units';
+import type { OrderStatus } from './order-status';
 
 /**
  * How much of one item, as a shopkeeper reads it on their phone.
@@ -326,7 +327,7 @@ export function buildRoundMessage(input: {
 export function buildStatusMessage(input: {
   shopName: string;
   customerName: string;
-  status: 'CONFIRMED' | 'READY' | 'COMPLETED' | 'CANCELLED' | 'NEW';
+  status: OrderStatus;
   totalAmountPaise: number;
   orderType: 'DELIVERY' | 'PICKUP';
   /** What was ordered. A total with nothing behind it cannot be checked. */
@@ -337,17 +338,11 @@ export function buildStatusMessage(input: {
   const hello = input.customerName ? `${w.namaste} ${input.customerName},` : `${w.namaste},`;
   const shop = escapeWhatsAppText(input.shopName);
 
-  /**
-   * READY is where "your order is ready" belongs, and COMPLETED is a receipt.
-   *
-   * They were one message on one state, which meant the only way to tell a
-   * customer their order was waiting was to first declare it handed over and
-   * answer for money nobody had been given yet.
-   */
+  /** COMPLETED is a receipt; anything still waiting is being prepared. */
   const body =
     (input.status === 'COMPLETED'
       ? w.settled
-      : input.status === 'CONFIRMED' || input.status === 'READY'
+      : input.status === 'CONFIRMED'
         ? w.preparing
         : input.status === 'CANCELLED'
           ? w.cancelled
