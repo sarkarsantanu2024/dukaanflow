@@ -32,7 +32,7 @@ export type LandingVideo = {
 /** The video beside the headline: the whole product in a couple of minutes. */
 export const HERO_VIDEO: LandingVideo = {
   id: 'overview',
-  youtube: '',
+  youtube: 'https://youtu.be/XweaBMz-TRc',
   thumb: '/landing/videos/overview.jpg',
   title: {
     en: 'See how Halkhata works',

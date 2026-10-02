@@ -25,7 +25,7 @@ import {
 } from '@/lib/business-types';
 import { LANDING, PLAN_INCLUDES, type Words } from '@/lib/marketing-copy';
 import { screenPath } from '@/lib/landing-media';
-import type { Locale } from '@/lib/i18n';
+import { LANDING_DEFAULT_LANG, type Locale } from '@/lib/i18n';
 import { PLAN_ORDER, PLAN_SPECS, TRIAL_DAYS } from '@/lib/plans';
 import { starterCatalogue, type StarterItem } from '@/lib/starter-catalogue';
 import { translateCategory } from '@/lib/speech';
@@ -135,7 +135,7 @@ export default async function BusinessPage({ params }: Props) {
   ];
 
   return (
-    <div data-landing="" suppressHydrationWarning className="flex min-h-dvh flex-col bg-card">
+    <div data-landing="" data-lang={LANDING_DEFAULT_LANG} suppressHydrationWarning className="flex min-h-dvh flex-col bg-card">
       <LandingLanguage />
       <MarketingAnalytics />
       <span id="top" tabIndex={-1} className="sr-only" />

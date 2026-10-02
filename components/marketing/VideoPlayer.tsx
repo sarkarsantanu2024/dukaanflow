@@ -10,11 +10,15 @@
  * button, and swaps in the player (the privacy-enhanced youtube-nocookie one)
  * only on a tap.
  *
+ * `autoplay` (the hero) swaps the player in by itself once the page has
+ * loaded, so the thumbnail still paints first. Browsers only let a video start
+ * on its own when it is muted, so it starts muted; the viewer unmutes it.
+ *
  * With no video yet it is a branded "coming soon" frame of the same shape, so
  * the layout does not move when the video arrives.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import { Say } from './Say';
 import type { Words } from '@/lib/marketing-copy';
@@ -31,6 +35,7 @@ export function VideoPlayer({
   title,
   size = 'card',
   priority = false,
+  autoplay = false,
 }: {
   /** The bare YouTube id, or '' when the video is not recorded yet. */
   videoId: string;
@@ -40,8 +45,26 @@ export function VideoPlayer({
   /** `hero` is the big one beside the headline; `card` sits in the gallery. */
   size?: 'hero' | 'card';
   priority?: boolean;
+  /** Start by itself, muted, once the page has loaded. */
+  autoplay?: boolean;
 }) {
   const [playing, setPlaying] = useState(false);
+  // Set only when the video started without a tap, so it must be muted.
+  const [muted, setMuted] = useState(false);
+
+  useEffect(() => {
+    if (!autoplay || !videoId) return;
+    const start = () => {
+      setMuted(true);
+      setPlaying(true);
+    };
+    if (document.readyState === 'complete') {
+      start();
+      return;
+    }
+    window.addEventListener('load', start, { once: true });
+    return () => window.removeEventListener('load', start);
+  }, [autoplay, videoId]);
   const picture = thumb ?? (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null);
   const hero = size === 'hero';
 
@@ -54,7 +77,7 @@ export function VideoPlayer({
     >
       {playing && videoId ? (
         <iframe
-          src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+          src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1${muted ? '&mute=1' : ''}&rel=0&modestbranding=1&playsinline=1`}
           title={title.en}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen

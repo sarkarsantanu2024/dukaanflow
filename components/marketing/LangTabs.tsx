@@ -31,7 +31,7 @@
 import { useEffect, useId, useSyncExternalStore } from 'react';
 import clsx from 'clsx';
 import { LangToggle } from '@/components/customer/LangToggle';
-import { LOCALES, type Locale } from '@/lib/i18n';
+import { LANDING_DEFAULT_LANG, LOCALES, type Locale } from '@/lib/i18n';
 
 /** Each language named in itself, in full: this is the control for choosing one. */
 const LABELS: Record<Locale, string> = { en: 'English', bn: 'বাংলা', hi: 'हिन्दी' };
@@ -68,7 +68,7 @@ function root(): HTMLElement | null {
   return document.querySelector<HTMLElement>('[data-landing]');
 }
 
-/** What the reader asked for: the link, then the attribute, then last time. */
+/** What the reader asked for: the link, then last time, then the default. */
 function initial(): Locale {
   try {
     const fromLink = new URLSearchParams(window.location.search).get('lang');
@@ -82,15 +82,15 @@ function initial(): Locale {
   } catch {
     // An unparseable address is not a reason to fail the page.
   }
-  const fromPage = root()?.getAttribute('data-lang');
-  if (isLocale(fromPage)) return fromPage;
+  // Not the root's `data-lang`: the server always writes the default there,
+  // so it would hide a stored choice after a client-side navigation.
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (isLocale(stored)) return stored;
   } catch {
-    // Storage can be switched off; the page simply starts in English.
+    // Storage can be switched off; the page simply starts in the default.
   }
-  return 'en';
+  return LANDING_DEFAULT_LANG;
 }
 
 function snapshot(): Locale {
@@ -118,9 +118,9 @@ export function setLandingLang(lang: Locale) {
 
 /** The page's language, for the few things CSS cannot switch — an aria-label. */
 export function useLandingLang(): Locale {
-  // English on the server and through hydration, which is what the HTML says
-  // until the attribute is read; the real value follows on the next render.
-  return useSyncExternalStore(subscribe, snapshot, () => 'en');
+  // The default on the server and through hydration, which is what the HTML
+  // says; a stored or linked choice follows on the next render.
+  return useSyncExternalStore(subscribe, snapshot, () => LANDING_DEFAULT_LANG);
 }
 
 /**
