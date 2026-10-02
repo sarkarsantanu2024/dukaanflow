@@ -200,10 +200,10 @@ export default async function ShopPage({ params }: PageProps) {
       <StoreFront shop={{ ...summary, notice }} items={items} />
       {/* Outside the storefront, so it is the last thing on the page rather
           than another block inside the menu. */}
+      {/* No spacer under it, by request (2 Oct): the bars fixed to the bottom
+          (basket, your order, same as last time) float over the footer
+          rather than leaving a band of empty space below it. */}
       <SiteFooter />
-      {/* Room for the bars fixed to the bottom (basket, your order, same as
-          last time), so the footer can scroll clear of them. */}
-      <div aria-hidden className="h-36 bg-card" />
     </>
   );
 }
