@@ -7,6 +7,14 @@
 export const LOCALES = ['en', 'bn', 'hi'] as const;
 export type Locale = (typeof LOCALES)[number];
 
+/**
+ * The language a first-time visitor to the public site (home and /<slug>
+ * pages) sees: Bengali, the language of the shops it is sold to. The page
+ * roots carry it as `data-lang` from the server, so it is right before any
+ * script runs; a `?lang=` link or a stored choice still wins.
+ */
+export const LANDING_DEFAULT_LANG: Locale = 'bn';
+
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: 'EN',
   bn: 'বাং',

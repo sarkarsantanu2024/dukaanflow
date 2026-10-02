@@ -35,7 +35,7 @@ import {
   type Words,
 } from '@/lib/marketing-copy';
 import { HERO_VIDEO, VIDEOS, screenPath, youtubeId, type ScreenId } from '@/lib/landing-media';
-import type { Locale } from '@/lib/i18n';
+import { LANDING_DEFAULT_LANG, type Locale } from '@/lib/i18n';
 import { firstExisting } from '@/lib/landing-media-files';
 import { LandingLanguage } from '@/components/marketing/LangTabs';
 import { Say } from '@/components/marketing/Say';
@@ -221,7 +221,7 @@ export default function LandingPage() {
   return (
     // THE ROOT CARRIES THE LANGUAGE: `data-lang` is set on it by the script
     // `LandingLanguage` renders, before paint — see `app/globals.css`.
-    <div data-landing="" suppressHydrationWarning className="flex min-h-dvh flex-col bg-card">
+    <div data-landing="" data-lang={LANDING_DEFAULT_LANG} suppressHydrationWarning className="flex min-h-dvh flex-col bg-card">
       <LandingLanguage />
       <MarketingAnalytics />
       <StructuredData />
@@ -296,10 +296,8 @@ export default function LandingPage() {
                 title={HERO_VIDEO.title}
                 size="hero"
                 priority
+                autoplay
               />
-              <p className="mt-3 text-center text-base text-slate-500">
-                <Say t={HERO_VIDEO.blurb} />
-              </p>
             </div>
           </div>
         </section>
