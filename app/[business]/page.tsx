@@ -70,8 +70,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'website',
       url: `/${business.slug}`,
       siteName: BRAND_NAME,
-      locale: 'en_IN',
-      alternateLocale: ['bn_IN', 'hi_IN'],
+      locale: 'bn_IN',
+      alternateLocale: ['en_IN', 'hi_IN'],
     },
   };
 }
