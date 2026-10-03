@@ -7,6 +7,9 @@ import { PLAN_ORDER, PLAN_SPECS, SETUP_FEE_PAISE, TRIAL_DAYS } from '@/lib/plans
 /**
  * Each business page's link preview: its own headline and its own demo
  * screenshot when one exists. Built at build time — see `lib/og-card.tsx`.
+ *
+ * The screenshot is the Bengali one, the site's default language. Its text
+ * stays English: the card renderer cannot join Bengali letters correctly.
  */
 export const dynamic = 'force-static';
 export const dynamicParams = false;
@@ -22,8 +25,10 @@ export default async function Image({ params }: { params: Promise<{ business: st
   const business = businessBySlug((await params).business) ?? BUSINESSES[0]!;
   const shot =
     business.slug === 'grocery'
-      ? screenPath('en', 'storefront')
-      : firstExisting(businessScreenPath(business.slug, 'en', 'storefront')) ?? screenPath('en', 'storefront');
+      ? screenPath('bn', 'storefront')
+      : (firstExisting(businessScreenPath(business.slug, 'bn', 'storefront')) ??
+        firstExisting(businessScreenPath(business.slug, 'en', 'storefront')) ??
+        screenPath('bn', 'storefront'));
   return ogCard({
     eyebrow: business.name.en,
     headline: business.headline.en,

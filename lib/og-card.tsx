@@ -12,6 +12,16 @@ import { BRAND_GREEN, BRAND_LOGO, BRAND_WORDMARK } from './brand';
  * drawn at build time from the same words and screenshots the pages use, so a
  * change of price or headline changes the card with it.
  *
+ * Since 2026-10-03 the home page's card is not drawn here: it is the Bengali
+ * banner, `app/opengraph-image.jpg` (and `twitter-image.jpg`), cropped from
+ * `public/landing/videos/overview.jpg` to 1200×630. Only `/<business>` uses
+ * this.
+ *
+ * WHEN A SCREENSHOT CHANGES, EDIT THE ROUTE FILE TOO. The share link's
+ * `?<hash>` comes from the route file, not from the picture it draws, so a
+ * new screenshot alone keeps the old link and WhatsApp and Facebook keep
+ * showing the cached old card.
+ *
  * English on purpose; the page it opens is in the reader's language. The font
  * is Noto Sans (SIL Open Font License, `assets/fonts/OFL.txt`), shipped with
  * the repo: the renderer's built-in font has no ₹ and no bold, so prices came
