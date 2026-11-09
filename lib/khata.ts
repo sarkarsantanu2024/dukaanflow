@@ -1,6 +1,7 @@
 import { escapeWhatsAppText } from './whatsapp';
 import { formatDay } from './time';
 import { plainPaise } from './money';
+import type { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
 
 /**
@@ -94,9 +95,19 @@ export function totalOutstanding(balances: CustomerBalance[]): number {
   return balances.reduce((sum, row) => sum + Math.max(0, row.balancePaise), 0);
 }
 
+type CustomerRow = { id: string; name: string; phone: string; area: string; address: string };
+
 /**
  * Finds or creates a regular by phone. The phone is the identity — names get
  * spelled three ways and a shopkeeper should never end up with three Rekhas.
+ *
+ * `fillBlanksOnly` is for the public shop page, where whoever is typing has not
+ * signed in: they may add a detail the shop does not have yet, but never
+ * replace one it does. Otherwise anybody who knew a customer's phone number
+ * could rename them in the shop's khata by placing an order. Signed-in paths
+ * (the owner's till and khata) keep updating as before.
+ *
+ * `client` lets a caller run this inside its own transaction.
  */
 export async function upsertCustomer(
   shopId: string,
@@ -104,8 +115,32 @@ export async function upsertCustomer(
   name: string,
   area = '',
   address = '',
-): Promise<{ id: string; name: string; phone: string; area: string; address: string }> {
-  return prisma.customer.upsert({
+  { client = prisma, fillBlanksOnly = false }: { client?: Prisma.TransactionClient; fillBlanksOnly?: boolean } = {},
+): Promise<CustomerRow> {
+  const select = { id: true, name: true, phone: true, area: true, address: true } as const;
+
+  if (fillBlanksOnly) {
+    const row = await client.customer.upsert({
+      where: { shopId_phone: { shopId, phone } },
+      create: { shopId, phone, name, area, address },
+      update: {},
+      select,
+    });
+    // Each field is written only while it is still empty, checked in the WHERE
+    // so two orders arriving together cannot both "fill" it.
+    const given = { name, area, address };
+    for (const field of ['name', 'area', 'address'] as const) {
+      if (!given[field] || row[field]) continue;
+      const { count } = await client.customer.updateMany({
+        where: { id: row.id, [field]: '' },
+        data: { [field]: given[field] },
+      });
+      if (count > 0) row[field] = given[field];
+    }
+    return row;
+  }
+
+  return client.customer.upsert({
     where: { shopId_phone: { shopId, phone } },
     create: { shopId, phone, name, area, address },
     // A blank field on a later visit means "unchanged", never "clear it". The
@@ -116,7 +151,7 @@ export async function upsertCustomer(
       ...(area ? { area } : {}),
       ...(address ? { address } : {}),
     },
-    select: { id: true, name: true, phone: true, area: true, address: true },
+    select,
   });
 }
 

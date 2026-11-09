@@ -42,8 +42,12 @@ export type AdminCredentials = { username: string; passwordHash: string };
  * `ADMIN_USERNAME` / `ADMIN_PASSWORD_HASH` exactly as before, so nothing about
  * a fresh clone or an existing install changes until somebody uses the screen.
  *
- * A database that cannot be reached falls back too, rather than locking the one
- * account that can fix anything out of the console.
+ * A database that cannot be reached does NOT fall back: it fails closed. If the
+ * read fails we cannot know whether a row exists, and falling back to the env
+ * hash would quietly bring back a password the admin had already changed (the
+ * QA report found the env default still accepted on live). Nothing is lost by
+ * refusing: every console screen reads the same database, so a sign-in while
+ * it is unreachable could not do anything anyway.
  */
 export async function currentAdminCredentials(): Promise<AdminCredentials | null> {
   try {
@@ -53,7 +57,8 @@ export async function currentAdminCredentials(): Promise<AdminCredentials | null
     });
     if (row) return row;
   } catch (error) {
-    console.error('Could not read admin credentials, falling back to env', error);
+    console.error('Could not read admin credentials; refusing sign-in', error);
+    return null;
   }
 
   const hash = process.env.ADMIN_PASSWORD_HASH;

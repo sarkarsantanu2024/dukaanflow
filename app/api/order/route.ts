@@ -404,7 +404,12 @@ export async function POST(request: Request) {
   // and a khata that could not name any of them. The upsert never clears a
   // field it was not given, so a blank name on a later order leaves the one
   // already recorded alone.
-  await upsertCustomer(shop.id, customerPhone, customerName, customerArea, customerAddress);
+  //
+  // Fill-blanks-only: this page is public and unauthenticated, so an order may
+  // add a detail the shop does not have but never overwrite one it does.
+  await upsertCustomer(shop.id, customerPhone, customerName, customerArea, customerAddress, {
+    fillBlanksOnly: true,
+  });
 
   /**
    * And the shop is told, on whatever phone said yes.
