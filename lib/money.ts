@@ -112,9 +112,12 @@ export function formatPaise(paise: number): string {
 /** The same figure without grouping, for a WhatsApp message or a UPI intent. */
 export function plainPaise(paise: number): string {
   const rounded = Math.round(paise);
+  // The sign is written separately: for amounts under a rupee the rupee part is
+  // -0, and String(-0) is "0", so -50 paise used to print as "₹0.50".
+  const sign = rounded < 0 ? '-' : '';
   const remainder = Math.abs(rounded % PAISE_PER_RUPEE);
-  const rupees = Math.trunc(rounded / PAISE_PER_RUPEE);
-  return remainder === 0 ? `₹${rupees}` : `₹${rupees}.${String(remainder).padStart(2, '0')}`;
+  const rupees = Math.trunc(Math.abs(rounded) / PAISE_PER_RUPEE);
+  return remainder === 0 ? `₹${sign}${rupees}` : `₹${sign}${rupees}.${String(remainder).padStart(2, '0')}`;
 }
 
 /**
