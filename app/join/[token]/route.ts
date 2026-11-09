@@ -16,8 +16,9 @@ type Context = { params: Promise<{ token: string }> };
  *
  * Opening it signs them in and sends them to their shop. THE TOKEN IS NOT SPENT
  * (changed on request): the same link opens the shop again a week later or on a
- * second phone, and it does not expire. It stops working only when a fresh link
- * is minted or the owner's access is revoked.
+ * second phone, and it does not expire. It stops working when a fresh link is
+ * minted, when the PIN is reissued (the lost-phone case), or when the owner's
+ * access is revoked: the pin route clears `inviteTokenHash` in both cases.
  */
 export async function GET(request: Request, { params }: Context) {
   const { token } = await params;

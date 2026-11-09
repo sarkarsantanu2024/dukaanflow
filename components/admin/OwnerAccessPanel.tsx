@@ -43,7 +43,7 @@ export function OwnerAccessPanel({
       !(await confirm({
         title: 'Issue a new PIN?',
         message:
-          'The old PIN stops working immediately, and the owner is signed out on every phone they used it on.',
+          'The old PIN and the old WhatsApp app link stop working immediately, and the owner is signed out on every phone. Send a fresh app link if they want one-tap sign-in again.',
         confirmLabel: 'Issue new PIN',
       }))
     ) {

@@ -48,7 +48,7 @@ export function ShopPinBadge({
       !(await confirm({
         title: `Issue a new PIN for ${shopName}?`,
         message:
-          'The old PIN stops working immediately, and the owner is signed out on every phone they used it on. The PIN they have now cannot be looked up — only replaced.',
+          'The old PIN and the old WhatsApp app link stop working immediately, and the owner is signed out on every phone. The PIN they have now cannot be looked up — only replaced.',
         confirmLabel: 'Issue new PIN',
       }))
     ) {
