@@ -22,7 +22,10 @@
  * delete it.
  *
  * Re-running is safe and is the normal case: the current year is rolled up
- * nightly and each run overwrites the last with better numbers.
+ * nightly and each run overwrites the last with better numbers. That overwrite
+ * is only correct because the purge deletes whole calendar years and never part
+ * of one (`lib/retention.ts`): a year is either complete on file or gone, and a
+ * gone year is skipped below rather than recomputed from nothing.
  */
 
 import { prisma } from './prisma';

@@ -54,7 +54,9 @@ async function main() {
     orders += shopOrders;
     sales += shopSales;
 
-    const firstYear = cutoff.getTime() === anchor.startedAt.getTime();
+    // The cutoff is 1 January of a year, so during the first year it falls on
+    // or before the start date.
+    const firstYear = cutoff.getTime() <= anchor.startedAt.getTime();
     console.log(
       `${anchor.slug}\n` +
         `  subscription started ${anchor.startedAt.toISOString()}\n` +

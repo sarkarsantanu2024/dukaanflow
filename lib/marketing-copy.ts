@@ -555,9 +555,12 @@ export const FAQ: { q: Words; a: Words }[] = [
       hi: 'भुगतान बंद करने पर क्या होगा?',
     },
     a: {
-      en: `You are reminded before your plan ends. Your store keeps taking orders for ${AUTO_PAUSE_DAYS} days, then pauses until you pay. Your data is never deleted.`,
-      bn: `প্ল্যান শেষের আগেই মনে করিয়ে দেওয়া হয়। দোকান আরও ${AUTO_PAUSE_DAYS} দিন অর্ডার নেয়, তারপর টাকা দেওয়া পর্যন্ত বন্ধ থাকে। আপনার তথ্য কখনও মোছা হয় না।`,
-      hi: `प्लान खत्म होने से पहले याद दिलाया जाता है। दुकान ${AUTO_PAUSE_DAYS} दिन और ऑर्डर लेती है, फिर भुगतान तक रुकी रहती है। आपका डेटा कभी मिटाया नहीं जाता।`,
+      // Pausing deletes nothing and the khata is never purged. Old orders are
+      // purged on the subscription anniversary (lib/retention.ts), so this must
+      // not promise "never deleted" outright.
+      en: `You are reminded before your plan ends. Your store keeps taking orders for ${AUTO_PAUSE_DAYS} days, then pauses until you pay. Pausing deletes nothing, and your credit book is always kept.`,
+      bn: `প্ল্যান শেষের আগেই মনে করিয়ে দেওয়া হয়। দোকান আরও ${AUTO_PAUSE_DAYS} দিন অর্ডার নেয়, তারপর টাকা দেওয়া পর্যন্ত বন্ধ থাকে। বন্ধ থাকলেও কিছু মোছা হয় না, আর আপনার খাতা সবসময় থাকে।`,
+      hi: `प्लान खत्म होने से पहले याद दिलाया जाता है। दुकान ${AUTO_PAUSE_DAYS} दिन और ऑर्डर लेती है, फिर भुगतान तक रुकी रहती है। रुकने पर कुछ भी नहीं मिटता, और आपकी उधार की बही हमेशा रहती है।`,
     },
   },
   {

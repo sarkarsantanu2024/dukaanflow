@@ -95,8 +95,9 @@ export default function TermsPage() {
         asking us, and you can ask us for the rest.
       </p>
       <p>
-        Orders and counter sales are kept for {RETENTION_YEARS === 1 ? 'one subscription year' : `${RETENTION_YEARS} subscription years`}{' '}
-        and are then deleted, after being summarised into figures that name nobody. See the{' '}
+        Orders and counter sales are kept for at least {RETENTION_YEARS === 1 ? 'one subscription year' : `${RETENTION_YEARS} subscription years`}{' '}
+        and are then deleted a whole calendar year at a time, after being summarised into figures
+        that name nobody. See the{' '}
         <a href="/privacy">privacy policy</a>.
       </p>
       <p>

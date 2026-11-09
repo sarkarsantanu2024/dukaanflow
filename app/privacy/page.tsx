@@ -130,8 +130,9 @@ export default function PrivacyPage() {
 
       <h2>How long it is kept</h2>
       <p>
-        Orders and counter sales are kept for <strong>one subscription year per shop</strong> and
-        are then deleted automatically. Before they go, they are summarised into figures that
+        Orders and counter sales are kept for <strong>at least one subscription year per shop</strong>.
+        On each anniversary of a shop&rsquo;s subscription, the whole calendar years before it are
+        deleted automatically. Before they go, they are summarised into figures that
         carry no customer name, number or address, so a shop keeps its long-run reporting without
         us keeping the people in it.
       </p>

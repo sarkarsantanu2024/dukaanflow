@@ -30,12 +30,23 @@
  *   this whole policy is computed from: purging it would move the window.
  * - `Customer`, `Shop`, `Item` — not transactions. They do not grow with trade.
  *
+ * ONLY WHOLE CALENDAR YEARS ARE EVER DELETED. The anniversary decides WHEN a
+ * year goes, but the cut itself is rounded down to 1 January (shop time) of the
+ * anniversary's year. The yearly rollup (`lib/rollup.ts`) recomputes a year from
+ * its raw rows every night; if the purge removed January-to-anniversary of the
+ * current year, the next night's rollup would overwrite that year's totals with
+ * the smaller remainder and the deleted months would vanish from every report.
+ * Deleting whole years only, each rolled up on the night it goes, means a year's
+ * totals are always computed from all of its rows. The price is that a shop
+ * keeps between one and two years of rows instead of exactly one.
+ *
  * THE COST, stated plainly: once a period falls before a shop's cutoff, no
  * report can be produced for it — the rows are gone. `shopCutoff` is exported so
  * the report can say so on its own face rather than quietly showing zeroes.
  */
 
 import { prisma } from './prisma';
+import { shopClock, shopMonthStart } from './time';
 
 /** The window, in years. One subscription year. */
 export const RETENTION_YEARS = 1;
@@ -49,17 +60,27 @@ export type RetentionAnchor = {
 };
 
 /**
- * The instant before which a shop's transactions are deleted: the most recent
- * anniversary of its subscription start that has already passed.
+ * The instant before which a shop's transactions are deleted: 1 January (shop
+ * time) of the year holding the most recent subscription anniversary that has
+ * passed. Never mid-year — see "ONLY WHOLE CALENDAR YEARS" above.
  *
- * Before the first anniversary this is the start date itself, so a shop in its
- * first year loses nothing.
+ * Before the first anniversary that is 1 January of the start year, which is on
+ * or before the start date, so a shop in its first year loses nothing it made
+ * while subscribed.
+ */
+export function shopCutoff(startedAt: Date, now: Date = new Date()): Date {
+  return shopMonthStart(shopClock(anniversaryCutoff(startedAt, now)).year, 1);
+}
+
+/**
+ * The most recent anniversary of the subscription start that has already
+ * passed (the start itself during the first year). Decides WHEN a year goes.
  *
  * February 29 anchors land on March 1 in common years — `Date.UTC` rolls the
  * overflow forward. That is a day either way on a policy measured in years, and
  * it is deliberate: the alternative is a cutoff that silently fails to advance.
  */
-export function shopCutoff(startedAt: Date, now: Date = new Date()): Date {
+export function anniversaryCutoff(startedAt: Date, now: Date = new Date()): Date {
   let years = now.getUTCFullYear() - startedAt.getUTCFullYear();
 
   const anniversary = (count: number) =>

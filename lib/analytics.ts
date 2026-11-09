@@ -1054,10 +1054,10 @@ function assemble(input: Ingredients): Report {
 
   const purged = cutoffs.filter(
     (shop) =>
-      // A shop still inside its first year has a cutoff equal to its start date.
-      // That is not a purge — nothing has been deleted, the shop simply did not
-      // exist yet — and warning about missing data there would be a false alarm
-      // on every young shop in the console.
+      // A shop still inside its first year has a cutoff on or before its start
+      // date (1 January of the start year). That is not a purge — nothing it made
+      // while subscribed has been deleted — and warning about missing data there
+      // would be a false alarm on every young shop in the console.
       shop.cutoff.getTime() > shop.startedAt.getTime() &&
       period.from.getTime() < shop.cutoff.getTime(),
   );
@@ -1073,8 +1073,8 @@ function assemble(input: Ingredients): Report {
         : `${purged.length} of ${shops.length} shops ${one ? 'has' : 'have'}`;
 
     caveats.push(
-      'A shop keeps only its current subscription year of orders and counter sales; ' +
-        'older ones are deleted on each anniversary of its subscription start. ' +
+      'A shop keeps at least its current subscription year of orders and counter sales; ' +
+        'on each anniversary of its subscription start, whole calendar years before it are deleted. ' +
         `${whose} a cutoff after this period began, ` +
         (allGone
           ? 'so this period can no longer be reported on — the figures above are not low, they are gone.'
