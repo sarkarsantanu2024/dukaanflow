@@ -981,5 +981,25 @@ model AdminCredential {
   passwordHash String
 
   createdAt DateTime @default(now())
+  /// Doubles as the CREDENTIAL VERSION stamped into every admin session
+  /// token. A password change moves it, and lib/guard.ts refuses every token
+  /// carrying an older value — that is how a changed password signs out the
+  /// laptop it was changed because of.
   updatedAt DateTime @updatedAt
+}
+
+/// Fixed-window counters behind the login, owner-PIN and order rate limits.
+///
+/// These lived in process memory, which on Vercel means per serverless
+/// instance: a 6-digit PIN brute-forced across instances met a fresh allowance
+/// on each. One row per `key` ("login:<ip>", "owner-login-shop:<slug>" …),
+/// upserted atomically in lib/rate-limit.ts. Rows are disposable — a sweep
+/// deletes anything a day past its window — and the limiter falls back to
+/// memory if this table is unreachable, so it can never lock the till.
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+
+  @@index([resetAt])
 }

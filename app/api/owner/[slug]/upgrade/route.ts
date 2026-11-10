@@ -169,7 +169,7 @@ export async function POST(request: Request, { params }: Context) {
 
   // Generous, but not unlimited: a screenshot is a few hundred KB and a shop
   // with a shaky signal will retry. This is here to stop a loop, not a person.
-  const limit = rateLimit(`upgrade:${clientIp(request)}`, 12, 10 * 60 * 1000);
+  const limit = await rateLimit(`upgrade:${clientIp(request)}`, 12, 10 * 60 * 1000);
   if (!limit.ok) return fail('Too many attempts. Please wait a few minutes.', 429);
 
   const shop = await prisma.shop.findUnique({ where: { slug }, select: SHOP_PRICE_SELECT });

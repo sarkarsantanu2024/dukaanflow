@@ -28,7 +28,7 @@ export async function POST(request: Request, { params }: Context) {
 
   // The id is unguessable, so this is not really a defence against enumeration
   // — it is a defence against a loop with a bug in it filling the table.
-  const limit = rateLimit(`push:${clientIp(request)}`, 20, 5 * 60 * 1000);
+  const limit = await rateLimit(`push:${clientIp(request)}`, 20, 5 * 60 * 1000);
   if (!limit.ok) return fail('Please wait a moment and try again.', 429);
 
   if (!pushConfigured()) return fail('Notifications are not switched on for this site', 503);

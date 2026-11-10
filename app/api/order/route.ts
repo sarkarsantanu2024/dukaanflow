@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
   // 12 orders per 5 minutes per IP. A family sharing a connection stays fine;
   // a script spamming the shop owner's WhatsApp does not.
-  const limit = rateLimit(`order:${clientIp(request)}`, 12, 5 * 60 * 1000);
+  const limit = await rateLimit(`order:${clientIp(request)}`, 12, 5 * 60 * 1000);
   if (!limit.ok) {
     return fail(`Too many orders. Please wait ${limit.retryAfterSeconds}s and try again.`, 429);
   }

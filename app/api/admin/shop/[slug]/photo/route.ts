@@ -37,7 +37,7 @@ export async function POST(request: Request, { params }: Context) {
 
   // Each photo costs money. Generous for an owner photographing a shelf, and a
   // hard stop for anything scripted.
-  const limit = rateLimit(`photo:${slug}`, 60, 10 * 60 * 1000);
+  const limit = await rateLimit(`photo:${slug}`, 60, 10 * 60 * 1000);
   if (!limit.ok) return fail('Too many photos at once. Wait a minute and try again.', 429);
 
   const parsed = bodySchema.safeParse(await readJson(request));

@@ -5,10 +5,11 @@
 QR ordering for Indian kirana shops, tea stalls, roll & momo counters,
 home kitchens and bakeries.
 
-The shop owner never logs in and never learns new software. A customer scans the
-QR taped to the counter, taps quantities, and the finished order lands in the
-owner's app, where a bell counts it from every screen. One Super Admin runs
-everything.
+A customer scans the QR taped to the counter, taps quantities, and the finished
+order lands in the owner's app, where a bell counts it from every screen. The
+owner's app opens from a one-time WhatsApp link and afterwards with a 6-digit
+PIN — no email, no password, nothing to learn. One Super Admin runs the
+platform: shops, PINs, plans and payments.
 
 ---
 
@@ -75,21 +76,29 @@ Zod · React Hook Form · qrcode.react · jsPDF · Vercel.
 
 ### Auth
 
-One fixed username and one password — a single Super Admin, no user table.
+One username and one password — a single Super Admin. The credentials start
+life as `ADMIN_USERNAME` / `ADMIN_PASSWORD_HASH` in the environment; the first
+time the admin changes them from the console they move into the one-row
+`AdminCredential` table, which wins from then on.
 
 ```text
-username → case-insensitive match against ADMIN_USERNAME (plain text)
-password → bcrypt.compare against ADMIN_PASSWORD_HASH   (lib/password.ts, Node only)
-        → HMAC-SHA256 signed token                      (lib/auth.ts, Web Crypto)
+username → case-insensitive match                       (lib/password.ts, Node only)
+password → bcrypt.compare against the stored hash
+        → HMAC-SHA256 token `<expiry>.<credentialVersion>`  (lib/auth.ts, Web Crypto)
         → HttpOnly; Secure in prod; SameSite=Lax cookie
-        → verified in middleware.ts on the Edge         (no DB hit, no bcrypt)
+        → signature + expiry verified in middleware.ts on the Edge (no DB, no bcrypt)
+        → credentialVersion re-checked on Node in lib/guard.ts before any write
 ```
 
 `lib/auth.ts` is deliberately Web-Crypto-only so Edge middleware can import it;
-bcrypt lives in `lib/password.ts`, imported solely by the login route. The cookie
-signature covers the expiry, so a client cannot extend its own session. Every
-mutating handler re-checks auth via `requireAdmin()` — a middleware matcher typo
-must not become an open write endpoint.
+bcrypt lives in `lib/password.ts`. The cookie signature covers the expiry and
+the credential version, so a client can neither extend its own session nor
+forge one against a password that has since changed: `credentialVersion` is
+`AdminCredential.updatedAt`, a password change moves it, and `requireAdmin()`
+refuses every token carrying the old one — the browser the change was made in
+is reissued a fresh cookie in the same response, every other one is signed out.
+Every mutating handler re-checks auth via `requireAdmin()` — a middleware
+matcher typo must not become an open write endpoint.
 
 The username is an identifier rather than a secret, so it is stored in plain
 text; only the password is hashed. A wrong username and a wrong password return
@@ -206,7 +215,7 @@ npm install
 cp .env.example .env            # fill DATABASE_URL, DIRECT_URL, COOKIE_SECRET
 
 npm run hash -- "your-strong-admin-password"   # paste output into .env
-npx prisma migrate dev --name init
+npm run db:push                                # refuses if .env points at production
 npm run db:seed
 npm run dev
 ```
@@ -633,9 +642,19 @@ have always taken orders.
 - Duplicate item ids in an order payload are collapsed before the quantity cap.
 - `robots: noindex` — shop pages are for people holding the QR, not for search.
 
-**Known limitation:** the rate limiter is in-memory, so on Vercel it is per
-serverless instance rather than global ([`lib/rate-limit.ts`](lib/rate-limit.ts)).
-That is an accepted MVP trade-off; swap in Upstash Redis if abuse becomes real.
+**Rate limits are global.** Counters live in the `RateLimit` table
+([`lib/rate-limit.ts`](lib/rate-limit.ts)), one atomic upsert per hit, so a
+PIN guess spread across serverless instances meets one allowance, not one per
+instance. If the table is unreachable the limiter falls back to a per-instance
+in-memory counter and logs that it has — it never fails open, and never locks
+a till over a database blip.
+
+**Known limitations, honestly:** the Prisma migration history stopped at
+2026-08-31 and later schema changes reached production through `db push`, so
+`prisma migrate deploy` is not currently a safe way to apply changes — see
+[DEPLOYMENT.md](DEPLOYMENT.md) §7. Photos are stored as data URLs in Postgres,
+not a blob store. The Bengali and Hindi FAQ copy has not been reviewed by a
+native speaker.
 
 ## Deploying
 
@@ -646,4 +665,5 @@ domain, and printing the first QR.
 
 - **Phase 1 (this repo)** — QR shop page, in-app orders, admin CRUD, QR generation.
 - **Phase 2** — order history views, analytics, richer categories.
-- **Phase 3** — item images, variants, multiple branches, owner logins, WhatsApp API.
+- **Phase 3** — item images, variants, multiple branches, WhatsApp API. (Owner
+  logins shipped early: PIN + one-time link, see above.)

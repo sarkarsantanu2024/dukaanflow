@@ -27,7 +27,7 @@ export async function POST(request: Request, { params }: Context) {
   // A second line of defence only. The real one is the attempt counter on the
   // row below, because this map lives in one serverless instance's memory and
   // an attacker who spreads guesses across instances walks straight past it.
-  const limit = rateLimit(`activate:${clientIp(request)}`, 20, 10 * 60 * 1000);
+  const limit = await rateLimit(`activate:${clientIp(request)}`, 20, 10 * 60 * 1000);
   if (!limit.ok) return fail('Too many attempts. Please wait a few minutes.', 429);
 
   const parsed = activationSchema.safeParse(await readJson(request));

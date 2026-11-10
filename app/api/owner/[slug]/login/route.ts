@@ -19,8 +19,10 @@ export async function POST(request: Request, { params }: Context) {
   // more than the admin password does. Two buckets: one stops a single phone
   // guessing, the other caps total guesses against one shop no matter how many
   // addresses they come from.
-  const perClient = rateLimit(`owner-login:${slug}:${clientIp(request)}`, 5, 15 * 60 * 1000);
-  const perShop = rateLimit(`owner-login-shop:${slug}`, 30, 60 * 60 * 1000);
+  const [perClient, perShop] = await Promise.all([
+    rateLimit(`owner-login:${slug}:${clientIp(request)}`, 5, 15 * 60 * 1000),
+    rateLimit(`owner-login-shop:${slug}`, 30, 60 * 60 * 1000),
+  ]);
   if (!perClient.ok || !perShop.ok) {
     return fail('Too many attempts. Please wait and try again.', 429);
   }
