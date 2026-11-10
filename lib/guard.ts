@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
-import { OWNER_COOKIE, readOwnerToken, SESSION_COOKIE, verifySessionToken } from './auth';
+import { OWNER_COOKIE, readOwnerToken, readSessionToken, SESSION_COOKIE } from './auth';
+import { currentAdminCredentials } from './password';
 import { prisma } from './prisma';
 
 /**
@@ -7,9 +8,28 @@ import { prisma } from './prisma';
  * every mutating handler re-checks: a matcher typo should not become an open
  * write endpoint.
  */
+
+/**
+ * Is the caller the Super Admin, holding a session issued against the CURRENT
+ * credentials?
+ *
+ * Middleware has already checked signature and expiry on the Edge. This adds
+ * the one thing the Edge cannot: a read of `AdminCredential` to compare the
+ * token's `credentialVersion` with the row's `updatedAt`. Changing the password
+ * moves that value, so every session issued before the change — the browser on
+ * the laptop that went missing — is refused here, on the next write. The
+ * version is exactly the same mechanism `currentOwnerSlug` uses for PINs.
+ *
+ * Fails closed: if the credentials cannot be read, nobody is the admin.
+ */
 export async function requireAdmin(): Promise<boolean> {
   const store = await cookies();
-  return verifySessionToken(store.get(SESSION_COOKIE)?.value);
+  const session = await readSessionToken(store.get(SESSION_COOKIE)?.value);
+  if (!session) return false;
+
+  const stored = await currentAdminCredentials();
+  if (!stored) return false;
+  return stored.version === session.credentialVersion;
 }
 
 /**

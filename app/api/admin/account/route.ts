@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers';
+import { createSessionToken, SESSION_COOKIE, SESSION_TTL_MS, sessionCookieOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/guard';
 import { fail, invalid, ok, readJson, sameOrigin } from '@/lib/http';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
   if (!sameOrigin(request)) return fail('Bad request', 403);
   if (!(await requireAdmin())) return fail('Not authenticated', 401);
 
-  const limit = rateLimit(`admin-account:${clientIp(request)}`, 8, 10 * 60 * 1000);
+  const limit = await rateLimit(`admin-account:${clientIp(request)}`, 8, 10 * 60 * 1000);
   if (!limit.ok) return fail('Too many attempts. Please wait and try again.', 429);
 
   const parsed = adminAccountSchema.safeParse(await readJson(request));
@@ -50,16 +52,21 @@ export async function POST(request: Request) {
     return fail('Current password is incorrect', 401);
   }
 
-  await saveAdminCredentials(username, newPassword);
+  const { version } = await saveAdminCredentials(username, newPassword);
 
   /**
-   * The session is deliberately left alone.
+   * Every OTHER session is now revoked: the credential version moved, and
+   * `requireAdmin()` refuses tokens carrying the old one. That is the reason
+   * somebody changes a password — the laptop that went missing, the colleague
+   * who left — and before this a change did not shorten a single existing
+   * session.
    *
-   * Signing the admin out of the browser they just made the change in would
-   * teach them that changing a password breaks the console, and the token
-   * carries no credential version to revoke against anyway — a change here does
-   * not shorten any session that already exists. Twelve hours is the ceiling on
-   * that either way.
+   * THIS browser keeps working: signing the admin out of the screen they just
+   * used would teach them that changing a password breaks the console, so the
+   * cookie is reissued against the new version in the same response.
    */
+  const store = await cookies();
+  store.set(SESSION_COOKIE, await createSessionToken(version), sessionCookieOptions(SESSION_TTL_MS / 1000));
+
   return ok({ success: true, username });
 }

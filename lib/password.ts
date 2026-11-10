@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { randomInt } from 'node:crypto';
+import { ENV_CREDENTIAL_VERSION } from './auth';
 import { prisma } from './prisma';
 
 /**
@@ -29,7 +30,17 @@ const ADMIN_ROUNDS = 12;
  */
 export const ADMIN_CREDENTIAL_ID = 'super';
 
-export type AdminCredentials = { username: string; passwordHash: string };
+export type AdminCredentials = {
+  username: string;
+  passwordHash: string;
+  /**
+   * What sessions are issued against and checked against: the row's
+   * `updatedAt` as epoch ms, or `ENV_CREDENTIAL_VERSION` for the env pair.
+   * Saving a new password moves it, and `requireAdmin()` refuses every token
+   * that carries an older one.
+   */
+  version: number;
+};
 
 /**
  * What the console signs in against: the row the admin set, or the environment
@@ -53,9 +64,11 @@ export async function currentAdminCredentials(): Promise<AdminCredentials | null
   try {
     const row = await prisma.adminCredential.findUnique({
       where: { id: ADMIN_CREDENTIAL_ID },
-      select: { username: true, passwordHash: true },
+      select: { username: true, passwordHash: true, updatedAt: true },
     });
-    if (row) return row;
+    if (row) {
+      return { username: row.username, passwordHash: row.passwordHash, version: row.updatedAt.getTime() };
+    }
   } catch (error) {
     console.error('Could not read admin credentials; refusing sign-in', error);
     return null;
@@ -63,7 +76,11 @@ export async function currentAdminCredentials(): Promise<AdminCredentials | null
 
   const hash = process.env.ADMIN_PASSWORD_HASH;
   if (!hash) return null;
-  return { username: process.env.ADMIN_USERNAME || DEFAULT_USERNAME, passwordHash: hash };
+  return {
+    username: process.env.ADMIN_USERNAME || DEFAULT_USERNAME,
+    passwordHash: hash,
+    version: ENV_CREDENTIAL_VERSION,
+  };
 }
 
 /**
@@ -78,11 +95,23 @@ export async function verifyAdminCredentials(
   username: string,
   password: string,
 ): Promise<boolean> {
+  return (await authenticateAdmin(username, password)) !== null;
+}
+
+/**
+ * Same check, but on success hands back the credential version the new
+ * session must be stamped with. The login route uses this; everything that
+ * only needs yes/no uses `verifyAdminCredentials`.
+ */
+export async function authenticateAdmin(
+  username: string,
+  password: string,
+): Promise<{ version: number } | null> {
   const stored = await currentAdminCredentials();
   if (!stored) {
     // Fail closed, and never echo the reason to the client.
     console.error('No admin credentials are configured');
-    return false;
+    return null;
   }
 
   const usernameMatches =
@@ -94,9 +123,9 @@ export async function verifyAdminCredentials(
       password,
       usernameMatches ? stored.passwordHash : DECOY_HASH,
     );
-    return usernameMatches && passwordMatches;
+    return usernameMatches && passwordMatches ? { version: stored.version } : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -107,14 +136,21 @@ export async function verifyAdminCredentials(
  * after it replaces the same row. The caller has already checked the current
  * password — see `adminAccountSchema`.
  */
-export async function saveAdminCredentials(username: string, password: string): Promise<void> {
+export async function saveAdminCredentials(
+  username: string,
+  password: string,
+): Promise<{ version: number }> {
   const passwordHash = await bcrypt.hash(password, ADMIN_ROUNDS);
   const data = { username: username.trim(), passwordHash };
-  await prisma.adminCredential.upsert({
+  // `updatedAt` moves on every write, and it IS the credential version: from
+  // this moment every session issued before the change stops authorising.
+  const row = await prisma.adminCredential.upsert({
     where: { id: ADMIN_CREDENTIAL_ID },
     create: { id: ADMIN_CREDENTIAL_ID, ...data },
     update: data,
+    select: { updatedAt: true },
   });
+  return { version: row.updatedAt.getTime() };
 }
 
 /* ------------------------------------------------------------------ */
